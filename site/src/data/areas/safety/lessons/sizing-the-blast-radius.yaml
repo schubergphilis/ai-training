@@ -26,9 +26,10 @@ exercise:
 sources: [AEC-10]
 issue: 130
 minutes: 15
+proofs: [safety/sizing-the-blast-radius/reach.py]
 notes: >-
   Introduces no concept: deepens blast-radius, permissions-and-least-privilege and human-in-the-loop.
   The page shows the output of the fixture site/examples/safety/sizing-the-blast-radius/reach.py in
   text fences, because safety is a foundations area and the page carries no Predict run. The fixture
-  is CI proof only, and how CI asserts a hidden fixture against a foundations page is decided in
-  #237. The team, folders and head counts are invented.
+  is CI proof only: it is listed in proofs, and `mise run examples` fails when it prints a line no
+  text fence on the page shows (#497, #311). The team, folders and head counts are invented.

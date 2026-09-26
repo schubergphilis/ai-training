@@ -395,11 +395,6 @@ export const UNRUN_EXEMPT = new Map([
 	['safety/assessing-a-use-case/score_use_cases.py', FOUNDATIONS],
 	['safety/checking-habits/totals.py', FOUNDATIONS],
 	['safety/checking-what-an-agent-changed/replay.py', FOUNDATIONS],
-	['safety/following-the-source/resolve_citations.py', FOUNDATIONS],
-	['safety/reading-agent-logs/compare_versions.py', FOUNDATIONS],
-	['safety/reading-agent-logs/read_log.py', FOUNDATIONS],
-	['safety/sizing-the-blast-radius/reach.py', FOUNDATIONS],
-	['safety/tracing-a-planted-instruction/planted_line.py', FOUNDATIONS],
 ]);
 
 /** Python files directly in `dir`, as file names. */

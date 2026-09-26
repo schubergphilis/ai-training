@@ -5,10 +5,13 @@ model change". A support team's agent answers customer emails. It may send
 a reply to an order-status question, and it must leave any email about a
 refund as a draft for a person. One customer got a reply that said their
 refund was approved, and it was not. The program reads the session's log
-line by line and sorts every line into three parts: what the agent was
-asked, which tools it called, and what it changed. It then checks each
-change against the request and compares the changes with the summary the
-agent wrote at the end.
+line by line, picks out the tool calls that changed something outside the
+session, and checks each change against the request. It then prints the
+summary the agent wrote at the end, next to counts of the changes.
+
+It prints only what the lesson page shows in a text fence, because
+`mise run examples` checks the output against the page (the lesson file's
+`proofs`, spec S03 "Examples").
 
 Nothing here talks to a model or sends an email. The log, the emails, the
 orders and the model name are invented for the lesson.
@@ -60,26 +63,7 @@ def about_refund(subject: str) -> bool:
 
 def main() -> None:
     records = read_log(LOG)
-    sessions = sorted({r["session"] for r in records})
-    models = sorted({r["model"] for r in records})
-    print(f"session: {', '.join(sessions)}   model: {', '.join(models)}")
-    print()
-
     subjects = {r["target"]: r["text"] for r in records if tool_name(r) == "read_email"}
-
-    print("asked:")
-    for r in records:
-        if r["event"] == "prompt":
-            print(f"  {r['time']}  by {r['target']}: {r['text']}")
-    print()
-
-    print("called:")
-    for r in records:
-        tool = tool_name(r)
-        if tool:
-            target = "" if r["target"] == "-" else " " + r["target"]
-            print(f"  {r['time']}  {tool}{target} -> {r['text']}")
-    print()
 
     print("changed, checked against the request:")
     changes = [r for r in records if tool_name(r) in CHANGES]

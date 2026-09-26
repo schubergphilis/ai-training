@@ -245,6 +245,7 @@ export interface LessonPlanFixture {
 		sources: string[];
 		issue?: number;
 		minutes: number;
+		proofs?: string[];
 		notes?: string;
 	};
 }
