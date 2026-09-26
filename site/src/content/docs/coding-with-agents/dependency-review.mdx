@@ -60,7 +60,8 @@ The agent can draw up the list for you. Start a new session, one that
 never saw the feature being built, and ask it to name every package the
 lockfile diff added or bumped and what each one is for. A session that
 didn't make the choices has nothing to defend, so it describes the diff as
-it is (@Claude Code best practices). The list is where the review starts, and you write the verdict at the end.
+it is (@Claude Code best practices). The list is where the review starts,
+and you write the verdict at the end.
 
 ## Principles that keep the review affordable
 
@@ -415,7 +416,8 @@ alike (@pnpm settings). Its documentation gives the reason, which is to
 lower the chance of installing a compromised or broken package before
 anyone has noticed. Since pnpm 11 the setting defaults to 1440 minutes,
 one day (@pnpm supply chain) (@pnpm settings). Left at that default, pnpm
-still installs a newer version when no older one fits the requested range.
+still installs a version younger than the floor when no older one fits the
+requested range.
 Setting `minimumReleaseAge` yourself makes that install fail instead
 (@pnpm settings). A project that waits a day before installing a new
 version gets the benefit of everyone else's attention during that day.

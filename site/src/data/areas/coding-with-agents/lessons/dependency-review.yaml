@@ -26,7 +26,6 @@ exercise:
 sources:
   - Fuchsia review
   - OpenSSF Scorecard
-  - Academy claude-code-in-action
   - Academy ai-native-sdlc-playbook
   - sbp-dependency-audit
   - npm package-lock
