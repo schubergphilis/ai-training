@@ -88,8 +88,8 @@ of its own. The table describes the fields as the components see them.
 | `serves`          | The learning objective ids the lesson teaches toward; each gets at least one checkpoint                                                                                                                                                                      |
 | `assumes`         | The learning objective ids the lesson relies on, each pointing at the lesson section that teaches it                                                                                                                                                         |
 | `extends-to`      | Where a confident learner goes next: the next lesson, a specialization topic, a short, or an `https://` URL under the `url` of a bibliography entry, for example a Claude Academy course. An external entry renders as a plain link marked "(external link)" |
-| `sources-checked` | Optional. The day the sources were last checked, shown in the footer's review line with `review-by`. Starlight's `lastUpdated` is the page's last git commit date and moves on every edit. A page shows one of the two lines, never both                     |
-| `review-by`       | Optional. The date by which the sources must be checked again, for a lesson whose facts move (a law, a product). The footer shows it as a review line with `sources-checked`, in place of "Last updated". The pair moves together, apart from `lastUpdated`  |
+| `sources-checked` | Optional. The day the sources were last checked, shown in the footer's review line with `review-by`. Starlight's `lastUpdated` is the page's last git commit date and moves on every edit. A lesson with `review-by` shows both lines, the review line first |
+| `review-by`       | Optional. The date by which the sources must be checked again, for a lesson whose facts move (a law, a product). The footer shows it as a review line with `sources-checked`, next to "Last updated". The pair moves together, apart from `lastUpdated`      |
 
 ## Tutorial mode
 

@@ -1,7 +1,7 @@
 /**
- * Renders the `Footer` override (issue #274) with Astro's Container API.
- * The footer shows one date line: the review line on a lesson whose plan
- * sets `review-by`, and Starlight's "Last updated" on every other page.
+ * Renders the `Footer` override (issues #274 and #339) with Astro's
+ * Container API. Every page shows Starlight's "Last updated", and a lesson
+ * whose plan sets `review-by` shows the review line before it.
  * Starlight's own parts read the route locals, so each render passes a
  * fake route with the fields they use.
  */
@@ -32,12 +32,14 @@ function render(data: Record<string, unknown>) {
 }
 
 describe('Footer', () => {
-	it('shows the review line, and not "Last updated", on a lesson with review-by', async () => {
+	it('shows the review line, then "Last updated", on a lesson with review-by', async () => {
 		const html = await render({ 'sources-checked': new Date('2026-09-20'), 'review-by': new Date('2027-03-20') });
-		expect(html).toContain('<p class="lesson-review" data-review-by="2027-03-20">');
+		const review = html.indexOf('<p class="lesson-review" data-review-by="2027-03-20">');
+		const updated = html.indexOf(`<time datetime="${lastUpdated.toISOString()}">`);
+		expect(review).toBeGreaterThan(-1);
+		expect(updated).toBeGreaterThan(review);
 		expect(html).toContain('Sources checked on September 20, 2026. Review due by March 20, 2027.');
-		expect(html).not.toContain('page.lastUpdated');
-		expect(html).not.toContain('<time');
+		expect(html).toContain('page.lastUpdated');
 	});
 	it('shows "Last updated" on a page without review-by', async () => {
 		const html = await render({ title: 'Concepts' });

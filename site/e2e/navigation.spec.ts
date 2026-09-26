@@ -45,7 +45,7 @@ test('the last lesson of a course links to the next course, and the footer carri
 /**
  * The first live lesson whose plan file sets `review-by`, read from the data
  * tree so a new lesson changes nothing here. Its page shows the review line
- * in the footer in place of "Last updated" (issue #274).
+ * in the footer, then "Last updated" (issue #339).
  */
 function lessonWithReviewBy(): string {
 	for (const id of liveLessons()) {
@@ -57,14 +57,15 @@ function lessonWithReviewBy(): string {
 	throw new Error('no live lesson sets review-by');
 }
 
-test('a lesson with review-by shows the review line once, in the footer, and no "Last updated"', async ({ page }) => {
+test('a lesson with review-by shows the review line once, in the footer, then "Last updated"', async ({ page }) => {
 	await page.goto(`${lessonWithReviewBy()}/`);
 	const footerLine = page.locator('.site-footer-meta .lesson-review[data-review-by]');
 	await expect(footerLine).toHaveCount(1);
 	await expect(footerLine).toContainText('Sources checked on');
 	await expect(footerLine).toContainText('Review due by');
 	await expect(page.locator('.lesson .lesson-review')).toHaveCount(0);
-	await expect(page.locator('.site-footer-meta time')).toHaveCount(0);
+	await expect(page.locator('.site-footer-meta time')).toHaveCount(1);
+	await expect(page.locator('.site-footer-meta .lesson-review ~ * time')).toHaveCount(1);
 });
 
 test('a page without review-by shows "Last updated" in the footer and no review line', async ({ page }) => {

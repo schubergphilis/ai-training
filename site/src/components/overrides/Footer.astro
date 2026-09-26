@@ -2,12 +2,14 @@
 /**
  * Starlight `Footer` override. Reordered: the previous/next cards come
  * first, right after the content; then one small line with the edit link,
- * one date line, and the AI co-authorship notice every page carries.
+ * the date lines, and the AI co-authorship notice every page carries.
  *
- * The date line is the review line ("Sources checked on X. Review due by
- * Y.") on a lesson whose plan sets `review-by` (spec S03 "Frontmatter"), and
- * Starlight's "Last updated" (the page's last git commit) on every other
- * page, so no page shows two dates (issue #274).
+ * A lesson whose plan sets `review-by` (spec S03 "Frontmatter") shows the
+ * review line ("Sources checked on X. Review due by Y.") first. Every page
+ * then shows Starlight's "Last updated", the page's last git commit. The
+ * review line says when the facts were checked, and "Last updated" says when
+ * the page last changed, so a lesson with `review-by` shows both (issue #339,
+ * which replaces the one-date decision of #274).
  */
 import EditLink from '@astrojs/starlight/components/EditLink.astro';
 import LastUpdated from '@astrojs/starlight/components/LastUpdated.astro';
@@ -22,7 +24,8 @@ const reviewBy = data['review-by'];
 	<Pagination />
 	<div class="site-footer-meta">
 		<EditLink />
-		{reviewBy ? <ReviewLine reviewBy={reviewBy} sourcesChecked={data['sources-checked']} /> : <LastUpdated />}
+		{reviewBy && <ReviewLine reviewBy={reviewBy} sourcesChecked={data['sources-checked']} />}
+		<LastUpdated />
 		<p class="ai-notice">Content co-authored by AI.</p>
 	</div>
 </footer>
