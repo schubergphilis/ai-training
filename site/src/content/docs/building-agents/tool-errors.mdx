@@ -10,9 +10,9 @@ model then says what went wrong.
 Every example runs against a fixture with a fake model, so you can predict
 the output and check yourself. The complete program is
 `site/examples/building-agents/tool-errors/agent.py` in the repository. Its
-`run` function is the loop from Building your first agent with a few
-changes. The tool table is a parameter, and the return value is a dict with the
-stop reason, the answer and the message list instead of a bare string.
+`run` function is the loop from the first agent lesson with a few
+changes. The tool table is a parameter, and the return value is a dict
+with the stop reason, the answer and the message list instead of a bare string.
 The assistant message stores the model's request as the dict itself
 rather than as text, because the fake model reads it back when it retries.
 The loop reads `reply["args"]` directly and stores the tool result as it

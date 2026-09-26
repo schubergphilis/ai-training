@@ -1,9 +1,9 @@
 import { Predict, Repair, Pitfall, Exercise, Recap, Choice, MultiChoice, Sort, Scenario } from '@components/lesson';
 
 In [Building your first agent](/building-agents/agent-loop/) the model had
-one tool, so its only choice was between calling it and answering. In this lesson the model gets two tools
-that overlap. We watch it call the wrong one and fix that without touching
-the functions. Everything we change is in the schema: the description the
+one tool, so its only choice was between calling it and answering. In this
+lesson the model gets two tools that overlap. We watch it call the wrong one
+and fix that without touching the functions. Everything we change is in the schema: the description the
 model reads and the parameters it fills in.
 
 Every example runs against a fixture: a fake model that behaves
@@ -17,12 +17,12 @@ A tool definition in the Claude API has a `name`, a `description`, and an
 `input_schema`, which is a JSON Schema object that names each parameter
 and its type (@Claude docs define-tools). The API requires the name and
 the schema and accepts a tool without a description (@Claude docs messages),
-but then the model has only the name to go on. The API builds a system
-prompt from the tool definitions (@Claude docs define-tools), and your
-code sends them again with every request, because the model doesn't keep
-state between calls (@Academy building-with-the-claude-api). That text is all the model has
-when it decides which tool to call and what to put in the arguments. The
-function body never reaches it.
+but then the model has only the name and the schema to go on. The API
+builds a system prompt from the tool definitions (@Claude docs define-tools),
+and your code sends them again with every request, because the model
+doesn't keep state between calls (@Academy building-with-the-claude-api).
+That text is all the model has when it decides which tool to call and what
+to put in the arguments. The function body never reaches it.
 
 A first draft of two customer tools often looks like this. The functions
 are stubs, because this lesson is about the text around them.
@@ -426,8 +426,8 @@ work, and would a real model have needed it?
    another tool, and what comes back (@Claude docs define-tools).
 2. A parameter gets a type and a description, and an enum where the set
    is small, so the model has nothing to guess.
-3. Count the wrong calls before and after a change. When the description
-   doesn't say when to use a tool, the model uses it wrongly or not at all
-   (@AEC-03).
+3. Count the wrong calls before and after a change, because when the
+   description doesn't say when to use a tool, the model uses it wrongly or
+   not at all (@AEC-03).
 
 </Recap>
