@@ -1280,3 +1280,24 @@ Claude Code features:
   author: Anthropic
   license: Proprietary
   url: https://code.claude.com/docs/en/features-overview
+npm package-lock:
+  type: reference
+  title: The npm package lock file
+  container: npm CLI documentation
+  author: npm, Inc. and contributors
+  license: Artistic-2.0
+  url: https://docs.npmjs.com/cli/v11/configuring-npm/package-lock-json
+Cargo build scripts:
+  type: reference
+  title: Build Scripts
+  container: The Cargo Book
+  author: The Cargo Project Developers
+  license: MIT OR Apache-2.0
+  url: https://doc.rust-lang.org/cargo/reference/build-scripts.html
+pnpm settings:
+  type: reference
+  title: "Settings: dependency resolution"
+  container: pnpm documentation
+  author: Zoltan Kochan and contributors
+  license: MIT
+  url: https://pnpm.io/settings/dependency-resolution

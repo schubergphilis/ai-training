@@ -23,7 +23,21 @@ shorts:
 exercise:
   kind: judge
   brief: Classify a lockfile diff and write the verdict per dependency.
-sources: [Fuchsia review, OpenSSF Scorecard, Academy claude-code-in-action, Academy ai-native-sdlc-playbook, sbp-dependency-audit]
+sources:
+  - Fuchsia review
+  - OpenSSF Scorecard
+  - Academy claude-code-in-action
+  - Academy ai-native-sdlc-playbook
+  - sbp-dependency-audit
+  - npm package-lock
+  - Cargo build scripts
+  - pnpm settings
+  - pnpm supply chain
+  - Claude Code best practices
+  - Claude Code memory
+  - Claude Code skills
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 20
 notes: >-
   From issue #16 (closed). Sits after tests-and-docs because the topic's prerequisites are

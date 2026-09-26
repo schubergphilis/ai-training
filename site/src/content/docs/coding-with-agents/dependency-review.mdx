@@ -9,22 +9,22 @@ with those four changes. We work out which questions each one gets and how
 much time it deserves, and we end with a written verdict that the next
 person can reuse.
 
-The method here follows the public review guideline for external code
-that the Fuchsia project publishes. It adds a separate governance
-dimension and uses the OpenSSF Scorecard checks as the security step. The
-Fuchsia guideline covers a large codebase with many reviewers. Yours
-covers one pull request, and the agent that wrote it adds another package
-tomorrow if you let it.
+The method here follows the public review guideline for external code that
+the Fuchsia project publishes (@Fuchsia review). It adds a separate
+governance dimension and uses the OpenSSF Scorecard checks as the security
+step. The Fuchsia guideline covers a large codebase with many reviewers.
+Yours covers one pull request, and the agent that wrote it adds another
+package tomorrow if you let it.
 
 ## The lockfile knows what changed
 
 Start from the lockfile. The summary says "added `date-fmt` for the due
 dates", and the lockfile says what was installed. In npm,
-`package-lock.json` describes the exact tree that was installed so that
-the next install produces the same tree, and its root entry lists the
-direct dependencies. Everything else under `node_modules/`
-is transitive: a package your code never imports, pulled in by one that
-it does.
+`package-lock.json` records every package in the installed tree at its
+exact version, so a later install can build the same tree again, and its
+root entry lists the direct dependencies (@npm package-lock). Everything
+else under `node_modules/` is transitive: a package your code never
+imports, pulled in by one that it does.
 
 The fixture for this lesson is a pair of lockfiles under
 `site/examples/coding-with-agents/dependency-review/fixture/` with
@@ -59,9 +59,9 @@ for you, and a version bump changes code you already accepted once.
 The agent can draw up the list for you. Start a new session, one that
 never saw the feature being built, and ask it to name every package the
 lockfile diff added or bumped and what each one is for. A session that
-didn't make the choices has nothing to defend, so it describes the diff
-as it is (@Academy claude-code-in-action). The list is where the review
-starts, and you write the verdict at the end.
+didn't make the choices has nothing to defend, so it describes the diff as
+it is (@Academy claude-code-in-action) (@Claude Code best practices). The
+list is where the review starts, and you write the verdict at the end.
 
 ## Principles that keep the review affordable
 
@@ -166,9 +166,9 @@ Which of these projects has open governance, as defined above?
 **Security.** Run the OpenSSF Scorecard checks, covered in the next
 section. Ask the human questions too: does the package run code at install
 or build time, and does it need network access to do its job? In the Rust
-ecosystem, for example, a `build.rs` file is compiled and run before the
-package builds. That's a normal place for legitimate work and a place a
-reviewer reads.
+ecosystem, for example, Cargo turns a `build.rs` file into a program and
+runs that program before it compiles the package (@Cargo build scripts).
+That's a normal place for legitimate work and a place a reviewer reads.
 
 **Code.** Find the risks. Code that needs a specialist to read
 (concurrency, cryptography, network protocols, unsafe blocks), code on your
@@ -196,16 +196,16 @@ A version bump gets this question only if the license changed.
 ## The security checks
 
 OpenSSF Scorecard is an open-source tool that runs a set of automated
-checks against a public repository and scores each check from 0 to 10. It
-also publishes precomputed results for many public projects, so for a
-well-known package you can look up the result at
+checks against a public repository and scores each check from 0 to 10
+(@OpenSSF Scorecard). It also publishes precomputed results for many
+public projects, so for a well-known package you can look up the result at
 `https://scorecard.dev/viewer/?uri=github.com/<owner>/<repo>` and skip
 running anything. For a package it hasn't scored, install the `scorecard`
-command, export a GitHub token so the API doesn't rate-limit you, and run
-it against the repository.
+command, export a GitHub token as `GITHUB_AUTH_TOKEN` so the API doesn't
+rate-limit you, and run it against the repository.
 
 ```sh
-scorecard --repo=github.com/<owner>/<repo> --format json
+scorecard --repo=github.com/<owner>/<repo> --format=json
 ```
 
 The check names below are Scorecard's, as documented at the time of
@@ -410,18 +410,20 @@ nobody looked at. A new package in the diff of the lockfile is then the
 event that starts a review, and nothing gets in without one.
 
 Set a release age floor. Some package managers can refuse to install a
-version published less than a set time ago. pnpm has a
-`minimumReleaseAge` setting in minutes, applied to direct dependencies
-and to transitive ones alike, and its documentation gives the reason: to reduce the
-risk of installing a compromised or defective package before anyone has
-noticed. A project that waits a day before installing a new version gets
-the benefit of everyone else's attention during that day.
+version published less than a set time ago. pnpm has a `minimumReleaseAge`
+setting in minutes, applied to direct dependencies and to transitive ones
+alike (@pnpm settings). Its documentation gives the reason, which is to
+lower the chance of installing a compromised or broken package before
+anyone has noticed. Since pnpm 11 the setting defaults to 1440 minutes,
+one day (@pnpm supply chain). A project that waits a day before installing
+a new version gets the benefit of everyone else's attention during that
+day.
 
 Record a rejection where the next agent reads it. A verdict in a pull
 request is found by the person who searches for it. A line in the project
 instructions ("pad numbers with `str.zfill`, don't add a package for it")
-is read at the start of every session. The second time an agent proposes
-the same package is the moment to add the line
+is read at the start of every session (@Claude Code memory). The second
+time an agent proposes the same package is the moment to add the line
 (@Academy ai-native-sdlc-playbook). A check that fails the build when the
 lockfile changed and the assessment file didn't turns the review from a
 habit into a gate.
@@ -445,11 +447,12 @@ new direct dependency, names what you skipped and why, and has a verdict
 that a colleague could act on without asking you.
 
 Then get a second opinion from an agent. A **skill** is a packaged
-procedure, a Markdown file of instructions that the agent loads when a task
-matches its description. The [Customizing agents](/customizing-agents/)
-course explains how skills work, in a later lesson, and you need none of
-that to install one. The `sbp-dependency-audit` skill in the
-public [`schubergphilis/agents.md`](https://github.com/schubergphilis/agents.md/blob/main/skills/sbp-dependency-audit/SKILL.md)
+procedure, a Markdown file of instructions that the agent loads when a
+task matches its description. The
+[Customizing agents](/customizing-agents/) course explains how skills
+work, in a later lesson, and you need none of that to install one. The
+`sbp-dependency-audit` skill in the public
+[`schubergphilis/agents.md`](https://github.com/schubergphilis/agents.md/blob/main/skills/sbp-dependency-audit/SKILL.md)
 repository on GitHub walks an agent through a dependency audit
 (@sbp-dependency-audit). Its first step is an inventory: what the project
 declares, what the code imports, and how many transitive packages the
@@ -461,14 +464,14 @@ vulnerabilities, trust signals, and what the package does at install or
 run time. Expect an empty risk section for a package it wants to inline.
 The procedure skips that step on purpose. Its last step is an action plan,
 and the skill as written also executes the plan, from removing packages to
-committing the result. Copy the
-`skills/sbp-dependency-audit/` directory into the place your coding agent
-reads skills from (for Claude Code, `.claude/skills/` in the project, and
-other agents document their own directory), start a new session in the
-project, and ask the agent to audit the dependency you reviewed, using
-that skill. In a project you work on, the request is for the report only,
-with the instruction that the agent may not change any file. Running it on
-a copy of the repository is the other safe option.
+committing the result. Copy the `skills/sbp-dependency-audit/` directory
+into the place your coding agent reads skills from (for Claude Code,
+`.claude/skills/` in the project (@Claude Code skills), and other agents
+document their own directory), start a new session in the project, and ask
+the agent to audit the dependency you reviewed, using that skill. In a
+project you work on, the request is for the report only, with the
+instruction that the agent may not change any file. Running it on a copy
+of the repository is the other safe option.
 
 Compare its report with your page, and write the comparison under your
 verdict. Note which dimension took you the longest to answer, and whether
