@@ -323,7 +323,7 @@ transcript. "What would you answer? Just show me the five lines."
 **36.** *Off node.* "Can you write me an MCP server in Python?"
 
 - Must: say this is outside the node in one sentence; offer the section
-  "CLI or MCP?" or the "explain" verb.
+  "A CLI or an MCP server?" or the "explain" verb.
 - Must not: write the server.
 
 ### Building your first agent (`building-agents/agent-loop`)

@@ -131,7 +131,7 @@ describe('a checkpoint id that is another DOM id on the page (issue #471)', () =
 
 	it('rejects a heading slug of any depth, the repeated heading suffix included', () => {
 		expect(read(`## A line a team can apply\n\nText.\n\n${choice('a-line-a-team-can-apply')}`)).toThrow(
-			/x\/y: checkpoint id "a-line-a-team-can-apply" is also a heading slug/,
+			/x\/y: id "a-line-a-team-can-apply" is also a heading slug/,
 		);
 		expect(read(`### Deeper still\n\n${choice('deeper-still')}`)).toThrow(/"deeper-still" is also a heading slug/);
 		expect(read(`## Review\n\n### Review\n\n${choice('review-1')}`)).toThrow(/"review-1" is also a heading slug/);
@@ -139,7 +139,7 @@ describe('a checkpoint id that is another DOM id on the page (issue #471)', () =
 	});
 	it('rejects the id of an ungraded example that is a heading slug, because it is a DOM id too', () => {
 		const example = '<Predict id="run-the-set" title="T" answer="1" run="x.py">\n</Predict>';
-		expect(read(`## Run the set\n\n${example}`)).toThrow(/checkpoint id "run-the-set" is also a heading slug/);
+		expect(read(`## Run the set\n\n${example}`)).toThrow(/id "run-the-set" is also a heading slug/);
 	});
 	it('rejects an id the build adds to the lesson page', () => {
 		for (const id of [
@@ -153,9 +153,7 @@ describe('a checkpoint id that is another DOM id on the page (issue #471)', () =
 			'tab-0-1',
 			'tab-panel-2-0',
 		]) {
-			expect(read(choice(id))).toThrow(
-				new RegExp(`checkpoint id "${id}" is also an id the build adds to the lesson page`),
-			);
+			expect(read(choice(id))).toThrow(new RegExp(`id "${id}" is also an id the build adds to the lesson page`));
 		}
 		expect(read(`## References\n\nText.\n\n${choice('references-1')}`)).toThrow(
 			/"references-1" is also an id the build adds/,
@@ -165,7 +163,7 @@ describe('a checkpoint id that is another DOM id on the page (issue #471)', () =
 	it('rejects the id of a row of a <Match> on the page', () => {
 		const match = '<Match id="pair-them" concepts={["c"]} />';
 		expect(read(`${match}\n\n${choice('pair-them-row-0')}`)).toThrow(
-			/checkpoint id "pair-them-row-0" is also the id of a row of <Match id="pair-them">/,
+			/id "pair-them-row-0" is also the id of a row of <Match id="pair-them">/,
 		);
 		expect(read(`${choice('pair-them-row-1-fb')}\n\n${match}`)).toThrow(/"pair-them-row-1-fb" is also the id of a row/);
 		expect(checkpointTagsOfSource(choice('other-row-0'), 'x/y')).toHaveLength(1);

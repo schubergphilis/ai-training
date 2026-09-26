@@ -229,19 +229,18 @@ function checkPracticePlacement(
 }
 
 /**
- * Throws unless the checkpoint id `id` differs from every other DOM id the
- * page gets: a heading slug in `slugs`, the id of a row of a `<Match>` in
- * `matchIds`, and an id the build adds (`isBuildId`). Names `where`.
+ * Throws unless `id`, the id of a checkpoint or an ungraded example,
+ * differs from every other DOM id the page gets: a heading slug in `slugs`,
+ * the id of a row of a `<Match>` in `matchIds`, and an id the build adds
+ * (`isBuildId`). Names `where`.
  */
 function assertFreeDomId(where: string, id: string, slugs: ReadonlySet<string>, matchIds: ReadonlySet<string>): void {
-	if (slugs.has(id)) throw new Error(`${where}: checkpoint id "${id}" is also a heading slug; pick another id`);
+	if (slugs.has(id)) throw new Error(`${where}: id "${id}" is also a heading slug; pick another id`);
 	if (isBuildId(id, slugs))
-		throw new Error(`${where}: checkpoint id "${id}" is also an id the build adds to the lesson page; pick another id`);
+		throw new Error(`${where}: id "${id}" is also an id the build adds to the lesson page; pick another id`);
 	const row = MATCH_ROW_ID.exec(id);
 	if (row && matchIds.has(row[1] ?? ''))
-		throw new Error(
-			`${where}: checkpoint id "${id}" is also the id of a row of <Match id="${row[1]}">; pick another id`,
-		);
+		throw new Error(`${where}: id "${id}" is also the id of a row of <Match id="${row[1]}">; pick another id`);
 }
 
 /**
