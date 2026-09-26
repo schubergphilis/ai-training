@@ -184,7 +184,21 @@ pitfall and the exercise.
   `python3` and gets what the lesson shows without installing anything.
   The repo pins both the current Python and 3.9 in `.mise.toml`, CI runs
   every fixture on both and asserts the same stdout, and ruff checks the
-  fixtures at the 3.9 target. No lesson asks for a `pip install`.
+  fixtures at the 3.9 target.
+- **An engineering lesson may have the learner install one pinned tool**
+  (decided 2026-09-26, #461). A `foundations` or `safety` lesson asks the
+  learner to install nothing. A lesson in `coding-with-agents`,
+  `customizing-agents` or `building-agents` may ask the learner to install
+  one third-party tool when all of these hold:
+  - The lesson installs one tool, at an exact version.
+  - The install happens outside the course repository: a throwaway
+    virtual environment for a Python tool (`python3 -m venv`, then
+    `pip install tool==X.Y.Z`), or `npx -y pkg@X.Y.Z` for a Node tool.
+  - The pinned version of a Python tool runs on the 3.9 floor.
+  - The page keeps a recorded, dated run of the tool's output, so a
+    reader who skips the install can still follow the lesson.
+  - Fixtures stay standard-library-only on 3.9. The rule covers what the
+    learner installs, and `mise run examples` never installs the tool.
 - **First `python3` on a fresh Mac may prompt for the Xcode command-line
   tools.** The lesson that first asks the learner to run `python3` says so,
   so the prompt reads as expected rather than as a failure.
