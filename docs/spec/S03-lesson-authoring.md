@@ -58,7 +58,7 @@ and does it serve **study** (acquiring a craft) or **work** (applying it)?
 
 | Part              | Rule                                                                                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Length            | 10 to 25 minutes.                                                                                                                                                       |
+| Length            | 10 to 25 minutes of reading and checkpoints, plus the exercise. See "Lesson time".                                                                                      |
 | Opener            | Where we're going, in the present tense: "In this lesson we build...". Never `you will learn`.                                                                          |
 | Sections          | H2s, each with a section kind. Body sections alternate teaching with pitfalls and checkpoints.                                                                          |
 | Pitfall           | At least one, placed right after the teaching it belongs to. It gives the setup and what went wrong, then states the rule. Short in tutorial mode.                      |
@@ -72,6 +72,28 @@ and does it serve **study** (acquiring a craft) or **work** (applying it)?
 Objectives are frontmatter data that drive checkpoints, routing, and tutor
 mode. They're never printed as a `you will learn` list; the opener and the
 recap carry that role.
+
+### Lesson time
+
+The site estimates a live lesson's time from its page when it builds. The
+course plan table shows the estimate, rounded to five minutes, in place of
+the plan's `minutes` target (S11 "Lesson file"). The estimate adds four
+parts:
+
+- Reading: prose at 180 words per minute and code or text fences at 100.
+  Pitfalls, recaps, prompts, responses and ungraded examples are prose.
+  Citations, raw HTML tags and import lines don't count.
+- Checkpoints: only `first` ones. Each gets a base time for its kind, plus
+  the time to read its shown words and half of its feedback.
+- The exercise: the time its text states ("Ten minutes is enough"), or 10
+  minutes when it states none, plus the time to read it.
+- Widgets: a fixed time each.
+
+The constants are in `site/src/lib/lesson-time.ts`, each with where its
+value comes from. Nobody has timed real readers against them yet. A
+component the estimate has no rule for fails the build and `mise run data`.
+`mise run data` also warns, without failing, when a lesson's reading and
+checkpoints alone come to more than 25 minutes.
 
 ### Frontmatter
 

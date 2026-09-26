@@ -1,4 +1,5 @@
 import type { PlanEntry } from './courses';
+import { lessonTime } from './lesson-time';
 
 /**
  * The pure half of `components/CoursePlan.astro`: the course plan (spec S11)
@@ -55,4 +56,24 @@ export function exerciseKinds(entry: Pick<PlanEntry, 'exercises'>): string {
 /** The GitHub issue URL of an entry, or undefined when it has none. */
 export function issueUrl(issue: number | undefined): string | undefined {
 	return issue === undefined ? undefined : `https://github.com/lsimons/ai-training/issues/${issue}`;
+}
+
+/** The Minutes cell: a number and whether it is the page's estimate or the plan's target. */
+export interface MinutesCell {
+	minutes: number;
+	kind: 'estimate' | 'target';
+}
+
+/**
+ * The Minutes cell of an entry (spec S11 "Lesson file"). A live lesson shows
+ * the rounded estimate from its page (`lib/lesson-time.ts`, spec S03 "Lesson
+ * time"), and a planned one the plan's `minutes` target. The page throws on a
+ * component the estimate has no rule for, so the build fails there.
+ */
+export function minutesCell(entry: Pick<PlanEntry, 'id' | 'minutes' | 'status' | 'lesson'>): MinutesCell {
+	if (entry.status === 'live' && entry.lesson) {
+		const { minutes } = lessonTime(entry.lesson.body ?? '', `src/content/docs/${entry.id}.mdx`);
+		return { minutes, kind: 'estimate' };
+	}
+	return { minutes: entry.minutes, kind: 'target' };
 }

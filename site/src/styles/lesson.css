@@ -230,6 +230,7 @@
 .course-plan tr[data-status='planned'] td, .course-plan tr[data-status='drafting'] td { color: var(--sl-color-gray-3); }
 .course-plan-id { display: block; font-family: var(--sl-font-mono); font-size: 0.7rem; color: var(--sl-color-gray-3); overflow-wrap: anywhere; }
 .course-plan-objective { display: block; overflow-wrap: anywhere; }
+.course-plan-minutes { color: var(--sl-color-gray-3); }
 
 /* ---- topic map ---- */
 .topic-map { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; margin: 1rem 0; }

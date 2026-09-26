@@ -46,9 +46,14 @@
  *   not in the `foundations` group, or a proof is not a `.py` file under
  *   site/examples/ (`proofErrors`).
  *
+ * It also reports an error when a lesson page uses a component the lesson
+ * time estimate has no rule for (`checkLessonTimes`).
+ *
  * It reports a warning, which doesn't fail, when a concept of one of the
  * area's topics is introduced by no lesson: a gap in the plan, which is a
- * content decision. `scripts/check-data.mjs` is the command-line entry;
+ * content decision. It warns, too, when a live lesson's reading and
+ * checkpoints alone are estimated at over 25 minutes (spec S03 "Length",
+ * `checkLessonTimes`). `scripts/check-data.mjs` is the command-line entry;
  * tests import this.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -58,6 +63,7 @@ import { citationKeys, hasMultipleKeys, multipleKeysMessage } from '../../plugin
 import { jsxElements, literalOf, parseMdx, propValue } from '../../src/lib/checkpoint-tags.ts';
 import { checkExtendsToHref, checkExternalSourceHref } from '../../src/lib/extends-to.ts';
 import { unsupportedInline } from '../../src/lib/inline-markdown.ts';
+import { LESSON_TIME, lessonTime } from '../../src/lib/lesson-time.ts';
 import { assumedSectionError, sectionSlugs } from '../../src/lib/section-slugs.ts';
 import { allTopics, courseLessonIds, readAreaTree } from './area-tree.mjs';
 import { predictTags } from './examples.mjs';
@@ -684,6 +690,12 @@ export function checkData(
 	for (const e of checkSourceHrefs(tree, rel)) fail(e);
 	for (const e of checkFoundationsAudience(tree, contentDir, pages.keys(), foundationsExempt)) fail(e);
 	for (const e of checkAssumedSections(tree, contentDir, pages.keys(), rel)) fail(e);
+	const times = checkLessonTimes(
+		contentDir,
+		[...pages.keys()].filter((id) => lessonIds.has(id)),
+	);
+	for (const e of times.errors) fail(e);
+	warnings.push(...times.warnings);
 	for (const a of tree.areas) {
 		const index = join(contentDir, a.dir, 'index.mdx');
 		if (!existsSync(index)) continue;
@@ -696,6 +708,58 @@ export function checkData(
 	}
 
 	return { errors, warnings, lessons: lessonIds.size, pages: pages.size };
+}
+
+/**
+ * The lesson time estimate (`src/lib/lesson-time.ts`, spec S03 "Lesson
+ * time") of each page in `pageIds`, lesson page ids under `contentDir`.
+ * A page the estimate cannot read, such as one with a component it has no
+ * rule for, is an error. A page whose reading and checkpoints alone come to
+ * more than `LESSON_TIME.warnMinutes`, unrounded, is a warning: the lesson
+ * is a candidate to trim or split, which is a content decision. The plan's
+ * `minutes` is not compared, because on a live lesson it is the historical
+ * target.
+ */
+export function checkLessonTimes(contentDir, pageIds) {
+	const errors = [];
+	const warnings = [];
+	for (const id of [...pageIds].sort()) {
+		const where = `src/content/docs/${id}.mdx`;
+		let core;
+		try {
+			core = lessonTime(readFileSync(join(contentDir, `${id}.mdx`), 'utf8'), where).coreMinutes;
+		} catch (e) {
+			errors.push(e.message);
+			continue;
+		}
+		if (core > LESSON_TIME.warnMinutes) {
+			warnings.push(
+				`${where}: reading and checkpoints come to about ${Math.round(core)} minutes without the exercise, over the ${LESSON_TIME.warnMinutes} of spec S03 "Length"; trim or split the lesson`,
+			);
+		}
+	}
+	return { errors, warnings };
+}
+
+/**
+ * Print a `checkData` result the way `mise run data` shows it and return the
+ * exit code: warnings go to `out.warn` and never fail, errors to
+ * `out.error` and exit 1, and a clean run prints one summary line to
+ * `out.log`. `scripts/check-data.mjs` calls it with `console`.
+ * @param {{ errors: string[], warnings: string[], lessons: number, pages: number }} result
+ * @param {{ log: (m: string) => void, warn: (m: string) => void, error: (m: string) => void }} [out]
+ */
+export function reportData({ errors, warnings, lessons, pages }, out = console) {
+	for (const w of warnings) out.warn(`data: warning: ${w}`);
+	if (errors.length) {
+		for (const e of errors) out.error(`data: ${e}`);
+		out.error(`data: ${errors.length} problem${errors.length === 1 ? '' : 's'}`);
+		return 1;
+	}
+	out.log(
+		`data: ${lessons} lesson plan${lessons === 1 ? '' : 's'}, ${pages} lesson page${pages === 1 ? '' : 's'}, all consistent${warnings.length ? ` (${warnings.length} warning${warnings.length === 1 ? '' : 's'})` : ''}`,
+	);
+	return 0;
 }
 
 /** Every topic id and every learning objective id under `dataDir`, for other checks. */

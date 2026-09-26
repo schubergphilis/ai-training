@@ -7,6 +7,7 @@ import {
 	checkBehaviorCitations,
 	checkBehaviorMarkdown,
 	checkData,
+	checkLessonTimes,
 	checkSourceHrefs,
 	FOUNDATIONS_EXEMPT,
 	foundationsSurfaces,
@@ -15,6 +16,7 @@ import {
 	lessonPages,
 	propCitationMessage,
 	propCitations,
+	reportData,
 	reviewDatePairError,
 } from '../../scripts/lib/data.mjs';
 
@@ -619,5 +621,64 @@ describe('helpers', () => {
 			}),
 		).toEqual(['a/x', 'a/y']);
 		expect(courseLessonIds({})).toEqual([]);
+	});
+});
+
+describe('checkLessonTimes (spec S03 "Lesson time")', () => {
+	/** 180 words of prose take one minute at the estimate's prose rate. */
+	const minutesOfProse = (m: number) => `${Array.from({ length: 180 * m }, () => 'word').join(' ')}\n`;
+	it('warns, without failing, when reading and checkpoints alone are over 25 minutes', () => {
+		const long = `${minutesOfProse(26)}\n<Exercise>\nTen minutes is enough.\n</Exercise>\n`;
+		const result = check(tree({ 'content/a/x.mdx': long }));
+		expect(result.errors).toEqual([]);
+		expect(result.warnings).toEqual([
+			'src/content/docs/a/x.mdx: reading and checkpoints come to about 26 minutes without the exercise, over the 25 of spec S03 "Length"; trim or split the lesson',
+		]);
+	});
+	it('leaves the exercise out: 20 minutes of reading and a 30-minute exercise pass', () => {
+		const withExercise = `${minutesOfProse(20)}\n<Exercise>\nThirty minutes.\n</Exercise>\n`;
+		expect(check(tree({ 'content/a/x.mdx': withExercise })).warnings).toEqual([]);
+	});
+	it('fails a page with a component the estimate has no rule for', () => {
+		const { errors } = check(tree({ 'content/a/x.mdx': 'Body.\n\n<Carousel />\n' }));
+		expect(errors).toEqual([
+			expect.stringMatching(/^src\/content\/docs\/a\/x\.mdx: <Carousel> has no rule in the lesson time estimate/),
+		]);
+	});
+	it('skips a page with no lesson file, which checkData reports on its own', () => {
+		const root = tree({ 'content/a/orphan.mdx': '<Carousel />\n' });
+		expect(checkLessonTimes(join(root, 'content'), ['a/x'])).toEqual({ errors: [], warnings: [] });
+		expect(check(root).errors).toEqual([expect.stringMatching(/a\/orphan\.mdx: lesson page without a lesson file/)]);
+	});
+});
+
+describe('reportData (the mise run data output)', () => {
+	const capture = () => {
+		const lines: { log: string[]; warn: string[]; error: string[] } = { log: [], warn: [], error: [] };
+		const out = {
+			log: (m: string) => lines.log.push(m),
+			warn: (m: string) => lines.warn.push(m),
+			error: (m: string) => lines.error.push(m),
+		};
+		return { lines, out };
+	};
+	it('prints each warning and exits 0', () => {
+		const { lines, out } = capture();
+		const code = reportData({ errors: [], warnings: ['w1', 'w2'], lessons: 2, pages: 1 }, out);
+		expect(code).toBe(0);
+		expect(lines.warn).toEqual(['data: warning: w1', 'data: warning: w2']);
+		expect(lines.log).toEqual(['data: 2 lesson plans, 1 lesson page, all consistent (2 warnings)']);
+		expect(lines.error).toEqual([]);
+	});
+	it('prints each error and a count, and exits 1', () => {
+		const { lines, out } = capture();
+		expect(reportData({ errors: ['e1'], warnings: [], lessons: 1, pages: 1 }, out)).toBe(1);
+		expect(lines.error).toEqual(['data: e1', 'data: 1 problem']);
+		expect(lines.log).toEqual([]);
+	});
+	it('prints a clean run without a warning count', () => {
+		const { lines, out } = capture();
+		expect(reportData({ errors: [], warnings: [], lessons: 1, pages: 1 }, out)).toBe(0);
+		expect(lines.log).toEqual(['data: 1 lesson plan, 1 lesson page, all consistent']);
 	});
 });

@@ -3,10 +3,20 @@
  * The course plan (spec S11) as one read-only table under the lesson graph,
  * folded into a `<details>` so the graph stays first. One row per lesson in
  * course order, with a heading row per part when the course has parts. The
- * `notes` fields never render; read the YAML for those.
+ * `notes` fields never render; read the YAML for those. The Minutes column
+ * shows a live lesson's estimate from its page and a planned lesson's target,
+ * each with a word that says which (`minutesCell`).
  */
 import { getCollection } from 'astro:content';
-import { afterTitles, exerciseKinds, idTail, issueUrl, objectiveCells, planSummary } from '@lib/course-plan-table';
+import {
+	afterTitles,
+	exerciseKinds,
+	idTail,
+	issueUrl,
+	minutesCell,
+	objectiveCells,
+	planSummary,
+} from '@lib/course-plan-table';
 import { getCourse, isLive, type PlanEntry } from '@lib/courses';
 import { href } from '@lib/url';
 
@@ -50,6 +60,7 @@ let n = 0;
 					)}
 					{g.lessons.map((e) => {
 						const issue = issueUrl(e.issue);
+						const time = minutesCell(e);
 						n += 1;
 						return (
 							<tr data-plan-entry={e.id} data-status={e.status}>
@@ -60,7 +71,7 @@ let n = 0;
 								</td>
 								<td>{e.status}</td>
 								<td>{e.mode}</td>
-								<td>{e.minutes}</td>
+								<td data-minutes={time.kind}>{time.minutes} <small class="course-plan-minutes">{time.kind}</small></td>
 								<td>
 									<a href={href(`/topics/${e.covers}/`)} title={e.covers}>{idTail(e.covers)}</a>
 								</td>

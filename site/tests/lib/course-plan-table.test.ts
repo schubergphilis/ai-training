@@ -1,5 +1,14 @@
-import { afterTitles, exerciseKinds, idTail, issueUrl, objectiveCells, planSummary } from '@lib/course-plan-table';
+import {
+	afterTitles,
+	exerciseKinds,
+	idTail,
+	issueUrl,
+	minutesCell,
+	objectiveCells,
+	planSummary,
+} from '@lib/course-plan-table';
 import type { PlanEntry } from '@lib/courses';
+import type { Lesson } from '@lib/lessons';
 import { describe, expect, it } from 'vitest';
 
 const entry = (over: Partial<PlanEntry> & { id: string }): PlanEntry => ({
@@ -83,5 +92,26 @@ describe('issueUrl', () => {
 	it('builds the GitHub URL, or nothing without an issue', () => {
 		expect(issueUrl(42)).toBe('https://github.com/lsimons/ai-training/issues/42');
 		expect(issueUrl(undefined)).toBeUndefined();
+	});
+});
+
+describe('minutesCell', () => {
+	const page = (body: string) => ({ id: 'x/live', body }) as unknown as Lesson;
+	it('shows the rounded estimate from the page of a live lesson, and says so', () => {
+		const body = `${Array.from({ length: 180 * 12 }, () => 'word').join(' ')}\n`;
+		expect(minutesCell(entry({ id: 'x/live', status: 'live', minutes: 10, lesson: page(body) }))).toEqual({
+			minutes: 10,
+			kind: 'estimate',
+		});
+		const withExercise = `${body}\n<Exercise>\nTwenty minutes.\n</Exercise>\n`;
+		expect(minutesCell(entry({ id: 'x/live', status: 'live', lesson: page(withExercise) })).minutes).toBe(30);
+	});
+	it('shows the target of a planned lesson, and says so', () => {
+		expect(minutesCell(entry({ id: 'x/p', minutes: 15 }))).toEqual({ minutes: 15, kind: 'target' });
+	});
+	it('fails on a live page with a component the estimate has no rule for', () => {
+		expect(() => minutesCell(entry({ id: 'x/live', status: 'live', lesson: page('<Carousel />') }))).toThrow(
+			/src\/content\/docs\/x\/live\.mdx: <Carousel> has no rule/,
+		);
 	});
 });

@@ -90,7 +90,10 @@ const lessonPlanSchema = z
 		sources: z.array(z.string()).default([]),
 		/** The lesson's GitHub issue number. */
 		issue: z.number().int().positive().optional(),
-		/** Target length in minutes; keep lessons short. */
+		/**
+		 * Target length in minutes of a planned lesson, and a brief for its builder. Once the
+		 * page exists, the course plan shows the estimate from the page instead (`lib/lesson-time.ts`).
+		 */
 		minutes: z.number().int().positive(),
 		/** The day the sources were last checked, paired with `review-by`. Not Starlight's `lastUpdated`, which is about the page. */
 		'sources-checked': z.coerce.date().optional(),

@@ -526,6 +526,10 @@ The next time you hand an agent a task, say out loud what it can reach before yo
 </Habit>
 ```
 
+The lesson time estimate (spec S03 "Lesson time") uses the time the
+exercise text states, such as "Ten minutes is enough", and 10 minutes when
+it states none, so state a time only where it is true.
+
 `Recap` appends "You can now..." from the served objectives and the finish
 button. Don't write those by hand. Where to go next is the page footer's
 previous/next, which follows the sidebar order. `extends-to` only feeds the
