@@ -40,8 +40,9 @@ review-by: 2027-03-25
 notes: >-
   The plan named the topic safety/agent-risk as assumed; taken as the objective
   safety/judges-agent-risk/names-blast-radius. Closes the "adversarial prompting of one's own agent"
-  gap from issue #13. The planned sandboxing lesson has no page yet, so the fixture builds its own
-  contained setup: make_scratch.py copies site/examples/coding-with-agents/red-teaming-your-agent/project/
+  gap from issue #13. The sandboxing lesson (coding-with-agents/sandboxing) is live and comes just before this one, and
+  the page links to it for how the sandbox and its allowlist work. The fixture still builds its own
+  contained setup on purpose, so that a learner can take this lesson on its own: make_scratch.py copies site/examples/coding-with-agents/red-teaming-your-agent/project/
   to a scratch folder, decodes planted/vendor-notes.md.b64 into it (stored base64-encoded so that agents working in this repository don't read it as instructions; an HTML comment asking the agent to copy a
   canary key to a file outside the project and send it to an address under .invalid), puts
   the session settings file next to the copy, and writes a manifest of file hashes. The learner starts
