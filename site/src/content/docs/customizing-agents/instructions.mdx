@@ -17,11 +17,13 @@ reproduce every step in an empty directory with a text editor.
 Most coding agents look for a Markdown file at the root of the repository
 and load it into their context before the first user message. The
 convention differs by tool: some look for `AGENTS.md`, some for
-`CLAUDE.md`, some for both. Claude Code, for example, reads `CLAUDE.md`,
-and reads `AGENTS.md` only when the project has no `CLAUDE.md`
-(@Claude Code memory). The content is the same either way, so the
-common pattern is to write `AGENTS.md` and make `CLAUDE.md` a symlink to
-it, or to have one contain one line pointing at the other.
+`CLAUDE.md`, some for both. Claude Code, for example, reads `CLAUDE.md`.
+It reads `AGENTS.md` only when there is no `CLAUDE.md`,
+`.claude/CLAUDE.md` or `CLAUDE.local.md` in the directory you start it in
+or in any directory above it (@Claude Code memory). The content is the
+same either way, so the common pattern is to write `AGENTS.md` and make
+`CLAUDE.md` a symlink to it, or to have one contain one line pointing at
+the other.
 
 The file is the briefing you would give a capable contractor on their
 first morning. They can read code. They can't know which command
@@ -85,8 +87,8 @@ Claude Code can write a first draft of the file with its `/init` command,
 from what it finds in the repository. Treat that draft as a list of
 candidates and delete every line the agent could have found itself. The
 vendor's own advice is close to the exercise at the end of this lesson:
-add to the file when the agent makes the same mistake a second time, or
-when you type a correction you already typed in an earlier session
+add to the file when the agent repeats a mistake, or when you find
+yourself giving it a correction you already gave it in an earlier session
 (@Claude Code memory).
 
 ## What doesn't belong
@@ -176,23 +178,24 @@ nothing in it restates what the agent could read from the repository.
 A repository with more than one project in it needs more than one file.
 Most tools read the file at the repository root, and also a file in a
 subdirectory when the agent works on files under that directory. Claude
-Code, for example, reads every instruction file from the directory you
-start it in up to the root when the session starts. It reads a
-subdirectory's file when it first reads a file in that subdirectory
-(@Claude Code memory).
+Code, for example, reads the instruction files in the directory you start
+it in and in every directory above it when the session starts. It reads a
+subdirectory's file when it first reads a file in that subdirectory. In
+both places the `CLAUDE.md` files come first, and it reads an `AGENTS.md`
+only where the rule above allows (@Claude Code memory).
 
 The tools differ on a conflict between two files. The AGENTS.md format
 says that the file closest to the edited file takes precedence
-(@AGENTS.md format). Claude Code keeps every file in its context, with
-the closer file after the root file, and when two rules contradict each
-other it may follow either one (@Claude Code memory). So treat a
-conflict between two files as a mistake to fix, and don't count on the
-closer file to apply.
+(@AGENTS.md format). Claude Code keeps every file in its context, with the
+closer file after the root file, and when two rules contradict each other
+it may follow either one (@Claude Code memory). So treat a conflict
+between two files as a mistake to fix, and don't count on the closer file
+to apply.
 
-The way the tools read the files gives a natural split. The root file holds what's true everywhere:
-the task runner, the commit convention, the branch rule. Each project's
-file holds only what differs: its own test command, its own language, its
-own recurring mistakes.
+The way the tools read the files gives a natural split. The root file
+holds what's true everywhere: the task runner, the commit convention, the
+branch rule. Each project's file holds only what differs: its own test
+command, its own language, its own recurring mistakes.
 
 ```text
 repo/
