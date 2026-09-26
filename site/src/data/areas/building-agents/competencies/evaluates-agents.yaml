@@ -72,8 +72,8 @@ objectives:
     statement: Chooses what to fix from counted failures
     level: base
     behaviors:
-      - claim: Before changing the agent, the learner reads the failed runs of a period and counts them by
-          the kind of step where each went wrong.
+      - claim: Before changing the agent, the learner reads the failed runs of a period, such as a week,
+          and counts them by the kind of step where each went wrong.
         why: Without a count, the team fixes the failure it remembers best, which is often the latest or
           the one a manager forwarded.
         example: 'Of 20 failed runs, 11 are search misses, 4 are made-up amounts, 3 hit the step limit and 2
