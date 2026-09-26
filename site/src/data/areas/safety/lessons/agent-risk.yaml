@@ -35,7 +35,12 @@ exercise:
     Describe one agent task, list its reach, and place the approval before the irreversible step.
 sources:
   - Academy introduction-to-claude-cowork
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 20
 notes: >-
   The plan also assumed concepts/recognizes-agents/tells-agent-from-assistant, which the page does
   not name. The calibrates-trust assumes entry points at checking-what-an-agent-changed (#128).
+  The Cowork course is cited from its lesson on working safely, which advises a backup before the
+  agent starts, says Cowork asks before it deletes, and says to read each confirmation prompt. The
+  claim about products that pause names that one product, because no page states it for many.
