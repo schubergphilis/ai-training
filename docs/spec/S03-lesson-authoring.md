@@ -92,8 +92,8 @@ parts:
 The constants are in `site/src/lib/lesson-time.ts`, each with where its
 value comes from. Nobody has timed real readers against them yet. A
 component the estimate has no rule for fails the build and `mise run data`.
-`mise run data` also warns, without failing, when a lesson's reading and
-checkpoints alone come to more than 25 minutes.
+`mise run data` also warns, without failing, when a lesson's reading,
+checkpoints and widgets alone come to more than 25 minutes.
 
 ### Frontmatter
 

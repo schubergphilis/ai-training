@@ -319,6 +319,18 @@ describe('CoursePlan', () => {
 		expect(html.match(/github\.com\/lsimons\/ai-training\/issues\//g)).toHaveLength(1);
 		expect(html).toContain('<td>Deeper</td>');
 	});
+	it("shows a live lesson's estimate from its page and a planned lesson's target, each labeled", async () => {
+		const html = await container.renderToString(CoursePlan, { props: { area: 'safety' } });
+		// safety/agent-risk has a 20-minute target, and its short fixture page rounds to 5 minutes.
+		const row = (id: string) =>
+			new RegExp(`data-plan-entry="${id.replace('/', '\\/')}"[\\s\\S]*?</tr>`).exec(html)?.[0] ?? '';
+		expect(row('safety/agent-risk')).toContain(
+			'<td data-minutes="estimate">5 <small class="course-plan-minutes">estimate</small></td>',
+		);
+		expect(row('safety/coming')).toContain(
+			'<td data-minutes="target">15 <small class="course-plan-minutes">target</small></td>',
+		);
+	});
 	it('rejects an area without a course file', async () => {
 		await expect(container.renderToString(CoursePlan, { props: { area: 'using-agents' } })).rejects.toThrow(
 			/No course plan/,

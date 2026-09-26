@@ -51,8 +51,8 @@
  *
  * It reports a warning, which doesn't fail, when a concept of one of the
  * area's topics is introduced by no lesson: a gap in the plan, which is a
- * content decision. It warns, too, when a live lesson's reading and
- * checkpoints alone are estimated at over 25 minutes (spec S03 "Length",
+ * content decision. It warns, too, when a live lesson's reading,
+ * checkpoints and widgets alone are estimated at over 25 minutes (spec S03 "Length",
  * `checkLessonTimes`). `scripts/check-data.mjs` is the command-line entry;
  * tests import this.
  */
@@ -714,7 +714,7 @@ export function checkData(
  * The lesson time estimate (`src/lib/lesson-time.ts`, spec S03 "Lesson
  * time") of each page in `pageIds`, lesson page ids under `contentDir`.
  * A page the estimate cannot read, such as one with a component it has no
- * rule for, is an error. A page whose reading and checkpoints alone come to
+ * rule for, is an error. A page whose reading, checkpoints and widgets alone come to
  * more than `LESSON_TIME.warnMinutes`, unrounded, is a warning: the lesson
  * is a candidate to trim or split, which is a content decision. The plan's
  * `minutes` is not compared, because on a live lesson it is the historical
@@ -734,7 +734,7 @@ export function checkLessonTimes(contentDir, pageIds) {
 		}
 		if (core > LESSON_TIME.warnMinutes) {
 			warnings.push(
-				`${where}: reading and checkpoints come to about ${Math.round(core)} minutes without the exercise, over the ${LESSON_TIME.warnMinutes} of spec S03 "Length"; trim or split the lesson`,
+				`${where}: reading, checkpoints and widgets come to about ${Math.round(core)} minutes without the exercise, over the ${LESSON_TIME.warnMinutes} of spec S03 "Length"; trim or split the lesson`,
 			);
 		}
 	}

@@ -14,8 +14,8 @@ import {
  * The time estimate of a live lesson, read from its page (spec S03 "Lesson
  * time"). The course plan table (`components/CoursePlan.astro`) shows the
  * rounded estimate in place of the plan's `minutes` target, and
- * `mise run data` (`scripts/lib/data.mjs`) warns when a lesson's reading and
- * checkpoints alone are over `LESSON_TIME.warnMinutes`. The tags are read
+ * `mise run data` (`scripts/lib/data.mjs`) warns when a lesson's reading,
+ * checkpoints and widgets alone are over `LESSON_TIME.warnMinutes`. The tags are read
  * with the checkpoint tag reader (`lib/checkpoint-tags.ts`), so a prop reads
  * the same here as on the rendered page. No Astro import, so both callers can
  * load it.

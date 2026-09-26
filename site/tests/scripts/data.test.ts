@@ -627,12 +627,12 @@ describe('helpers', () => {
 describe('checkLessonTimes (spec S03 "Lesson time")', () => {
 	/** 180 words of prose take one minute at the estimate's prose rate. */
 	const minutesOfProse = (m: number) => `${Array.from({ length: 180 * m }, () => 'word').join(' ')}\n`;
-	it('warns, without failing, when reading and checkpoints alone are over 25 minutes', () => {
+	it('warns, without failing, when reading, checkpoints and widgets alone are over 25 minutes', () => {
 		const long = `${minutesOfProse(26)}\n<Exercise>\nTen minutes is enough.\n</Exercise>\n`;
 		const result = check(tree({ 'content/a/x.mdx': long }));
 		expect(result.errors).toEqual([]);
 		expect(result.warnings).toEqual([
-			'src/content/docs/a/x.mdx: reading and checkpoints come to about 26 minutes without the exercise, over the 25 of spec S03 "Length"; trim or split the lesson',
+			'src/content/docs/a/x.mdx: reading, checkpoints and widgets come to about 26 minutes without the exercise, over the 25 of spec S03 "Length"; trim or split the lesson',
 		]);
 	});
 	it('leaves the exercise out: 20 minutes of reading and a 30-minute exercise pass', () => {
