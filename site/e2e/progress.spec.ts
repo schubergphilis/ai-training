@@ -2,9 +2,11 @@
 import { progressPercent } from '../src/scripts/overview';
 import { emptyRecord } from '../src/scripts/progress-model';
 import {
+	competencyObjectives,
 	expect,
 	lessonCheckpoints,
 	liveCourseLessons,
+	liveObjectiveLessons,
 	liveTopicLessons,
 	passCheckpoint,
 	storageKeyFor,
@@ -98,6 +100,37 @@ test('the topic map colors covered topics by lesson state', async ({ page, seed 
 		topicLessons.length > 1 ? 'in-progress' : 'finished',
 	);
 	await expect(page.locator('.topic-node[data-topic="concepts/prompting"]')).toHaveAttribute('data-state', 'untouched');
+});
+
+test('the competency map colors the objectives a finished lesson serves and their competency', async ({
+	page,
+	seed,
+}) => {
+	await seed(finished);
+	await page.goto('competencies/');
+	// The same rule as the topic map (topicState): finished once every serving lesson is finished, in progress
+	// once any has an entry. The seed finishes only LESSON, so the expected states come from the data tree.
+	const COMPETENCY = 'concepts/explains-models';
+	const objectives = competencyObjectives(COMPETENCY).map((id) => ({ id, lessons: liveObjectiveLessons(id) }));
+	const served = objectives.filter((o) => o.lessons.includes(LESSON));
+	expect(served.length).toBeGreaterThan(0);
+	const stateOf = (lessons: string[]) =>
+		lessons.every((l) => l === LESSON) ? 'finished' : lessons.includes(LESSON) ? 'in-progress' : 'untouched';
+	for (const o of objectives)
+		await expect(page.locator(`.competency-objective[data-objective="${o.id}"]`)).toHaveAttribute(
+			'data-state',
+			stateOf(o.lessons),
+		);
+	const all = [...new Set(objectives.flatMap((o) => o.lessons))];
+	await expect(page.locator(`.competency-node[data-competency="${COMPETENCY}"]`)).toHaveAttribute(
+		'data-state',
+		stateOf(all),
+	);
+	// A competency of another area that the lesson doesn't serve stays untouched.
+	await expect(page.locator('.competency-node[data-competency="building-agents/builds-agent-loop"]')).toHaveAttribute(
+		'data-state',
+		'untouched',
+	);
 });
 
 test('the progress page exports, resets and imports the record', async ({ page, seed, seedRaw }) => {

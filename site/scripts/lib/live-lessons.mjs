@@ -1,6 +1,6 @@
 /**
  * What the e2e specs need to know about the content without counting it by
- * hand: which lessons are live, per course and per topic, and which graded
+ * hand: which lessons are live, per course, per topic and per objective, and which graded
  * checkpoints and ungraded examples a lesson page has. A lesson is live when
  * its lesson file under site/src/data has a page under site/src/content/docs,
  * so the course percentage a spec expects depends on the content directory.
@@ -75,6 +75,24 @@ export function liveCourseLessonIds(dataDir, contentDir, area) {
 export function liveTopicLessonIds(dataDir, contentDir, topic) {
 	return liveLessons(dataDir, contentDir)
 		.filter((l) => l.topic === topic)
+		.map((l) => l.id);
+}
+
+/**
+ * The live lesson ids that serve `objective`, in course order across areas.
+ * @param {string} dataDir
+ * @param {string} contentDir
+ * @param {string} objective
+ * @returns {string[]}
+ */
+export function liveObjectiveLessonIds(dataDir, contentDir, objective) {
+	const tree = readAreaTree(dataDir);
+	/** @type {Set<string>} */
+	const serving = new Set();
+	for (const a of tree.areas)
+		for (const l of a.lessons) if ((l.data?.serves ?? []).includes(objective)) serving.add(l.data.id);
+	return liveLessons(dataDir, contentDir)
+		.filter((l) => serving.has(l.id))
 		.map((l) => l.id);
 }
 

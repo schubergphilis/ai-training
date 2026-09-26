@@ -306,7 +306,14 @@ export const lessonPlans: LessonPlanFixture[] = [
 		],
 		exercise: undefined,
 	}),
-	plan({ id: 'safety/coming', title: 'Coming soon', issue: 42, after: ['safety/deeper'] }),
+	// Serves an objective no live lesson serves: the competency map's "lesson coming" state.
+	plan({
+		id: 'safety/coming',
+		title: 'Coming soon',
+		issue: 42,
+		after: ['safety/deeper'],
+		serves: ['safety/spots-injection/names-risk'],
+	}),
 ];
 
 export const competencies = [
@@ -340,6 +347,21 @@ export const competencies = [
 						},
 					],
 				},
+			],
+		},
+	},
+	// Draws on a topic from another area. One objective only the planned safety/coming serves ("lesson coming"),
+	// and one no lesson serves ("no lesson planned"). It sorts before judges-output by course order, not by statement.
+	{
+		id: 'safety/competencies/spots-injection',
+		data: {
+			id: 'safety/spots-injection',
+			area: 'safety',
+			statement: 'Spots prompt injection',
+			topics: ['safety/injection', 'concepts/models'],
+			objectives: [
+				{ id: 'safety/spots-injection/names-risk', statement: 'Names the risk', level: 'expert', behaviors: [] },
+				{ id: 'safety/spots-injection/plans-defense', statement: 'Plans a defense', level: 'base', behaviors: [] },
 			],
 		},
 	},

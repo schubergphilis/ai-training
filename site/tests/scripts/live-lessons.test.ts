@@ -5,6 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import {
 	liveCourseLessonIds,
 	liveLessons,
+	liveObjectiveLessonIds,
 	liveTopicLessonIds,
 	pageAlternates,
 	pageCheckpoints,
@@ -91,6 +92,21 @@ describe('liveCourseLessonIds and liveTopicLessonIds', () => {
 		expect(liveCourseLessonIds(data, content, 'none')).toEqual([]);
 		expect(liveTopicLessonIds(data, content, 'a/t')).toEqual(['a/x', 'a/y']);
 		expect(liveTopicLessonIds(data, content, 'a/u')).toEqual(['a/z']);
+	});
+});
+
+describe('liveObjectiveLessonIds', () => {
+	it('lists the live lessons serving an objective in course order and leaves out a planned one', () => {
+		const serves = (area: string, stem: string, topic: string, objectives: string[]) =>
+			`${lesson(area, stem, topic)}serves: [${objectives.join(', ')}]\n`;
+		const { data, content } = tree({
+			'data/areas/a/lessons/x.yaml': serves('a', 'x', 't', ['a/c/o1']),
+			'data/areas/a/lessons/y.yaml': serves('a', 'y', 't', ['a/c/o1', 'a/c/o2']),
+			'data/areas/a/lessons/p.yaml': serves('a', 'p', 'u', ['a/c/o2', 'a/c/o3']),
+		});
+		expect(liveObjectiveLessonIds(data, content, 'a/c/o1')).toEqual(['a/x', 'a/y']);
+		expect(liveObjectiveLessonIds(data, content, 'a/c/o2')).toEqual(['a/y']);
+		expect(liveObjectiveLessonIds(data, content, 'a/c/o3')).toEqual([]);
 	});
 });
 

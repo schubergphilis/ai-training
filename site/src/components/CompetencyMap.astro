@@ -1,0 +1,88 @@
+---
+/**
+ * The competency map (issue #514): every competency from the YAML, one
+ * column per area headed by the course that teaches it, each box listing
+ * its objectives. Boxes and objectives are colored by the state of the
+ * lessons that serve them, with the topic map's states and colors.
+ */
+import { getCollection } from 'astro:content';
+import { getAreas } from '@lib/areas';
+import { getAllCoursePlans, getCoursePlan } from '@lib/courses';
+import { getLessons } from '@lib/lessons';
+import { href } from '@lib/url';
+import { type CompetencyCoverage, orderByCoursePlan } from '@scripts/competency-map-model';
+
+const competencies = (await getCollection('competencies')).map((c) => c.data);
+const topics = (await getCollection('topics')).map((t) => t.data);
+const lessons = await getLessons();
+// Objectives a course plan serves with a lesson that isn't live yet, as on the topic map (spec S02 "Storage").
+const planned = new Set((await getAllCoursePlans()).filter((e) => e.status !== 'live').flatMap((e) => e.serves));
+const serving = (objective: string) => lessons.filter((l) => l.data.serves.includes(objective)).map((l) => l.id);
+const anchor = (objective: string) => objective.split('/').pop();
+
+const byArea = await Promise.all(
+	(await getAreas()).map(async (a) => {
+		const own = competencies.filter((c) => c.area === a.slug);
+		const list = own.length ? orderByCoursePlan(own, await getCoursePlan(a.slug)) : [];
+		return {
+			area: a,
+			competencies: list.map((c) => {
+				const ids = c.objectives.map((o) => o.id);
+				return {
+					...c,
+					hasLesson: ids.some((o) => serving(o).length > 0),
+					planned: ids.some((o) => planned.has(o)),
+					// The topics from other areas, from the same `topics` list as the "Draws on" line of the competency page.
+					elsewhere: c.topics
+						.filter((t) => t.split('/')[0] !== c.area)
+						.map((t) => ({ id: t, name: topics.find((x) => x.id === t)?.name ?? t })),
+				};
+			}),
+		};
+	}),
+);
+const coverage: CompetencyCoverage[] = competencies.map((c) => ({
+	id: c.id,
+	objectives: c.objectives.map((o) => ({ id: o.id, lessons: serving(o.id) })),
+}));
+---
+
+<div class="not-content">
+	<p class="topic-legend">
+		<span data-k="none">no lesson planned</span>
+		<span data-k="planned">lesson coming</span>
+		<span data-k="untouched">has a lesson</span>
+		<span data-k="in-progress">in progress</span>
+		<span data-k="finished">finished</span>
+	</p>
+	<div class="topic-map competency-map" data-competency-map data-coverage={JSON.stringify(coverage)}>
+		{
+			byArea.map(({ area, competencies }) => (
+				<div class="topic-col">
+					<p class="topic-col-title"><a href={href(`/${area.slug}/`)}>{area.name}</a></p>
+					{competencies.map((c) => (
+						<div class="competency-node" data-competency={c.id} data-state="untouched" data-has-lesson={String(c.hasLesson)} data-planned={String(c.planned)}>
+							<a class="competency-title" href={href(`/competencies/${c.id}/`)}>{c.statement}</a>
+							<ul class="competency-objectives">
+								{c.objectives.map((o) => (
+									<li>
+										<a class="competency-objective" href={href(`/competencies/${c.id}/#${anchor(o.id)}`)} data-objective={o.id} data-state="untouched" data-has-lesson={String(serving(o.id).length > 0)} data-planned={String(planned.has(o.id))}>{o.statement} <span class="competency-level">{o.level}</span></a>
+									</li>
+								))}
+							</ul>
+							{c.elsewhere.length > 0 && (
+								<p class="competency-draws">Draws on topics from other areas: {c.elsewhere.map((t, i) => (<>{i > 0 && ', '}<a href={href(`/topics/${t.id}/`)}>{t.name}</a></>))}</p>
+							)}
+						</div>
+					))}
+				</div>
+			))
+		}
+	</div>
+</div>
+
+<script>
+	import { mountCompetencyMap } from '@scripts/competency-map';
+
+	mountCompetencyMap();
+</script>

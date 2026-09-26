@@ -7,9 +7,11 @@
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test as base, expect, type Locator, type Page } from '@playwright/test';
+import { readAreaTree } from '../scripts/lib/area-tree.mjs';
 import {
 	liveCourseLessonIds,
 	liveLessons as liveLessonList,
+	liveObjectiveLessonIds,
 	liveTopicLessonIds,
 	pageAlternates,
 	pageCheckpoints,
@@ -40,6 +42,19 @@ export function liveLessons(): string[] {
 /** The live lesson ids that cover `topic`. */
 export function liveTopicLessons(topic: string): string[] {
 	return liveTopicLessonIds(DATA_DIR, CONTENT_DIR, topic);
+}
+
+/** The live lesson ids that serve `objective` (a full objective id). */
+export function liveObjectiveLessons(objective: string): string[] {
+	return liveObjectiveLessonIds(DATA_DIR, CONTENT_DIR, objective);
+}
+
+/** The objective ids of `competency`, in YAML order, from the data tree. */
+export function competencyObjectives(competency: string): string[] {
+	const file = readAreaTree(DATA_DIR)
+		.areas.flatMap((a) => a.competencies)
+		.find((c) => c.data?.id === competency);
+	return (file?.data?.objectives ?? []).map((o: { id: string }) => o.id);
 }
 
 /**

@@ -1,10 +1,11 @@
 /**
  * Renders the page-level components that read the content collections
- * (CourseGraph, CoursePlan, TopicMap, Settings, OverallProgress, CompetencyObjectives) against the fixture lessons in
+ * (CourseGraph, CoursePlan, TopicMap, CompetencyMap, Settings, OverallProgress, CompetencyObjectives) against the fixture lessons in
  * tests/lib/content.ts. What the client scripts draw on top is covered by
  * the e2e suite; these tests check the server-rendered frame the scripts
  * bind to.
  */
+import CompetencyMap from '@components/CompetencyMap.astro';
 import CompetencyObjectives from '@components/CompetencyObjectives.astro';
 import CourseGraph from '@components/CourseGraph.astro';
 import CoursePlan from '@components/CoursePlan.astro';
@@ -120,6 +121,71 @@ describe('TopicMap', () => {
 		const edges = JSON.parse(/data-edges>([^<]*)</.exec(html)?.[1] ?? '[]');
 		expect(edges).toEqual([{ from: 'concepts/models', to: 'safety/risk', cross: true }]);
 		expect(html.match(/class="topic-col-title"/g)).toHaveLength(6);
+	});
+});
+
+describe('CompetencyMap', () => {
+	const box = (html: string, id: string) =>
+		new RegExp(`<div class="competency-node" data-competency="${id}"[\\s\\S]*?</ul>([\\s\\S]*?)</div>`).exec(html);
+	it('heads each area column with a link to its course and links each box and objective', async () => {
+		const html = await container.renderToString(CompetencyMap, {});
+		expect(html).toContain('class="not-content"');
+		expect(html.match(/class="topic-col-title"/g)).toHaveLength(6);
+		expect(html).toContain('<p class="topic-col-title"><a href="/ai-training/safety/">Safety</a></p>');
+		expect(html).toContain(
+			'<p class="topic-col-title"><a href="/ai-training/building-agents/">Building agents</a></p>',
+		);
+		expect(html).toContain(
+			'<a class="competency-title" href="/ai-training/competencies/concepts/explains-models/">Explains what a model does</a>',
+		);
+		expect(html).toMatch(
+			/<a class="competency-objective" href="\/ai-training\/competencies\/safety\/spots-injection\/#names-risk" data-objective="safety\/spots-injection\/names-risk"[^>]*>Names the risk <span class="competency-level">expert<\/span><\/a>/,
+		);
+		expect(html).toMatch(
+			/href="\/ai-training\/competencies\/concepts\/explains-models\/#o1"[^>]*>Explains generation <span class="competency-level">base<\/span>/,
+		);
+	});
+	it('orders a column by the course plan, before the statement', async () => {
+		const html = await container.renderToString(CompetencyMap, {});
+		// safety/coming serves spots-injection; no plan entry serves judges-output, so it goes last though it sorts first.
+		expect(html.indexOf('data-competency="safety/spots-injection"')).toBeGreaterThan(0);
+		expect(html.indexOf('data-competency="safety/spots-injection"')).toBeLessThan(
+			html.indexOf('data-competency="safety/judges-output"'),
+		);
+	});
+	it('names the topics from other areas only for a competency that draws on them', async () => {
+		const html = await container.renderToString(CompetencyMap, {});
+		expect(box(html, 'safety/spots-injection')?.[1]).toContain(
+			'Draws on topics from other areas: <a href="/ai-training/topics/concepts/models/">Models</a>',
+		);
+		expect(box(html, 'safety/judges-output')?.[1]).not.toContain('Draws on');
+		expect(box(html, 'concepts/explains-models')?.[1]).not.toContain('Draws on');
+	});
+	it('marks a live lesson, a planned lesson and no lesson for the colors', async () => {
+		const html = await container.renderToString(CompetencyMap, {});
+		expect(html).toMatch(/data-objective="o1" data-state="untouched" data-has-lesson="true" data-planned="false"/);
+		// Only the planned safety/coming serves names-risk: "lesson coming".
+		expect(html).toMatch(
+			/data-objective="safety\/spots-injection\/names-risk" data-state="untouched" data-has-lesson="false" data-planned="true"/,
+		);
+		// Nothing serves plans-defense: "no lesson planned".
+		expect(html).toMatch(
+			/data-objective="safety\/spots-injection\/plans-defense" data-state="untouched" data-has-lesson="false" data-planned="false"/,
+		);
+		expect(html).toMatch(
+			/data-competency="safety\/spots-injection" data-state="untouched" data-has-lesson="false" data-planned="true"/,
+		);
+		expect(html).toMatch(
+			/data-competency="safety\/judges-output" data-state="untouched" data-has-lesson="false" data-planned="false"/,
+		);
+		expect(html).toMatch(/data-competency="concepts\/explains-models" data-state="untouched" data-has-lesson="true"/);
+		expect(html).toContain('<span data-k="planned">lesson coming</span>');
+		expect(html).not.toContain('solid line');
+		const coverage = JSON.parse(/data-coverage="([^"]*)"/.exec(html)?.[1]?.replace(/&quot;/g, '"') ?? '[]');
+		expect(coverage).toContainEqual({
+			id: 'concepts/explains-models',
+			objectives: [{ id: 'o1', lessons: ['concepts/how-models-work'] }],
+		});
 	});
 });
 
