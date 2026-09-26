@@ -63,16 +63,17 @@ objectives:
     behaviors:
       - claim: Before an install, the learner opens the plugin's hook file and the scripts it names, its
           server list, its `bin/` directory and each subagent's tool list.
-        why: The list that Claude Code shows before an install says that a hook exists and not what it
-          runs (@Claude Code plugin security).
+        why: Claude Code's install screen names each hook but doesn't show the command behind it
+          (@Claude Code plugin security), and a subagent without a tool list may use every tool that
+          subagents are allowed (@Claude Code subagents).
         example: The learner opens `hooks/hooks.json`, sees a `PreToolUse` hook on `Bash`, and reads the
           script to learn that it blocks every commit without a staged changelog.
       - claim: The learner names the parts that act in every session where the plugin is enabled, and the
           parts that no permission rule checks.
         why: Hooks and server processes run with the user's own rights, outside the permission rules and
           the sandbox (@Claude Code plugin security).
-        example: For a plugin wanted for one skill, the learner notes that its hook and its tracker server
-          would also run in sessions that never use that skill.
+        example: For a plugin wanted for one skill, the learner notes that its hook and its tracker connection
+          are active in sessions that never use that skill.
       - claim: The learner decides between installing the plugin at the narrowest scope that fits, copying
           one skill out of it when the license allows, and leaving it.
         why: A plugin installed for one part brings all of its parts into every session where it is

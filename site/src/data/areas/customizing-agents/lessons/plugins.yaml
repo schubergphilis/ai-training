@@ -51,7 +51,7 @@ notes: >-
   (code.claude.com/docs/en/plugins/security), hook firing and namespaced skill names
   (plugins/components), auto-update defaults (plugins/install), the `version` pin
   (plugins/manifest-reference), matchers (hooks) and the default tool list of a subagent
-  (sub-agents). The Academy course named in the short is not cited on the page. The lesson serves
-  `evaluates-a-plugin` since #409. Its checkpoints and alternates share one idea: a plugin brings
-  all its parts into each session where it is enabled, and its hooks and server processes run
-  outside the permission rules, so the reader decides from each part what to take.
+  (sub-agents). The Academy course named in the short is not cited on the page. Since #409 the lesson
+  serves `evaluates-a-plugin`. Its checkpoints and alternates share one idea: only the plugin's own
+  files show what it brings into each session where it is enabled, and its hooks and server
+  processes run outside the permission rules, so the reader decides from each part what to take.

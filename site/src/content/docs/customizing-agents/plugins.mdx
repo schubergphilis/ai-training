@@ -182,6 +182,21 @@ rights, and no permission rule sees them (@Claude Code plugin security).
 Which two of these do your permission rules check?
 </MultiChoice>
 
+<MultiChoice id="where-to-read-before-install" objective="customizing-agents/writes-skill/evaluates-a-plugin"
+  concepts={['plugins']}
+  context="A colleague suggests a Claude Code plugin that holds a skill, a hook, an MCP server and an executable in a bin directory. You have cloned its directory and haven't installed it yet."
+  title="Where do you see what it runs?" hint="Which of these are the files Claude Code itself reads and runs, and which only describe the plugin?"
+  options={[
+    { text: 'hooks/hooks.json and the scripts it names', correct: true },
+    { text: 'The list of parts in the /plugin menu before the install', why: 'That list names each hook and does not show the command behind it.' },
+    { text: 'The .mcp.json file', correct: true },
+    { text: 'The plugin\'s README', why: 'A README is what the author says about the plugin. Claude Code doesn\'t run it, and it can leave a part out.' },
+    { text: 'The files in the bin/ directory', correct: true },
+  ]}>
+Before you install the plugin, which three of these show you what it
+would run in your sessions?
+</MultiChoice>
+
 ## Install it, copy one skill, or leave it
 
 A plugin is a dependency, and it gets the same kind of review as a
@@ -267,6 +282,19 @@ The team wants the decision-record skill from `docs-kit`. What should
 it do?
 </Scenario>
 
+<Choice id="the-install-screen" phase="review" objective="customizing-agents/writes-skill/evaluates-a-plugin"
+  concepts={['plugins']}
+  context="Before an install, the /plugin menu in Claude Code shows that a plugin holds one skill and one PreToolUse hook. The user wants only the skill and hasn't opened the plugin's files."
+  title="One skill and one hook" hint="What does the install screen leave out about the hook, and when would the hook act?"
+  options={[
+    { text: 'Open hooks/hooks.json and the script it names before deciding.', correct: true },
+    { text: 'Install it, since a plugin with one hook is small enough to trust.', why: 'The screen names the hook and not its command. The hook acts in every session where the plugin is enabled, whatever it runs.' },
+    { text: 'Install it, and let your permission rules stop the hook if it misbehaves.', why: 'Claude Code runs a hook by itself, with your user rights. Permission rules check only the calls Claude makes.' },
+    { text: 'Install it at local scope now, and read the hook when it first acts.', why: 'The hook is active from the moment a session loads the plugin, so it acts before you have read it.' },
+  ]}>
+What should the user do next?
+</Choice>
+
 <Pitfall title="The hook that came with the release skill">
 A developer installs `release-kit` at user scope to get the release
 skill. Their team updates `CHANGELOG.md` only when it cuts a release. A
@@ -339,8 +367,8 @@ you have no rules at all?
    tools. Hooks and server processes run with your user rights, outside
    both the rules and the sandbox (@Claude Code plugin security).
 4. Read `hooks/hooks.json`, the scripts it names, `.mcp.json` and `bin/`
-   before you install. The list Claude Code shows says that a hook exists
-   and not what it runs (@Claude Code plugin security).
+   before you install. Claude Code's install screen names each hook but
+   doesn't show the command behind it (@Claude Code plugin security).
 5. Weigh a plugin like a dependency: install it, copy one skill out of it
    when the license allows, or leave it.
 </Recap>
