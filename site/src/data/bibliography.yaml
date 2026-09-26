@@ -1285,7 +1285,7 @@ npm package-lock:
   title: The npm package lock file
   container: npm CLI documentation
   author: npm, Inc. and contributors
-  license: Artistic-2.0
+  license: CC BY 4.0
   url: https://docs.npmjs.com/cli/v11/configuring-npm/package-lock-json
 Cargo build scripts:
   type: reference
@@ -1296,7 +1296,7 @@ Cargo build scripts:
   url: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 pnpm settings:
   type: reference
-  title: "Settings: dependency resolution"
+  title: Dependency Resolution Settings
   container: pnpm documentation
   author: Zoltan Kochan and contributors
   license: MIT
