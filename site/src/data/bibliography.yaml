@@ -778,11 +778,11 @@ Agent Skills spec:
   url: https://agentskills.io/specification
 MCP specification:
   type: reference
-  title: Model Context Protocol specification
+  title: Model Context Protocol specification 2026-07-28
   container: modelcontextprotocol.io
   author: Anthropic and the MCP contributors
-  license: MIT
-  url: https://modelcontextprotocol.io/specification/2025-06-18
+  license: Apache-2.0 and MIT
+  url: https://modelcontextprotocol.io/specification/2026-07-28
 MCP filesystem server:
   type: reference
   title: Filesystem MCP Server
@@ -1301,3 +1301,10 @@ pnpm settings:
   author: Zoltan Kochan and contributors
   license: MIT
   url: https://pnpm.io/settings/dependency-resolution
+MCP deprecated features:
+  type: reference
+  title: Deprecated Features, Model Context Protocol specification 2026-07-28
+  container: modelcontextprotocol.io
+  author: Anthropic and the MCP contributors
+  license: Apache-2.0 and MIT
+  url: https://modelcontextprotocol.io/specification/2026-07-28/deprecated

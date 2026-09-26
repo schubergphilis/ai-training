@@ -26,7 +26,7 @@ exercise:
     For a proposed connection to an external agent over an agent-to-agent protocol, list what it can
     read and send, decide which of the fixture's defense layers apply to it, and write the one trust
     decision you would make before enabling it.
-sources: [AEC-14, MCP specification, A2A specification, A2A and MCP]
+sources: [AEC-14, MCP specification, MCP deprecated features, A2A specification, A2A and MCP]
 issue: 215
 minutes: 12
 sources-checked: 2026-09-26
@@ -35,7 +35,9 @@ notes: >-
   Closes the N x M thread from the first lesson. The Model Context Protocol for tools and data,
   agent-to-agent protocols for delegation across organizations, and each connection as a trust
   decision. When the page went live, the protocol claims were checked against the MCP
-  specification (2025-06-18) and version 1.0 of the A2A specification. The plan's choice on four
+  specification (2025-06-18, re-checked against 2026-07-28 on 2026-09-26 in #442, which replaced
+  roots with elicitation as the client feature and says roots and sampling are deprecated) and
+  version 1.0 of the A2A specification. The plan's choice on four
   connections became a Sort with two buckets, because each connection has one protocol and a Sort
   shows that with no repeated options. Two Sort items name no agent, so the word alone doesn't
   sort them. A2A requests name no skill, so the page puts the control on what ask_courier sends.

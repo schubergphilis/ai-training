@@ -14,8 +14,8 @@ assumes:
   - objective: safety/judges-agent-risk/names-blast-radius
     lesson: safety/agent-risk
     section: blast-radius
-sources-checked: 2026-09-25
-review-by: 2027-03-25
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 after: [customizing-agents/mcp-first-server]
 shorts:
   - Tool poisoning across servers, one worked example
@@ -27,6 +27,7 @@ exercise:
     the log or the transcript that the send was refused or asked about.
 sources:
   - MCP specification
+  - MCP deprecated features
   - Claude Code mcp
   - Claude Code security
   - Claude Code permission modes
@@ -45,8 +46,10 @@ notes: >-
   call even with an allow rule (code.claude.com/docs/en/mcp, checked with Claude Code 2.1.281 in -p
   mode, where the call was held for approval). The --env syntax for claude mcp add and local scope in
   the Claude Code config file come from the same mcp page. The short-lived token advice and "clients should log tool
-  usage for audit" come from the 2025-06-18 spec (authorization and tools pages), the revision the
-  bibliography pins; the latest revision is 2026-07-28. In a trial with a small model the model
+  usage for audit" come from the 2026-07-28 spec (the authorization security considerations page and
+  the tools page), the revision the bibliography pins, re-checked on 2026-09-26 (#442). The same
+  revision deprecates roots and sampling (SEP-2577, the deprecated page), and the page says so where
+  it contrasts this server with the roots-driven reference server. In a trial with a small model the model
   noticed the planted line and did not call share_note, so the exercise has the learner ask for the
   send directly as a second run. Tool poisoning and shadowing come from the Invariant Labs post.
   The permission-modes page states that Manual mode (`default`) runs only reads without a prompt,
