@@ -795,7 +795,7 @@ MCP filesystem server:
   title: Filesystem MCP Server
   container: GitHub, modelcontextprotocol/servers README
   author: Anthropic and the MCP contributors
-  license: MIT
+  license: Apache-2.0, CC BY 4.0, MIT
   url: https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
 A2A specification:
   type: reference
