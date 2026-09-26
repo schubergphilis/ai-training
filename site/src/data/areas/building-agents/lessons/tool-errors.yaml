@@ -31,6 +31,8 @@ sources:
   - Claude docs handle-tool-calls
   - Claude docs handling-stop-reasons
 minutes: 15
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 notes: >-
   The tool side of what #91 does in the loop: a structured `ok: false` result the model can read, a
   retry count decided in the harness, and the fake model answering from the error text. The fixture

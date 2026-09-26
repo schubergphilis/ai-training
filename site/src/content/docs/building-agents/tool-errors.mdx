@@ -10,15 +10,15 @@ model then says what went wrong.
 Every example runs against a fixture with a fake model, so you can predict
 the output and check yourself. The complete program is
 `site/examples/building-agents/tool-errors/agent.py` in the repository. Its
-`run` function is the loop from the previous lesson with a few changes.
-The tool table is a parameter, and the return value is a dict with the
+`run` function is the loop from Building your first agent with a few
+changes. The tool table is a parameter, and the return value is a dict with the
 stop reason, the answer and the message list instead of a bare string.
 The assistant message stores the model's request as the dict itself
 rather than as text, because the fake model reads it back when it retries.
 The loop reads `reply["args"]` directly and stores the tool result as it
-is, where the first lesson used `reply.get("args", {})` and `str(result)`.
-The `TOOLS.get` and the `try` around the tool call from the last lesson
-are gone on purpose. You need to see the raw failure first.
+is, where that lesson used `reply.get("args", {})` and `str(result)`.
+The `TOOLS.get` and the `try` around the tool call from that lesson are
+gone on purpose. You need to see the raw failure first.
 The error flag on tool messages and the `max_errors` policy are the two
 changes this lesson adds one at a time.
 
