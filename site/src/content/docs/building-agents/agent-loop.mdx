@@ -147,7 +147,7 @@ Notice `max_steps`. Without it, a model that keeps asking for tools runs
 forever and spends your money. A real loop has a budget, and when the
 budget runs out it returns a string that names the limit
 (`stopped: step limit`) rather than an empty answer. The lesson
-"Stopping the loop on purpose" replaces the bare string with a dict that
+[Stopping the loop on purpose](/building-agents/stopping-the-loop/) replaces the bare string with a dict that
 has a stop reason field.
 
 The loop also keeps going when a tool fails. A tool name that isn't in
@@ -179,9 +179,9 @@ print(run("What is the weather in Oslo?"))
 
 A vendor SDK (software development kit) can run this loop for you.
 The Claude API SDKs call it the tool runner. You hand it your functions and
-it returns the final answer. In Python it builds each tool definition
-from the function's arguments and docstring, and it handles the request
-and result rounds inside (@Academy claude-platform-101)
+it returns the final answer. In Python a decorator builds each tool
+definition from the function's arguments and docstring, and the runner
+runs the request and result rounds (@Academy claude-platform-101)
 (@Claude docs tool-runner). That saves the code above and hides the
 same decisions: how many steps it takes, what it does on a tool error, when
 it stops, and what it puts in the message list. Having written the loop

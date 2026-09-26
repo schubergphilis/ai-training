@@ -28,9 +28,9 @@ definition has a `name`, an `input_schema`, which is a JSON Schema object
 that names each parameter and its type, and a `description`. The first two
 are required, and the description is optional (@Claude docs messages). The
 description is the text the model reads to decide when to call the tool,
-and the vendor's advice is to make it detailed: say what the tool does,
-when to use it and when not, and what each parameter means
-(@Claude docs define-tools).
+and the vendor advises a long one. It explains the tool's purpose, the
+situations that call for it and those that don't, and the meaning of each
+parameter (@Claude docs define-tools).
 
 ```python
 TOOLS = [

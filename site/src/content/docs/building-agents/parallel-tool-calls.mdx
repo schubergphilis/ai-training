@@ -147,8 +147,8 @@ show(run(QUESTION, model=model_all_at_once, execute=together))
 The same answer came back in two rounds instead of four. With the
 timings from the last section the run takes about five seconds. The three lookups
 overlap, so they cost one second together, and the model is asked twice.
-Independent reads, such as three files the model wants to see, are the
-calls the vendor page names as usually safe to run together
+The vendor page says independent reads, such as three files the model
+wants to see, are usually safe to run together
 (@Claude docs parallel-tool-use). A model that asks for them in one reply
 saves the round trips in between (@AEC-03).
 
@@ -161,8 +161,8 @@ holds one `tool_result` block per `tool_use` block, each naming its
 another or in a thread pool is invisible in that message, so `in_order`
 and `together` both produce a valid reply. When a model stops asking for
 several tools at once, the docs name one result per `user` message as the
-most common cause: a history in that format shows the model one call per
-turn, and it learns to ask that way (@Claude docs parallel-tool-use). To
+most common cause: a history in that format teaches the model to stop
+asking for several at once (@Claude docs parallel-tool-use). To
 turn the batching off, set `disable_parallel_tool_use: true` inside the
 `tool_choice` object.
 With the default `tool_choice` type `auto` the model then makes at most
@@ -220,10 +220,12 @@ now can share a reply, and a call whose argument is another call's result
 waits for the reply after it.
 
 A model doesn't always get this right, and a dependent call can arrive in
-the same batch as the call it needs. The docs say to return a
-`tool_result` with `is_error` set to `true` and a short note for any call
-you choose not to run, and they say the model makes the call again in the
-next turn. They also suggest a line in the system prompt that asks the
+the same batch as the call it needs. The docs give two cases. For a call
+you choose not to run, return a `tool_result` with `is_error` set to
+`true` and a short note. For a call that ran and failed because the call
+it needed hadn't finished, return the error with `is_error` set to `true`,
+and the docs say the model makes the call again in the next turn. They
+also suggest a line in the system prompt that asks the
 model to batch only calls that don't depend on each other
 (@Claude docs parallel-tool-use). The exercise below builds that case.
 
@@ -342,7 +344,8 @@ in two rounds, which is wrong and fast. The second run shows the error
 result for `call_4` in the first tool message, then a second reply with
 the real `weather` argument, and three rounds, the same count as the
 lesson's follow-up run. Your fake model asks again by construction. A
-real model usually does, and the harness can't count on it. What would the harness need to know to tell a dependent
+real model may, and for a call you didn't run the docs promise no retry, so
+the harness can't count on it. What would the harness need to know to tell a dependent
 call from an independent one without a rule about ids in arguments?
 
 </Exercise>
@@ -352,8 +355,8 @@ call from an independent one without a rule about ids in arguments?
 1. A model reply can hold several tool calls at once. The loop runs the
    list and returns one result per call, all in the next message, each
    under the id of the call it answers (@Claude docs parallel-tool-use).
-2. Three independent lookups cost one round in a batch and three rounds
-   one at a time. The batch saves model round trips, and running the
+2. Three independent lookups cost two rounds in a batch and four one at
+   a time. The batch saves model round trips, and running the
    calls in a thread pool saves the wait for the tools too (@AEC-03).
 3. A call whose argument is another call's result waits for the next
    round. Data flow decides what can share a reply.
