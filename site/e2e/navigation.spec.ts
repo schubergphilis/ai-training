@@ -110,6 +110,32 @@ test('the topic map is the heading of the topic groups, and clicking it opens th
 	).toBeVisible();
 });
 
+test('the competency map is the heading of the competency groups, and clicking it opens the map (#514)', async ({
+	page,
+}) => {
+	await page.goto('progress/');
+	const heading = page.locator('nav.sidebar li.linked > a[href="/ai-training/competencies/"]');
+	await expect(heading).toHaveCount(1);
+	// The heading's group holds the per-area competency groups, closed until the map is open.
+	const group = heading.locator('xpath=following-sibling::details[1]');
+	const area = group.locator('summary .plain-label').first();
+	await expect(area).toHaveText('Concepts');
+	await expect(area).toBeHidden();
+	await heading.click();
+	await expect(page).toHaveURL(/\/ai-training\/competencies\/$/);
+	await expect(
+		page.locator('nav.sidebar li.linked > a[href="/ai-training/competencies/"] + details summary .plain-label').first(),
+	).toBeVisible();
+	// A competency page opened from the map is the current page in its sidebar group.
+	const box = page.locator('.competency-node a.competency-title').first();
+	const target = await box.getAttribute('href');
+	await box.click();
+	await expect(page).toHaveURL(new RegExp(`${target}$`));
+	const current = page.locator(`nav.sidebar a[href="${target}"]`);
+	await expect(current).toHaveAttribute('aria-current', 'page');
+	await expect(current).toBeVisible();
+});
+
 test('clicking an open course heading opens the course page with the group still open (#228)', async ({ page }) => {
 	// Starlight persists the open state per group on a summary click. The heading is not in the summary, so
 	// the state stays as the server rendered it (issue #228 review, finding 1).

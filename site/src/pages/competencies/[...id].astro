@@ -2,6 +2,7 @@
 /** One page per competency (spec S02 "Stable URLs"): objectives, behaviors, alignment, lessons serving it. */
 import { getCollection } from 'astro:content';
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import CompetencyCourse from '@components/CompetencyCourse.astro';
 import CompetencyObjectives from '@components/CompetencyObjectives.astro';
 import References from '@components/References.astro';
 import { areaOf, getAreas } from '@lib/areas';
@@ -33,6 +34,7 @@ const headings = competencyHeadings(alignment.length, references.length);
 
 <StarlightPage frontmatter={{ title: competency.statement, description: `Competency ${competency.id}` }} headings={headings}>
 	<p><em>{area.name}</em> · competency <code>{competency.id}</code></p>
+	<CompetencyCourse area={area} />
 	<p>
 		<strong>Draws on:</strong>{' '}
 		{competency.topics.map((t, i) => (<>{i > 0 && ', '}<a href={href(`/topics/${t}/`)}>{topics.find((x) => x.id === t)?.name ?? t}</a></>))}

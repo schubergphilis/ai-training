@@ -171,6 +171,8 @@ These describe what the site teaches, independent of how it is laid out.
 Topics and concepts are the nodes and edges of the **topic map**; they say
 what's taught. Competencies, learning objectives, and behaviors say what a
 learner can do afterwards. They're kept outside the map and point into it.
+The **competency map** is the page that lists every competency and its
+objectives, grouped by the course that teaches them.
 
 | Term                   | Definition                                                                                                                                                                                                     | Don't use                          |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |

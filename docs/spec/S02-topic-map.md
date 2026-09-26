@@ -21,6 +21,8 @@ Since 2026-09-20 each checkpoint names the concepts it exercises by id
 a public identifier like a topic id, and renaming one means updating the
 checkpoints that name it. Issue #106 added the `picks-a-model-by-fit`
 objective under `using-agents/chooses-tool-and-autonomy` (2026-09-23).
+The competency map at `/competencies/`, its sidebar group, and the course
+line on competency pages are implemented (issue #514, 2026-09-26).
 
 ## Introduction
 
@@ -91,6 +93,7 @@ the lesson pages.
 | ---------- | ------------------------------------ | ------------------------------------------------------------------------------- |
 | Topic      | `/topics/<area>/<topic>/`            | The map opens it in a side drawer and updates the URL, so the view is shareable |
 | Competency | `/competencies/<area>/<competency>/` | Lists objectives, behaviors, alignment, and the lessons that serve it           |
+| Comp. map  | `/competencies/`                     | The competency map: every competency and its objectives, one column per course  |
 | Glossary   | `/glossary/#<concept>`               | Generated from every topic's concept definitions                                |
 | Reference  | `/reference/`                        | The learner's reference: finished lessons by area, linking to their topic pages |
 
@@ -105,6 +108,9 @@ Tutor mode cites these URLs when it points a learner somewhere.
   objective slug.
 - The topic map colors each topic by the state of the lessons that cover
   it, using the same three states as the lesson graph below.
+- The competency map colors each competency and each objective by the state
+  of the lessons that serve it, with the same states and colors as the topic
+  map.
 
 ## Learner's reference
 

@@ -72,6 +72,24 @@ function topicSidebar() {
 }
 
 /**
+ * The competency sidebar (issue #514): one collapsed group per area that has
+ * competencies, in area order, competencies by statement, each linked to its
+ * competency page so that page shows as the current one.
+ */
+function competencySidebar() {
+	return tree.areas
+		.filter((a) => a.competencies.length > 0)
+		.map((a) => ({
+			label: a.area?.name ?? a.dir,
+			collapsed: true,
+			items: a.competencies
+				.map((c) => c.data)
+				.sort((x, y) => x.statement.localeCompare(y.statement))
+				.map((c) => ({ label: c.statement, link: `/competencies/${c.id}/` })),
+		}));
+}
+
+/**
  * The course sidebar, one group per S01 group: per area, a group whose heading
  * is the course page link, holding the live lessons in course order (spec S11
  * "Sidebar"). A course with parts nests each part as a group. A lesson is live
@@ -203,6 +221,15 @@ export default defineConfig({
 							label: 'Topic map',
 							collapsed: true,
 							items: [{ slug: 'map', label: 'Topic map', attrs: { 'data-group-link': '' } }, ...topicSidebar()],
+						},
+						// The competency map is the heading of the per-area competency groups, as the topic map is (#514).
+						{
+							label: 'Competency map',
+							collapsed: true,
+							items: [
+								{ slug: 'competencies', label: 'Competency map', attrs: { 'data-group-link': '' } },
+								...competencySidebar(),
+							],
 						},
 						{ slug: 'glossary', label: 'Glossary' },
 					],

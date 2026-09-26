@@ -5,6 +5,7 @@
  * the e2e suite; these tests check the server-rendered frame the scripts
  * bind to.
  */
+import CompetencyCourse from '@components/CompetencyCourse.astro';
 import CompetencyMap from '@components/CompetencyMap.astro';
 import CompetencyObjectives from '@components/CompetencyObjectives.astro';
 import CourseGraph from '@components/CourseGraph.astro';
@@ -15,6 +16,7 @@ import References from '@components/References.astro';
 import Settings from '@components/Settings.astro';
 import TopicMap from '@components/TopicMap.astro';
 import TopicReference from '@components/TopicReference.astro';
+import { areaOf, getAreas } from '@lib/areas';
 import { createCitations, renderObjectives } from '@lib/citations';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -186,6 +188,25 @@ describe('CompetencyMap', () => {
 			id: 'concepts/explains-models',
 			objectives: [{ id: 'o1', lessons: ['concepts/how-models-work'] }],
 		});
+	});
+});
+
+describe('Competency page', () => {
+	// The page renders CompetencyCourse with the area of the competency; StarlightPage needs the real
+	// sidebar, so the test renders the component the page uses.
+	const courseLine = async (id: string) => {
+		const competency = competencies.find((c) => c.data.id === id)?.data;
+		if (!competency) throw new Error(`no fixture competency ${id}`);
+		const area = areaOf(await getAreas(), competency.area);
+		return container.renderToString(CompetencyCourse, { props: { area } });
+	};
+	it('names the course that teaches the competency and links to its course page (#514)', async () => {
+		expect(await courseLine('safety/spots-injection')).toContain(
+			'<p data-competency-course><strong>Taught in:</strong> the <a href="/ai-training/safety/">Safety</a> course</p>',
+		);
+		expect(await courseLine('concepts/explains-models')).toContain(
+			'<strong>Taught in:</strong> the <a href="/ai-training/concepts/">Concepts</a> course',
+		);
 	});
 });
 

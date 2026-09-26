@@ -1,0 +1,19 @@
+---
+/**
+ * The "Taught in" line of a competency page (issue #514): the course that
+ * teaches the competency, linked to its course page. That is the course of the
+ * competency's area, since every lesson that serves one of its objectives is in
+ * that course. A component of its own so the Container API test can render it
+ * without StarlightPage.
+ */
+import type { Area } from '@lib/areas';
+import { href } from '@lib/url';
+
+interface Props {
+	area: Area;
+}
+
+const { area } = Astro.props;
+---
+
+<p data-competency-course><strong>Taught in:</strong> the <a href={href(`/${area.slug}/`)}>{area.name}</a> course</p>
