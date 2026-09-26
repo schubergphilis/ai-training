@@ -56,10 +56,10 @@ the server. Find the number.
 **Training.** Some tiers use your conversations to train future models.
 Consumer subscriptions often do, and business tiers usually don't, and the
 default can be a setting you have to switch. One vendor as an example:
-Anthropic's privacy pages say that its consumer plans train on chats only
-when the user allows it in the privacy settings
-(@Claude privacy consumer-training), and that its business products and
-API don't train on them by default (@Claude privacy commercial-training).
+Anthropic's privacy pages say that its consumer plans train on chats and
+coding sessions when a model-improvement setting in the privacy settings
+is on (@Claude privacy consumer-training), and that its business products
+and API don't train on them by default (@Claude privacy commercial-training).
 Find the sentence in the terms of your own tool that says so, and find the
 setting.
 
@@ -360,14 +360,15 @@ needs to know that AI was involved, and how?
 The second output habit is checking what the model may have copied.
 
 Material you give a model and material it produces both come with
-obligations. Feeding in text or code you may not redistribute doesn't
-remove the restriction on it. Output that reproduces a source needs the attribution the
-source demands, and code output can reproduce public code closely enough
-that its license applies. Some coding assistants check each suggestion against
-public code, and then either drop a match or show it with a link to the
-source and the name of its license (@GitHub docs code-referencing).
-Without such a check there is a chance of reproducing licensed code word
-for word, and the legal position of such output is unsettled. The honest summary is that nobody can promise you the
+obligations. Feeding in text or code you may not redistribute doesn't remove
+the restriction on it. Output that reproduces a source needs the attribution
+the source demands, and code output can reproduce public code closely enough
+that its license applies. Some coding assistants check each suggestion
+against public code, and then, depending on a setting, either drop a match
+or show it with a reference that names the source and its license
+(@GitHub docs code-referencing). Without such a check there is a chance of
+reproducing licensed code word for word, and the legal position of such
+output is unsettled. The honest summary is that nobody can promise you the
 output is free of other people's work, so the check is yours.
 
 The habit is small. Keep track of where your inputs came from. Search for a phrase
