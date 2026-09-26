@@ -20,12 +20,13 @@ sources-checked: 2026-09-25
 review-by: 2027-03-25
 issue: 138
 minutes: 15
+proofs: [safety/reading-agent-logs/read_log.py, safety/reading-agent-logs/compare_versions.py]
 notes: >-
-  The fixtures site/examples/safety/reading-agent-logs/read_log.py (reads session.log and sorts it
-  into asked, called and changed) and compare_versions.py (one task set on two model versions,
+  The fixtures site/examples/safety/reading-agent-logs/read_log.py (reads session.log and checks each
+  change against the request) and compare_versions.py (one task set on two model versions,
   printing the rows that differ) are CI proof only. The page shows their output in text fences and
-  carries no Predict run, because safety is a foundations area, and how CI asserts a hidden fixture
-  is decided in #237. The support team, emails, orders and model names are invented, and the page
+  carries no Predict run, because safety is a foundations area. Both are listed in proofs, and
+  `mise run examples` fails when one prints a line no text fence on the page shows (#497, #311). The support team, emails, orders and model names are invented, and the page
   holds no person names. The planned Academy deploying-claude-enterprise-with-confidence framing
   (no audit trail means the wrong tool for a regulated workflow) is not attributed to the course,
   after the review note on issue #138 found the course does not state it. The page states it as the

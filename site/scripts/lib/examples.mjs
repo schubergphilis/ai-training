@@ -390,11 +390,6 @@ export const UNRUN_EXEMPT = new Map([
 		'customizing-agents/session-handoff/setup_practice.py',
 		'a setup tool the learner runs with a directory of their own; its output holds that path, and diff_only.py runs the same build and checks the output the page shows',
 	],
-	['safety/following-the-source/resolve_citations.py', FOUNDATIONS],
-	['safety/reading-agent-logs/compare_versions.py', FOUNDATIONS],
-	['safety/reading-agent-logs/read_log.py', FOUNDATIONS],
-	['safety/sizing-the-blast-radius/reach.py', FOUNDATIONS],
-	['safety/tracing-a-planted-instruction/planted_line.py', FOUNDATIONS],
 ]);
 
 /** Python files directly in `dir`, as file names. */

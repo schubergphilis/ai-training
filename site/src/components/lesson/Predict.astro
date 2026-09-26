@@ -12,8 +12,17 @@
  * is in no progress record, review page, sidebar count or export. It needs
  * `answer` and `run` (an example that is shown has to be verified) and takes
  * no `hint`, `concepts` or `context`.
+ *
+ * A graded block with `answer` and no `run` says its output was checked by
+ * hand, unless the lesson file lists `proofs` (#311). A foundations page may
+ * not carry `run`, and `mise run examples` checks its `text` fences against
+ * those fixtures, so the notice would be false there. The block then shows
+ * no notice, because a foundations page never points at the program behind
+ * it (spec S03 "Foundations audience").
  */
 import type { CheckpointPhase } from '@lib/checkpoint-rules';
+import { lessonIdOf } from '@lib/lesson-context';
+import { lessonProofsOf } from '@lib/lessons';
 import CheckpointShell from './CheckpointShell.astro';
 import SectionTitle from './SectionTitle.astro';
 
@@ -46,6 +55,8 @@ if (!graded) {
 	if (hint !== undefined || concepts !== undefined || context !== undefined || phase !== undefined)
 		throw new Error(`Predict "${id}": an ungraded example (no objective) takes no hint, concepts, context or phase`);
 }
+// Read only when the "checked by hand" notice could render.
+const handChecked = graded && !run && !honor && (await lessonProofsOf(lessonIdOf(Astro))).length === 0;
 ---
 
 {
@@ -89,7 +100,7 @@ if (!graded) {
 							Output verified in CI from <code>site/examples/{run}</code>.
 						</p>
 					)}
-					{!run && !honor && <p class="cp-verified">This example is not run in CI; the output was checked by hand.</p>}
+					{handChecked && <p class="cp-verified">This example is not run in CI; the output was checked by hand.</p>}
 				</div>
 			</Fragment>
 		</CheckpointShell>

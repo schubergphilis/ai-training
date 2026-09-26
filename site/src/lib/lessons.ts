@@ -53,6 +53,17 @@ export async function getLessons(area?: string): Promise<Lesson[]> {
 }
 
 /**
+ * The `proofs` of a lesson's file (spec S11 "Lesson file"): the fixtures
+ * behind a foundations page that `mise run examples` runs against the page's
+ * `text` fences (spec S03 "Examples", #497). Empty for a lesson without them
+ * and for a page that is no lesson.
+ */
+export async function lessonProofsOf(lessonId: string): Promise<string[]> {
+	const plans = await getCollection('lessonPlans');
+	return plans.find((p) => p.data.id === lessonId)?.data.proofs ?? [];
+}
+
+/**
  * The checkpoint tags of a lesson, read from the MDX tree of its body
  * (`lib/checkpoint-tags.ts`). A collection entry carries the source and not
  * the tree the page build made, and this reader is synchronous, so the body

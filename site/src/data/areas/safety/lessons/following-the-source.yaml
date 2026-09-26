@@ -24,13 +24,14 @@ exercise:
 sources: [AI Index 2025, CS50x, Academy ai-fluency-framework-foundations]
 issue: 122
 minutes: 15
+proofs: [safety/following-the-source/resolve_citations.py]
 notes: >-
   The fixture site/examples/safety/following-the-source/resolve_citations.py resolves the two
   citations in a model-written paragraph against an offline bibliography kept in the file, and
   prints one report that exists with a different finding and one that does not exist. The page
   shows its output in a text fence and carries no Predict run, because safety is a foundations
-  area. The fixture is CI proof only, and how CI asserts a hidden fixture against a foundations page
-  is decided in #237. The real report is the 2025 AI Index Report by Stanford HAI, and the finding
+  area. The fixture is CI proof only: it is listed in proofs, and `mise run examples` fails when it
+  prints a line no text fence on the page shows (#497, #311). The real report is the 2025 AI Index Report by Stanford HAI, and the finding
   recorded for it (78% of organizations reported using AI in 2024, up from 55%) was read from its
   public page on 2026-09-24. The productivity finding the paragraph attributes to it is invented,
   and the page says so. The Nordholm Institute and its survey are invented, and a web search found

@@ -16,10 +16,34 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // The shell checks `concepts` against the topics collection, which the fixtures in tests/lib/content.ts supply.
-vi.mock('astro:content', async () => (await import('../lib/content')).mockContent());
+// One extra lesson file lists `proofs`, so the Predict notice test doesn't depend on which real lessons have them.
+vi.mock('astro:content', async () => {
+	const content = await import('../lib/content');
+	const proved: (typeof content.lessonPlans)[number] = {
+		id: 'safety/lessons/proved',
+		data: {
+			id: 'safety/proved',
+			title: 'Proved',
+			mode: 'tutorial',
+			covers: 'safety/risk',
+			serves: [],
+			introduces: [],
+			assumes: [],
+			'extends-to': [],
+			after: [],
+			shorts: [],
+			exercise: { kind: 'judge', brief: 'Judge it.' },
+			sources: [],
+			minutes: 15,
+			proofs: ['safety/proved/show.py'],
+		},
+	};
+	return content.mockContent({ lessonPlans: [...content.lessonPlans, proved] });
+});
 
 // Only `entry.id` is read (lib/lesson-context.ts); the rest of Starlight's route data is not needed here.
-const locals = { starlightRoute: { entry: { id: 'concepts/how-models-work' } } } as unknown as App.Locals;
+const routeTo = (id: string) => ({ starlightRoute: { entry: { id } } }) as unknown as App.Locals;
+const locals = routeTo('concepts/how-models-work');
 const base = { id: 'cp', objective: 'o1', title: 'Title', hint: 'A hint', concepts: ['token'] };
 
 let container: AstroContainer;
@@ -27,9 +51,14 @@ beforeAll(async () => {
 	container = await AstroContainer.create();
 });
 
-// biome-ignore lint/suspicious/noExplicitAny: the Container API takes any Astro component
-async function render(component: any, props: Record<string, unknown>, slots?: Record<string, string>) {
-	return container.renderToString(component, { props, locals, ...(slots ? { slots } : {}) });
+async function render(
+	// biome-ignore lint/suspicious/noExplicitAny: the Container API takes any Astro component
+	component: any,
+	props: Record<string, unknown>,
+	slots?: Record<string, string>,
+	on: App.Locals = locals,
+) {
+	return container.renderToString(component, { props, locals: on, ...(slots ? { slots } : {}) });
 }
 
 describe('phase (spec S03 "Checkpoints")', () => {
@@ -202,6 +231,12 @@ describe('Predict', () => {
 	it('graded without run says the output was checked by hand', async () => {
 		const html = await render(Predict, { ...base, answer: 'x' });
 		expect(html).toContain('not run in CI');
+	});
+	it('graded without run on a lesson whose file lists proofs shows no notice (#311)', async () => {
+		const html = await render(Predict, { ...base, answer: 'x' }, undefined, routeTo('safety/proved'));
+		expect(html).toContain('data-answer="x"');
+		expect(html).not.toContain('not run in CI');
+		expect(html).not.toContain('class="cp-verified"');
 	});
 	it('ungraded example (no objective): output shown, CI note, and no checkpoint markup', async () => {
 		const html = await render(

@@ -26,10 +26,12 @@ sources:
   - Claude support get-started-with-Cowork
 issue: 132
 minutes: 15
+proofs: [safety/tracing-a-planted-instruction/planted_line.py]
 notes: >-
   Introduces no concept: deepens prompt-injection and exfiltration from agent-risk. The page shows the
   output of the fixture site/examples/safety/tracing-a-planted-instruction/planted_line.py in text
   fences, because safety is a foundations area and the page carries no Predict run. The fixture is
-  CI proof only, and how CI asserts a hidden fixture against a foundations page is decided in #237.
+  CI proof only: it is listed in proofs, and `mise run examples` fails when it prints a line no text
+  fence on the page shows (#497, #311).
   The recipe site bramble-kitchen.example
   is under the reserved .example domain, and the page holds no person names.
