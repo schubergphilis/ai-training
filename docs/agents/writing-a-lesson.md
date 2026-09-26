@@ -613,7 +613,9 @@ to `/glossary/#<id>` must name a real concept id, or the build fails.
 ### Source licenses
 
 Content is CC BY-SA 4.0 (`LICENSE`) and code is Apache-2.0
-(`LICENSE-CODE`). Source material has different terms, and spec S02
+(`LICENSE-CODE`). The files under `.claude/` are code, Markdown included,
+so a lesson that cites an agent definition, a skill or a hook from this
+repository cites it as Apache-2.0. Source material has different terms, and spec S02
 "Source material" has the per-source table for topic content. In short:
 
 - `agent-engineer-course` (Apache-2.0) and Diátaxis (CC BY-SA) content may

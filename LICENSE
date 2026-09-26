@@ -2,7 +2,7 @@ Copyright Leo Simons
 
 The content of this repository is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0), reproduced below. To view a copy online, visit https://creativecommons.org/licenses/by-sa/4.0/
 
-"Content" means the lesson pages and other Markdown/MDX under site/src/content, the decks and assets under site/public, the specs and agent docs under docs/, and the Markdown files at the repository root. The code (site configuration, components, scripts, styles, build tooling and workflows) is licensed under the Apache License 2.0; see LICENSE-CODE.
+"Content" means the lesson pages and other Markdown/MDX under site/src/content, the decks and assets under site/public, the specs and agent docs under docs/, and the Markdown files at the repository root. The code (site configuration, components, scripts, styles, build tooling and workflows, and the agent definitions, skills and hooks under .claude/, Markdown included) is licensed under the Apache License 2.0; see LICENSE-CODE.
 
 This applies including the parts derived from https://github.com/lsimons/lsimons-template-doc (relicensed by the same author). Material incorporated from third parties keeps its own notices; see NOTICE.md.
 
