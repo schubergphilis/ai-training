@@ -27,7 +27,10 @@ sources:
   - Academy building-with-the-claude-api
   - Claude docs define-tools
   - Claude docs strict-tool-use
+  - Claude docs messages
 minutes: 15
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 notes: >-
   Two tools with overlapping descriptions and a fake model that chooses by counting shared words.
   Predict which tool it picks, tighten the description, then turn a free-text currency parameter

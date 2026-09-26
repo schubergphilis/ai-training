@@ -1,7 +1,7 @@
 import { Predict, Repair, Pitfall, Exercise, Recap, Choice, MultiChoice, Sort, Scenario } from '@components/lesson';
 
-In the first agent lesson the model had one tool, so its only choice was
-between calling it and answering. In this lesson the model gets two tools
+In [Building your first agent](/building-agents/agent-loop/) the model had
+one tool, so its only choice was between calling it and answering. In this lesson the model gets two tools
 that overlap. We watch it call the wrong one and fix that without touching
 the functions. Everything we change is in the schema: the description the
 model reads and the parameters it fills in.
@@ -13,12 +13,14 @@ in the repository, and each step below is `python3 tools.py <step>`.
 
 ## What the model reads
 
-A tool definition sent to a model API has three required fields: a
-`name`, a `description`, and an `input_schema`, which is a JSON Schema
-object that names each parameter and its type (@Claude docs define-tools).
-The API turns those fields into text in the prompt, and sends them again
-with every request, because the model doesn't keep state between calls
-(@Academy building-with-the-claude-api). That text is all the model has
+A tool definition in the Claude API has a `name`, a `description`, and an
+`input_schema`, which is a JSON Schema object that names each parameter
+and its type (@Claude docs define-tools). The API requires the name and
+the schema and accepts a tool without a description (@Claude docs messages),
+but then the model has only the name to go on. The API builds a system
+prompt from the tool definitions (@Claude docs define-tools), and your
+code sends them again with every request, because the model doesn't keep
+state between calls (@Academy building-with-the-claude-api). That text is all the model has
 when it decides which tool to call and what to put in the arguments. The
 function body never reaches it.
 
@@ -114,8 +116,9 @@ cover the following, in at least three or four sentences
 - what each parameter means and how it changes the result
 - any caveats or limits
 
-The docs call the description "by far the most important factor in tool
-performance" (@Claude docs define-tools).
+The same page puts a detailed description first among its tips, and says
+no other part of a tool definition matters as much for how well the model
+uses the tool (@Claude docs define-tools).
 
 Look at how the third sentence is written. It names the other tool and the
 input you lack, and it doesn't repeat that tool's own trigger words. The
@@ -216,8 +219,9 @@ a value to a fixed list, and a `description` on each parameter tells the
 model what the value means. Anthropic's own example does this for a
 temperature unit, and with `strict: true` on the tool definition the API
 constrains the model's output so the arguments always match the schema.
-Without it the model can still return a type or a value the schema
-doesn't allow (@Claude docs define-tools) (@Claude docs strict-tool-use).
+Without it the model can still return the wrong type, such as the string
+`"2"` for an integer, or leave out a required field
+(@Claude docs define-tools) (@Claude docs strict-tool-use).
 
 ```python
 ENUM_SCHEMA = {
@@ -422,7 +426,8 @@ work, and would a real model have needed it?
    another tool, and what comes back (@Claude docs define-tools).
 2. A parameter gets a type and a description, and an enum where the set
    is small, so the model has nothing to guess.
-3. Count the wrong calls before and after a change. Most tool misuse is a
-   schema problem (@AEC-03).
+3. Count the wrong calls before and after a change. When the description
+   doesn't say when to use a tool, the model uses it wrongly or not at all
+   (@AEC-03).
 
 </Recap>
