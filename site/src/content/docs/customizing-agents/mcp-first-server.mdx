@@ -25,9 +25,13 @@ Revisions up to 2025-11-25 open a session with an `initialize` handshake
 in which client and server agree on a protocol version and exchange their
 capabilities. Revision 2026-07-28 has no handshake: each request puts
 its protocol version and the client's capabilities in a `_meta` field
-(@MCP specification). The stand-in below does neither. Almost all the
-traffic is two messages. The client sends `tools/list` once and gets back each tool's `name`,
-`description` and `inputSchema`. When the model asks for a tool, the
+(@MCP specification). Claude Code asks only HTTP servers whether they
+support the newer revision, and asks a stdio server only when
+`MCP_PROTOCOL_NEGOTIATION` is set to `auto`, so the stdio connection in
+the exercise uses the older `initialize` handshake by default
+(@Claude Code mcp). The stand-in below does neither. Almost all the
+traffic is two messages. The client sends `tools/list` once and gets back
+each tool's `name`, `description` and `inputSchema`. When the model asks for a tool, the
 client sends `tools/call` with the tool's `name` and its `arguments`, and
 the server answers with a `content` list and an `isError` flag
 (@MCP specification).
@@ -108,9 +112,9 @@ MCP revision 2026-07-28 deprecates roots. They stay in the specification
 until at least the first revision released on or after 2027-07-28, and
 new servers should take their directories from tool parameters,
 resource URIs or their own configuration instead
-(@MCP deprecated features). The
-specification also says that roots guide a server and that the protocol
-doesn't make a server stay inside them (@MCP specification). So the
+(@MCP deprecated features). The specification also says that roots guide
+a server and that the protocol doesn't make a server stay inside them
+(@MCP specification). So the
 refusal comes from the reference server's own check, and the steps below
 give the server the same directory as its argument and as its root. The
 scope then stays the same whichever list the server uses.
@@ -441,8 +445,9 @@ would you have found out?
    when the client sends none (@MCP filesystem server), and Claude Code's
    roots are the directory you started it in plus what you add with
    `--add-dir` (@Claude Code mcp). Roots are deprecated in MCP revision
-   2026-07-28 (@MCP deprecated features), so give the copy as the
-   argument too. Start the agent inside the copy, and read
+   2026-07-28 (@MCP deprecated features). Give the copy as the argument
+   too, so a client that stops sending roots still leaves the server on
+   the copy. Start the agent inside the copy, and read
    `list_allowed_directories` first.
 3. In Claude Code, `claude mcp add <name> -- <command>` adds a server at
    local scope by default, and a project-scoped `.mcp.json` server is
