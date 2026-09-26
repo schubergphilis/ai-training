@@ -7,7 +7,7 @@ under `/data/`, and the stance on crawlers.
 
 **Status:** Accepted - build issues #499 (Markdown alternates), #500
 (`llms.txt`, `llms-full.txt`) and #501 (data tree as JSON) are open, none
-merged
+merged.
 
 Each build issue updates the Status line and the index row when it
 merges.
@@ -195,7 +195,7 @@ The table gives the full rendering, with those five differences in it.
 | `Exercise`                                 | `## Exercise`, then its text, then `Stretch:` and the stretch goal when it has one.                                                                                            |
 | `Recap`                                    | `## Recap`, then its takeaways.                                                                                                                                                |
 | `Habit`                                    | `#### Habit`, then its text.                                                                                                                                                   |
-| Widget, or any other component             | A widget is left out, and any other component renders its children by these rules.                                                                                             |
+| Widget, or any other component             | A widget is left out, and other components render their children. Widgets today are self-closing, which the bundle `prose` drops too, so this isn't a sixth difference.        |
 | Page frame and injected blocks             | Left out: the sidebar, the "On this page" menu, the footer, the review line, the tutor block and the route-ahead cards. The page line and the license line replace the footer. |
 
 A checkpoint's hint, the `why` of each option, and the `answer` are never
@@ -305,9 +305,9 @@ order.
 ### Files
 
 `groups.yaml` and each YAML file under `areas/` in the data tree publish
-as one JSON file each under `/data/`, at `/data/<kind>/<id>.json`, where `<id>` is the
-unit's id per S01 "Identifiers". This is the rule the bundles already
-follow (`/data/lessons/<area>/<lesson>.json`, S08 "URL scheme").
+as one JSON file each under `/data/`, at `/data/<kind>/<id>.json`, where
+`<id>` is the unit's id per S01 "Identifiers". This is the rule the
+bundles already follow (`/data/lessons/<area>/<lesson>.json`, S08 "URL scheme").
 
 | Source (`site/src/data/`)                     | Published at                                  | Example                                            |
 | --------------------------------------------- | --------------------------------------------- | -------------------------------------------------- |
