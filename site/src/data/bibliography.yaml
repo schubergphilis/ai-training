@@ -958,6 +958,27 @@ GitHub docs workflow-syntax:
   author: GitHub
   license: CC BY 4.0
   url: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
+Claude privacy consumer-training:
+  type: reference
+  title: Is my data used for model training? (consumer products)
+  container: Anthropic Privacy Center
+  author: Anthropic
+  license: Proprietary
+  url: https://privacy.claude.com/en/articles/10023580-is-my-data-used-for-model-training
+Claude privacy commercial-training:
+  type: reference
+  title: Is my data used for model training? (commercial products)
+  container: Anthropic Privacy Center
+  author: Anthropic
+  license: Proprietary
+  url: https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training
+GitHub docs code-referencing:
+  type: reference
+  title: GitHub Copilot code referencing
+  container: GitHub documentation
+  author: GitHub
+  license: CC BY 4.0
+  url: https://docs.github.com/en/copilot/concepts/completions/code-referencing
 GitHub docs events-that-trigger-workflows:
   type: reference
   title: Events that trigger workflows
