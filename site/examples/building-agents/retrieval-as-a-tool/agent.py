@@ -214,6 +214,19 @@ def show(number: int, question: str, result: dict) -> None:
     print(f"   {source}: {result['answer']}")
 
 
+def list_sources(questions: list[str]) -> None:
+    """One line per question: the document the answer came from, or `not found`."""
+    answered = 0
+    for number, question in enumerate(questions, 1):
+        result = answer_basic(question)
+        if result["answer"] == "not found":
+            print(f"{number}. not found")
+        else:
+            print(f"{number}. {result['name']}")
+            answered += 1
+    print(f"answered: {answered} of {len(questions)}")
+
+
 def run_test_set(questions: list[str]) -> None:
     answered = 0
     for number, question in enumerate(questions, 1):
@@ -230,6 +243,10 @@ def step_prompt() -> None:
 
 
 def step_basic() -> None:
+    list_sources(TEST_SET)
+
+
+def step_basic_answers() -> None:
     run_test_set(TEST_SET)
 
 
@@ -253,6 +270,7 @@ def step_no_answer() -> None:
 STEPS = {
     "prompt": step_prompt,
     "basic": step_basic,
+    "basic_answers": step_basic_answers,
     "multi_hop_basic": step_multi_hop_basic,
     "multi_hop_loop": step_multi_hop_loop,
     "no_answer": step_no_answer,

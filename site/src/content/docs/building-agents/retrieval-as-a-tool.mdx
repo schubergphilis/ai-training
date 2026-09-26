@@ -101,14 +101,53 @@ def answer_basic(question: str) -> dict:
 A test set decides whether this is good enough. This one has six
 questions in the handbook's own words, except the second, which asks
 about holiday where the handbook says leave. The concepts course showed
-what a keyword search does with that. The fixture prints each
-question, the document it retrieved, the answer, and a count at the end.
+what a keyword search does with that.
+
+```python
+TEST_SET = [
+    "How many days of annual leave do I get?",
+    "How much holiday can I take?",
+    "What is the training budget per year?",
+    "How many days per week can I work from home?",
+    "How many days ahead are flights booked?",
+    "Who do I report a lost laptop to?",
+]
+```
+
+The twelve handbook files are `data-team.txt`, `expenses.txt`,
+`laptops.txt`, `leave.txt`, `office-hours.txt`, `onboarding.txt`,
+`payments-team.txt`, `remote-work.txt`, `security.txt`,
+`service-desk.txt`, `training.txt` and `travel.txt`. The `list_sources`
+function runs the basic version on each question. It prints one line per
+question with the question's number and the file the answer came from,
+or `not found` when there is no answer, and then a count.
 
 <Predict id="predict-basic" objective="building-agents/builds-agent-loop/adds-retrieval"
-  concepts={['when-basic-rag-suffices']}
-  context="The lesson's fixture runs a keyword search once per question over a twelve-document company handbook and answers with the best sentence of the retrieved passage. The test set has six questions, five in the handbook's own words and one that asks about holiday where the handbook says annual leave."
+  concepts={['when-basic-rag-suffices']} revision={2}
+  context="The lesson's fixture runs a keyword search once per question over a twelve-document company handbook and answers with the best sentence of the retrieved passage. The files are data-team.txt, expenses.txt, laptops.txt, leave.txt, office-hours.txt, onboarding.txt, payments-team.txt, remote-work.txt, security.txt, service-desk.txt, training.txt and travel.txt. The six questions are: 1. How many days of annual leave do I get? 2. How much holiday can I take? 3. What is the training budget per year? 4. How many days per week can I work from home? 5. How many days ahead are flights booked? 6. Who do I report a lost laptop to? Five are in the handbook's own words, and the second asks about holiday where the handbook says annual leave. The fixture prints one line per question with its number, a dot and the file the answer came from, or not found in place of the file when there is no answer, and then a count line in the form answered: N of 6."
   title="Which questions does the basic version answer?"
   hint="Which question uses a word that no document contains, and what does the search return then?"
+  answer={`1. leave.txt
+  2. not found
+  3. training.txt
+  4. remote-work.txt
+  5. travel.txt
+  6. laptops.txt
+  answered: 5 of 6`} run="building-agents/retrieval-as-a-tool/basic.py">
+
+Predict the output first, with the file or `not found` for each
+question and the count line. Then run this.
+
+```python
+list_sources(TEST_SET)
+```
+
+</Predict>
+
+The `run_test_set` function prints each question with the file it
+retrieved and its answer, and the same count at the end.
+
+<Predict id="basic-answers" title="The answers of the basic version"
   answer={`1. How many days of annual leave do I get?
      leave.txt: Every employee accrues 25 days of annual leave per year.
   2. How much holiday can I take?
@@ -121,10 +160,9 @@ question, the document it retrieved, the answer, and a count at the end.
      travel.txt: Flights are booked through the travel desk at least 14 days ahead.
   6. Who do I report a lost laptop to?
      laptops.txt: Report a lost laptop to the service desk the same day.
-  answered: 5 of 6`} run="building-agents/retrieval-as-a-tool/basic.py">
+  answered: 5 of 6`} run="building-agents/retrieval-as-a-tool/basic_answers.py">
 
-Before you run it, write down which of the six questions get an answer
-and which document each one comes from. Then run this.
+Run this, and compare what you see with the output below.
 
 ```python
 run_test_set(TEST_SET)
