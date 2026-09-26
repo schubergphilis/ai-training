@@ -84,6 +84,13 @@ mise.local.toml
 .claude/settings.local.json
 .claude/worktrees
 
+# Environment files that hold secrets, at any depth: a pattern without a
+# slash matches in every directory. The keys-and-secrets lesson says the
+# course repository ignores every `.env`, and its fixture commits
+# `env.sample` instead.
+.env
+.env.*
+
 # Vale styles fetched by `mise run prose-sync` (or `vale --config
 # .vale-eval.ini sync` for packages under evaluation) from the release URLs
 # pinned in .vale.ini and .vale-eval.ini.
