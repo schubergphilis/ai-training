@@ -242,16 +242,18 @@
 .topic-node { display: block; position: relative; z-index: 1; padding: 0.45rem 0.6rem; border: 1.5px solid var(--sl-color-gray-4); border-radius: 6px; background: var(--sl-color-bg); text-decoration: none; color: inherit; font-size: 0.85rem; line-height: 1.25; }
 /* No lesson and none planned: a gap in the plan. */
 .topic-node[data-state='untouched'][data-has-lesson='false'][data-planned='false'],
-:is(.competency-node, .competency-objective)[data-state='untouched'][data-has-lesson='false'][data-planned='false'] { opacity: 0.55; border-style: dashed; }
+.competency-node[data-state='untouched'][data-has-lesson='false'][data-planned='false'] { opacity: 0.55; border-style: dashed; }
+.competency-objective[data-state='untouched'][data-has-lesson='false'][data-planned='false'] { border-style: dashed; }
 /* A lesson is planned or being written; the topic is covered on paper. */
 .topic-node[data-state='untouched'][data-has-lesson='false'][data-planned='true'],
-:is(.competency-node, .competency-objective)[data-state='untouched'][data-has-lesson='false'][data-planned='true'] { opacity: 0.75; border-style: dotted; }
+.competency-node[data-state='untouched'][data-has-lesson='false'][data-planned='true'] { opacity: 0.75; border-style: dotted; }
+.competency-objective[data-state='untouched'][data-has-lesson='false'][data-planned='true'] { border-style: dotted; }
 .topic-node[data-state='in-progress'],
 :is(.competency-node, .competency-objective)[data-state='in-progress'] { border-color: var(--sl-color-accent); }
 .topic-node[data-state='finished'],
 :is(.competency-node, .competency-objective)[data-state='finished'] { border-color: var(--at-done); background: color-mix(in srgb, var(--at-done) 14%, var(--sl-color-bg)); }
 .topic-node:hover { border-color: var(--sl-color-accent); }
-/* The competency map (issue #514) uses the topic map grid, and the box and objective states above. A box holds links, so it is a block and each link inside it is a line. */
+/* The competency map (issue #514) uses the topic map grid, and the box and objective states above. A box holds links, so it is a block and each link inside it is a line. Only a box fades for a gap state: an objective shows it by its border, so the opacity doesn't stack inside a faded box. */
 .competency-node { padding: 0.45rem 0.6rem; border: 1.5px solid var(--sl-color-gray-4); border-radius: 6px; background: var(--sl-color-bg); font-size: 0.85rem; line-height: 1.25; }
 .competency-title { display: block; font-weight: 600; color: inherit; text-decoration: none; }
 .competency-title:hover { color: var(--sl-color-accent); }

@@ -1,6 +1,7 @@
 /** Finishing a lesson, and where that progress shows up and persists (spec S04). */
 import { progressPercent } from '../src/scripts/overview';
 import { emptyRecord } from '../src/scripts/progress-model';
+import { topicState } from '../src/scripts/topic-map-model';
 import {
 	competencyObjectives,
 	expect,
@@ -109,13 +110,14 @@ test('the competency map colors the objectives a finished lesson serves and thei
 	await seed(finished);
 	await page.goto('competencies/');
 	// The same rule as the topic map (topicState): finished once every serving lesson is finished, in progress
-	// once any has an entry. The seed finishes only LESSON, so the expected states come from the data tree.
+	// once any has an entry. The seed finishes only LESSON, and the serving lessons come from the data tree.
 	const COMPETENCY = 'concepts/explains-models';
 	const objectives = competencyObjectives(COMPETENCY).map((id) => ({ id, lessons: liveObjectiveLessons(id) }));
 	const served = objectives.filter((o) => o.lessons.includes(LESSON));
 	expect(served.length).toBeGreaterThan(0);
-	const stateOf = (lessons: string[]) =>
-		lessons.every((l) => l === LESSON) ? 'finished' : lessons.includes(LESSON) ? 'in-progress' : 'untouched';
+	const rec = emptyRecord();
+	rec.lessons[LESSON] = finished.lessons[LESSON];
+	const stateOf = (lessons: string[]) => topicState(lessons, rec);
 	for (const o of objectives)
 		await expect(page.locator(`.competency-objective[data-objective="${o.id}"]`)).toHaveAttribute(
 			'data-state',
