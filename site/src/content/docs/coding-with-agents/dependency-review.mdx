@@ -135,8 +135,8 @@ repository.
 similar. Count the sub-dependencies it brings and their size, and compare
 the cost of reviewing and updating them with the benefit. The API has to
 make sense where you call it (from async code, say) on the platform you
-run. Its docs, or the lack of them, tell you about
-undocumented invariants and unsafe code.
+run. Its docs, or the lack of them, tell you about undocumented invariants
+and unsafe code.
 
 **Quality.** If the maintainer walked away, would we fork it and maintain
 it ourselves? Are there real tests, and do they pass in CI? Duplicated code
@@ -209,8 +209,8 @@ scorecard --repo=github.com/<owner>/<repo> --format=json
 ```
 
 The check names below are Scorecard's, as documented at the time of
-writing. The list changes between releases, so read the current
-docs before you quote a name in a review.
+writing. The list changes between releases, so read the current docs
+before you quote a name in a review.
 
 | Check                    | What it asks                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------------------- |
@@ -412,15 +412,15 @@ event that starts a review, and nothing gets in without one.
 Set a release age floor. Some package managers can refuse to install a
 version published less than a set time ago. pnpm has a `minimumReleaseAge`
 setting in minutes, applied to direct dependencies and to transitive ones
-alike (@pnpm settings). Its docs give the reason, which is to
-lower the chance of installing a compromised or broken package before
-anyone has noticed. Since pnpm 11 the setting defaults to 1440 minutes,
-one day (@pnpm supply chain) (@pnpm settings). Left at that default, pnpm
-still installs a version younger than the floor when no older one fits the
-requested range.
-Setting `minimumReleaseAge` yourself makes that install fail instead
-(@pnpm settings). A project that waits a day before installing a new
-version gets the benefit of everyone else's attention during that day.
+alike (@pnpm settings). Its docs give the reason, which is to lower the
+chance of installing a compromised or broken package before anyone has
+noticed. Since pnpm 11 the setting defaults to 1440 minutes, one day
+(@pnpm supply chain) (@pnpm settings). Left at that default, pnpm still
+installs a version younger than the floor when no older one fits the
+requested range. Setting `minimumReleaseAge` yourself makes that install
+fail instead (@pnpm settings). A project that waits a day before
+installing a new version gets the benefit of everyone else's attention
+during that day.
 
 Record a rejection where the next agent reads it. A verdict in a pull
 request is found by the person who searches for it. A line in the project

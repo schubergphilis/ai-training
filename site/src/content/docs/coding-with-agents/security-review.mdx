@@ -236,9 +236,9 @@ python3 hostile.py
 
 The second line shows Bob's notes to Alice, including one about his bank
 login. The third line is the pitfall above: an ordinary search that
-fails and reports nothing. The Python docs warn against
-building a query with string operations for this reason and gives the fix, a
-placeholder in the SQL with the values passed separately to `execute()`
+fails and reports nothing. The Python docs warn against building a query
+with string operations for this reason and give the fix, a placeholder in
+the SQL with the values passed separately to `execute()`
 (@Python sqlite3). The database then treats the values as data, whatever
 characters they contain.
 
