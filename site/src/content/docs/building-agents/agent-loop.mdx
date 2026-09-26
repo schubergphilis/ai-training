@@ -135,18 +135,20 @@ A real model API returns the same two cases in a different format. The
 reply has a stop reason field that says whether the model finished or
 wants a tool, and each tool result names the id of the request it
 answers, so the model can match them up when it asked for more than one
-tool at once. With a stateless model API, the usual kind, every round
-sends the whole message list and the tool definitions again, because the
-model doesn't keep state between calls
-(@Academy building-with-the-claude-api). The `answer` key in `fake_model`
+tool at once (@Claude docs handle-tool-calls). With a stateless model API,
+the usual kind, every round sends the whole message list and the tool
+definitions again, because the model doesn't keep state between calls
+(@Academy building-with-the-claude-api) (@Claude docs messages). The
+`answer` key in `fake_model`
 plays the role of the stop reason, and translating that field is most of
 the work of swapping in a real model.
 
 Notice `max_steps`. Without it, a model that keeps asking for tools runs
 forever and spends your money. A real loop has a budget, and when the
 budget runs out it returns a string that names the limit
-(`stopped: step limit`) rather than an empty answer. The next lesson
-replaces the bare string with a dict that has a stop reason field.
+(`stopped: step limit`) rather than an empty answer. The lesson
+"Stopping the loop on purpose" replaces the bare string with a dict that
+has a stop reason field.
 
 The loop also keeps going when a tool fails. A tool name that isn't in
 `TOOLS`, or a function that raises, becomes a tool result that starts with
@@ -175,11 +177,12 @@ print(run("What is the weather in Oslo?"))
 
 </Predict>
 
-Every vendor SDK (software development kit) ships this loop under a name
-such as tool runner or agent SDK. You hand it your functions and it
-returns the final answer, with the descriptions built from the function
-signatures and the request and result rounds handled inside
-(@Academy claude-platform-101). That saves the code above and hides the
+A vendor SDK (software development kit) can run this loop for you.
+The Claude API SDKs call it the tool runner. You hand it your functions and
+it returns the final answer. In Python it builds each tool definition
+from the function's arguments and docstring, and it handles the request
+and result rounds inside (@Academy claude-platform-101)
+(@Claude docs tool-runner). That saves the code above and hides the
 same decisions: how many steps it takes, what it does on a tool error, when
 it stops, and what it puts in the message list. Having written the loop
 once, you know which of those to check in the SDK's version.

@@ -27,6 +27,11 @@ sources:
   - Academy building-with-the-claude-api
   - Academy claude-platform-101
   - AEC-13
+  - Claude docs handle-tool-calls
+  - Claude docs messages
+  - Claude docs tool-runner
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 25
 notes: >-
   Live. Issue #91 added the error path and a named stop reason to this lesson's code as a section
