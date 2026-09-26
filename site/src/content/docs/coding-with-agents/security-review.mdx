@@ -409,12 +409,13 @@ Bandit 1.8.6 needs Python 3.9 or newer, and its PyPI page lists Python
 run, on Python 3.14.7, it printed two `ERROR` lines for
 `notes_search.py`, listed none of the findings and exited with status 0,
 which looks like a clean run. If your version is 3.14 or newer, check the
-system Python of your Mac with `/usr/bin/python3 --version`. If that
-prints 3.9 to 3.13, write `/usr/bin/python3` in place of `python3` in the
-first command below. If it doesn't, skip the install and the Bandit
-steps, and work from the recorded run in this lesson. Otherwise, create
-the environment, install the pinned version and run it on the agent's
-version:
+system Python (`/usr/bin/python3` on macOS) with
+`/usr/bin/python3 --version`. If that prints 3.9 to 3.13, write
+`/usr/bin/python3` in place of `python3` in the first command below. If
+it doesn't, skip the install and the Bandit steps, and work from the
+recorded run in this lesson. If your version is 3.9 to 3.13, or you use
+the system Python, create the environment, install the pinned version
+and run it on the agent's version:
 
 ```sh
 python3 -m venv ~/bandit-1.8.6
