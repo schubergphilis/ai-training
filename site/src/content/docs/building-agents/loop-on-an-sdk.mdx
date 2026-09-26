@@ -56,8 +56,9 @@ to by name (@Claude Code agent sdk python). The handler returns a `content`
 list, and `"is_error": True` marks a failed call so the model reads it as
 one (@Claude Code custom tools). The tool itself is the one from the first
 lesson, a function plus a description written for the caller (@AEC-13). A tool from a server called
-`weather` is named `mcp__weather__get_weather` in the model's view, and
-listing it in `allowed_tools` lets it run without a permission prompt.
+`weather` has the full name `mcp__weather__get_weather`, and listing
+that name in `allowed_tools` lets it run without a permission prompt
+(@Claude Code custom tools).
 
 ```python
 import asyncio

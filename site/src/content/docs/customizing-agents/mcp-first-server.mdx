@@ -182,10 +182,10 @@ no secrets in it is the one case where a fetch at start-up is acceptable,
 and the exact version in the command above still keeps the download from
 changing under you between runs.
 
-The name `handbook` is yours, and the server's tools appear to the model
-as `mcp__handbook__<tool>`, which is also the form a permission rule uses
-(@Claude Code permissions). Without a `--scope` flag the server is added
-at `local` scope, which is you in this project. The `project` scope
+The name `handbook` is yours, and Claude Code names the server's tools
+`mcp__handbook__<tool>` in permission rules (@Claude Code permissions).
+Without a `--scope` flag the server is added at `local` scope, which is
+you in this project. The `project` scope
 writes a `.mcp.json` the whole team's clients read, and Claude Code asks
 you before it uses a project-scoped server in an interactive session
 (@Claude Code mcp). `claude mcp list` shows what you have configured, and
