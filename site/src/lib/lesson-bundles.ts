@@ -14,7 +14,7 @@ import {
 } from './checkpoint-tags';
 import type { BibliographyEntry } from './citations';
 import { getLessons, type Lesson } from './lessons';
-import { type CodeAside, citationText, plainCitations, resolveCitations, setAsideCode } from './plain-citations';
+import { type CodeAside, plainCitations, resolveCitations, setAsideCode } from './plain-citations';
 import { absoluteUrl } from './url';
 
 /**
@@ -26,7 +26,7 @@ import { absoluteUrl } from './url';
  * is the one function that reads the collections.
  */
 
-export { BUNDLE_VERSION, citationText, setAsideCode };
+export { BUNDLE_VERSION };
 
 export interface BundleTopic {
 	id: string;

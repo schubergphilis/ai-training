@@ -8,11 +8,12 @@ import type { BibliographyEntry } from './citations';
 
 /**
  * `(@key)` citations as plain text, for the JSON exports a tutor reads (spec
- * S08 "Lesson bundles"): the lesson bundle's `prose`, its behaviors' `why`,
- * and the checkpoint stems in `checkpoints.json` and the bundles. The HTML
- * pages render citations as numbered links instead (`citations.ts` and
- * `plugins/remark-citations.mjs`). Code is set aside first, so a token in a
- * fenced block or a code span stays as written.
+ * S08 "Lesson bundles"): the lesson bundle's `prose`, its behaviors'
+ * `claim`, `why` and `example`, and the checkpoint stems in
+ * `checkpoints.json` and the bundles. The HTML pages render citations as
+ * numbered links instead (`citations.ts` and `plugins/remark-citations.mjs`).
+ * Code is set aside first, so a token in a fenced block or a code span stays
+ * as written.
  */
 
 /**
@@ -115,8 +116,9 @@ export function resolveCitations(
 /**
  * `text` with each `(@key)` outside code rendered by `citationText`, and its
  * code unchanged. This is the pass `proseOf` runs, for a field that is plain
- * text with no components: a behavior's `why` or a checkpoint stem. An
- * unknown key or a token with more than one key throws, naming `where`.
+ * text with no components: a behavior's `claim`, `why` or `example`, or a
+ * checkpoint stem. An unknown key or a token with more than one key throws,
+ * naming `where`.
  */
 export function plainCitations(text: string, bibliography: Record<string, BibliographyEntry>, where: string): string {
 	const aside = setAsideCode(text);

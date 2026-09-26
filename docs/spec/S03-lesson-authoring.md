@@ -296,8 +296,9 @@ reads it to ask a checkpoint as a standalone item.
 - One object, `{ "version": 1, "items": [...] }`, items in lesson order
   then page order. `version` changes when a field changes meaning.
 - Each item has `id`, `lesson`, `kind`, `objective`, `concepts`, `context`
-  (`null` when absent), `stem` (the children as Markdown source, with each `(@key)` citation
-  outside code rendered as the lesson bundle's `prose` renders it, S08),
+  (`null` when absent), `stem` (the children as Markdown source, with
+  each `(@key)` citation outside code rendered as the lesson bundle's
+  `prose` renders it, S08),
   `options`, `answer`, `hint`, `reviewable`, `revision`, `guessable`
   (the exemption reason, `null` when absent) and `phase`. Alternates are
   items like any other, in page order. `reviewable` is whether finishing
