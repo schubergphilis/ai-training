@@ -65,13 +65,13 @@ A lesson whose facts move (a law, a product) sets `review-by: 2027-03-20`,
 the date by which its sources must be checked again, and
 `sources-checked: 2026-09-20` for the day they were last checked. The page
 then shows "Sources checked on September 20, 2026. Review due by March 20,
-2027." in the footer, in place of "Last updated". Set `review-by` six
+2027." in the footer, before "Last updated". Set `review-by` six
 months after `sources-checked`, the interval every lesson uses.
 `mise run data` rejects a lesson that sets one of the two dates without the
 other, or a `review-by` that isn't after `sources-checked`. Move both dates
 when you re-check the sources, and leave them alone for a prose fix.
 Starlight's `lastUpdated` is a separate date, the page's last git commit,
-and a page without `review-by` shows it in the footer as "Last updated".
+and every page shows it in the footer as "Last updated".
 
 ## Course plan
 

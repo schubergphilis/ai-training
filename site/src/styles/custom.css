@@ -145,8 +145,8 @@
 }
 
 /* Footer (overrides/Footer.astro): previous/next first, then one line with
-   the edit link, one date (the review line of a lesson with `review-by`, else
-   the last-updated date), and "Content co-authored by AI." */
+   the edit link, the date lines (the review line of a lesson with
+   `review-by`, then the last-updated date), and "Content co-authored by AI." */
 .site-footer {
 	display: flex;
 	flex-direction: column;

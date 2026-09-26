@@ -164,8 +164,9 @@ Until #112 the loader copied `sources-checked` onto Starlight's
 `lastUpdated`, so a prose fix that moved the footer date also moved the
 review line. Since #112 `lastUpdated: true` in `astro.config.mjs` makes
 the footer date the page's last git commit, and the review line reads
-`sources-checked`. Since #274 the footer shows one date line: the review
-line on a lesson with `review-by`, and "Last updated" on every other page.
+`sources-checked`. Since #339 a lesson with `review-by` shows both date
+lines in the footer, the review line first, and every other page shows
+"Last updated" only. This replaces the one-date rule of #274.
 The course page `<area>/index.mdx`
 gets its `title` and `description` from `area.yaml` the same way (S09).
 
