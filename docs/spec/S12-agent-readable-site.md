@@ -5,9 +5,12 @@ on a person's behalf: a Markdown alternate of each content page, an
 `llms.txt` index with an `llms-full.txt` companion, the data tree as JSON
 under `/data/`, and the stance on crawlers.
 
-**Status:** Accepted - no build step has merged yet. Open build issues:
-the Markdown alternates (#499), `llms.txt` and `llms-full.txt` (#500), and
-the data tree as JSON (#501). Each one updates this line when it merges.
+**Status:** Accepted - build issues #499 (Markdown alternates), #500
+(`llms.txt`, `llms-full.txt`) and #501 (data tree as JSON) are open, none
+merged
+
+Each build issue updates the Status line and the index row when it
+merges.
 
 ## Introduction
 
@@ -36,7 +39,7 @@ Starlight builds the sitemap when `site` is set in the Astro config
 All paths in this spec are under the base path, so `/data/tutor.md` is
 `https://lsimons.github.io/ai-training/data/tutor.md`.
 
-Every other page is HTML inside the Starlight page frame: the sidebar,
+The other pages are HTML inside the Starlight page frame: the sidebar,
 the "On this page" menu, the footer and the widget scripts. An agent that
 fetches a lesson gets that frame around the text. The tutor has its own
 bundle (S08), but any other agent has to strip the HTML itself. This spec
@@ -53,14 +56,14 @@ What this spec takes from it is cited to that page in each section.
   same content collections and data files as the pages, so no second copy
   can drift, as in S08 "One publish step".
 - **Static files only.** Each file is at its own URL. The site doesn't
-  vary a response by the request's `Accept` header, and it doesn't set
-  response headers of its own.
+  vary a response by the request's `Accept` header, and on the published
+  site it doesn't set response headers of its own.
 - **What the page shows, as text.** An alternate contains what a reader
   sees on the page before they interact with it. It leaves out what only
   the browser has: progress, settings, and widget state.
 - **Agents read what people read.** An alternate contains only what its page
   shows, plus the page and license lines of its header. The site has no
-  page written for agents alone.
+  content page written for agents alone.
 
 ## Markdown alternates
 
@@ -81,7 +84,7 @@ What this spec takes from it is cited to that page in each section.
 
 ### URL scheme
 
-Every page URL on the site ends in `/`. The alternate is the page URL
+Page URLs on this site end in `/`. The alternate is the page URL
 with `index.md` appended:
 
 | Page                                                              | Alternate                                                                 |
@@ -94,15 +97,15 @@ The proposal asks for a Markdown version of a page at the page's own URL
 with `.md` added, and says that a URL without a file name adds
 `index.md` or `index.html.md` (llmstxt.org, "Proposal"). This site's
 URLs have no file name, and `index.md` is the shorter of the two. A
-`.md` sibling (`/safety/agent-risk.md`) was the other choice in #231 and
-is rejected, because it doesn't follow from the proposal's rule for a URL
-that ends in `/`.
+`.md` sibling (`/safety/agent-risk.md`) is rejected, because it doesn't
+follow from the proposal's rule for a URL that ends in `/`.
 
 GitHub Pages served `/data/tutor.md` with
 `content-type: text/markdown; charset=utf-8` on 2026-09-27 (checked with
 `curl -I`). An alternate gets the same header without a setting in this
-repository. The build endpoint sets that header too, as `site/src/pages/data/tutor.md.ts` does, so the
-dev server and preview agree.
+repository. The build endpoint sets that header too, as
+`site/src/pages/data/tutor.md.ts` does, so the dev server and preview
+agree.
 
 ### Head hints
 
@@ -112,18 +115,12 @@ Each page with an alternate has, in its `<head>`:
 <link rel="alternate" type="text/markdown" href="https://lsimons.github.io/ai-training/safety/agent-risk/index.md">
 ```
 
-Every page, with or without an alternate, also has:
-
-```html
-<link rel="describedby" href="https://lsimons.github.io/ai-training/llms.txt">
-```
-
-The proposal recommends these two link relations: `alternate` with
-`type="text/markdown"` for a page's Markdown version, and `describedby`
-for the `llms.txt` file that covers the page (llmstxt.org, "Proposal").
-It allows them as HTML `<link>` elements or as an HTTP `Link:` header.
-This site uses the elements only, per "Static files only". Both `href`
-values are absolute, built from Astro's `site` and the base path.
+The proposal recommends this link relation for a page's Markdown version
+(llmstxt.org, "Proposal"). It allows it as an HTML `<link>` element or as
+an HTTP `Link:` header. This site uses the element only, per "Static
+files only". The `href` is absolute, built from Astro's `site` and the
+base path. The `describedby` link to `llms.txt` is in "`llms.txt`",
+because it ships with that file.
 
 ### Anatomy
 
@@ -156,9 +153,23 @@ License: CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
 ### Rendering a lesson body
 
 A lesson body renders by the rules of the bundle's `prose` field (S08
-"Format"), so one renderer produces both and they can't disagree. The
-alternate adds two things the bundle `prose` leaves to other fields: the
-options of each checkpoint, and the output of an ungraded example.
+"Format"). One renderer produces both, and it takes a flag for the
+alternate. With the flag off, the bundle `prose` stays as S08 defines it.
+With the flag on, the renderer differs from the bundle `prose` in exactly
+these five ways:
+
+- Each checkpoint's options follow its stem, in the form of the table
+  below.
+- An ungraded example's output follows its children. The bundle `prose`
+  leaves that output out today, and no other bundle field holds it, which
+  is a known gap in the bundle.
+- An `#<id>` link becomes the page's absolute URL plus `#<id>`. The bundle
+  leaves it as written.
+- A `## References` section follows the body.
+- A habit heading is `#### Habit` without the id, because the page shows
+  no id.
+
+The table gives the full rendering, with those five differences in it.
 
 | Source element                             | In the alternate                                                                                                                                                               |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -183,14 +194,15 @@ options of each checkpoint, and the output of an ungraded example.
 | `MorePractice`                             | `## More practice`, then its checkpoints.                                                                                                                                      |
 | `Exercise`                                 | `## Exercise`, then its text, then `Stretch:` and the stretch goal when it has one.                                                                                            |
 | `Recap`                                    | `## Recap`, then its takeaways.                                                                                                                                                |
-| `Habit`                                    | `#### Habit: <id>`, then its text.                                                                                                                                             |
-| Widget, or any other component             | Its children, rendered by these rules. A self-closing widget is left out.                                                                                                      |
+| `Habit`                                    | `#### Habit`, then its text.                                                                                                                                                   |
+| Widget, or any other component             | A widget is left out, and any other component renders its children by these rules.                                                                                             |
 | Page frame and injected blocks             | Left out: the sidebar, the "On this page" menu, the footer, the review line, the tutor block and the route-ahead cards. The page line and the license line replace the footer. |
 
 A checkpoint's hint, the `why` of each option, and the `answer` are never
-in the alternate. A reader who needs them reads the checkpoint export or
-the bundle, which hold the answer because the page does (S04, "The answer
-is in the page").
+in the alternate. The hint and the answer are in the checkpoint export and
+the bundle, which may hold the answer because the page does (S04, "The
+answer is in the page"). The `why` of an option is published in neither
+file.
 
 ### Rendering the other pages
 
@@ -198,7 +210,7 @@ is in the page").
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Course page         | The page's own prose. The lesson graph is left out. The course plan becomes one `##` heading per part (none in a flat course), each with a list of its lessons in course order: `[<title>](<page URL>): <description>` for a live lesson, `<title> (planned)` for a planned one. |
 | Guide, contributing | The page's Markdown, with the link rules of the lesson body.                                                                                                                                                                                                                     |
-| Glossary            | One `##` heading per concept name, with its definition and a link to its topic page, in the page's order.                                                                                                                                                                        |
+| Glossary            | One `## <name> (<id>)` heading per concept, so the id of the glossary anchor stays in the text, with its definition and a link to its topic page, in the page's order.                                                                                                           |
 | Topic page          | The sections the page shows (definition, concepts, links, lessons, sources), each under its page heading. The "Your reference" section is left out, because it reads browser storage.                                                                                            |
 | Competency page     | The sections the page shows: the course, the topics it draws on, each objective with its level and behaviors (`claim`, `why`, `example`), the alignment table and the references. The progress colors are left out.                                                              |
 
@@ -212,6 +224,17 @@ The file is `/llms.txt` under the base path:
 under that path, and names a GitHub Pages project site as a case this
 allows (llmstxt.org, "Proposal" and "Existing standards"). So the file
 at `/ai-training/llms.txt` covers the site.
+
+When `llms.txt` ships (#500), each page of the site gets in its `<head>`:
+
+```html
+<link rel="describedby" href="https://lsimons.github.io/ai-training/llms.txt">
+```
+
+The proposal recommends `describedby` for the `llms.txt` file that covers
+a page (llmstxt.org, "Proposal"). The link goes in with #500 and not with
+the alternates (#499), so no published page points at a file that
+doesn't exist yet.
 
 ### Layout
 
@@ -233,7 +256,7 @@ site's file fills it as follows:
 
 Links point at the alternates, because the proposal says the links of an
 `llms.txt` should lead to content an agent reads easily (llmstxt.org,
-"Proposal"). Every URL is absolute. Parts, planned lessons, topic pages
+"Proposal"). The URLs are absolute. Parts, planned lessons, topic pages
 and competency pages aren't listed. They're one link away, from the
 course page alternate and from `/data/index.json`. Leaving them out keeps
 `llms.txt` small enough to read in one fetch.
@@ -259,11 +282,10 @@ A worked excerpt, with the descriptions as the data tree has them on
 `/llms-full.txt` under the base path joins the alternates of every course
 page and every live lesson, each course page followed by its lessons in
 course order, and the courses in the order `llms.txt` lists them. A
-`---` line with a blank line on each side separates two alternates. Guides and reference pages aren't in
-it.
+`---` line with a blank line on each side separates two alternates.
+Guides and reference pages aren't in it.
 
-The v2 proposal doesn't define this file (llmstxt.org, "Changes": v2
-drops the context-expansion tooling of v1). The site adds it for a tool
+The proposal doesn't define this file. The site adds it for a tool
 that indexes or searches the whole course text in one fetch. It is far
 larger than `llms.txt`, so `llms.txt` lists it under `Optional`.
 
@@ -282,8 +304,8 @@ order.
 
 ### Files
 
-Each YAML file of the areas part of the data tree publishes as one JSON
-file under `/data/`, at `/data/<kind>/<id>.json`, where `<id>` is the
+`groups.yaml` and each YAML file under `areas/` in the data tree publish
+as one JSON file each under `/data/`, at `/data/<kind>/<id>.json`, where `<id>` is the
 unit's id per S01 "Identifiers". This is the rule the bundles already
 follow (`/data/lessons/<area>/<lesson>.json`, S08 "URL scheme").
 
@@ -301,12 +323,21 @@ segment. The lesson file publishes under `lesson-plans/`, because S08 has
 `/data/lessons/` for the bundles. A live lesson has both files at the
 same `<area>/<lesson>` path, and a planned lesson has only the plan.
 
-A published file is the YAML file as JSON: the same keys, spelled as in
-the YAML (`extends-to`, `sources-checked`), the same values, in the same
-key order, with a folded or literal string as the YAML parser returns it.
-It is pretty-printed with two spaces and ends in a newline, as the other
-`/data/` files do. The `notes` fields are published too. The repository
-is public, and a note in a published file is already public in the source.
+A published file is the YAML file as JSON, minus `notes`: the same keys,
+spelled as in the YAML (`extends-to`, `sources-checked`), the same values,
+in the same key order. S09 "Area file" and S11 define `notes` as prose for
+authors that is never rendered, so every `notes` field is left out: the
+top-level one of an area, course or lesson file, and the one of a course
+part.
+
+The endpoint reads the raw file with the `yaml` package, as
+`site/scripts/lib/data.mjs` does, and not through the content
+collections. A date then stays a `YYYY-MM-DD` string, keys keep their
+source order, and a folded or literal string is the value that package
+returns. The content collections turn `sources-checked` and `review-by`
+into dates and order keys by the schema, so JSON written from them
+wouldn't match its source. The file is pretty-printed with two spaces and
+ends in a newline, as the other `/data/` files are.
 
 ### Index
 
@@ -324,29 +355,30 @@ them on a static host that has no directory listing:
 | `areas[].courses[]`      | Per course: `id`, `url`.                                                                                                                                         |
 | `areas[].lessons[]`      | Per lesson in course order: `id`, `plan` (the lesson plan URL), `live` (boolean), and for a live lesson `page` and `bundle`, which are `null` for a planned one. |
 
-Every URL in the index is absolute. The index is the one derived file in
-the data tree: `live`, `page` and `bundle` are facts the build knows and
+The URLs in the index are absolute. The index is the one derived file
+under `/data/`: `live`, `page` and `bundle` are facts the build knows and
 no YAML file states.
 
 ### How a published file differs from a bundle
 
 | Published data file                                                                      | Lesson bundle (S08)                                                                                                      |
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| One YAML file, copied as it is.                                                          | A view of one live lesson, joined from the lesson file, its page, its topic, its competencies and the checkpoint export. |
+| One YAML file, copied without its `notes`.                                               | A view of one live lesson, joined from the lesson file, its page, its topic, its competencies and the checkpoint export. |
 | Exists for planned lessons too.                                                          | Exists for live lessons only.                                                                                            |
 | Keys as in the YAML, kebab-case.                                                         | Its own field names, snake-case (`extends_to`).                                                                          |
-| No `version` field. A change to a data-tree schema (S09 to S11) is a change to the file. | A `version` field that the tutor bootstrap reads.                                                                        |
+| No `version` field. A change to a data-tree schema (S09 to S11) is a change to the file. | A `version` field equal to the instruction file's `version`.                                                             |
 | For any agent.                                                                           | For the tutor, in the format its instructions expect.                                                                    |
 
 ### Build and check
 
 The files are build-time endpoints under `site/src/pages/data/`, like the
 bundle route. After `site-build`, a check reads each published file back,
-parses its YAML source and fails when the two differ, when a data-tree
-file has no published file, or when a published file has no source. It
-runs in `mise run data` or `mise run bundles`, whichever reads the built
-`dist/data/`, and a test feeds it a JSON file that differs from its YAML
-and sees it fail.
+parses its YAML source with the `yaml` package, drops `notes`, and fails
+when the two differ, when a data-tree file has no published file, or when
+a published file has no source. It runs in `mise run bundles`
+(`site/scripts/check-bundles.mjs`), which already reads the built
+`dist/data/`. A test passes the check a JSON file that differs from its
+YAML and sees it fail.
 
 ## Crawlers
 
@@ -401,7 +433,7 @@ crawlers included, and on 2026-09-26 that the site ships no `robots.txt`.
 ## Out of scope
 
 - JSON-LD `Course` markup or other structured data in the page head.
-- Pages written for agents only. Every alternate mirrors a page.
+- Content pages written for agents alone. Each alternate mirrors a page.
 - A `robots.txt`, in this repository or at the host root (see
   "Crawlers").
 - HTTP `Link:` headers and a response chosen by the `Accept` header. The
