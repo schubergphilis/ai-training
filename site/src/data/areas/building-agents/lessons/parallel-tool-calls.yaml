@@ -23,6 +23,8 @@ sources:
   - Academy claude-platform-101
   - Claude docs parallel-tool-use
   - Claude docs handle-tool-calls
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 12
 notes: >-
   The fake model requests three lookups in one reply. Predict the round count with a model that

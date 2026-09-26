@@ -147,9 +147,10 @@ show(run(QUESTION, model=model_all_at_once, execute=together))
 The same answer came back in two rounds instead of four. With the
 timings from the last section the run takes about five seconds. The three lookups
 overlap, so they cost one second together, and the model is asked twice.
-A batch of independent reads is the common case in agents that work on
-files or records, where the model wants five files and there is no reason
-to fetch them one per round (@AEC-03).
+Independent reads, such as three files the model wants to see, are the
+calls the vendor page names as usually safe to run together
+(@Claude docs parallel-tool-use). A model that asks for them in one reply
+saves the round trips in between (@AEC-03).
 
 The Claude API works the same way (@Claude docs parallel-tool-use). A
 reply with `stop_reason` `tool_use` can hold several `tool_use` blocks,
@@ -158,11 +159,12 @@ holds one `tool_result` block per `tool_use` block, each naming its
 `tool_use_id`, and any text in that message comes after the results
 (@Claude docs handle-tool-calls). Whether those calls ran one after
 another or in a thread pool is invisible in that message, so `in_order`
-and `together` both produce a valid reply. The docs name
-one result per `user` message as the most common formatting mistake: the
-API accepts it, and a history with that pattern teaches the model to stop
-asking for several tools at once (@Claude docs parallel-tool-use). To turn the batching off,
-set `disable_parallel_tool_use: true` inside the `tool_choice` object.
+and `together` both produce a valid reply. When a model stops asking for
+several tools at once, the docs name one result per `user` message as the
+most common cause: a history in that format shows the model one call per
+turn, and it learns to ask that way (@Claude docs parallel-tool-use). To
+turn the batching off, set `disable_parallel_tool_use: true` inside the
+`tool_choice` object.
 With the default `tool_choice` type `auto` the model then makes at most
 one tool call per reply, and the run looks like the first section.
 
@@ -220,9 +222,10 @@ waits for the reply after it.
 A model doesn't always get this right, and a dependent call can arrive in
 the same batch as the call it needs. The docs say to return a
 `tool_result` with `is_error` set to `true` and a short note for any call
-you choose not to run (@Claude docs parallel-tool-use). A model that reads
-such an error usually asks again with the real argument
-(@Claude docs handle-tool-calls). The exercise below builds that case.
+you choose not to run, and they say the model makes the call again in the
+next turn. They also suggest a line in the system prompt that asks the
+model to batch only calls that don't depend on each other
+(@Claude docs parallel-tool-use). The exercise below builds that case.
 
 <Pitfall title="Returning results in the order they finished">
 The thread pool also offers `as_completed`, which yields each result as
