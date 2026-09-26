@@ -135,7 +135,7 @@ repository.
 similar. Count the sub-dependencies it brings and their size, and compare
 the cost of reviewing and updating them with the benefit. The API has to
 make sense where you call it (from async code, say) on the platform you
-run. Its documentation, or the lack of it, tells you about
+run. Its docs, or the lack of them, tell you about
 undocumented invariants and unsafe code.
 
 **Quality.** If the maintainer walked away, would we fork it and maintain
@@ -210,7 +210,7 @@ scorecard --repo=github.com/<owner>/<repo> --format=json
 
 The check names below are Scorecard's, as documented at the time of
 writing. The list changes between releases, so read the current
-documentation before you quote a name in a review.
+docs before you quote a name in a review.
 
 | Check                    | What it asks                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------------------- |
@@ -265,7 +265,7 @@ Skip everything on this list, and write in the review that you skipped it:
 - Code that hasn't changed since somebody on your team reviewed it.
 - Individual test cases. Check that tests exist and run. Don't read them.
 - Platform-specific code for platforms you never build for.
-- Documentation that isn't about the API or about how the implementation
+- Docs that aren't about the API or about how the implementation
   works.
 
 Skipping is a decision, and it is recorded. "Skipped the Windows path
@@ -412,7 +412,7 @@ event that starts a review, and nothing gets in without one.
 Set a release age floor. Some package managers can refuse to install a
 version published less than a set time ago. pnpm has a `minimumReleaseAge`
 setting in minutes, applied to direct dependencies and to transitive ones
-alike (@pnpm settings). Its documentation gives the reason, which is to
+alike (@pnpm settings). Its docs give the reason, which is to
 lower the chance of installing a compromised or broken package before
 anyone has noticed. Since pnpm 11 the setting defaults to 1440 minutes,
 one day (@pnpm supply chain) (@pnpm settings). Left at that default, pnpm
