@@ -230,6 +230,13 @@ Claude support memory:
   author: Anthropic
   license: Proprietary
   url: https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+Claude support enabling-and-using-web-search:
+  type: reference
+  title: Enable and use web search
+  container: Claude Help Center
+  author: Anthropic
+  license: Proprietary
+  url: https://support.claude.com/en/articles/10684626-enabling-and-using-web-search
 Claude docs messages:
   type: reference
   title: Messages
