@@ -209,9 +209,10 @@ have skipped even once, don't rely on prose for it. A *hook* runs a
 command of yours at a fixed point in the agent's loop, before a tool call
 or after an edit, and can block the action outright. For example, a hook
 that runs before every shell command, inspects the command the agent is
-about to run, and exits non-zero when it matches `git push` to `main`
+about to run, and exits with code 2 when it matches `git push` to `main`
 means the push never happens, however far back the instruction file has
-scrolled. "Never push to `main`" in `AGENTS.md` is advised; the hook is
+scrolled (@Claude Code hooks). "Never push to `main`" in `AGENTS.md`
+is advised; the hook is
 enforced. A hook that runs the formatter after every edit works the same
 way for a procedure the agent often forgets. The message a blocking hook
 prints goes back to the agent, so it learns why the action was refused
