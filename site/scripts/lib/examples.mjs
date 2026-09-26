@@ -19,7 +19,7 @@
  * `scripts/check-examples.mjs` is the command-line entry; tests import this.
  */
 import { spawnSync } from 'node:child_process';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { attrsOf, jsxElements, parseMdx, propValue, stringProp } from '../../src/lib/checkpoint-tags.ts';
 
@@ -314,13 +314,28 @@ export function usesModule(src, stem) {
 	);
 }
 
+/** Directory names the deep walk never enters: tool output and installs. */
+const DEEP_SKIP = new Set(['__pycache__', '.venv', 'node_modules']);
+
+/**
+ * Directories directly in `dir` for the deep walk, as names. It skips
+ * `DEEP_SKIP`, every dot-directory (`.git`, `.claude`) and every symlink
+ * (`lstatSync`), so a link can't loop the walk or pull in files from
+ * outside the lesson. The lesson-level walk keeps `subdirs`.
+ */
+function deepSubdirs(dir) {
+	return readdirSync(dir).filter(
+		(name) => !DEEP_SKIP.has(name) && !name.startsWith('.') && lstatSync(join(dir, name)).isDirectory(),
+	);
+}
+
 /**
  * Python files below `dir` but not directly in it, as paths relative to
- * `dir` with `/` separators (`nightly/importer.py`), skipping `__pycache__`.
+ * `dir` with `/` separators (`nightly/importer.py`), through `deepSubdirs`.
  */
 function deepPythonFiles(dir, prefix = '') {
 	const out = [];
-	for (const sub of subdirs(dir)) {
+	for (const sub of deepSubdirs(dir)) {
 		const rel = `${prefix}${sub}/`;
 		out.push(...pythonFiles(join(dir, sub)).map((name) => `${rel}${name}`));
 		out.push(...deepPythonFiles(join(dir, sub), rel));
@@ -332,19 +347,19 @@ function deepPythonFiles(dir, prefix = '') {
  * Whether `src` (a lesson-level fixture's source) names `rel`, a file or a
  * directory relative to the lesson directory (`nightly`,
  * `nightly/importer.py`). It names it in a quoted string literal that is the
- * whole path or its last segment, with an optional trailing `/`
- * (`"nightly"`, `'nightly/importer.py'`, `"importer.py"`), or imports it as
- * a module or package (`import nightly.importer`, `from nightly import
- * importer`, and `import importer` for a file). The matching is the one
- * behind `usesModule`, so a mention in a docstring, a comment or a longer
- * string doesn't count.
+ * whole relative path, with an optional trailing `/` (`"nightly"`,
+ * `'nightly/importer.py'`), or imports that path as a module or package
+ * (`import nightly.importer`, `from nightly import importer`). A bare file
+ * name (`"importer.py"`, `import importer`) or the last segment of a nested
+ * path (`"scripts"` for `release-kit/scripts`) doesn't count, because a
+ * lesson-level file of the same name would make it pass (#468 review).
+ * `deepFileNamed` tries each containing directory as its own `rel`. The
+ * matching is the one behind `usesModule`, so a mention in a docstring, a
+ * comment or a longer string doesn't count.
  */
 export function namesPath(src, rel) {
-	const base = rel.slice(rel.lastIndexOf('/') + 1);
 	const isFile = rel.endsWith('.py');
-	if (isFile && usesModule(src, base.slice(0, -'.py'.length))) return true;
-	const literals = [rel, base].map((t) => `${escapeRe(t)}/?`).join('|');
-	if (new RegExp(`(["'])(?:${literals})\\1`).test(src)) return true;
+	if (new RegExp(`(["'])${escapeRe(rel)}/?\\1`).test(src)) return true;
 	const dotted = escapeRe((isFile ? rel.slice(0, -'.py'.length) : rel).replaceAll('/', '.'));
 	return (
 		new RegExp(`^[ \\t]*from[ \\t]+${dotted}(?:\\.[\\w.]+)?[ \\t]+import\\b`, 'm').test(src) ||

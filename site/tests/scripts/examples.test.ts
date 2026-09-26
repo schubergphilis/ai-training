@@ -1,5 +1,5 @@
 import { type spawnSync, spawnSync as spawnSyncReal } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -445,6 +445,29 @@ describe('unrunFixtures below the lesson directory (#468)', () => {
 			reported('extra/tool.py'),
 		]);
 	});
+	it('reports a deep file whose bare name only a lesson-level import or string matches', () => {
+		const src = 'import agent\nsubprocess.run(["python3", "-m", "pytest", "test_todo.py"])\n';
+		expect(check(src, ['tools/agent.py', 'other/test_todo.py'])).toEqual([
+			reported('other/test_todo.py'),
+			reported('tools/agent.py'),
+		]);
+	});
+	it('skips .venv, node_modules and dot-directories', () => {
+		expect(
+			check('print("hi")\n', ['.venv/lib/site.py', 'node_modules/pkg/gyp.py', '.git/hooks/hook.py', 'a/.cache/x.py']),
+		).toEqual([]);
+	});
+	it('does not follow a symlinked directory', () => {
+		const dir = lessonWith('print("hi")\n', []);
+		dirs.push(dir);
+		const outside = mkdtempSync(join(tmpdir(), 'unrun-outside-'));
+		dirs.push(outside);
+		writeFileSync(join(outside, 'stray.py'), 'print("stray")\n');
+		const lesson = join(dir, 'area', 'lesson');
+		symlinkSync(outside, join(lesson, 'linked'));
+		symlinkSync(lesson, join(lesson, 'loop'));
+		expect(unrunFixtures(dir, runs, new Map())).toEqual([]);
+	});
 	it('takes an UNRUN_EXEMPT entry for a deep path, and fails it once the directory is named', () => {
 		const exempt = new Map([['area/lesson/library/truncate.py', 'the learner reads it; the page shows no output']]);
 		expect(check('print("hi")\n', ['library/truncate.py'], exempt)).toEqual([]);
@@ -459,10 +482,9 @@ describe('namesPath', () => {
 		['"nightly"', 'nightly', 'directory in double quotes'],
 		["'nightly/'", 'nightly', 'directory with a trailing slash'],
 		['"nightly/importer.py"', 'nightly/importer.py', 'whole file path'],
-		['"importer.py"', 'nightly/importer.py', 'file name'],
-		['"scripts"', 'release-kit/scripts', 'last segment of a nested directory'],
-		['import importer\n', 'nightly/importer.py', 'import of the file on sys.path'],
+		['"release-kit/scripts"', 'release-kit/scripts', 'whole nested directory path'],
 		['import nightly.importer\n', 'nightly', 'import of a module in the package'],
+		['import nightly.importer\n', 'nightly/importer.py', 'dotted import of the file'],
 		['from pkg.sub import tool\n', 'pkg/sub', 'from-import of the package'],
 		['from pkg import sub\n', 'pkg', 'from-import from the top package'],
 	];
@@ -476,6 +498,10 @@ describe('namesPath', () => {
 		['"my-nightly"', 'nightly', 'a name that ends with it'],
 		['print("$ ls nightly")\n', 'nightly', 'a longer string'],
 		['import nightly_old\n', 'nightly', 'an import of a longer module'],
+		['"importer.py"', 'nightly/importer.py', 'the bare file name'],
+		['"scripts"', 'release-kit/scripts', 'the last segment of a nested directory'],
+		['import importer\n', 'nightly/importer.py', 'an import of the bare stem'],
+		['from importer import run\n', 'nightly/importer.py', 'a from-import of the bare stem'],
 	];
 	it.each(misses)('%j does not name %j (%s)', (src, rel) => {
 		expect(namesPath(src, rel)).toBe(false);

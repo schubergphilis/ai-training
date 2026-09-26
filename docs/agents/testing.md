@@ -60,11 +60,15 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   the same lesson directory imports or names in a quoted string literal
   (`"<name>.py"`), and every file that isn't `.py`. A `.py` file in a
   subdirectory, such as `nightly/importer.py`, passes when a `.py` file
-  directly in the lesson directory imports it or names it, or a directory
-  that contains it, in a quoted string literal (`"nightly"`,
-  `'nightly/importer.py'`). A deep file that nothing names is reported
-  like an entry script. A mention in a docstring, a comment, a code span
-  or a longer string doesn't count.
+  directly in the lesson directory names its whole path relative to the
+  lesson directory, or the whole path of a directory that contains it. It
+  names the path in a quoted string literal (`"nightly"`,
+  `'nightly/importer.py'`) or imports it with dots
+  (`import nightly.importer`). A bare file name such as `"importer.py"`
+  or `import importer` doesn't count. A deep file that nothing names is
+  reported like an entry script. The check doesn't look in `.venv`,
+  `node_modules`, dot-directories or symlinked directories. A mention in
+  a docstring, a comment, a code span or a longer string doesn't count.
   Wire a new fixture to a `<Predict run=...>`. Add it to `UNRUN_EXEMPT`
   in `site/scripts/lib/examples.mjs`, with the reason, only when no
   Predict can run it: a fixture behind a `foundations` page, where
