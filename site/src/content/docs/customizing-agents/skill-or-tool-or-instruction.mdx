@@ -24,7 +24,7 @@ An **instruction** is standing text, loaded at the start of every session
 and present on every turn. `AGENTS.md` from the last lesson is one. It
 suits a rule that always applies, the test command being the usual
 example. The harness loads it every time. It is there
-whether the task needs it or not (@Academy claude-code-101) (@Claude Code features).
+whether the task needs it or not (@Academy claude-code-101) (@Claude Code memory).
 
 A **skill** is a procedure with a trigger. It is a directory with a
 short description of when it applies, and the agent sees only that
@@ -134,8 +134,9 @@ turn and in what they let it do. Put them on two axes.
 session, whether or not the task needs it. A skill puts one line, its
 description, in the context on every turn, and the full body from the
 turn it is invoked on. With many skills installed, Claude Code keeps
-every skill's name in that list but can drop the descriptions of the
-skills used least, to stay within a fixed budget (@Claude Code skills).
+every skill's name in the skill list but can drop the descriptions of the
+skills used least, to stay within a character budget sized to the
+context window (@Claude Code skills).
 In an agent that loads every tool up front, a
 tool puts its name, description and parameter schema in the context on
 every turn, and a server that exposes thirty tools puts thirty of them
@@ -163,7 +164,7 @@ adds no new ability, because the shell and the client were already
 there. Anthropic's own guidance points at this middle way: reach
 for a skill around a command before you write or connect a tool server
 for it (@Academy claude-code-101). Claude Code's guide to costs makes
-the same point about context: a command-line client adds no tool
+a related point about context: a command-line client adds no tool
 listing, so it costs less context than a tool server (@Claude Code costs).
 A tool server is right when there is
 no client to wrap, when the ability is new to the agent, or when you
