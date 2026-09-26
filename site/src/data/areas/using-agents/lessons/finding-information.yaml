@@ -24,7 +24,11 @@ exercise:
   brief: >-
     Paste the supplied guideline, ask for the three things a newcomer must know with a quote for each,
     then check every quote against the text and note which one is not there word for word.
-sources: [Academy ai-capabilities-and-limitations]
+sources:
+  - Academy ai-capabilities-and-limitations
+  - Claude support enabling-and-using-web-search
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 15
 notes: >-
   The plan named the topic concepts/prompting as assumed; taken as the objective
