@@ -32,10 +32,15 @@ notes: >-
   Sources: Brilliant SEC-3, Academy claude-code-in-action (paraphrased). The exercise installs one
   pinned tool, Bandit 1.8.6, into a virtual environment outside the course repository, under the S03
   rule decided in https://github.com/lsimons/ai-training/issues/461. Bandit 1.8.6 declares Python
-  >=3.9 on PyPI. Both pasted outputs were produced on 2026-09-27 with Bandit 1.8.6 on Python 3.9.25,
-  from a fresh copy of site/examples/coding-with-agents/security-review/, by `bandit -q
-  notes_search.py` (exit status 1, the page drops the start line and the summary) and `bandit -q
-  fixed/notes_search.py` (no output, exit status 0). On Python 3.12.14 and 3.13.15 the same
-  version printed the same findings with the B608 location as 22:10. On Python 3.14.7 it printed
+  >=3.9 on PyPI, and its classifiers list 3.9 to 3.13. Both pasted outputs were produced on
+  2026-09-27 with Bandit 1.8.6 on Python 3.9.25 (mise), installed with `uv pip install --python
+  <venv>/bin/python bandit==1.8.6` into a `python3.9 -m venv` environment, from a fresh copy of
+  site/examples/coding-with-agents/security-review/, by `bandit -q notes_search.py` (exit status 1,
+  the page drops the start line and the summary) and `bandit -q fixed/notes_search.py` (no output,
+  exit status 0). The same day, the page's own steps ran on macOS /usr/bin/python3 3.9.6:
+  `python3 -m venv`, then `<venv>/bin/pip install bandit==1.8.6` (pip 21.2.4), then the run in a
+  fresh ~/search-fix copy printed the same findings. With uvx, 3.10.21 and 3.11.16 printed the B608
+  location as 22:8, and 3.12.14 and 3.13.15 as 22:10, with the same findings. On 3.14.7 it printed
   two ERROR lines for notes_search.py and exited with status 0, which is why the page tells a
-  learner on 3.14 or newer to skip the install. Re-run all of these when the review date comes.
+  learner on 3.14 or newer to use the system Python or skip the install. Re-run all of these when
+  the review date comes.

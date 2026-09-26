@@ -140,9 +140,9 @@ Test results:
 ```
 
 The run also printed a summary with the line count and the issues per
-severity, and it exited with status 1 because it found issues. On
-Python 3.12 and 3.13, the same Bandit version printed the same findings
-with the location of the B608 finding as `22:10`.
+severity, and it exited with status 1 because it found issues. The
+column of the B608 finding depends on the Python version: 3.9, 3.10 and
+3.11 printed `22:8`, and 3.12 and 3.13 printed `22:10`.
 
 Bandit found two of the classic mistakes. B105 is a password in the
 source, which Bandit spots because the variable name contains
@@ -377,7 +377,7 @@ shows.
 Which line of the brief gives you proof that the fix works?
 </Choice>
 
-<Exercise stretch="Run Bandit on a public Python project. Clone one into a scratch directory outside the course repository and run ~/bandit-1.8.6/bin/bandit -r on its source directory, without -q. Read the Files skipped list at the end first: Bandit lists a file there when it can't parse it, for example a file that uses syntax newer than your Python. Pick one finding with Low confidence, and decide in writing whether it is a real problem in that code, and why.">
+<Exercise stretch="If you installed Bandit above, run it on a public Python project before you delete the environment. Clone one into a scratch directory outside the course repository and run ~/bandit-1.8.6/bin/bandit -r on its source directory, without -q. Read the Files skipped list at the end first: Bandit lists a file there when it can't parse it, for example a file that uses syntax newer than your Python. Pick one finding with Low confidence, and decide in writing whether it is a real problem in that code, and why.">
 After this exercise you can review an agent's change to code that reads
 user input without trusting a clean analyzer run.
 
@@ -397,18 +397,21 @@ rm -r ~/search-before/fixed ~/search-before/test_notes_search.py ~/search-before
 
 Next, install Bandit 1.8.6 into a virtual environment in your home
 directory. A virtual environment is a directory with its own Python
-packages, and installing into it leaves the course repository, both
-copies and the rest of your machine unchanged. First check which Python
-you have:
+packages, and installing into it leaves the course repository and both
+copies unchanged. First check which Python you have:
 
 ```sh
 python3 --version
 ```
 
-Bandit 1.8.6 needs Python 3.9 or newer (@Bandit PyPI). In a test run on
-Python 3.14.7, it printed two `ERROR` lines for `notes_search.py`, listed
-none of the findings and exited with status 0, which looks like a clean
-run. If your version is 3.14 or newer, skip the install and the Bandit
+Bandit 1.8.6 needs Python 3.9 or newer, and its PyPI page lists Python
+3.9 to 3.13 as supported (@Bandit PyPI). On the same day as the recorded
+run, on Python 3.14.7, it printed two `ERROR` lines for
+`notes_search.py`, listed none of the findings and exited with status 0,
+which looks like a clean run. If your version is 3.14 or newer, check the
+system Python of your Mac with `/usr/bin/python3 --version`. If that
+prints 3.9 to 3.13, write `/usr/bin/python3` in place of `python3` in the
+first command below. If it doesn't, skip the install and the Bandit
 steps, and work from the recorded run in this lesson. Otherwise, create
 the environment, install the pinned version and run it on the agent's
 version:
@@ -427,9 +430,16 @@ agent session in `~/search-fix`, which is a copy you can delete, and
 give it a brief for the parameterized version with a test, in your own
 words. Before you accept the change, the agent's test must fail when you
 copy it into `~/search-before` and run it there. In `~/search-fix` it
-must pass. Then run Bandit on `~/search-fix/notes_search.py` again. A
-clean run there means that no rule matched, and the test is what shows
-that the fix works. When you are done, delete the environment with
+must pass. Then run Bandit on the agent's new version:
+
+```sh
+~/bandit-1.8.6/bin/bandit -q ~/search-fix/notes_search.py
+```
+
+B608 is gone when the query uses placeholders. B105 still shows if your
+brief left the password in the source. A clean run means that no rule
+matched, and the test is what shows that the fix works. When you are
+done, including the stretch goal, delete the environment with
 `rm -r ~/bandit-1.8.6`.
 
 A good result is a short note with the Bandit findings, the problem it
