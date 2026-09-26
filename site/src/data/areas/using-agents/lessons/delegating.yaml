@@ -26,6 +26,8 @@ exercise:
 sources:
   - Academy introduction-to-claude-cowork
   - Academy ai-fluency-framework-foundations
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 20
 notes: >-
   The plan assumed the topics concepts/what-is-an-agent and safety/verification, which the page does
