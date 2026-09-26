@@ -49,8 +49,9 @@ concepts:
   - id: provider-operations
     name: Provider operations
     definition: >-
-      The mechanics of calling a model provider reliably. Pin a dated model
-      ID so behavior changes only when you choose. Use prompt caching so the
+      The mechanics of calling a model provider reliably. Pin an exact model
+      ID, one that names a single fixed version, so behavior changes only
+      when you choose. Use prompt caching so the
       stable prefix of a system prompt and tool list is processed once and
       read back at a lower price on later calls. Retry retriable errors,
       such as rate limits and overload, with a backoff. Report terminal

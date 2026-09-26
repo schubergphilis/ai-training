@@ -88,5 +88,5 @@ objectives:
           any other.
         why: A new model version changes behavior, and an automatic upgrade is an untested change to
           production.
-        example: The agent uses a dated model id, and the upgrade goes through the evaluation gate and the
-          staged rollout.
+        example: The agent uses an exact model id that names one fixed version, and the upgrade goes
+          through the evaluation gate and the staged rollout.
