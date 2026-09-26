@@ -59,6 +59,16 @@ Start your coding agent from inside `fixture-repo`. The directory you start
 in is the agent's world: it reads and edits files there, and it runs
 commands there. Starting one level too high hands it your whole home directory.
 
+Check one setting before your first message. This lesson is built around
+the moment the agent asks you before it edits a file, and some agents start
+in a mode that doesn't ask. Recent versions of Claude Code start in auto
+mode, in which file edits in the working directory go through without a
+prompt and a second model reviews the other actions in place of you. The
+mode that asks before each edit is called Manual there, and
+`claude --permission-mode default` starts a session in it
+(@Claude Code permission modes). The section on permission modes later in
+this lesson explains the other choices.
+
 Your first message isn't a task. It is a question, and its purpose is to
 check that the agent is looking at the same code you are.
 
@@ -84,6 +94,8 @@ unprompted. Either is fine, because you are about to hand it the evidence.
 Notice what the agent read without being asked: `AGENTS.md`. Most coding
 agents load a project-instructions file at start. The lines in that file
 set the rules for the whole session, and you didn't have to repeat them.
+Claude Code reads `AGENTS.md` when the project has no `CLAUDE.md`, which is
+the case in this fixture (@Claude Code memory).
 
 Many coding agents have a read-only mode, often called plan mode, in which
 the agent reads, searches and runs commands to explore, but edits nothing.
@@ -262,9 +274,9 @@ Some agents add modes between the last two, such as a list of commands you
 approved in advance that runs without a prompt, or an automatic check that
 reviews each action against your request in place of you. Before you use
 one, read what your agent's documentation says it still asks about. Check
-which mode your agent starts in, too. In Claude Code that depends on your
-plan, on whether you run it in a terminal, an editor or the browser, and
-on your settings, and it has changed between versions
+which mode your agent starts in, too. In Claude Code that depends on the
+version, on whether you run it in a terminal, an editor or the browser, and
+on your settings. On older versions it depended on your plan as well
 (@Claude Code permission modes).
 
 Each mode sets how much the agent can do before you get a chance to say
@@ -379,7 +391,9 @@ Most agents summarize the session for you when the context is nearly full,
 and many let you ask for a summary earlier. The summary keeps what the
 agent judges important, which isn't always what you need next. When you ask
 for one, say what it should keep: the task, the files touched, and the
-check that still has to run (@Academy claude-code-in-action).
+check that still has to run (@Academy claude-code-in-action). In Claude
+Code, the `/compact` command followed by what to focus on asks for that
+summary (@Claude Code how it works).
 
 <Choice id="same-session-or-new" objective="coding-with-agents/ships-with-agent/runs-a-session"
   concepts={['session-and-context']}
