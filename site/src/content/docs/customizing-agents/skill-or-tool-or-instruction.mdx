@@ -16,7 +16,7 @@ one worked decision, and the exercise is a sort you do on paper.
 
 In the agent loop from the concepts course, the model reads its context
 and decides what to do next, and the software around it runs the tools it
-asks for (@AEC-17). Every way to customize an agent changes one of those
+asks for (@AEC-03). Every way to customize an agent changes one of those
 two parts. Either it puts different text in the context, or it gives the
 software a different set of tools to run.
 
@@ -24,7 +24,7 @@ An **instruction** is standing text, loaded at the start of every session
 and present on every turn. `AGENTS.md` from the last lesson is one. It
 suits a rule that always applies, the test command being the usual
 example. The harness loads it every time. It is there
-whether the task needs it or not (@Academy claude-code-101).
+whether the task needs it or not (@Academy claude-code-101) (@Claude Code features).
 
 A **skill** is a procedure with a trigger. It is a directory with a
 short description of when it applies, and the agent sees only that
@@ -133,10 +133,13 @@ turn and in what they let it do. Put them on two axes.
 **Context.** An instruction file is read in full on every turn of every
 session, whether or not the task needs it. A skill puts one line, its
 description, in the context on every turn, and the full body from the
-turn it is invoked on. In an agent that loads every tool up front, a
+turn it is invoked on. With many skills installed, Claude Code keeps
+every skill's name in that list but can drop the descriptions of the
+skills used least, to stay within a fixed budget (@Claude Code skills).
+In an agent that loads every tool up front, a
 tool puts its name, description and parameter schema in the context on
 every turn, and a server that exposes thirty tools puts thirty of them
-there (@AEC-17). Claude Code defers MCP tool definitions by default and
+there (@AEC-03). Claude Code defers MCP tool definitions by default and
 loads only the tool names and the server's instructions at the start of
 a session, so the cost per tool is smaller there, and it is still a cost
 on every turn (@Claude Code mcp). The last lesson's warning about long
@@ -159,7 +162,10 @@ calls for the service, it costs one description line until then, and it
 adds no new ability, because the shell and the client were already
 there. Anthropic's own guidance points at this middle way: reach
 for a skill around a command before you write or connect a tool server
-for it (@Academy claude-code-101). A tool server is right when there is
+for it (@Academy claude-code-101). Claude Code's guide to costs makes
+the same point about context: a command-line client adds no tool
+listing, so it costs less context than a tool server (@Claude Code costs).
+A tool server is right when there is
 no client to wrap, when the ability is new to the agent, or when you
 need the schema and the access control that a tool gives you and a shell
 command doesn't.
@@ -212,7 +218,7 @@ Match each need to the mechanism that fits it.
   title="What each one costs" hint="Which of these add access, and which spend context on every turn?"
   options={[
     { text: 'Instructions and skills add no new access.', correct: true },
-    { text: 'A skill costs no context until it is used.', why: 'The skill\'s description is in context on every turn, so the agent can decide to load it.' },
+    { text: 'A skill costs no context until it is used.', why: 'The skill\'s name, and usually its description, is in context on every turn, so the agent can decide to load it.' },
     { text: 'A tool adds an ability with whatever access its credentials carry.', correct: true },
     { text: 'A tool costs context only on the turns that call it.', why: 'At least a tool\'s name is in context on every turn, called or not, and in many clients its full description too.' },
   ]}>

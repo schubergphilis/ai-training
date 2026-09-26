@@ -24,9 +24,14 @@ exercise:
     the one-line reason next to each.
 sources:
   - AEC-17
+  - AEC-03
   - Claude Code skills
   - Claude Code mcp
+  - Claude Code features
+  - Claude Code costs
   - Academy claude-code-101
   - Academy introduction-to-agent-skills
 issue: 159
 minutes: 10
+sources-checked: 2026-09-26
+review-by: 2027-03-26
