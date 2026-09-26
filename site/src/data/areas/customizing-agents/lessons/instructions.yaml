@@ -23,5 +23,9 @@ exercise:
     write an AGENTS.md of at most fifteen lines from them.
 sources:
   - Academy claude-code-101
+  - Claude Code memory
   - Claude Code hooks
+  - AGENTS.md format
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 20

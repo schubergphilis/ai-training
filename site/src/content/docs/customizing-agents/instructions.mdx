@@ -17,7 +17,9 @@ reproduce every step in an empty directory with a text editor.
 Most coding agents look for a Markdown file at the root of the repository
 and load it into their context before the first user message. The
 convention differs by tool: some look for `AGENTS.md`, some for
-`CLAUDE.md`, some for both. The content is the same either way, so the
+`CLAUDE.md`, some for both. Claude Code, for example, reads `CLAUDE.md`,
+and reads `AGENTS.md` only when the project has no `CLAUDE.md`
+(@Claude Code memory). The content is the same either way, so the
 common pattern is to write `AGENTS.md` and make `CLAUDE.md` a symlink to
 it, or to have one contain one line pointing at the other.
 
@@ -82,9 +84,10 @@ lesson learned, not one paragraph per feature.
 Claude Code can write a first draft of the file with its `/init` command,
 from what it finds in the repository. Treat that draft as a list of
 candidates and delete every line the agent could have found itself. The
-vendor's own advice matches the exercise at the end of this lesson: start
-a project without the file and add one line each time you have to correct
-the agent (@Academy claude-code-101).
+vendor's own advice is close to the exercise at the end of this lesson:
+add to the file when the agent makes the same mistake a second time, or
+when you type a correction you already typed in an earlier session
+(@Claude Code memory).
 
 ## What doesn't belong
 
@@ -171,11 +174,22 @@ nothing in it restates what the agent could read from the repository.
 ## Instructions in a monorepo
 
 A repository with more than one project in it needs more than one file.
-The tools handle this the same way: the agent always reads the file at the
-repository root, and it also reads a file in a subdirectory when it works
-on files under that directory. Closer wins on conflict.
+Most tools read the file at the repository root, and also a file in a
+subdirectory when the agent works on files under that directory. Claude
+Code, for example, reads every instruction file from the directory you
+start it in up to the root when the session starts. It reads a
+subdirectory's file when it first reads a file in that subdirectory
+(@Claude Code memory).
 
-That gives a natural split. The root file holds what's true everywhere:
+The tools differ on a conflict between two files. The AGENTS.md format
+says that the file closest to the edited file takes precedence
+(@AGENTS.md format). Claude Code keeps every file in its context, with
+the closer file after the root file, and when two rules contradict each
+other it may follow either one (@Claude Code memory). So treat a
+conflict between two files as a mistake to fix, and don't count on the
+closer file to apply.
+
+The way the tools read the files gives a natural split. The root file holds what's true everywhere:
 the task runner, the commit convention, the branch rule. Each project's
 file holds only what differs: its own test command, its own language, its
 own recurring mistakes.
@@ -195,8 +209,8 @@ reads standalone. The agent sees both; the copy only adds a second place
 to keep in sync.
 
 Your personal preferences belong in neither file. Claude Code also reads
-a user-level `CLAUDE.md` from your home configuration directory, in every
-project and only for you. How you like a change explained or which shell
+a user-level `~/.claude/CLAUDE.md`, in every project and only for you
+(@Claude Code memory). How you like a change explained or which shell
 you use goes there. The shared file then holds only what the whole team
 needs (@Academy claude-code-101).
 
@@ -211,20 +225,23 @@ tool call or after an edit. When it runs before a tool call, it can
 block the action outright. For example, a hook that runs before every
 shell command, inspects the command the agent is about to run, and
 exits with code 2 when it matches `git push` to `main` means the push
-never happens, however far back the instruction file has scrolled
+never happens, however far back the instruction file has scrolled. In
+Claude Code, exit code 2 is the code that blocks. A hook that exits
+with 1 reports an error, and the command still runs
 (@Claude Code hooks). "Never push to `main`" in `AGENTS.md` is advice.
 The hook enforces it. A hook that runs the formatter after every edit
 works the same way for a procedure the agent often forgets. The message
 a blocking hook prints goes back to the agent, so it learns why the
-action was refused and can change course instead of retrying. Hooks in
-the project's shared settings file are committed with the code.
-Everyone who clones the repository gets the same enforcement without
-setting it up (@Academy claude-code-101). And when a rule isn't a
-prohibition but a procedure, a multi-step thing the agent should do the
-same way every time, it is better packaged as a *skill*: a named,
-self-contained set of instructions the agent loads only when the task
-calls for it, so it doesn't sit in every session's context. The next
-lesson is about writing one.
+action was refused and can change course instead of retrying
+(@Claude Code hooks). Hooks in the project's shared settings file,
+`.claude/settings.json` in Claude Code, are committed with the code
+(@Claude Code hooks). Everyone who clones the repository gets the same
+enforcement without setting it up (@Academy claude-code-101). And when
+a rule isn't a prohibition but a procedure, a multi-step thing the
+agent should do the same way every time, it is better packaged as a
+*skill*: a named, self-contained set of instructions the agent loads
+only when the task calls for it, so it doesn't sit in every session's
+context. The next lesson is about writing one.
 
 <Exercise stretch="Now add one more rule that is enforced rather than advised: an agent hook that blocks the action, or a CI check that fails when the rule is broken, and remove the equivalent line from AGENTS.md.">
 In an empty directory, create a throwaway project: any language, a test
@@ -249,7 +266,8 @@ doesn't, it is a candidate to delete.
    to every project on earth. Short files get followed; long ones get
    skimmed.
 4. In a monorepo, the root file holds what's shared and each project's
-   file holds only what differs, and on conflict the closer file applies.
+   file holds only what differs. Keep the two from contradicting each
+   other, because tools differ on which one applies.
 5. A rule you can't afford to have skipped belongs in a hook rather than
    in prose, and a procedure the agent should repeat belongs in a skill.
 </Recap>
