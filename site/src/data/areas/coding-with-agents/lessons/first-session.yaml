@@ -30,7 +30,14 @@ shorts:
 exercise:
   kind: do
   brief: A scripted change in the fixture repository, reviewed the same way.
-sources: [Academy claude-code-101, Academy claude-code-in-action, Claude Code permission modes]
+sources:
+  - Academy claude-code-101
+  - Academy claude-code-in-action
+  - Claude Code permission modes
+  - Claude Code memory
+  - Claude Code how it works
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 25
 notes: >-
   Issue #94 adds a permission modes section and checkpoint to this page. It is a section of this
