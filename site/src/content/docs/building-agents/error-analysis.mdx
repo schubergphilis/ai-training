@@ -214,7 +214,7 @@ some of those can start to fail. A fix aimed at the most common category
 changes one thing that you can name, and you can check it on the runs
 that failed.
 
-<Choice id="which-fix-first" objective="building-agents/evaluates-agents/grades-trajectories"
+<Choice id="which-fix-first" objective="building-agents/evaluates-agents/prioritizes-fixes"
   concepts={['error-analysis']}
   context="A support agent answers product questions with a search tool. A team read its 20 failed runs of one week and counted them by the step where each went wrong. The run a manager forwarded on Friday was one of the step-limit failures."
   title="Which change comes first?"
@@ -259,7 +259,7 @@ Count the failures of the week by kind before you choose what to fix.
     { text: 'The search for "bicycle" found no page, and a page covers bikes', bucket: 1 },
   ]} />
 
-<Scenario id="the-forwarded-failure" phase="review" objective="building-agents/evaluates-agents/grades-trajectories"
+<Scenario id="the-forwarded-failure" phase="review" objective="building-agents/evaluates-agents/prioritizes-fixes"
   concepts={['error-analysis']}
   context="A team runs a handbook assistant. Its manager forwards one bad answer from this morning and asks the team to fix it today. The team has the transcripts of the week's 12 failed runs and hasn't read them yet."
   title="The manager forwards one failure"

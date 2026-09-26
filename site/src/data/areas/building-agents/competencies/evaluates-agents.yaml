@@ -68,6 +68,27 @@ objectives:
           transcripts.
         example: The scores are unchanged, and the transcripts show the agent has started apologizing in
           every reply since the prompt change.
+  - id: building-agents/evaluates-agents/prioritizes-fixes
+    statement: Chooses what to fix from counted failures
+    level: base
+    behaviors:
+      - claim: Before changing the agent, the learner reads the failed runs of a period and counts them by
+          the kind of step where each went wrong.
+        why: Without a count, the team fixes the failure it remembers best, which is often the latest or
+          the one a manager forwarded.
+        example: 'Of 20 failed runs, 11 are search misses, 4 are made-up amounts, 3 hit the step limit and 2
+          answer in the wrong language.'
+      - claim: The learner fixes the most frequent kind first, with a change aimed at the part of the agent
+          that failed.
+        why: A targeted fix can turn every failure of its kind into a pass, and a general change such as a
+          larger model often does not reach a fault in a tool or in the search.
+        example: Five of ten failures are dates the tool could not read, so the learner writes the date
+          format into the parameter description before touching the stop rule.
+      - claim: The learner checks the fix on the next batch of runs and counts the kinds again.
+        why: A fix can miss its target or break runs that passed, and once it works another kind becomes
+          the most common.
+        example: In the week after the date fix, no run fails on a date the tool could not read, and search
+          misses are now the largest kind, so they are the next fix.
   - id: building-agents/evaluates-agents/avoids-gamed-metrics
     statement: Chooses metrics that cannot improve without the real quality improving
     level: expert

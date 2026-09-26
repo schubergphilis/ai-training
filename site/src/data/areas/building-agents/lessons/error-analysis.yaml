@@ -8,6 +8,7 @@ mode: explanation
 covers: building-agents/evaluation
 serves:
   - building-agents/evaluates-agents/grades-trajectories
+  - building-agents/evaluates-agents/prioritizes-fixes
   - building-agents/evaluates-agents/builds-a-golden-set
 introduces: [error-analysis]
 assumes:
@@ -42,5 +43,5 @@ notes: >-
   definition, and AEC-09 is cited only for finding the step in a trace, for improving a tool
   description when a trace shows wrong arguments, and for adding a production failure to the test
   set. DLAI-11 and Academy building-with-the-claude-api from the plan were dropped because the page
-  cites no claim from them. The two first checkpoints on grades-trajectories test classifying and
-  choosing the fix, and each has its own review alternate.
+  cites no claim from them. The Match on grades-trajectories tests classifying, and the Choice on
+  prioritizes-fixes tests choosing the fix. The Sort and the Scenario are their review alternates.

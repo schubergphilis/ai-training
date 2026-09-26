@@ -68,4 +68,5 @@ rows:
       - building-agents/evaluates-agents/writes-a-rubric
       - building-agents/evaluates-agents/builds-a-golden-set
       - building-agents/evaluates-agents/grades-trajectories
+      - building-agents/evaluates-agents/prioritizes-fixes
       - building-agents/evaluates-agents/avoids-gamed-metrics

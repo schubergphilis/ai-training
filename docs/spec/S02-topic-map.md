@@ -562,6 +562,7 @@ Learning objectives:
 | `evaluates-agents`    | `writes-a-rubric`              | base   | Turns "good" into scorable criteria                                      |
 | `evaluates-agents`    | `builds-a-golden-set`          | base   | Builds a representative input set with expected qualities                |
 | `evaluates-agents`    | `grades-trajectories`          | base   | Grades the path the agent took, not only the final answer                |
+| `evaluates-agents`    | `prioritizes-fixes`            | base   | Chooses what to fix from counted failures                                |
 | `evaluates-agents`    | `avoids-gamed-metrics`         | expert | Chooses metrics that can't improve without the real quality improving    |
 | `orchestrates-agents` | `picks-a-pattern`              | base   | Picks a design pattern for a task and says why                           |
 | `orchestrates-agents` | `justifies-orchestration-cost` | base   | Justifies the coordination cost of more than one agent                   |
