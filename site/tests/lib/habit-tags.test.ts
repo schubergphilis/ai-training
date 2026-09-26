@@ -1,4 +1,5 @@
-import { assertHabitId, HABIT_ID, habitTagsOfSource, MAX_HABITS, RESERVED_IDS } from '@lib/habit-tags';
+import { assertHabitId, HABIT_ID, habitTagsOfSource, MAX_HABITS } from '@lib/habit-tags';
+import { RESERVED_IDS } from '@lib/page-ids';
 import { describe, expect, it } from 'vitest';
 
 const page = (habits: string, before = '') =>

@@ -165,6 +165,13 @@ diagnostic question, never the answer), and `concepts` (the S02 concept
 ids the checkpoint exercises, at least one, as an array). Children are the
 stem, as Markdown.
 
+Because the id is a DOM id, it must also differ from every heading slug
+of the page and from the ids the build adds (`site/src/lib/page-ids.ts`).
+An ungraded example's `id` follows the same rule. When a new checkpoint
+clashes with a heading, rename the checkpoint. When an existing one
+clashes, rename the heading, because a learner's progress is stored under
+the checkpoint id.
+
 A concept id is the `id` of a `concepts` entry in a topic YAML under
 `site/src/data/areas/<area>/topics/`, the same id the glossary anchors use (`token`,
 `blast-radius`), and it may come from any topic, not only the one the

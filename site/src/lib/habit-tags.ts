@@ -9,6 +9,7 @@
  */
 import { KIND_OF_TAG } from './checkpoint-rules';
 import { attrsOf, childrenSource, jsxElements, type MdxNode, parseMdx, stringProp } from './checkpoint-tags';
+import { isBuildId, MATCH_ROW_ID } from './page-ids';
 import { headingSlugs } from './section-slugs';
 
 export const HABIT_TAG = 'Habit';
@@ -16,47 +17,6 @@ export const HABIT_TAG = 'Habit';
 export const MAX_HABITS = 2;
 /** A habit id is a lowercase kebab-case slug. */
 export const HABIT_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-/**
- * The DOM ids the build puts on a lesson page that the lesson source doesn't
- * spell out, so a habit id must differ from each (issue #458). Starlight's own
- * fixed ids (`_top` from `constants.js` via `PageTitle.astro`,
- * `starlight__sidebar` from `PageFrame.astro`, `starlight__search` from
- * `Search.astro`, `starlight__on-this-page` from `TableOfContents.astro`,
- * `starlight__mobile-toc` and `starlight__on-this-page--mobile` from
- * `MobileTableOfContents.astro`) aren't here, because `HABIT_ID` already
- * rejects an id with `_` or `--`.
- */
-export const RESERVED_IDS: ReadonlySet<string> = new Set([
-	// The heading `plugins/remark-citations.mjs` appends when the lesson cites a source; Starlight slugs it.
-	'references',
-	// The group headings of the lesson table of contents, one per group in `lib/lesson-toc.ts`:
-	// `overrides/TableOfContents.astro` emits `lesson-toc-<group>`.
-	'lesson-toc-checkpoints',
-	'lesson-toc-examples',
-	// `overrides/MobileTableOfContents.astro` emits `lesson-toc-mobile-<group>`.
-	'lesson-toc-mobile-checkpoints',
-	'lesson-toc-mobile-examples',
-	// The sections `<Recap>` (`lesson/Recap.astro`), `<Exercise>` (`lesson/Exercise.astro`) and
-	// `<MorePractice>` (`lesson/MorePractice.astro`) render, with an id the tag doesn't carry.
-	'recap',
-	'exercise',
-	'more-practice',
-	// The `<template>` of theme icons Starlight's `ThemeProvider.astro` puts on every page.
-	'theme-icons',
-]);
-/** The id of the n-th entry of the references list `plugins/remark-citations.mjs` appends. */
-export const REFERENCE_ID = /^ref-\d+$/;
-/**
- * The ids Starlight's `<Tabs>` gives its tabs and panels, `tab-<i>-<n>` and
- * `tab-panel-<i>-<n>` (`@astrojs/starlight/dist/user-components/tabs-processor.js`).
- */
-export const TAB_ID = /^tab-(?:panel-)?\d+-\d+$/;
-/**
- * The ids `lesson/Match.astro` gives the rows of a `<Match>`: `<id>-row-<i>` on each
- * select and `<id>-row-<i>-fb` on its feedback. Group 1 is the checkpoint id.
- */
-export const MATCH_ROW_ID = /^(.+)-row-\d+(?:-fb)?$/;
 
 export interface HabitInfo {
 	/** The id within the lesson; the progress id is `<lesson id>#<id>`. */
@@ -76,8 +36,7 @@ export function assertHabitId(where: string, id: string | undefined): string {
  * The habits in `tree`, parsed from `src`, in source order, after the rules:
  * at most `MAX_HABITS`, each with a kebab-case `id` unique in the lesson that
  * is not a heading slug, a checkpoint id, the id of a `<Match>` row or an id
- * the build adds (`RESERVED_IDS`, `REFERENCE_ID`, `TAB_ID`, the slug of the
- * appended `References` heading), each after the `<Recap>`, and each with text.
+ * the build adds (`isBuildId` in `lib/page-ids.ts`), each after the `<Recap>`, and each with text.
  * Throws on the first break, naming `where`.
  */
 export function habitTagsIn(tree: MdxNode, src: string, where: string): HabitInfo[] {
@@ -88,11 +47,6 @@ export function habitTagsIn(tree: MdxNode, src: string, where: string): HabitInf
 	const recapEnd = Math.max(-1, ...elements.filter((n) => n.name === 'Recap').map((n) => n.position?.end.offset ?? -1));
 	// The ids the build gives the headings (`lib/section-slugs.ts`), so a repeated heading's `-1` counts too.
 	const slugs = new Set(headingSlugs(tree));
-	// The page-wide slugger slugs the `References` heading `plugins/remark-citations.mjs` appends
-	// after the source headings, so when a source heading has taken `references` it becomes the next
-	// free `references-<n>`.
-	let referencesSlug = 'references';
-	for (let n = 1; slugs.has(referencesSlug); n++) referencesSlug = `references-${n}`;
 	// A checkpoint's section id is its `id` too (`CheckpointShell.astro`), so a habit id must differ from those as well.
 	const checkpointIds = new Set(
 		elements
@@ -115,7 +69,7 @@ export function habitTagsIn(tree: MdxNode, src: string, where: string): HabitInf
 		ids.add(id);
 		if (slugs.has(id)) throw new Error(`${where}: habit id "${id}" is also a heading slug; pick another id`);
 		if (checkpointIds.has(id)) throw new Error(`${where}: habit id "${id}" is also a checkpoint id; pick another id`);
-		if (RESERVED_IDS.has(id) || id === referencesSlug || REFERENCE_ID.test(id) || TAB_ID.test(id))
+		if (isBuildId(id, slugs))
 			throw new Error(`${where}: habit id "${id}" is also an id the build adds to the lesson page; pick another id`);
 		const row = MATCH_ROW_ID.exec(id);
 		if (row && matchIds.has(row[1] ?? ''))

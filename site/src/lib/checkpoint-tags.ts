@@ -13,6 +13,8 @@ import {
 	MORE_PRACTICE_TAG,
 	PHASES,
 } from './checkpoint-rules';
+import { isBuildId, MATCH_ROW_ID } from './page-ids';
+import { headingSlugs } from './section-slugs';
 
 /**
  * The checkpoint tag reader: finds every `<Choice ...>` (and the other kinds
@@ -227,13 +229,31 @@ function checkPracticePlacement(
 }
 
 /**
+ * Throws unless the checkpoint id `id` differs from every other DOM id the
+ * page gets: a heading slug in `slugs`, the id of a row of a `<Match>` in
+ * `matchIds`, and an id the build adds (`isBuildId`). Names `where`.
+ */
+function assertFreeDomId(where: string, id: string, slugs: ReadonlySet<string>, matchIds: ReadonlySet<string>): void {
+	if (slugs.has(id)) throw new Error(`${where}: checkpoint id "${id}" is also a heading slug; pick another id`);
+	if (isBuildId(id, slugs))
+		throw new Error(`${where}: checkpoint id "${id}" is also an id the build adds to the lesson page; pick another id`);
+	const row = MATCH_ROW_ID.exec(id);
+	if (row && matchIds.has(row[1] ?? ''))
+		throw new Error(
+			`${where}: checkpoint id "${id}" is also the id of a row of <Match id="${row[1]}">; pick another id`,
+		);
+}
+
+/**
  * The checkpoint tags in `tree`, parsed from `src`: the component name, its
  * props, and the children as Markdown (empty for a self-closing tag). `where`
  * names the lesson in error messages. The reader only knows the tags in
  * `KIND_OF_TAG`, so a new kind enters there first. A `<Predict>` with no
  * `objective` is an ungraded example, not a checkpoint, and is skipped, but
  * its `id` still counts: every tag's string `id` must be unique in the page,
- * because each one becomes a DOM id. Each tag's `phase` is read and checked,
+ * because each one becomes a DOM id. For the same reason it must not be a
+ * heading slug of the page, the id of a `<Match>` row or an id the build adds
+ * (`isBuildId` in `lib/page-ids.ts`, issue #471). Each tag's `phase` is read and checked,
  * and so is where the `practice` ones are (`checkPracticePlacement`).
  */
 export function checkpointTagsIn(tree: MdxNode, src: string, where: string): CheckpointTagInfo[] {
@@ -241,6 +261,15 @@ export function checkpointTagsIn(tree: MdxNode, src: string, where: string): Che
 	const placed: { node: JsxElement; info: CheckpointTagInfo; id: string }[] = [];
 	const ids = new Set<string>();
 	const elements = jsxElements(tree);
+	// The ids the build gives the headings (`lib/section-slugs.ts`), so a repeated heading's `-1` counts too.
+	const slugs = new Set(headingSlugs(tree));
+	// A `<Match>` gives each of its rows ids too (`MATCH_ROW_ID`).
+	const matchIds = new Set(
+		elements
+			.filter((n) => n.name === 'Match')
+			.map((n) => attrsOf(n, where).get('id')?.value)
+			.filter((v): v is string => typeof v === 'string'),
+	);
 	for (const node of elements) {
 		const kind: CheckpointKind | undefined = node.name ? KIND_OF_TAG[node.name as CheckpointTag] : undefined;
 		if (!kind) continue;
@@ -250,6 +279,7 @@ export function checkpointTagsIn(tree: MdxNode, src: string, where: string): Che
 		if (id && !id.expr && typeof id.value === 'string') {
 			if (ids.has(id.value)) throw new Error(`${where}: id "${id.value}" is used twice`);
 			ids.add(id.value);
+			assertFreeDomId(where, id.value, slugs, matchIds);
 		}
 		// A Predict without an objective is an ungraded example (spec S03 "Examples"): CI runs its fixture,
 		// the page shows the output, and it is not a checkpoint anywhere.
