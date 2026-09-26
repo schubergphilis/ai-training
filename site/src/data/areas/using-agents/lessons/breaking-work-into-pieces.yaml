@@ -20,6 +20,8 @@ exercise:
     that each have an input, an output and a check, write the brief for the first piece, and run
     that piece so the result is what you look at.
 sources: [DLAI-11, Academy ai-fluency-framework-foundations]
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 15
 notes: >-
   The issue listed no assumed objective. The page checks a piece against its own criterion, which the
