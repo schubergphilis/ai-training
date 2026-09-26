@@ -83,8 +83,12 @@ test('a page without headings keeps the right column but drops "On this page"', 
 test('topic, competency and glossary pages render', async ({ page }) => {
 	await page.goto('topics/concepts/how-models-work/');
 	await expect(page.locator('h1')).not.toBeEmpty();
-	await page.goto('competencies/concepts/explains-models/');
+	const competency = 'concepts/explains-models';
+	await page.goto(`competencies/${competency}/`);
 	expect(await page.locator('tbody tr').count()).toBeGreaterThan(0);
+	// The course line links to the course of the competency's area (#514).
+	const courseArea = competency.split('/')[0];
+	await expect(page.locator('[data-competency-course] a')).toHaveAttribute('href', `/ai-training/${courseArea}/`);
 	await page.goto('glossary/');
 	await expect(page.locator('h1')).toHaveText('Glossary');
 });
@@ -129,9 +133,11 @@ test('the competency map is the heading of the competency groups, and clicking i
 	// A competency page opened from the map is the current page in its sidebar group.
 	const box = page.locator('.competency-node a.competency-title').first();
 	const target = await box.getAttribute('href');
+	const current = page.locator(`nav.sidebar a[href="${target}"]`);
+	// Its area group is closed on the map page, so the link only shows once its page is open.
+	await expect(current).toBeHidden();
 	await box.click();
 	await expect(page).toHaveURL(new RegExp(`${target}$`));
-	const current = page.locator(`nav.sidebar a[href="${target}"]`);
 	await expect(current).toHaveAttribute('aria-current', 'page');
 	await expect(current).toBeVisible();
 });

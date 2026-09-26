@@ -89,13 +89,13 @@ the lesson pages.
 
 ### Stable URLs
 
-| Page       | URL                                  | Notes                                                                           |
-| ---------- | ------------------------------------ | ------------------------------------------------------------------------------- |
-| Topic      | `/topics/<area>/<topic>/`            | The map opens it in a side drawer and updates the URL, so the view is shareable |
-| Competency | `/competencies/<area>/<competency>/` | Lists objectives, behaviors, alignment, and the lessons that serve it           |
-| Comp. map  | `/competencies/`                     | The competency map: every competency and its objectives, one column per course  |
-| Glossary   | `/glossary/#<concept>`               | Generated from every topic's concept definitions                                |
-| Reference  | `/reference/`                        | The learner's reference: finished lessons by area, linking to their topic pages |
+| Page           | URL                                  | Notes                                                                           |
+| -------------- | ------------------------------------ | ------------------------------------------------------------------------------- |
+| Topic          | `/topics/<area>/<topic>/`            | The map opens it in a side drawer and updates the URL, so the view is shareable |
+| Competency     | `/competencies/<area>/<competency>/` | Lists objectives, behaviors, alignment, and the lessons that serve it           |
+| Competency map | `/competencies/`                     | The competency map: every competency and its objectives, one column per course  |
+| Glossary       | `/glossary/#<concept>`               | Generated from every topic's concept definitions                                |
+| Reference      | `/reference/`                        | The learner's reference: finished lessons by area, linking to their topic pages |
 
 Tutor mode cites these URLs when it points a learner somewhere.
 
