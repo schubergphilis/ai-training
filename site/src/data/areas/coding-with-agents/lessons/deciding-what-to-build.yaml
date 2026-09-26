@@ -25,6 +25,8 @@ exercise:
     Take three feature requests against the fixture and reject or shrink at least one. For the rest,
     write checkable success criteria with an out-of-scope line.
 sources: [Academy ai-fluency-for-builders, Brilliant TAS]
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 15
 notes: >-
   Explanation mode because nothing runs. The feature requests are against the first-session to-do
