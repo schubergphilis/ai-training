@@ -9,6 +9,7 @@
  * alternate's hidden section is shown in the item's place.
  */
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ReviewIntro from '@components/ReviewIntro.astro';
 import { getAreas } from '@lib/areas';
 import { reviewAlternatesOf } from '@lib/checkpoint-rules';
 import { checkpointsOf, getLessons, habitsOf } from '@lib/lessons';
@@ -34,25 +35,11 @@ const catalog = lessons.map((l) => {
 		habits: habitsOf(l).map((h) => ({ id: h.id, html: renderInline(h.text) })),
 	};
 });
-// Every kind the page may ask: the reviewable `first` checkpoints and their `review` alternates.
-const formats = [
-	...new Set(
-		lessons.flatMap((l) =>
-			checkpointsOf(l, { alternates: true })
-				.filter((c) => c.phase !== 'practice' && c.reviewable)
-				.map((c) => c.kind),
-		),
-	),
-];
 ---
 
 <StarlightPage frontmatter={{ title: `Review: ${area.name}`, description: `Review items due for the ${area.name} course.`, tableOfContents: false }}>
 	<div class="not-content review" data-review={area.slug} data-catalog={JSON.stringify(catalog)}>
-		<p>
-			Items from lessons you finished, re-asked at growing intervals. Answer formats in this course:
-			{formats.length ? formats.map((f) => <code>{f}</code>) : 'none yet'}. <strong>Hint</strong> nudges; <strong>Give up</strong>
-			shows the answer after one attempt and counts as a fail.
-		</p>
+		<ReviewIntro area={area.slug} />
 		<div class="review-habits" data-habits hidden></div>
 		<div class="review-progress" aria-label="Items in this session"><div data-bar></div></div>
 		<p data-status role="status"></p>

@@ -1,6 +1,6 @@
 /**
  * Renders the page-level components that read the content collections
- * (CourseGraph, CoursePlan, TopicMap, CompetencyMap, Settings, OverallProgress, CompetencyObjectives) against the fixture lessons in
+ * (CourseGraph, CoursePlan, TopicMap, CompetencyMap, Settings, OverallProgress, CompetencyObjectives, ReviewIntro) against the fixture lessons in
  * tests/lib/content.ts. What the client scripts draw on top is covered by
  * the e2e suite; these tests check the server-rendered frame the scripts
  * bind to.
@@ -13,6 +13,7 @@ import CoursePlan from '@components/CoursePlan.astro';
 import LearnersReference from '@components/LearnersReference.astro';
 import OverallProgress from '@components/OverallProgress.astro';
 import References from '@components/References.astro';
+import ReviewIntro from '@components/ReviewIntro.astro';
 import Settings from '@components/Settings.astro';
 import TopicMap from '@components/TopicMap.astro';
 import TopicReference from '@components/TopicReference.astro';
@@ -207,6 +208,30 @@ describe('Competency page', () => {
 		expect(await courseLine('concepts/explains-models')).toContain(
 			'<strong>Taught in:</strong> the <a href="/ai-training/concepts/">Concepts</a> course',
 		);
+	});
+});
+
+describe('ReviewIntro', () => {
+	// The review page renders ReviewIntro; StarlightPage needs the real sidebar, so the test renders the component.
+	const intro = async (area: string) => {
+		const html = await container.renderToString(ReviewIntro, { props: { area } });
+		return html
+			.replace(/<[^>]+>/g, '')
+			.replace(/\s+/g, ' ')
+			.trim();
+	};
+	it('separates the format names and keeps the spaces around the bold words (#517)', async () => {
+		const text = await intro('concepts');
+		const formats = /answer formats: ([^.]*)\./.exec(text)?.[1] ?? '';
+		// The fixture's concepts lessons ask two or more kinds, whatever they are.
+		const names = formats.split(', ');
+		expect(names.length).toBeGreaterThanOrEqual(2);
+		for (const name of names) expect(name).toMatch(/^[a-z-]+$/);
+		expect(text).toContain('intervals. This course asks them');
+		expect(text).toContain('. Hint gives a nudge. Give up shows the answer');
+	});
+	it('says so when the course has nothing to ask', async () => {
+		expect(await intro('using-agents')).toContain('This course has no items to ask yet. Hint gives a nudge.');
 	});
 });
 

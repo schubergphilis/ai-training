@@ -1,0 +1,37 @@
+---
+/**
+ * The intro paragraph of a course review page (spec S05 "The review page"):
+ * what the page asks, the answer formats the course's items use, and what
+ * Hint and Give up do. A component of its own so the Container API test can
+ * render it without StarlightPage (issue #517). The format names are the
+ * checkpoint kind ids of spec S01 "Interaction types", which has no other
+ * learner-facing names. The script joins them with ", " and builds the
+ * sentence, so no space depends on source whitespace, which the compiler
+ * drops at a tag's line edge.
+ */
+import { checkpointsOf, getLessons } from '@lib/lessons';
+
+interface Props {
+	area: string;
+}
+
+const { area } = Astro.props;
+const lessons = await getLessons(area);
+// Every kind the page may ask: the reviewable `first` checkpoints and their `review` alternates.
+const formats = [
+	...new Set(
+		lessons.flatMap((l) =>
+			checkpointsOf(l, { alternates: true })
+				.filter((c) => c.phase !== 'practice' && c.reviewable)
+				.map((c) => c.kind),
+		),
+	),
+];
+const formatText = formats.length
+	? `This course asks them in these answer formats: ${formats.join(', ')}.`
+	: 'This course has no items to ask yet.';
+---
+
+<p data-review-intro>
+	Items from lessons you finished come back at growing intervals. {formatText} <strong>Hint</strong> gives a nudge. <strong>Give up</strong> shows the answer after one attempt, and the item counts as failed.
+</p>
