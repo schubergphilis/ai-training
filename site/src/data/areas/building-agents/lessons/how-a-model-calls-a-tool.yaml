@@ -27,6 +27,9 @@ sources:
   - Claude docs messages
   - Academy building-with-the-claude-api
   - Academy introduction-to-model-context-protocol
+  - AEC-03
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 issue: 182
 minutes: 10
 notes: >-
