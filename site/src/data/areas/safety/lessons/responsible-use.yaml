@@ -14,6 +14,8 @@ assumes:
   - objective: concepts/explains-models/names-failure-modes
     lesson: concepts/how-models-work
     section: failure-modes-named
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 extends-to:
   - label: Why agent safety is different
     href: /safety/agent-risk/
@@ -29,4 +31,7 @@ exercise:
     subprocessors.
 sources:
   - Academy ai-fluency-framework-foundations
+  - Claude privacy consumer-training
+  - Claude privacy commercial-training
+  - GitHub docs code-referencing
 minutes: 20
