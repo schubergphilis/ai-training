@@ -79,9 +79,9 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   `proofs`. Add it to `UNRUN_EXEMPT` in `site/scripts/lib/examples.mjs`,
   with the reason, only when neither can run it: a script the learner
   runs or reads whose output the page doesn't show, such as a setup tool
-  or a model answer, or a foundations fixture not moved to `proofs` yet
-  (#311). The list only shrinks, and the check fails on an entry that a
-  Predict or a proof now runs or that doesn't name an entry script.
+  or a model answer. The list only shrinks, and the check fails on an
+  entry that a Predict or a proof now runs or that doesn't name an entry
+  script.
 - **Links.** Internal links are root-relative. `starlight-links-validator`
   fails `mise run site-build` on a dead one, so the build is the check.
   Don't disable it.

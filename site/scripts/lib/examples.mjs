@@ -365,8 +365,6 @@ export function checkExamples(
  * Predict"). The list only shrinks: a fixture on it goes unchecked in CI, so a
  * page claim about its output can go stale with the build green.
  */
-const FOUNDATIONS =
-	'foundations page: `mise run data` rejects `<Predict run=...>` there, and the lesson file does not list it in `proofs` yet (#311)';
 const MODEL_ANSWER =
 	'a model answer the learner runs to compare with their own; the page shows the command and none of its output';
 const RED_TEAM_TOOL =
