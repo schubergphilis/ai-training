@@ -19,6 +19,9 @@ Usage: python3 check_items.py FILE
 Exit status 0 when every item passes, 1 otherwise, so a script can test it.
 
 Standard library only, Python 3.9 or later.
+
+The lesson's format checker widget ports these rules to the browser
+(site/src/scripts/format-checker-logic.ts). Change both together.
 """
 
 import datetime

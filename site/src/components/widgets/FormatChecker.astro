@@ -1,0 +1,140 @@
+---
+/**
+ * FormatChecker: the learner pastes what a chat assistant answered, presses
+ * Check, and reads one line per item (`ok`, or why the item fails) and a
+ * summary, the lines `check_items.py` prints for the same text. Teaches and
+ * never grades (spec S03 "Widgets"), and writes nothing to the progress
+ * record. The rules are `scripts/format-checker-logic.ts`, and
+ * `scripts/format-checker.ts` binds each instance.
+ *
+ * `sample` names a file under `site/examples/` (such as
+ * `concepts/structured-output/sample/lines.txt`) that fills the text box,
+ * so the page shows the file its proof fixture checks. `fields` and
+ * `priorities` default to the ones `check_items.py` uses.
+ */
+import { DEFAULT_CONFIG } from '@scripts/format-checker-logic';
+
+interface Props {
+	fields?: string[];
+	priorities?: string[];
+	sample?: string;
+}
+
+const { fields = [...DEFAULT_CONFIG.fields], priorities = [...DEFAULT_CONFIG.priorities], sample } = Astro.props;
+
+if (fields.length === 0) throw new Error('FormatChecker: fields is empty');
+if (priorities.length === 0) throw new Error('FormatChecker: priorities is empty');
+
+const SAMPLE_ROOT = '../../../examples/';
+const samples = import.meta.glob<string>('../../../examples/**/sample/*', {
+	query: '?raw',
+	import: 'default',
+	eager: true,
+});
+
+let text = '';
+if (sample !== undefined) {
+	const found = samples[SAMPLE_ROOT + sample];
+	if (found === undefined)
+		throw new Error(`FormatChecker: no sample ${sample} (a file in a sample/ directory under site/examples/)`);
+	text = found;
+}
+---
+
+<div
+	class="not-content format-checker"
+	data-format-checker
+	data-fields={JSON.stringify(fields)}
+	data-priorities={JSON.stringify(priorities)}
+>
+	<label class="fc-label">
+		<span>Paste the answer here</span>
+		<textarea class="fc-input" rows="8" spellcheck="false" autocomplete="off">{text}</textarea>
+	</label>
+	<button type="button" class="fc-check">Check</button>
+	<div class="fc-report" aria-live="polite">
+		<ul class="fc-lines"></ul>
+		<p class="fc-summary"></p>
+	</div>
+</div>
+
+<style>
+	.format-checker {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background: var(--sl-color-bg-nav);
+		font-size: var(--sl-text-sm);
+	}
+
+	.fc-label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.fc-input {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		resize: vertical;
+	}
+
+	.fc-input:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 1px;
+	}
+
+	.fc-check {
+		align-self: flex-start;
+		padding: 0.35rem 0.85rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: 0.25rem;
+		background: transparent;
+		color: var(--sl-color-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.fc-check:hover,
+	.fc-check:focus-visible {
+		background: var(--sl-color-accent);
+		color: var(--sl-color-text-invert);
+	}
+
+	.fc-lines {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		overflow-wrap: anywhere;
+	}
+
+	/* The rows are built with createElement and never get Astro's scope class, so their rules need :global(). */
+	.fc-lines :global(.fc-fail) {
+		color: var(--sl-color-red-high);
+	}
+
+	.fc-summary {
+		margin: 0;
+		font-weight: 600;
+	}
+</style>
+
+<script>
+	import { mountFormatCheckers } from '@scripts/format-checker';
+
+	mountFormatCheckers(document);
+</script>

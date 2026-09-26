@@ -1,10 +1,11 @@
 """Runs the checker on the sample that a bare "return JSON" prompt produced.
 
-The lesson shows `python3 check_items.py sample/bare.json` as its pitfall:
-the model chose its own keys and its own priority words, so every item
-fails and the checker returns 1. That status is dropped here on purpose,
-because the example runner treats a non-zero exit as a broken fixture, and
-this fixture shows a failing run.
+The lesson page loads sample/bare.json into its format checker for its
+pitfall, and shows this report in a `text` fence. The lesson file lists
+this script in `proofs`. The model chose its own keys and its own priority
+words, so every item fails and the checker returns 1. That status is
+dropped here on purpose, because the example runner treats a non-zero exit
+as a broken fixture, and this fixture shows a failing run.
 """
 
 import os

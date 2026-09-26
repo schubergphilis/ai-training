@@ -11,10 +11,11 @@ rank at most five components to build first.
 This site has two families of interactive parts. A checkpoint is graded
 and has one of the kinds in [S01 "Interaction
 types"](S01-dictionary.md#interaction-types). A widget teaches and never
-grades ([S03 "Widgets"](S03-lesson-authoring.md#widgets)). Two widgets
-exist today: `Sampler` (next-token sampling with a temperature slider)
-and `InstructionsBuilder` (tick facts about a project and see the
-instructions file it produces).
+grades ([S03 "Widgets"](S03-lesson-authoring.md#widgets)). Three widgets
+exist today: `Sampler` (next-token sampling with a temperature slider),
+`InstructionsBuilder` (tick facts about a project and see the
+instructions file it produces) and `FormatChecker` (paste an assistant's
+answer and see which items a strict import would reject).
 
 Lessons in the `foundations` group can't show terminal work (S03
 "Foundations audience"), so their hands-on step is a widget or a prompt

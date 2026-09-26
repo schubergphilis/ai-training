@@ -129,7 +129,6 @@ export const FOUNDATIONS_GROUP = 'foundations';
  * that shows no banned surface fails the check. No wildcards.
  */
 export const FOUNDATIONS_EXEMPT = new Map([
-	['concepts/structured-output', 237], // #237: browser format-checker widget replaces the terminal
 	['concepts/context-window', 238], // #238: widget or graded checkpoint replaces each Predict
 	['concepts/same-prompt-twice', 238], // #238
 	['safety/redact-before-you-paste', 238], // #238

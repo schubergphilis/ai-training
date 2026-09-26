@@ -69,9 +69,11 @@ export const LESSON_TIME = {
 	/**
 	 * Fixed seconds for an interactive widget, whose time the page text does not
 	 * show. Three minutes is the start issue #521 set. A new widget needs an
-	 * entry here, or the estimate fails.
+	 * entry here, or the estimate fails. `FormatChecker` is one minute: a
+	 * press of Check and a look at a report the page also shows in a fence,
+	 * which the reading time already counts (#237).
 	 */
-	widgetSeconds: { Sampler: 180, InstructionsBuilder: 180 } as Record<string, number>,
+	widgetSeconds: { Sampler: 180, InstructionsBuilder: 180, FormatChecker: 60 } as Record<string, number>,
 	/** The shown estimate is rounded to this many minutes, because the constants are not calibrated. */
 	roundToMinutes: 5,
 	/** `mise run data` warns when reading, checkpoints and widgets alone are over this (spec S03 "Length"). */

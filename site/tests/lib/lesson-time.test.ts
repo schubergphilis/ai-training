@@ -77,9 +77,9 @@ describe('lessonTime: reading', () => {
 		expect(t.checkpointSeconds).toBe(0);
 	});
 	it('gives a widget its fixed time', () => {
-		const t = time('<Sampler />\n\n<InstructionsBuilder />\n');
-		expect(t.widgetSeconds).toBe(2 * 180);
-		expect(t.coreMinutes).toBe(6);
+		const t = time('<Sampler />\n\n<InstructionsBuilder />\n\n<FormatChecker sample="a/b.txt" />\n');
+		expect(t.widgetSeconds).toBe(2 * 180 + 60);
+		expect(t.coreMinutes).toBe(7);
 	});
 	it('fails on a component it has no rule for', () => {
 		expect(() => time('Text.\n\n<Carousel slides={3} />\n')).toThrow(

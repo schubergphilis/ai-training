@@ -1,4 +1,5 @@
-import { Choice, Predict, Pitfall, Exercise, Recap, Prompt, Response, MultiChoice, Scenario } from '@components/lesson';
+import { Choice, Pitfall, Exercise, Recap, Prompt, Response, MultiChoice, Scenario } from '@components/lesson';
+import FormatChecker from '@components/widgets/FormatChecker.astro';
 
 In the lesson on instruction, context, and format you asked for three
 bullets under 15 words, and a person read them. In this lesson the reader
@@ -8,8 +9,8 @@ checker that accepts the same items as a task tracker's import. The first
 answer is prose and the checker can't read it. By the end the answer
 passes, and the difference is what the prompt now says about the format.
 
-You need any chat assistant, a terminal, and `python3`. Every response
-shown here is illustrative: the author wrote it to show the pattern, and
+You need any chat assistant, and the checker is on this page. Every
+response shown here is illustrative: the author wrote it to show the pattern, and
 the component says so. Your model gives a different text, and the checker
 tells you whether that text passes.
 
@@ -94,39 +95,34 @@ owner: Maria | task: replace the old system name in the help texts | due: 2026-1
 owner: Dana | task: book the accessibility check with the agency | due: 2026-10-08 | priority: medium
 </Response>
 
-Now run the check. The checker is a short Python program in the course
-repository, under `site/examples/concepts/structured-output/`. Copy that
-directory or work in a clone, and change into it. `check_items.py` reads a
-file of items and prints one line per item, `ok` or `FAIL`, then a summary
-line. It accepts two input formats: the one-line format from this round,
-and the same fields as JSON (JavaScript Object Notation, a text format
-that programs read and write), which the next round asks for. The
-`sample/` directory has the answers shown on this page, so you can run the
-checker before you paste your own.
+Now check the answer. The checker below accepts the same items as the
+tracker's import. It reads the text in its box and prints one line per
+item, `ok` or `FAIL`, then a summary line. It reads the one-line format
+from this round. The next round asks for the same fields as JSON
+(JavaScript Object Notation, a common text format for data that programs
+exchange), and the checker takes that format too. The box already holds
+the answer shown above, so you can try the checker before you paste your
+own.
 
-<Predict id="check-the-lines" title="Check the one-line answer"
-  answer={`ok 1: Jonas, fix the password reset email address, 2026-10-03, high
+<FormatChecker sample="concepts/structured-output/sample/lines.txt" />
+
+Press Check. The report should read:
+
+```text
+ok 1: Jonas, fix the password reset email address, 2026-10-03, high
 ok 2: Sam, get two quotes for a new search box, 2026-10-17, low
 ok 3: Maria, replace the old system name in the help texts, 2026-10-10, low
 ok 4: Dana, book the accessibility check with the agency, 2026-10-08, medium
-4 of 4 items pass`} run="concepts/structured-output/check_lines.py">
-Run the checker on the sample answer, and compare what you see with the
-output below.
-
-```sh
-python3 check_items.py sample/lines.txt
+4 of 4 items pass
 ```
 
-</Predict>
-
-Now check your own answer. Copy it out of the chat tool into a file named
-`mine.txt` in the same directory and run `python3 check_items.py mine.txt`.
-The checker skips a line that starts with three backticks, so you can
-leave a code fence around the answer in place. If an item fails, the line tells you which field
-is missing or which value is outside the allowed set. The checker also
-exits with status 1 on a failing item, so a script can notice the failure
-without reading the report. That failure is about your prompt, so change the prompt, run it again in a fresh chat, and
-check again.
+Now check your own answer. Replace the text in the box with the answer
+from your chat tool, and press Check again. The checker skips a line that
+starts with three backticks, so you can leave a code fence around the
+answer in place. If an item fails, the line tells you which field is
+missing or which value is outside the allowed set. That failure is about
+your prompt, so change the prompt, run it again in a fresh chat, and check
+again.
 
 ## Named keys and allowed values
 
@@ -155,7 +151,7 @@ Return only the JSON, with no text before or after it.
 </Prompt>
 <Response>
 
-```json
+```text
 [
   {"owner": "Jonas", "task": "fix the password reset email address", "due": "2026-10-03", "priority": "high"},
   {"owner": "Sam", "task": "get two quotes for a new search box", "due": "2026-10-17", "priority": "low"},
@@ -166,31 +162,29 @@ Return only the JSON, with no text before or after it.
 
 </Response>
 
-The checker reads a file that starts with `[` as JSON and applies the same
+The checker reads an answer that starts with `[` as JSON and applies the same
 four checks: every key present, no extra keys, a date the import can
-parse, and a priority from the allowed set.
+parse, and a priority from the allowed set. This box holds the JSON answer
+above.
 
-<Predict id="check-the-json" title="Check the JSON answer"
-  answer={`ok 1: Jonas, fix the password reset email address, 2026-10-03, high
+<FormatChecker sample="concepts/structured-output/sample/items.json" />
+
+Press Check, and compare the report with this one:
+
+```text
+ok 1: Jonas, fix the password reset email address, 2026-10-03, high
 ok 2: Sam, get two quotes for a new search box, 2026-10-17, low
 ok 3: Maria, replace the old system name in the help texts, 2026-10-10, low
 ok 4: Dana, book the accessibility check with the agency, 2026-10-08, medium
-4 of 4 items pass`} run="concepts/structured-output/check_json.py">
-Run the checker on the sample JSON, and compare what you see with the
-output below.
-
-```sh
-python3 check_items.py sample/items.json
+4 of 4 items pass
 ```
 
-</Predict>
-
-Save your own JSON answer as `mine.json` and run the checker on it too.
-Both rounds print the same report, because the checker looks at the
-fields and the values, whatever the packaging. Naming the fields is what
-made the two answers comparable, and it is also what makes a missing
-value visible: an item without a due date fails a check instead of
-disappearing into a paragraph.
+Paste your own JSON answer into the box and check it too. Both rounds
+print the same report, because the checker looks at the fields and the
+values, whatever the packaging. Naming the fields is what made the two
+answers comparable, and it is also what makes a missing value visible: an
+item without a due date fails a check instead of disappearing into a
+paragraph.
 
 Vendors' developer tools add ways to force a format on the output, and
 the public course on the Claude API describes one of them
@@ -217,27 +211,24 @@ the tracker. Rule: name the keys and the allowed values, because "return
 JSON" fixes the packaging and leaves the contents to the model.
 </Pitfall>
 
-The sample directory has the first of those two answers. Run the checker
-on it to see what it reports when the type is right and the fields are
-not.
+The box below holds the first of those two answers, with the code fence
+the chat tool put around it. Check it to see what the checker reports when
+the type is right and the fields are not.
 
-<Predict id="check-the-bare-json" title="Check the bare JSON answer"
-  answer={`FAIL 1: missing owner, task, due (found assignee, action, deadline)
+<FormatChecker sample="concepts/structured-output/sample/bare.json" />
+
+Press Check. The report should read:
+
+```text
+FAIL 1: missing owner, task, due (found assignee, action, deadline)
 FAIL 1: priority "urgent" is not one of high, low, medium
 FAIL 2: missing owner, task, due (found assignee, action, deadline)
 FAIL 2: priority "normal" is not one of high, low, medium
 FAIL 3: missing owner, task, due (found assignee, action, deadline)
 FAIL 3: priority "normal" is not one of high, low, medium
 FAIL 4: missing owner, task, due (found assignee, action, deadline)
-0 of 4 items pass`} run="concepts/structured-output/check_bare.py">
-Run the checker on the answer to "return JSON", and compare what you see
-with the output below.
-
-```sh
-python3 check_items.py sample/bare.json
+0 of 4 items pass
 ```
-
-</Predict>
 
 The last part of the rule is about order of work. Check the first result
 against the program that has to read it before you produce the rest. A
@@ -310,17 +301,19 @@ you do next?
 
 </Scenario>
 
-<Exercise stretch="Add a fifth field to the request, such as a status that is one of open, blocked or done, then extend the checker's FIELDS list and add an allowed set for it next to PRIORITIES, so it checks the values too.">
+<Exercise stretch="Add a fifth field to your request, such as a status that is one of open, blocked or done, and change the prompt until every item has a status with one of those values. The checker knows only the four fields, so it reports the status as unexpected on each item. When that is the only failure left, read the status values yourself.">
 
-Take the checker and the sample notes from this lesson, and write your
-own format request from scratch without looking at the ones on this page.
-Ask for the four fields with their allowed values, in the one-line format
-or as JSON. Run the prompt in your chat tool and save the answer as a
-file, then run `python3 check_items.py` on that file. If any item fails, change one thing in the
-prompt, run it again in a fresh chat, and check again. Stop when the
-report says `4 of 4 items pass`. Fifteen minutes is enough. Doing this
-once against a checker you can't argue with is what makes you name the
-fields the next time, before the first run.
+Take the sample notes from this lesson, and write your own format request
+from scratch without looking at the ones on this page. Ask for the four
+fields with their allowed values, in the one-line format or as JSON. Run
+the prompt in your chat tool, paste the answer into the checker below and
+press Check. If any item fails, change one thing in the prompt, run it
+again in a fresh chat, and check again. Stop when the report says
+`4 of 4 items pass`. Fifteen minutes is enough. Doing this once against a
+checker you can't argue with is what makes you name the fields the next
+time, before the first run.
+
+<FormatChecker />
 
 A good result is a passing report and a prompt that names the type, the
 four fields and the allowed values of `due` and `priority`. Which part of

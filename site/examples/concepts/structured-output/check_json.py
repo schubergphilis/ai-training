@@ -1,7 +1,9 @@
 """Runs the checker on the committed JSON sample.
 
-The lesson shows `python3 check_items.py sample/items.json`. Every item in
-the sample passes, so this exits with the checker's exit status.
+The lesson page loads sample/items.json into its format checker and shows
+this report in a `text` fence. The lesson file lists this script in
+`proofs`. Every item in the sample passes, so this exits with the
+checker's exit status.
 """
 
 import os

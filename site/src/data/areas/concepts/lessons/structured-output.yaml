@@ -25,9 +25,13 @@ shorts: []
 exercise:
   kind: do
   brief: >-
-    Ask for named fields with allowed values, paste the result into the fixture that checks it, and
-    fix the prompt until it passes.
+    Ask for named fields with allowed values, paste the result into the checker on the page, and fix
+    the prompt until it passes.
 sources:
   - Academy building-with-the-claude-api
   - DLAI-1
 minutes: 12
+proofs:
+  - concepts/structured-output/check_lines.py
+  - concepts/structured-output/check_json.py
+  - concepts/structured-output/check_bare.py
