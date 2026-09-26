@@ -31,10 +31,10 @@ support the newer revision, and asks a stdio server only when
 the exercise uses the older `initialize` handshake by default
 (@Claude Code mcp). The stand-in below does neither. Almost all the
 traffic is two messages. The client sends `tools/list` once and gets back
-each tool's `name`, `description` and `inputSchema`. When the model asks for a tool, the
-client sends `tools/call` with the tool's `name` and its `arguments`, and
-the server answers with a `content` list and an `isError` flag
-(@MCP specification).
+each tool's `name`, `description` and `inputSchema`. When the model asks
+for a tool, the client sends `tools/call` with the tool's `name` and its
+`arguments`, and the server answers with a `content` list and an
+`isError` flag (@MCP specification).
 
 The lesson ships a stand-in for that server, in about a hundred lines of
 Python, at `site/examples/customizing-agents/mcp-first-server/stand_in.py`.
@@ -110,11 +110,10 @@ failure the model should read (@MCP specification).
 
 MCP revision 2026-07-28 deprecates roots. They stay in the specification
 until at least the first revision released on or after 2027-07-28, and
-new servers should take their directories from tool parameters,
-resource URIs or their own configuration instead
-(@MCP deprecated features). The specification also says that roots guide
-a server and that the protocol doesn't make a server stay inside them
-(@MCP specification). So the
+new servers should take their directories from tool parameters, resource
+URIs or their own configuration instead (@MCP deprecated features). The
+specification also says that roots guide a server and that the protocol
+doesn't make a server stay inside them (@MCP specification). So the
 refusal comes from the reference server's own check, and the steps below
 give the server the same directory as its argument and as its root. The
 scope then stays the same whichever list the server uses.
