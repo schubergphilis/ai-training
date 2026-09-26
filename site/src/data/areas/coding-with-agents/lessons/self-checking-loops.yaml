@@ -53,4 +53,6 @@ notes: >-
   text edits are read with ast from observing-and-debugging/after_fix.py, and only the added
   `import csv` line is repeated in _common.py. The gate-or-opinion checkpoint and its review
   alternate serve prefers-gates-to-opinions, added in issue #408, and the other checkpoints serve
-  automates-the-check.
+  automates-the-check. The three first checkpoints left on automates-the-check test its three
+  behaviors of the bounded loop (a check the agent can run, a limit in the brief, a protected
+  test), and each of them has a review alternate of its own.

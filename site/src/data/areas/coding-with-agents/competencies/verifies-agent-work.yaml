@@ -61,8 +61,8 @@ objectives:
     statement: Chooses a deterministic gate over a model's review to block work
     level: base
     behaviors:
-      - claim: The learner lets a merge or an agent's loop depend only on checks whose result needs no
-          judgment, such as tests, type checks, builds and schema checks.
+      - claim: The learner lets only checks whose result needs no judgment, such as tests, type checks,
+          builds and schema checks, block a merge or end an agent's loop on their own.
         why: A gate that isn't flaky gives the same result for the same input, so a failure means the
           same thing on every run.
         example: The team makes the test suite and the type checker required checks on every pull
