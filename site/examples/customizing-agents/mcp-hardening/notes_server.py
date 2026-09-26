@@ -26,7 +26,10 @@ import sys
 import notes_token
 
 # The revisions whose tools messages this server implements. A client that asks
-# for a later one gets 2025-06-18 back, and may accept it or disconnect.
+# for a later one gets 2025-06-18 back, and may accept it or disconnect. These
+# are all legacy revisions, which open with an initialize handshake. A dual-era
+# client that probes with server/discover first gets "Method not found" here and
+# falls back to initialize (versioning page of the 2026-07-28 specification).
 PROTOCOL_VERSIONS = ("2024-11-05", "2025-03-26", "2025-06-18")
 NAME_SCHEMA = {"type": "string", "description": "A note's file name, such as standup.md"}
 

@@ -37,14 +37,14 @@ the token itself.
 The server takes its one folder from its command line and never asks the
 client for roots. That's different from the reference file-system server
 in [Connecting your first tool server](/customizing-agents/mcp-first-server/),
-which replaces its folder list with the roots the client sends. So
-here the scope of the server is the path you pass it, and nothing the
-client says changes it. Revision 2026-07-28 of the MCP specification
-marks roots as deprecated, and it tells servers to take their folders
-from tool parameters, resource addresses or their own configuration,
-as this server does (@MCP deprecated features). You still start the
-agent inside the notes folder, for a second reason. The agent has file tools of its own, and a
-planted instruction can ask for a write through them as well. In Claude
+which replaces its folder list with the roots the client sends. So here
+the scope of the server is the path you pass it, and nothing the client
+says changes it. Revision 2026-07-28 of the MCP specification marks
+roots as deprecated, and it tells servers to take their folders from
+tool parameters, resource addresses or their own configuration, as this
+server does (@MCP deprecated features). You still start the agent inside
+the notes folder, for a second reason. The agent has file tools of its
+own, and a planted instruction can ask for a write through them as well. In Claude
 Code's Manual mode, the agent needs your explicit permission to change a
 file above the folder you started it in (@Claude Code security), and it
 asks before every edit, because Manual mode runs only reads without a

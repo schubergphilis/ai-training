@@ -45,12 +45,15 @@ notes: >-
   marks share_note with the requiresUserInteraction flag in _meta, which makes Claude Code ask on every
   call even with an allow rule (code.claude.com/docs/en/mcp, checked with Claude Code 2.1.281 in -p
   mode, where the call was held for approval). The --env syntax for claude mcp add and local scope in
-  the Claude Code config file come from the same mcp page. The short-lived token advice and "clients should log tool
-  usage for audit" come from the 2026-07-28 spec (the authorization security considerations page and
-  the tools page), the revision the bibliography pins, re-checked on 2026-09-26 (#442). The same
-  revision deprecates roots and sampling (SEP-2577, the deprecated page), and the page says so where
-  it contrasts this server with the roots-driven reference server. In a trial with a small model the model
-  noticed the planted line and did not call share_note, so the exercise has the learner ask for the
+  the Claude Code config file come from the same mcp page. The short-lived token advice and "clients
+  should log tool usage for audit" come from the 2026-07-28 spec (the authorization security
+  considerations page and the tools page), the revision the bibliography pins, re-checked on
+  2026-09-26 (#442). The same revision deprecates roots (SEP-2577, the deprecated page), and the page
+  says so where it contrasts this server with the roots-driven reference server. The fixture
+  implements the legacy revisions up to 2025-06-18, which open with an initialize handshake. A
+  dual-era client falls back to initialize when its server/discover probe gets a non-modern error, per
+  the 2026-07-28 versioning page. In a trial with a small model the model noticed the planted line and
+  did not call share_note, so the exercise has the learner ask for the
   send directly as a second run. Tool poisoning and shadowing come from the Invariant Labs post.
   The permission-modes page states that Manual mode (`default`) runs only reads without a prompt,
   that Pro, Max and Team plans start in auto mode, and that no mode auto-approves a

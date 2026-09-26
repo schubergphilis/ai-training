@@ -47,8 +47,10 @@ for the model or the person to use, and prompts, which are message
 templates a person picks. A client can in turn offer the server
 elicitation, which lets the server ask the person for more information
 (@MCP specification). Revision 2026-07-28 of the specification marks two
-older client features, roots and sampling, as deprecated, and new servers
-and clients should not start to use them (@MCP deprecated features).
+older client features as deprecated. Roots let a client tell a server
+which folders to use, and sampling lets a server ask the client's model
+for a completion. New servers and clients should not start to use either
+of them (@MCP deprecated features).
 
 On the model's side, the loop you built in this course stays the same.
 The model asks for a tool with a `tool_use` block, and the loop sends back
