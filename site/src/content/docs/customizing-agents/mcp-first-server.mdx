@@ -21,9 +21,11 @@ starts the server as a child process and exchanges one message per line
 over the process's standard input and output, in JSON-RPC, a format for
 Remote Procedure Calls (RPC) in JSON. The server may log to standard error,
 and it may write nothing else to standard output (@MCP specification).
-A session opens with an `initialize` handshake in which client and server
-agree on a protocol version and exchange their capabilities, and the
-stand-in below skips it (@MCP specification). After that, almost all the
+Revisions up to 2025-11-25 open a session with an `initialize` handshake
+in which client and server agree on a protocol version and exchange their
+capabilities. Revision 2026-07-28 has no handshake: each request puts
+its protocol version and the client's capabilities in a `_meta` field
+(@MCP specification). The stand-in below does neither. Almost all the
 traffic is two messages. The client sends `tools/list` once and gets back each tool's `name`,
 `description` and `inputSchema`. When the model asks for a tool, the
 client sends `tools/call` with the tool's `name` and its `arguments`, and
@@ -101,6 +103,17 @@ fallback the server never uses, and the scope is where you start the
 agent. A call whose path is outside the list fails. The stand-in does the same, and the refusal is a normal result
 with `isError` set, which is how the specification says a tool reports a
 failure the model should read (@MCP specification).
+
+MCP revision 2026-07-28 deprecates roots. They stay in the specification
+until at least the first revision released on or after 2027-07-28, and
+new servers should take their directories from tool parameters,
+resource URIs or their own configuration instead
+(@MCP deprecated features). The
+specification also says that roots guide a server and that the protocol
+doesn't make a server stay inside them (@MCP specification). So the
+refusal comes from the reference server's own check, and the steps below
+give the server the same directory as its argument and as its root. The
+scope then stays the same whichever list the server uses.
 
 <Predict id="predict-the-refusal" objective="customizing-agents/connects-tools-safely/adds-a-tool"
   concepts={['server', 'mcp-security']}
@@ -427,8 +440,10 @@ would you have found out?
    allows the roots its client sends, or its command-line directories
    when the client sends none (@MCP filesystem server), and Claude Code's
    roots are the directory you started it in plus what you add with
-   `--add-dir` (@Claude Code mcp). Start the agent inside the copy, and
-   read `list_allowed_directories` first.
+   `--add-dir` (@Claude Code mcp). Roots are deprecated in MCP revision
+   2026-07-28 (@MCP deprecated features), so give the copy as the
+   argument too. Start the agent inside the copy, and read
+   `list_allowed_directories` first.
 3. In Claude Code, `claude mcp add <name> -- <command>` adds a server at
    local scope by default, and a project-scoped `.mcp.json` server is
    approved by you before its first use in an interactive session

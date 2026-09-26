@@ -15,8 +15,8 @@ assumes:
   - objective: coding-with-agents/ships-with-agent/runs-a-session
     lesson: coding-with-agents/first-session
     section: start-the-agent-and-ask-it-to-explain
-sources-checked: 2026-09-24
-review-by: 2027-03-24
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 after: [customizing-agents/mcp]
 shorts:
   - Local and remote transports and what each one means for credentials (Academy model-context-protocol-advanced-topics)
@@ -28,6 +28,7 @@ exercise:
 sources:
   - MCP specification
   - MCP filesystem server
+  - MCP deprecated features
   - Claude Code mcp
   - Claude Code permissions
   - Academy model-context-protocol-advanced-topics
@@ -45,5 +46,8 @@ notes: >-
   roots behavior, the scope names, the `.mcp.json` approval prompt and the
   tool-search default come from code.claude.com/docs/en/mcp, the `mcp__` rule forms from
   code.claude.com/docs/en/permissions, and the package name, tool names and directory scoping from the
-  server's README. The bibliography pins spec revision 2025-06-18, the one checked, and a later
-  revision exists. All must be re-checked by review-by, the spec revision included.
+  server's README. The spec claims were re-checked against revision 2026-07-28, which drops the
+  `initialize` handshake for a per-request `_meta` field and says roots guide a server without the
+  protocol enforcing them. That revision deprecates roots (its deprecated-features registry), so the
+  page says so and has the learner give the copy both as the argument and as the root. All must be
+  re-checked by review-by, the spec revision included.
