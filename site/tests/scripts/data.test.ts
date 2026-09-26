@@ -531,6 +531,16 @@ describe('foundations audience', () => {
 				'src/data/areas/a/lessons/x.yaml: proofs is only for a lesson in the foundations group (spec S09 "Groups"), and this area is in "g"; an engineering page shows its fixture with <Predict run=...>',
 			]);
 		});
+		it('names the missing group when groups.yaml lists none for the area', () => {
+			const root = tree({
+				...fixture,
+				'data/groups.yaml': '[]\n',
+				'data/areas/a/lessons/x.yaml': withProofs('[a/x/price.py]'),
+			});
+			expect(check(root).errors).toContain(
+				'src/data/areas/a/lessons/x.yaml: proofs is only for a lesson in the foundations group (spec S09 "Groups"), and this area is in no group of src/data/groups.yaml; an engineering page shows its fixture with <Predict run=...>',
+			);
+		});
 		it('fails a proof that is not a .py file under site/examples/', () => {
 			const root = tree({
 				...foundations,

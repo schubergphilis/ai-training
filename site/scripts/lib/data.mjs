@@ -199,10 +199,12 @@ export function foundationsSurfaces(src, where = 'lesson') {
 export function proofErrors(l, group, examplesDir) {
 	if (l?.proofs === undefined) return [];
 	const errors = [];
-	if (group !== FOUNDATIONS_GROUP)
+	if (group !== FOUNDATIONS_GROUP) {
+		const inGroup = group === undefined ? 'in no group of src/data/groups.yaml' : `in ${JSON.stringify(group)}`;
 		errors.push(
-			`proofs is only for a lesson in the ${FOUNDATIONS_GROUP} group (spec S09 "Groups"), and this area is in ${JSON.stringify(group)}; an engineering page shows its fixture with <Predict run=...>`,
+			`proofs is only for a lesson in the ${FOUNDATIONS_GROUP} group (spec S09 "Groups"), and this area is ${inGroup}; an engineering page shows its fixture with <Predict run=...>`,
 		);
+	}
 	if (!Array.isArray(l.proofs)) return [...errors, 'proofs is not a list of fixture paths'];
 	for (const p of l.proofs) {
 		const bad = (why) => errors.push(`proofs ${JSON.stringify(p)} ${why}`);

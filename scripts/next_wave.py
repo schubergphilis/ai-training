@@ -41,7 +41,9 @@ whose `assumes` names a lesson without a page, so a wave that includes
 such a lesson can't land. An `after` entry that is still planned does not
 block. It is reported per lesson as ordering advice for the wave lead.
 Each candidate carries `unblocks`, the number of blocked candidates whose
-missing objectives it serves (direct only, no transitive closure). With
+missing objectives it serves (direct only, no transitive closure). A
+blocked candidate that a `Blocked by`, `Not before` or unreadable line
+also holds counts for none, since writing the lesson doesn't free it. With
 `--unblockers-first`, an area's candidates sort by that count descending
 ahead of course position, so `concepts/agent-loop` comes before an
 earlier lesson that unblocks nothing. The planned `after` rule still
@@ -540,11 +542,16 @@ def pick_lessons_wave(
         rank = c["position"] if c["position"] is not None else math.inf
         return (has_after, score, rank)
 
+    # A lesson that a `Blocked by`, `Not before` or unreadable line also holds
+    # stays blocked when the serving lesson is written, so it counts for no one.
+    freeable = [
+        b for b in blocked if not ("blockedByIssues" in b or "notBefore" in b or "unreadable" in b)
+    ]
     for candidates in per_area.values():
         for c in candidates:
             serves = set(candidate_serves[c["id"]])
             c["unblocks"] = sum(
-                1 for b in blocked if any(x["objective"] in serves for x in b["blockedBy"])
+                1 for b in freeable if any(x["objective"] in serves for x in b["blockedBy"])
             )
         candidates.sort(key=sort_key)
 

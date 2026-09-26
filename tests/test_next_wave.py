@@ -541,6 +541,20 @@ def test_unblocks_keeps_the_after_rule_ahead_of_the_count_and_breaks_a_tie_by_po
     ]
 
 
+@pytest.mark.parametrize(
+    "body", ["Blocked by #40", "Not before 2026-12-24", "Not before 2026-02-30"]
+)
+def test_unblocks_does_not_count_a_blocked_lesson_a_dependency_line_also_holds(body: str) -> None:
+    # `a/blocked-one` assumes `a/c/loop`, but its own line keeps it blocked
+    # after `a/loop` is written, so only `a/blocked-two` and `b/blocked-three` count.
+    ready = [issue(n, body=body if n == 4 else "") for n in range(1, 8)]
+    r = lessons_wave(
+        unblock_plan(), ready, Lookups({40: state()}), size=6, unblockers_first=True, today=TODAY
+    )
+    assert "a/blocked-one" in [b["id"] for b in r["blocked"]]
+    assert [(w["id"], w["unblocks"]) for w in r["wave"]] == WITHOUT_BLOCKED_ONE
+
+
 def test_unblocks_with_the_flag_and_no_blocked_lesson_the_order_is_the_course_order() -> None:
     lessons = plan(
         [
@@ -1593,8 +1607,10 @@ def test_lessons_blocks_on_an_open_blocker_a_future_date_and_an_unreadable_date(
     ]
     # Each number outside the fetched set is looked up once per mention.
     assert sorted(set(lookup.asked)) == [40, 41]
-    # A dependency-only block counts for no candidate's `unblocks`.
-    assert [w["unblocks"] for w in r["wave"]] == [0, 1]
+    # A dependency-only block counts for no candidate's `unblocks`, and
+    # neither does `a/3`: `a/5` serves its objective, but its `Blocked by`
+    # line still holds it.
+    assert [w["unblocks"] for w in r["wave"]] == [0, 0]
     assert r["notPicked"] == [
         {"issue": 1, "reason": "blocked by #2, #40"},
         {"issue": 2, "reason": "not before 2026-10-01"},
