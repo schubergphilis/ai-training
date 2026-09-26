@@ -1315,3 +1315,10 @@ MCP deprecated features:
   author: Anthropic and the MCP contributors
   license: Apache-2.0 and MIT
   url: https://modelcontextprotocol.io/specification/2026-07-28/deprecated
+AGENTS.md format:
+  type: reference
+  title: "AGENTS.md: a simple, open format for guiding coding agents"
+  container: agents.md
+  author: AGENTS.md contributors
+  license: MIT
+  url: https://agents.md/
