@@ -1,4 +1,4 @@
-import { Choice, MultiChoice, Sort, Pitfall, Exercise, Recap } from '@components/lesson';
+import { Choice, MultiChoice, Pitfall, Exercise, Recap } from '@components/lesson';
 
 Your team wants a chat assistant to write a summary of every meeting's notes
 for the finance team, about a thousand times a month. Before anyone approves it, someone
@@ -137,21 +137,25 @@ every token, and both grow faster on a larger model.
 Which model fits which task is a decision of its own, and the course on
 using agents has a lesson that puts a small and a large model side by
 side on the same inputs. Here the point is only what changes when you
-switch: the price and the wait, and each by a factor of several times.
+switch: the price moves by a factor of several, and the wait moves with it.
 
-<Sort id="price-or-wait" objective="concepts/explains-models/explains-generation"
+<Choice id="what-the-switch-changes" objective="concepts/explains-models/explains-generation"
   concepts={['cost-and-latency', 'model-family-and-size']}
-  context="The lesson prices a call as input tokens at one rate and output tokens at a higher rate, and says that a model writes one token at a time, so the wait grows with the answer length and with the model size."
-  title="What does each change do?"
-  hint="For each change, ask two questions. Does the model read or write more tokens, and does each token take longer?"
-  buckets={['Raises the price and the wait', 'Raises the price more than the wait', 'Changes neither']}
-  items={[
-    { text: 'Switch from the small model to the large one', bucket: 0 },
-    { text: 'Ask for a two-page report instead of five bullets', bucket: 0 },
-    { text: 'Attach a 3,000-token document to a prompt that was 100 tokens', bucket: 1 },
-    { text: 'Send the same short prompt at night instead of during the day', bucket: 2 },
-    { text: 'Rename the file you attach before you attach it', bucket: 2 },
-  ]} />
+  context="The lesson says that a larger model in a family costs several times a smaller one per token and produces each token more slowly, so a switch between the two changes both the price and the wait."
+  title="What does the switch change?"
+  hint="The token counts stay the same. What does the small model charge for each token, and how fast does it write one?"
+  options={[
+    { text: 'The price and the wait both drop, because each token costs less and comes faster.', correct: true },
+    { text: 'The price drops, and the wait stays the same, because the answer has the same number of tokens.', why: 'The small model also writes each token faster, so the same answer arrives sooner.' },
+    { text: 'The wait drops, and the price stays the same, because the model reads and writes the same tokens.', why: 'The price is per token, and the small model charges less for each one.' },
+    { text: 'Neither changes, because the prompt and the answer are the same.', why: 'The tokens are the same, but the small model is cheaper and faster for each of them.' },
+  ]}>
+
+The team moves the meeting summaries from the large model to the small
+one. The prompt and the five bullets stay the same. What happens to the
+price and the wait of each call?
+
+</Choice>
 
 ## The rule that got buried
 
