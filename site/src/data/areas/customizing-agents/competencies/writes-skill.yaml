@@ -57,3 +57,25 @@ objectives:
         why: Skills grow by accretion, and no single addition looks expensive.
         example: The learner counts the tokens of the skill directory after each change and moves a bloated
           table into a script.
+  - id: customizing-agents/writes-skill/evaluates-a-plugin
+    statement: Reads a plugin's parts before installing it and takes only what is needed
+    level: base
+    behaviors:
+      - claim: Before an install, the learner opens the plugin's hook file and the scripts it names, its
+          server list, its `bin/` directory and each subagent's tool list.
+        why: The list that Claude Code shows before an install says that a hook exists and not what it
+          runs (@Claude Code plugin security).
+        example: The learner opens `hooks/hooks.json`, sees a `PreToolUse` hook on `Bash`, and reads the
+          script to learn that it blocks every commit without a staged changelog.
+      - claim: The learner names the parts that act in every session where the plugin is enabled, and the
+          parts that no permission rule checks.
+        why: Hooks and server processes run with the user's own rights, outside the permission rules and
+          the sandbox (@Claude Code plugin security).
+        example: For a plugin wanted for one skill, the learner notes that its hook and its tracker server
+          would also run in sessions that never use that skill.
+      - claim: The learner decides between installing the plugin at the narrowest scope that fits, copying
+          one skill out of it when the license allows, and leaving it.
+        why: A plugin installed for one part brings all of its parts into every session where it is
+          enabled.
+        example: The team wants only the release skill, so the learner copies it into the project's
+          `.claude/skills/` and doesn't install the plugin.

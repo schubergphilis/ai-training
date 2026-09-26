@@ -5,7 +5,7 @@ description: >-
   in your sessions, and decide whether to install it, copy one skill out of it, or leave it.
 mode: explanation
 covers: customizing-agents/skills
-serves: [customizing-agents/writes-skill/chooses-skill-over-tool]
+serves: [customizing-agents/writes-skill/evaluates-a-plugin]
 introduces: [plugins]
 assumes:
   - objective: coding-with-agents/verifies-agent-work/screens-for-security
@@ -51,6 +51,7 @@ notes: >-
   (code.claude.com/docs/en/plugins/security), hook firing and namespaced skill names
   (plugins/components), auto-update defaults (plugins/install), the `version` pin
   (plugins/manifest-reference), matchers (hooks) and the default tool list of a subagent
-  (sub-agents). The Academy course named in the short is not cited on the page. Whether the
-  lesson should serve `chooses-skill-over-tool`, of which it exercises only the cost weighing, is
-  open in #409.
+  (sub-agents). The Academy course named in the short is not cited on the page. The lesson serves
+  `evaluates-a-plugin` since #409. Its checkpoints and alternates share one idea: a plugin brings
+  all its parts into each session where it is enabled, and its hooks and server processes run
+  outside the permission rules, so the reader decides from each part what to take.

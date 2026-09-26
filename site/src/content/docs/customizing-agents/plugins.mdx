@@ -68,7 +68,7 @@ a skill or a subagent waits until Claude uses it. The plugin's servers
 run in each session and its hooks act on their events. Both run with
 your user account's rights.
 
-<Sort id="when-each-part-acts" objective="customizing-agents/writes-skill/chooses-skill-over-tool"
+<Sort id="when-each-part-acts" objective="customizing-agents/writes-skill/evaluates-a-plugin"
   concepts={['plugins']}
   context="A Claude Code plugin called release-kit holds a release skill, a release-notes subagent, a hook that runs before each shell command the agent runs, and a connection to an issue tracker server. It is installed and enabled, and the learner works on a task that has nothing to do with releases."
   title="What acts in a session that never releases?" hint="For each part, ask whether Claude Code needs it to know the part exists or to use it, and whether an event in the session sets it off."
@@ -169,7 +169,7 @@ of those, because the server behind an MCP tool runs outside it. Hooks
 and server processes are outside both. They run with your full user
 rights, and no permission rule sees them (@Claude Code plugin security).
 
-<MultiChoice id="what-the-rules-check" objective="customizing-agents/writes-skill/chooses-skill-over-tool"
+<MultiChoice id="what-the-rules-check" objective="customizing-agents/writes-skill/evaluates-a-plugin"
   concepts={['plugins']}
   context="A Claude Code plugin brings a hook that runs a script before each shell command, a local MCP server that Claude Code starts as a process, an MCP server with tools, and an executable in its bin directory. The user has permission rules that allow some tool calls and deny others."
   title="What do your permission rules check?" hint="Which of these is a call that Claude makes, and which does Claude Code run by itself?"
@@ -214,7 +214,7 @@ So copy the skill. If the team decides later that every commit needs a
 changelog entry, that's a rule for the repository, and it goes into a
 hook in the repository's own settings.
 
-<Choice id="what-to-do-with-release-kit" objective="customizing-agents/writes-skill/chooses-skill-over-tool"
+<Choice id="what-to-do-with-release-kit" objective="customizing-agents/writes-skill/evaluates-a-plugin"
   concepts={['plugins']}
   context="The release-kit plugin holds a release skill that edits CHANGELOG.md, a release-notes subagent, a PreToolUse hook on Bash that blocks any git commit without a staged CHANGELOG.md, and an MCP server for an issue tracker. The learner's team updates CHANGELOG.md only when it cuts a release, and doesn't use that tracker. The plugin's license lets them copy files from it."
   title="What do you do with release-kit?" hint="Which parts do you want, and which parts would run in sessions that have nothing to do with a release?"
@@ -227,7 +227,7 @@ hook in the repository's own settings.
 Which of these is the right decision for `release-kit`?
 </Choice>
 
-<Match id="when-it-acts" phase="review" objective="customizing-agents/writes-skill/chooses-skill-over-tool"
+<Match id="when-it-acts" phase="review" objective="customizing-agents/writes-skill/evaluates-a-plugin"
   concepts={['plugins']}
   context="A Claude Code plugin is enabled at user scope. It holds a skill, a PreToolUse hook with no matcher, and an MCP server with tools. Each row is one part of the plugin, and the options say when that part acts and whether your permission rules check it."
   title="When does each part act, and who checks it?" hint="Does the part need Claude to use it, and is it a call that Claude makes or code that Claude Code runs by itself?"
@@ -241,7 +241,7 @@ Which of these is the right decision for `release-kit`?
 Match each part of the plugin to when it acts and what checks it.
 </Match>
 
-<Choice id="what-stops-the-hook" phase="review" objective="customizing-agents/writes-skill/chooses-skill-over-tool"
+<Choice id="what-stops-the-hook" phase="review" objective="customizing-agents/writes-skill/evaluates-a-plugin"
   concepts={['plugins']}
   context="A user installed a plugin at user scope for one skill. The plugin also has a hook that runs a script before each shell command the agent runs, and the script blocks commits in a way the user doesn't want. The plugin's license lets them copy its files."
   title="Keep the skill, stop the hook" hint="Does the hook depend on the skill being used, and does a rule for Claude's calls reach code that Claude Code runs by itself?"
@@ -254,7 +254,7 @@ The user wants to keep the one skill and stop the hook. What do they
 do?
 </Choice>
 
-<Scenario id="a-plugin-for-one-skill" phase="review" objective="customizing-agents/writes-skill/chooses-skill-over-tool"
+<Scenario id="a-plugin-for-one-skill" phase="review" objective="customizing-agents/writes-skill/evaluates-a-plugin"
   concepts={['plugins']}
   context="A plugin called docs-kit holds a skill that drafts architecture decision records, a hook with no matcher on the Stop event that runs a script from the plugin, and a local MCP server that Claude Code starts from a file in the plugin. The team wants only the drafting skill, and the plugin's license lets them copy its files."
   title="The docs plugin" hint="Which parts would run in sessions that never draft a decision record, and which of them do your permission rules check?"

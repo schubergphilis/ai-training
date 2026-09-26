@@ -46,6 +46,7 @@ rows:
     asks: Evaluate AI code for vulnerabilities; supply-chain risk
     objectives:
       - coding-with-agents/verifies-agent-work/screens-for-security
+      - customizing-agents/writes-skill/evaluates-a-plugin
   - code: BLD-4, BLD-5
     asks: Organize and oversee a workflow
     objectives:
