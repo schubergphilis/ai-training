@@ -67,9 +67,18 @@ def run_test(copy: str) -> "tuple[int, str]":
 
 
 def git(copy: str, *args: str) -> str:
-    """Run one git command in the copy, with a fixed identity and no user config."""
+    """Run one git command in the copy, with a fixed identity and no user config.
+
+    `maintenance.auto=false` stops a commit from starting
+    `git maintenance run --auto` after its own work
+    (https://git-scm.com/docs/git-config, "maintenance.auto"). That run
+    detaches by default ("maintenance.autoDetach") and takes a lock in the
+    object database (https://git-scm.com/docs/git-maintenance). It can
+    still hold that lock when the fixture removes its temporary directory,
+    and the cleanup then fails with "Directory not empty: 'objects'" (#472).
+    """
     result = subprocess.run(
-        ["git", "-c", "commit.gpgsign=false", *args],
+        ["git", "-c", "commit.gpgsign=false", "-c", "maintenance.auto=false", *args],
         cwd=copy,
         env=dict(GIT_ENV_BASE, HOME=os.path.dirname(copy)),
         capture_output=True,
