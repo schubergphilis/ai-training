@@ -23,6 +23,8 @@ exercise:
     from a recording, a supplier register lookup a person did versus one an automation did), name
     the check that stopped working, the check that replaces it, and one signal to go back down.
 sources: [Brilliant ABS, Academy building-effective-human-agent-teams]
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 issue: 168
 minutes: 15
 notes: >-
