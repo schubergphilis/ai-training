@@ -23,7 +23,9 @@ exercise:
     Run the same three supplied inputs (one reformatting, one classification, one ambiguous request)
     on a small and a large model from the picker in your chat tool, time each answer, and fill a
     six-cell table with good enough or not.
-sources: [AEC-02, Academy ai-fluency-for-builders]
+sources: [AEC-02]
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 issue: 161
 minutes: 15
 notes: >-
@@ -35,3 +37,7 @@ notes: >-
   model picker" and marks the six-cell table as one example run. No fixture: the learner runs the
   three inputs in a chat tool. The lesson in after, chat-agent-or-automation, was planned and not
   live when this page went live, so the page doesn't refer to it.
+  AEC-02 is cited for model fit (light models for classification and extraction, heavier ones for
+  reasoning) and for the cost and latency of using a frontier model for every step. Academy
+  ai-fluency-for-builders was cited for per-call cost and speed until 2026-09-26 and is dropped,
+  because its public course page says nothing about model cost or speed.
