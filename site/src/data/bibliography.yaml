@@ -633,9 +633,9 @@ Sharma 2023:
   type: paper
   title: Towards Understanding Sycophancy in Language Models
   container: International Conference on Learning Representations (ICLR 2024), arXiv preprint 2310.13548
-  author: Mrinank Sharma, Meg Tong, Tomasz Korbak and 16 others
+  author: Mrinank Sharma, Meg Tong, Tomasz Korbak and 15 others
   license: CC BY 4.0
-  url: https://arxiv.org/abs/2310.13548
+  url: https://openreview.net/forum?id=tvhaxkMKAn
 Wilson 2024:
   type: paper
   title: Gender, Race, and Intersectional Bias in Resume Screening via Language Model Retrieval
@@ -880,7 +880,7 @@ Yao 2022:
   container: International Conference on Learning Representations (ICLR 2023), arXiv preprint 2210.03629
   author: Shunyu Yao, Jeffrey Zhao, Dian Yu and 4 others
   license: CC BY 4.0
-  url: https://arxiv.org/abs/2210.03629
+  url: https://openreview.net/forum?id=WE_vluYUL-X
 Turpin 2023:
   type: paper
   title: "Language Models Don't Always Say What They Think"
@@ -950,7 +950,7 @@ Huang 2023:
   container: International Conference on Learning Representations (ICLR 2024), arXiv preprint 2310.01798
   author: Jie Huang, Xinyun Chen, Swaroop Mishra and 4 others
   license: CC BY 4.0
-  url: https://arxiv.org/abs/2310.01798
+  url: https://openreview.net/forum?id=IkmD3fKBPQ
 Claude Code costs:
   type: reference
   title: Manage costs effectively
