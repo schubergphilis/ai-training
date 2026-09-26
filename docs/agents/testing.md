@@ -58,9 +58,13 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   directory, `site/examples/<area>/<lesson>/<name>.py`. The check skips a
   helper whose name starts with `_`, a module that another `.py` file in
   the same lesson directory imports or names in a quoted string literal
-  (`"<name>.py"`), every file in a subdirectory such as `fixture-repo/`,
-  and every file that isn't `.py`. A mention of `<name>.py` in a
-  docstring, a comment, a code span or a longer string doesn't count.
+  (`"<name>.py"`), and every file that isn't `.py`. A `.py` file in a
+  subdirectory, such as `nightly/importer.py`, passes when a `.py` file
+  directly in the lesson directory imports it or names it, or a directory
+  that contains it, in a quoted string literal (`"nightly"`,
+  `'nightly/importer.py'`). A deep file that nothing names is reported
+  like an entry script. A mention in a docstring, a comment, a code span
+  or a longer string doesn't count.
   Wire a new fixture to a `<Predict run=...>`. Add it to `UNRUN_EXEMPT`
   in `site/scripts/lib/examples.mjs`, with the reason, only when no
   Predict can run it: a fixture behind a `foundations` page, where

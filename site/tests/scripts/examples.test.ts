@@ -9,6 +9,7 @@ import {
 	FIXTURE_TIMEOUT_MS,
 	FLOOR,
 	interpreters,
+	namesPath,
 	predictTags,
 	pythonVersion,
 	runFixture,
@@ -325,7 +326,7 @@ describe('unrunFixtures', () => {
 	mkdirSync(join(lesson, '__pycache__'));
 	writeFileSync(join(lesson, 'run_me.py'), 'import agent\nagent.main()\n');
 	writeFileSync(join(lesson, 'agent.py'), 'def main():\n    print("hi")\n');
-	writeFileSync(join(lesson, '_common.py'), 'X = 1\n');
+	writeFileSync(join(lesson, '_common.py'), 'REPO = os.path.join(HERE, "fixture-repo")\n');
 	writeFileSync(join(lesson, 'tests.py'), 'import subprocess\nsubprocess.run(["python3", "test_x.py"])\n');
 	writeFileSync(join(lesson, 'test_x.py'), 'print("ok")\n');
 	writeFileSync(join(lesson, 'notes.txt'), 'data\n');
@@ -334,7 +335,7 @@ describe('unrunFixtures', () => {
 	afterAll(() => rmSync(dir, { recursive: true, force: true }));
 	const runs = new Set(['area/lesson/run_me.py', 'area/lesson/tests.py']);
 
-	it('passes when every entry script is run, skipping helpers, used modules, data and deeper files', () => {
+	it('passes when every entry script is run, skipping helpers, used modules, data and files in a named directory', () => {
 		expect(unrunFixtures(dir, runs, new Map())).toEqual([]);
 	});
 	it('fails on an entry script that no Predict runs, naming it and the way out', () => {
@@ -358,7 +359,7 @@ describe('unrunFixtures', () => {
 		const exempt = new Map([
 			['area/lesson/run_me.py', 'run now'],
 			['area/lesson/agent.py', 'a used module'],
-			['area/lesson/fixture-repo/todo.py', 'too deep'],
+			['area/lesson/fixture-repo/todo.py', 'in a named directory'],
 			['area/lesson/gone.py', 'deleted'],
 			['area/lesson/exercise.py', ''],
 		]);
@@ -367,7 +368,7 @@ describe('unrunFixtures', () => {
 			expect(unrunFixtures(dir, runs, exempt)).toEqual([
 				'UNRUN_EXEMPT area/lesson/run_me.py: a <Predict run=...> runs it now; drop the entry',
 				'UNRUN_EXEMPT area/lesson/agent.py: is a helper another fixture uses, not an entry script; drop the entry',
-				'UNRUN_EXEMPT area/lesson/fixture-repo/todo.py: names no entry script; drop the entry',
+				'UNRUN_EXEMPT area/lesson/fixture-repo/todo.py: a lesson-level fixture names this file or a directory that contains it; drop the entry',
 				'UNRUN_EXEMPT area/lesson/gone.py: names no entry script; drop the entry',
 				'UNRUN_EXEMPT area/lesson/exercise.py: has no reason',
 			]);
@@ -387,8 +388,96 @@ describe('unrunFixtures', () => {
 	});
 	it('gives every real exemption a reason', () => {
 		for (const [path, reason] of UNRUN_EXEMPT) {
-			expect(path).toMatch(/^[^/]+\/[^/]+\/[^/_][^/]*\.py$/);
+			expect(path).toMatch(/^[^/]+\/[^/]+\/(?:[^/_][^/]*|(?:[^/]+\/)+[^/]+)\.py$/);
 			expect(reason.length).toBeGreaterThan(20);
 		}
+	});
+});
+
+describe('unrunFixtures below the lesson directory (#468)', () => {
+	/** One lesson with `run.py` (run by a Predict) holding `src`, and the deep `.py` files in `deep`. */
+	function lessonWith(src: string, deep: string[]) {
+		const dir = mkdtempSync(join(tmpdir(), 'unrun-deep-'));
+		const lesson = join(dir, 'area', 'lesson');
+		mkdirSync(lesson, { recursive: true });
+		writeFileSync(join(lesson, 'run.py'), src);
+		for (const rel of deep) {
+			const parts = rel.split('/');
+			mkdirSync(join(lesson, ...parts.slice(0, -1)), { recursive: true });
+			writeFileSync(join(lesson, ...parts), 'print("deep")\n');
+		}
+		return dir;
+	}
+	const runs = new Set(['area/lesson/run.py']);
+	const dirs: string[] = [];
+	afterAll(() => {
+		for (const d of dirs) rmSync(d, { recursive: true, force: true });
+	});
+	const check = (src: string, deep: string[], exempt = new Map<string, string>()) => {
+		const dir = lessonWith(src, deep);
+		dirs.push(dir);
+		return unrunFixtures(dir, runs, exempt);
+	};
+	const reported = (path: string) =>
+		`examples/area/lesson/${path}: no <Predict run=...> runs this fixture, so CI never checks its output; name it in a run= or add it to UNRUN_EXEMPT with the reason (docs/agents/testing.md)`;
+
+	it('passes a deep file a lesson-level fixture names directly', () => {
+		expect(check('subprocess.run(["python3", "nightly/importer.py"])\n', ['nightly/importer.py'])).toEqual([]);
+	});
+	it('passes a deep file in a directory a lesson-level fixture names', () => {
+		expect(check('SHOP = os.path.join(HERE, "shop")\n', ['shop/check.py', 'shop/test_shipping.py'])).toEqual([]);
+	});
+	it('passes a deep file two levels down whose parent directory is named', () => {
+		expect(check("print(report(HERE / 'release-kit/scripts'))\n", ['release-kit/scripts/changelog_guard.py'])).toEqual(
+			[],
+		);
+		expect(check('from pkg.sub import tool\n', ['pkg/sub/tool.py'])).toEqual([]);
+	});
+	it('reports a deep file in a directory nothing names', () => {
+		expect(check('print("hi")\n', ['library/truncate.py'])).toEqual([reported('library/truncate.py')]);
+	});
+	it('reports a deep file whose directory is named only in a comment or a docstring', () => {
+		const src = '"""Reads the nightly/ directory."""\n# the nightly importer is in nightly/importer.py\nprint(1)\n';
+		expect(check(src, ['nightly/importer.py'])).toEqual([reported('nightly/importer.py')]);
+	});
+	it('reports a deep file when only a sibling directory is named', () => {
+		expect(check('REPO = "fixture-repo"\n', ['fixture-repo/todo.py', 'extra/tool.py'])).toEqual([
+			reported('extra/tool.py'),
+		]);
+	});
+	it('takes an UNRUN_EXEMPT entry for a deep path, and fails it once the directory is named', () => {
+		const exempt = new Map([['area/lesson/library/truncate.py', 'the learner reads it; the page shows no output']]);
+		expect(check('print("hi")\n', ['library/truncate.py'], exempt)).toEqual([]);
+		expect(check('LIB = "library"\n', ['library/truncate.py'], exempt)).toEqual([
+			'UNRUN_EXEMPT area/lesson/library/truncate.py: a lesson-level fixture names this file or a directory that contains it; drop the entry',
+		]);
+	});
+});
+
+describe('namesPath', () => {
+	const names: [string, string, string][] = [
+		['"nightly"', 'nightly', 'directory in double quotes'],
+		["'nightly/'", 'nightly', 'directory with a trailing slash'],
+		['"nightly/importer.py"', 'nightly/importer.py', 'whole file path'],
+		['"importer.py"', 'nightly/importer.py', 'file name'],
+		['"scripts"', 'release-kit/scripts', 'last segment of a nested directory'],
+		['import importer\n', 'nightly/importer.py', 'import of the file on sys.path'],
+		['import nightly.importer\n', 'nightly', 'import of a module in the package'],
+		['from pkg.sub import tool\n', 'pkg/sub', 'from-import of the package'],
+		['from pkg import sub\n', 'pkg', 'from-import from the top package'],
+	];
+	it.each(names)('%j names %j (%s)', (src, rel) => {
+		expect(namesPath(src, rel)).toBe(true);
+	});
+	const misses: [string, string, string][] = [
+		['# see nightly/\n', 'nightly', 'a comment'],
+		['"""Copies nightly to a scratch dir."""\n', 'nightly', 'a docstring'],
+		['"nightly_old"', 'nightly', 'a longer name'],
+		['"my-nightly"', 'nightly', 'a name that ends with it'],
+		['print("$ ls nightly")\n', 'nightly', 'a longer string'],
+		['import nightly_old\n', 'nightly', 'an import of a longer module'],
+	];
+	it.each(misses)('%j does not name %j (%s)', (src, rel) => {
+		expect(namesPath(src, rel)).toBe(false);
 	});
 });

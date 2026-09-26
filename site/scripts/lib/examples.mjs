@@ -315,26 +315,81 @@ export function usesModule(src, stem) {
 }
 
 /**
- * Every entry script under `examplesDir` that no `<Predict run=...>` runs
- * (#460), as one failure message each. An entry script is a `.py` file
- * directly in a lesson directory, `<area>/<lesson>/<name>.py`, the only
- * depth a `run` names. Not entry scripts, so never reported:
+ * Python files below `dir` but not directly in it, as paths relative to
+ * `dir` with `/` separators (`nightly/importer.py`), skipping `__pycache__`.
+ */
+function deepPythonFiles(dir, prefix = '') {
+	const out = [];
+	for (const sub of subdirs(dir)) {
+		const rel = `${prefix}${sub}/`;
+		out.push(...pythonFiles(join(dir, sub)).map((name) => `${rel}${name}`));
+		out.push(...deepPythonFiles(join(dir, sub), rel));
+	}
+	return out;
+}
+
+/**
+ * Whether `src` (a lesson-level fixture's source) names `rel`, a file or a
+ * directory relative to the lesson directory (`nightly`,
+ * `nightly/importer.py`). It names it in a quoted string literal that is the
+ * whole path or its last segment, with an optional trailing `/`
+ * (`"nightly"`, `'nightly/importer.py'`, `"importer.py"`), or imports it as
+ * a module or package (`import nightly.importer`, `from nightly import
+ * importer`, and `import importer` for a file). The matching is the one
+ * behind `usesModule`, so a mention in a docstring, a comment or a longer
+ * string doesn't count.
+ */
+export function namesPath(src, rel) {
+	const base = rel.slice(rel.lastIndexOf('/') + 1);
+	const isFile = rel.endsWith('.py');
+	if (isFile && usesModule(src, base.slice(0, -'.py'.length))) return true;
+	const literals = [rel, base].map((t) => `${escapeRe(t)}/?`).join('|');
+	if (new RegExp(`(["'])(?:${literals})\\1`).test(src)) return true;
+	const dotted = escapeRe((isFile ? rel.slice(0, -'.py'.length) : rel).replaceAll('/', '.'));
+	return (
+		new RegExp(`^[ \\t]*from[ \\t]+${dotted}(?:\\.[\\w.]+)?[ \\t]+import\\b`, 'm').test(src) ||
+		new RegExp(`^[ \\t]*import[ \\t]+(?:[\\w.]+(?:[ \\t]+as[ \\t]+\\w+)?[ \\t]*,[ \\t]*)*${dotted}\\b`, 'm').test(src)
+	);
+}
+
+/**
+ * Whether one of `sources` (the lesson-level `.py` sources) names the deep
+ * file `rel` or a directory that contains it (#468). For `a/b/c.py` the
+ * paths tried are `a`, `a/b` and `a/b/c.py`, each through `namesPath`.
+ */
+export function deepFileNamed(sources, rel) {
+	const parts = rel.split('/');
+	const paths = parts.map((_, i) => parts.slice(0, i + 1).join('/'));
+	return paths.some((p) => sources.some((src) => namesPath(src, p)));
+}
+
+/**
+ * Every fixture under `examplesDir` that no `<Predict run=...>` runs and no
+ * other fixture uses (#460, #468), as one failure message each. The rule is
+ * in docs/agents/testing.md ("Fixtures without a Predict").
  *
- * - a shared helper, whose name starts with `_`;
- * - a module another `.py` file in the same lesson directory uses
- *   (`usesModule`), such as the agent a wrapper fixture imports;
- * - anything deeper, such as a `fixture-repo/` the lesson's agent works on,
- *   and every file that is not `.py` (data).
+ * An entry script is a `.py` file directly in a lesson directory,
+ * `<area>/<lesson>/<name>.py`, the only depth a `run` names. It is not
+ * reported when it is a shared helper, whose name starts with `_`, or a
+ * module another `.py` file in the same lesson directory uses
+ * (`usesModule`), such as the agent a wrapper fixture imports.
+ *
+ * A `.py` file below the lesson directory, such as `nightly/importer.py`,
+ * is not reported when a lesson-level `.py` names it or a directory that
+ * contains it (`deepFileNamed`), such as `_common.py` copying `"nightly"`
+ * to a scratch directory. A deep file that nothing names is reported like
+ * an entry script. A file that is not `.py` is data and never reported.
  *
  * `runs` holds the `run` names from the pages. `exempt` maps a fixture path
  * (relative to `examplesDir`) to the reason no Predict runs it. An entry
- * that names no file, a file a Predict runs, or a file that is not an
- * entry script fails too, so the list can't go stale.
+ * that names no file, a file a Predict runs, or a file the check doesn't
+ * report fails too, so the list can't go stale.
  */
 export function unrunFixtures(examplesDir, runs, exempt = UNRUN_EXEMPT) {
 	const failures = [];
 	const entries = new Set();
 	const helpers = new Set();
+	const named = new Set();
 	for (const area of subdirs(examplesDir)) {
 		for (const lesson of subdirs(join(examplesDir, area))) {
 			const dir = join(examplesDir, area, lesson);
@@ -345,6 +400,11 @@ export function unrunFixtures(examplesDir, runs, exempt = UNRUN_EXEMPT) {
 				const stem = name.slice(0, -'.py'.length);
 				const used = files.some((other) => other !== name && usesModule(sources.get(other), stem));
 				if (name.startsWith('_') || used) helpers.add(path);
+				else entries.add(path);
+			}
+			for (const rel of deepPythonFiles(dir)) {
+				const path = `${area}/${lesson}/${rel}`;
+				if (deepFileNamed([...sources.values()], rel)) named.add(path);
 				else entries.add(path);
 			}
 		}
@@ -360,6 +420,10 @@ export function unrunFixtures(examplesDir, runs, exempt = UNRUN_EXEMPT) {
 		if (runs.has(path)) failures.push(`UNRUN_EXEMPT ${path}: a <Predict run=...> runs it now; drop the entry`);
 		else if (helpers.has(path))
 			failures.push(`UNRUN_EXEMPT ${path}: is a helper another fixture uses, not an entry script; drop the entry`);
+		else if (named.has(path))
+			failures.push(
+				`UNRUN_EXEMPT ${path}: a lesson-level fixture names this file or a directory that contains it; drop the entry`,
+			);
 		else if (!entries.has(path)) failures.push(`UNRUN_EXEMPT ${path}: names no entry script; drop the entry`);
 	}
 	return failures;
