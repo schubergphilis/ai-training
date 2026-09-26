@@ -31,9 +31,10 @@ sources:
   - Academy ai-capabilities-and-limitations
   - Claude Code memory
   - Claude Code context window
+  - Claude support memory
   - Liu 2024
-sources-checked: 2026-09-24
-review-by: 2027-03-24
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 issue: 152
 minutes: 12
 notes: >-
@@ -43,5 +44,7 @@ notes: >-
   illustrative on the page. No fixture backs it. The Claude Code claims (instruction files and auto
   memory loaded at the start of every session, auto memory on by default, automatic compaction near
   the limit that replaces the conversation with a summary) were checked against the two cited pages
-  on 2026-09-24. No context size is quoted. Chat memory features are described without naming a
-  product, because no bibliography entry covers a chat product's help page yet.
+  on 2026-09-24. No context size is quoted. The Claude chat memory claims (notes saved on topics while
+  you chat, on by default on Free, Pro, and Max, off on Team and Enterprise until an owner turns it
+  on, topics listed in settings to read, change, or delete) were checked against the cited help
+  center page on 2026-09-26.
