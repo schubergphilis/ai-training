@@ -21,12 +21,13 @@ exercise:
 sources: [AEC-01, DLAI-11, Academy claude-platform-101]
 issue: 140
 minutes: 15
+proofs: [concepts/agent-loop/tiny_agent.py]
 notes: >-
   Foundations page, so the learner runs nothing. The toy loop is
   site/examples/concepts/agent-loop/tiny_agent.py, a scripted model with two tools (list_dir,
   read_file) over three committed notes. The page shows its three transcripts (find, count, limit)
-  in text fences, pasted from its output. No test wires the fixture to the page yet, because how a
-  hidden fixture backs a foundations page in CI is decided in #237. The engineering version with the code
+  in text fences, pasted from its output. The fixture is in proofs, so mise run examples fails
+  when it prints a line that no text fence on the page shows (#311). The engineering version with the code
   is building-agents/agent-loop, linked from extends-to. The pitfall's half-written file is prose
   about an agent with a write tool, which the toy doesn't have. AEC-01 is cited for ideas in our own
   words, so NOTICE.md gets no new entry.

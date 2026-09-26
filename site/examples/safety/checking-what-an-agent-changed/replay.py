@@ -15,10 +15,11 @@ the kind of helpful extra step an agent takes and then leaves out of its
 summary.
 """
 
-REQUEST = (
-    "Move this week's meeting notes into 2026-meetings, "
-    "with the date at the start of each file name."
-)
+# The request, word for word, as the page shows it: "Move this week's
+# meeting notes into 2026-meetings, with the date at the start of each file
+# name." `asked_for` encodes it. The program doesn't print it, because the
+# page quotes it before the output and `mise run examples` checks every
+# printed line against the page's text fences.
 
 # The folder before the session: file name to its lines. A name that ends
 # in "/" is an empty folder.
@@ -109,7 +110,7 @@ def listing(folder: "dict[str, list[str]]") -> "list[str]":
 def replay() -> str:
     """Replay the session and return the report the lesson shows."""
     folder = {name: list(lines) for name, lines in BEFORE.items()}
-    out = [f"request: {REQUEST}", "", "before:", *listing(folder)]
+    out = ["before:", *listing(folder)]
     effects = []
     for step in SESSION:
         kind = step[0]

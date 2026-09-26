@@ -23,13 +23,14 @@ exercise:
 sources: [AEC-05, AEC-08, Academy ai-capabilities-and-limitations]
 issue: 149
 minutes: 15
+proofs: [concepts/retrieval/keyword_search.py]
 notes: >-
   Foundations page, so the learner runs nothing. The plan's exercise had the learner search a
   folder with the retrieval fixture. The page pastes the fixture's output into text fences instead,
   and the exercise is a judge kind on that output. The fixture is
   site/examples/concepts/retrieval/keyword_search.py over four committed policy texts in
-  policies/. No test wires the fixture to the page yet, because how a hidden fixture backs a
-  foundations page in CI is decided in #237 (then #311). The issue asked for a Predict block on the
+  policies/. The fixture is in proofs, so mise run examples fails when it prints a line
+  that no text fence on the page shows (#311). The issue asked for a Predict block on the
   fixture's miss. A Predict needs run= (rejected on a foundations page) or is honor-system and not
   reviewable, so the miss is a Choice instead. AEC-05 and AEC-08 are cited for ideas in our own
   words, so NOTICE.md gets no new entry. The company and the policy texts are invented.
