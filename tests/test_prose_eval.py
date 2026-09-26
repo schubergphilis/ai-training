@@ -31,7 +31,7 @@ HITS: prose_eval.Hits = {
         ("docs/spec/S01-dictionary.md", "spec"),
         ("docs/agents/writing-a-lesson.md", "agent-docs"),
         ("docs/prose/README.md", "agent-docs"),
-        (".claude/skills/tutor/SKILL.md", "agent-docs"),
+        (".claude/skills/ai-tutor/SKILL.md", "agent-docs"),
         ("site/src/data/topics.yaml", "data"),
         ("README.md", "repo-docs"),
     ],

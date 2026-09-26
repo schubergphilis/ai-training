@@ -11,7 +11,7 @@ GitHub Pages deploy as the publish step.
 file and the bootstrap shipped 2026-09-24 (#69): `site/src/tutor/instructions.md`
 is the source, `site/src/lib/tutor-instructions.ts` adds the frontmatter,
 `site/src/pages/data/tutor.md.ts` writes `/data/tutor.md`, and
-`.claude/skills/tutor/SKILL.md` is the bootstrap. The install check by hand
+`.claude/skills/ai-tutor/SKILL.md` is the bootstrap. The install check by hand
 (step 3 of #69) waits for the first deploy that includes the file. The page
 block and the getting-started page aren't built yet.
 
@@ -58,11 +58,11 @@ can open any lesson in a tutor session.
 
 | Rule            | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Source of truth | The skill directory `.claude/skills/tutor/` in the GitHub repo `lsimons/ai-training`, on `main`.                                                                                                                                                                                                                                                                                                                                                                   |
-| Install         | The `skills` CLI, which installs a skill from a GitHub repo into Claude Code or opencode: `npx skills add lsimons/ai-training --skill tutor -g`. The `-g` flag installs to the learner's user directory, so the skill is found from any project rather than only from the directory the command ran in. `npx skills list -g` shows it afterwards. The exact command is printed by the lesson page block and the getting-started page, and both print the same one. |
+| Source of truth | The skill directory `.claude/skills/ai-tutor/` in the GitHub repo `lsimons/ai-training`, on `main`.                                                                                                                                                                                                                                                                                                                                                                |
+| Install         | The `skills` CLI, which installs a skill from a GitHub repo into Claude Code or opencode: `npx skills add lsimons/ai-training --skill ai-tutor -g`. The `-g` flag installs to the learner's user directory, so the skill is found from any project rather than only from the folder the command ran in. `npx skills list -g` shows it afterwards. The exact command is printed by the lesson page block and the getting-started page, and both print the same one. |
 | Not offered     | A plugin marketplace entry, a `curl` one-liner, a manual copy of the file. One install path keeps the instructions on the page short and the support surface small.                                                                                                                                                                                                                                                                                                |
 | Precondition    | The repo is public, which it is as of the "ready to go public" release. The install command fails on a private repo, so the page never showed it before that.                                                                                                                                                                                                                                                                                                      |
-| Invocation      | `/tutor <lesson URL>` in Claude Code. opencode has no per-skill slash command, so there the learner writes a plain request that names the skill: `Use the tutor skill on <lesson URL>`. The skill's `description` field says what it does so either agent can also pick it up from a plain request.                                                                                                                                                                |
+| Invocation      | `/ai-tutor <lesson URL>` in Claude Code. opencode has no per-skill slash command, so there the learner writes a plain request that names the skill: `Use the ai-tutor skill on <lesson URL>`. The skill's `description` field says what it does so either agent can also pick it up from a plain request.                                                                                                                                                          |
 
 ## Bootstrap contract
 
@@ -70,7 +70,7 @@ The installed `SKILL.md` is the bootstrap. It contains, and only contains:
 
 | Part             | Content                                                                                                                                                                                                                                                      |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Frontmatter      | `name: tutor` and a one-sentence `description`, as the skill format requires.                                                                                                                                                                                |
+| Frontmatter      | `name: ai-tutor` and a one-sentence `description`, as the skill format requires.                                                                                                                                                                             |
 | Instructions URL | The absolute URL of the published instruction file (below). The bootstrap fetches it first, before saying anything to the learner.                                                                                                                           |
 | Version check    | The bootstrap declares the `version` it understands. If the fetched file's `version` is higher, the tutor tells the learner to reinstall the skill with the install command and then continues as far as the instructions still make sense to it.            |
 | Lesson step      | Ask the learner for the lesson URL, or take it from what they pasted. Derive the bundle URL by the scheme below, fetch it, and follow the fetched instructions from there.                                                                                   |
@@ -140,7 +140,7 @@ https://lsimons.github.io/ai-training/data/tutor.md
 | Exemplar dialogues | Two to four short dialogues that show the hint ladder and never reveal an answer.                                                                                                                                      |
 | Out of scope       | What the tutor declines: a second lesson in the same session, a grade for a certificate, the learner's browser storage, and any edit to the learner's files.                                                           |
 
-The file's body is the text that was in `.claude/skills/tutor/SKILL.md`,
+The file's body is the text that was in the skill's `SKILL.md`,
 moved and rewritten for a reader who has the bundle rather than the repo.
 Its source in the repo is `site/src/tutor/instructions.md`, and the build
 copies it into the output unchanged with the frontmatter fields filled in.
@@ -227,8 +227,8 @@ order:
 
 1. The install command, once, as a code line with a copy button.
 2. The paste-ready line for this lesson, as a code line with a copy button:
-   `/tutor https://lsimons.github.io/ai-training/<area>/<lesson>/`. Under
-   it, one line for opencode: `In opencode, ask: Use the tutor skill on <the same URL>`.
+   `/ai-tutor https://lsimons.github.io/ai-training/<area>/<lesson>/`. Under
+   it, one line for opencode: `In opencode, ask: Use the ai-tutor skill on <the same URL>`.
 3. One sentence: the tutor can't read the progress stored in this browser,
    so export it from the settings page and paste the file if a recall
    question is wanted.

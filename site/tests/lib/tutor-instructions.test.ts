@@ -57,7 +57,7 @@ describe('renderTutorInstructions', () => {
 // `version` it understands. Each is derived from the constants the build
 // uses, so the test fails when the build moves and the bootstrap text stays.
 describe('the bootstrap SKILL.md', () => {
-	const skill = readFileSync(new URL('../../../.claude/skills/tutor/SKILL.md', import.meta.url), 'utf8');
+	const skill = readFileSync(new URL('../../../.claude/skills/ai-tutor/SKILL.md', import.meta.url), 'utf8');
 	const instructionsUrl = absoluteUrl(TUTOR_INSTRUCTIONS_PATH, site);
 	const example = { area: 'using-agents', lesson: 'delegating' };
 	const pageUrl = `${ROOT}/${example.area}/${example.lesson}/`;

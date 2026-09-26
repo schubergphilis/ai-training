@@ -2,7 +2,7 @@
 /**
  * The "Open in tutor" block (spec S08 "Lesson page block"). The
  * MarkdownContent override renders it on every lesson page after the lesson
- * body. It shows the install command and the paste-ready `/tutor` line for
+ * body. It shows the install command and the paste-ready `/ai-tutor` line for
  * this lesson, each with a copy button, says that the tutor can't read the
  * progress in this browser, and links the getting-started guide. The
  * absolute lesson URL comes from the page, built with `absoluteUrl()`.
@@ -15,16 +15,16 @@ interface Props {
 }
 
 const { lessonUrl } = Astro.props;
-const install = 'npx skills add lsimons/ai-training --skill tutor -g';
-const command = `/tutor ${lessonUrl}`;
-const opencodeRequest = `Use the tutor skill on ${lessonUrl}`;
+const install = 'npx skills add lsimons/ai-training --skill ai-tutor -g';
+const command = `/ai-tutor ${lessonUrl}`;
+const opencodeRequest = `Use the ai-tutor skill on ${lessonUrl}`;
 ---
 
 <aside class="route-card tutor-block not-content" data-tutor-block>
 	<p class="route-title">Open in tutor</p>
 	<p>
-		Work through this lesson with a coding agent that gives hints instead of answers. Install the tutor skill once
-		with the first line, then paste the <code>/tutor</code> line into Claude Code.
+		Work through this lesson with a coding agent that gives hints instead of answers. Install the ai-tutor skill once
+		with the first line, then paste the <code>/ai-tutor</code> line into Claude Code.
 	</p>
 	<div class="tutor-line">
 		<pre><code>{install}</code></pre>
@@ -32,7 +32,7 @@ const opencodeRequest = `Use the tutor skill on ${lessonUrl}`;
 	</div>
 	<div class="tutor-line">
 		<pre><code>{command}</code></pre>
-		<button type="button" class="tutor-copy" data-copy={command} aria-label="Copy the /tutor line">Copy</button>
+		<button type="button" class="tutor-copy" data-copy={command} aria-label="Copy the /ai-tutor line">Copy</button>
 	</div>
 	<p class="route-where">In opencode, ask: <code>{opencodeRequest}</code></p>
 	<p>

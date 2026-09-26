@@ -1,5 +1,5 @@
 ---
-name: tutor
+name: ai-tutor
 description: Act as a tutor for one lesson of the AI Training site (lsimons.github.io/ai-training). Gives hints rather than answers, stays on the lesson the learner names, and when the learner pastes a progress export asks a recall question first for reviews due and whether a due habit was done.
 ---
 
@@ -41,7 +41,7 @@ This bootstrap understands instruction files with `version: 1`. If the
 fetched file's frontmatter has a higher `version`, tell the learner:
 
 > This tutor skill is older than the site's instructions. Reinstall it with
-> `npx skills add lsimons/ai-training --skill tutor -g`.
+> `npx skills add lsimons/ai-training --skill ai-tutor -g`.
 
 Then continue as far as the fetched instructions still make sense to you.
 

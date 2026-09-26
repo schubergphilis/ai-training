@@ -1,6 +1,6 @@
 ---
 title: How to study with the tutor
-description: Install the tutor skill in Claude Code or opencode, open a lesson with it, and know what it does and doesn't do.
+description: Install the ai-tutor skill in Claude Code or opencode, open a lesson with it, and know what it does and doesn't do.
 ---
 
 The tutor is Claude acting as a study partner for one lesson of this site.
@@ -20,7 +20,7 @@ Install the skill into your user directory, so it is found from any folder
 you start the agent in:
 
 ```sh
-npx skills add lsimons/ai-training --skill tutor -g
+npx skills add lsimons/ai-training --skill ai-tutor -g
 ```
 
 The `skills` command detects which agents you have and installs the skill
@@ -30,7 +30,7 @@ for each of them. Then check that it is listed:
 npx skills list -g
 ```
 
-The output includes a line for `tutor`. When the site's instructions need a
+The output includes a line for `ai-tutor`. When the site's instructions need a
 newer skill, the tutor tells you to run the same install command again.
 
 ## First session
@@ -42,14 +42,14 @@ URL. Start your agent in any folder and give it the lesson.
 In Claude Code, the skill has a slash command:
 
 ```text
-/tutor https://lsimons.github.io/ai-training/coding-with-agents/first-session/
+/ai-tutor https://lsimons.github.io/ai-training/coding-with-agents/first-session/
 ```
 
 opencode has no slash command per skill, so write a plain request that
 names the skill:
 
 ```text
-Use the tutor skill on https://lsimons.github.io/ai-training/coding-with-agents/first-session/
+Use the ai-tutor skill on https://lsimons.github.io/ai-training/coding-with-agents/first-session/
 ```
 
 The tutor first fetches its instructions and the lesson from the site, one

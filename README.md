@@ -20,9 +20,9 @@ The basic material (AI concepts, AI safety, using AI agents) is written for
 anyone doing knowledge work. The rest is written for software engineers. The
 site is static HTML with interactive lessons that keep your progress in your
 browser, and you can also study a lesson from a Claude Code or opencode
-session with Claude acting as a tutor. Install the tutor skill with
-`npx skills add lsimons/ai-training --skill tutor -g` and start it with
-`/tutor <lesson URL>`. The skill (`.claude/skills/tutor/SKILL.md`, spec S08)
+session with Claude acting as a tutor. Install the ai-tutor skill with
+`npx skills add lsimons/ai-training --skill ai-tutor -g` and start it with
+`/ai-tutor <lesson URL>`. The skill (`.claude/skills/ai-tutor/SKILL.md`, spec S08)
 fetches its rules and the lesson from the published site.
 
 **Status: release 1 is live, with three to eight lessons per area and twenty-five in total.** The

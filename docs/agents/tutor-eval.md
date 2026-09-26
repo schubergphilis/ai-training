@@ -1,6 +1,6 @@
 # Tutor eval set
 
-A blind set of learner queries for the tutor skill (`.claude/skills/tutor/SKILL.md`),
+A blind set of learner queries for the tutor skill (`.claude/skills/ai-tutor/SKILL.md`),
 with what a good reply must and must not do. Run it by hand after a model
 change or a rewrite of the skill. The result goes in the log at the end. There is no automation, on purpose: the judgments are
 about tone and restraint, and a person reads the two replies side by side.
@@ -17,7 +17,7 @@ to checkpoint X" and the answer is in the checkpoint's attributes.
 1. Pick the two configurations to compare: usually the model before and
    after the change, with the same skill file, or the skill before and
    after with the same model. Name them A and B.
-2. Start a fresh session for each query and each configuration: `/tutor`,
+2. Start a fresh session for each query and each configuration: `/ai-tutor`,
    then the setup line for the query (which lesson, and the earlier turns
    when the query is a later rung of the ladder), then the query. Save
    both replies. A fresh session per query keeps dilution out of the

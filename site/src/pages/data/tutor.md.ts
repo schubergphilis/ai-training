@@ -6,7 +6,7 @@ import body from '../../tutor/instructions.md?raw';
  * The tutor instruction file (spec S08 "Published instruction file"), served
  * under the base path at `TUTOR_INSTRUCTIONS_PATH` (`@lib/tutor-instructions`),
  * which this file's own path must match. The installed tutor
- * skill (`.claude/skills/tutor/SKILL.md`) fetches it before it says anything
+ * skill (`.claude/skills/ai-tutor/SKILL.md`) fetches it before it says anything
  * to the learner, and then a lesson bundle from `/data/lessons/`. Nothing in
  * the browser reads it.
  */

@@ -12,8 +12,8 @@ const markup = `
 <aside class="route-card tutor-block not-content" data-tutor-block>
 	<div class="tutor-line"><pre><code>npx skills add</code></pre>
 		<button type="button" class="tutor-copy" data-copy="npx skills add">Copy</button></div>
-	<div class="tutor-line"><pre><code>/tutor https://example.org/l/</code></pre>
-		<button type="button" class="tutor-copy" data-copy="/tutor https://example.org/l/">Copy</button></div>
+	<div class="tutor-line"><pre><code>/ai-tutor https://example.org/l/</code></pre>
+		<button type="button" class="tutor-copy" data-copy="/ai-tutor https://example.org/l/">Copy</button></div>
 </aside>`;
 
 const writeText = vi.fn<(text: string) => Promise<void>>();
@@ -45,7 +45,7 @@ describe('mountTutorBlock', () => {
 	it('copies the data-copy text of the clicked button and shows Copied, then restores the label', async () => {
 		expect(mountTutorBlock(document)).toBe(2);
 		await click(buttons()[1]);
-		expect(writeText).toHaveBeenCalledExactlyOnceWith('/tutor https://example.org/l/');
+		expect(writeText).toHaveBeenCalledExactlyOnceWith('/ai-tutor https://example.org/l/');
 		expect(buttons()[1]?.textContent).toBe('Copied');
 		expect(buttons()[0]?.textContent).toBe('Copy');
 		await vi.advanceTimersByTimeAsync(RESTORE_MS);
