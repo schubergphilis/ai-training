@@ -11,6 +11,8 @@ assumes:
   - objective: safety/judges-agent-risk/names-blast-radius
     lesson: safety/agent-risk
     section: permissions-and-least-privilege
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 after: [safety/agent-risk]
 shorts: [Why a model cannot tell data from commands]
 exercise:
