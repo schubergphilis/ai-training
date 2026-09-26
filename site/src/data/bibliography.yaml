@@ -1161,6 +1161,13 @@ Git docs git-stash:
   author: The Git project
   license: GPL-2.0
   url: https://git-scm.com/docs/git-stash
+Git docs git-reflog:
+  type: reference
+  title: git-reflog
+  container: Git reference documentation
+  author: The Git project
+  license: GPL-2.0
+  url: https://git-scm.com/docs/git-reflog
 Git docs git-rebase:
   type: reference
   title: git-rebase
