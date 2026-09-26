@@ -34,8 +34,12 @@ export default getViteConfig({
 			include: ['src/lib/**/*.ts', 'src/scripts/**/*.ts', 'scripts/lib/**/*.mjs', 'plugins/**/*.mjs'],
 			// `lesson-context.ts` reads Starlight's route locals and has no
 			// logic of its own; it is exercised by the component tests and
-			// the build. The two CLI entrypoints under scripts/ are thin argv
-			// shims over scripts/lib; keep them thin or drop the exclusion.
+			// the build. The entry scripts directly under scripts/ are outside
+			// the include. The check scripts and lesson-plan.mjs only read argv
+			// and call scripts/lib, where the floor measures their logic, so
+			// put new logic there too. gen-favicon.mjs, screenshot.mjs and
+			// serve-dist.mjs are dev tools with their code in the file and no
+			// tests.
 			exclude: ['src/lib/lesson-context.ts'],
 			thresholds: {
 				lines: 80,
