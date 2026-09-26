@@ -26,6 +26,7 @@ exercise:
     large model, then find the rule that a long instruction file buried.
 sources:
   - Claude docs pricing
+  - Claude docs models-overview
   - Academy ai-capabilities-and-limitations
   - AEC-02
   - Liu 2024

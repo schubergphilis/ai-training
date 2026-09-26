@@ -678,6 +678,13 @@ Claude docs pricing:
   author: Anthropic
   license: Proprietary
   url: https://platform.claude.com/docs/en/about-claude/pricing
+Claude docs models-overview:
+  type: reference
+  title: Models overview
+  container: Claude Platform documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://platform.claude.com/docs/en/about-claude/models/overview
 Parasuraman 2010:
   type: paper
   title: "Complacency and Bias in Human Use of Automation: An Attentional Integration"

@@ -121,7 +121,7 @@ Vendors publish models in a family with several sizes, and the sizes
 share a name and a release date but differ in price and in what they can
 do. The larger model follows a complex instruction more reliably and reasons
 through more steps, and it costs more per token and produces each token
-more slowly. The smaller one is cheaper and faster,
+more slowly (@Claude docs models-overview). The smaller one is cheaper and faster,
 and for a narrow task with a clear instruction, such as a five-bullet
 summary in a fixed format, it is often good enough
 (@Academy ai-capabilities-and-limitations).
@@ -137,18 +137,18 @@ every token, and both grow faster on a larger model.
 Which model fits which task is a decision of its own, and the course on
 using agents has a lesson that puts a small and a large model side by
 side on the same inputs. Here the point is only what changes when you
-switch: the price moves by a factor of several, and the wait moves with it.
+switch: the price moves by a factor of several, and the wait changes too.
 
 <Choice id="what-the-switch-changes" objective="concepts/explains-models/explains-generation"
   concepts={['cost-and-latency', 'model-family-and-size']}
-  context="The lesson says that a larger model in a family costs several times a smaller one per token and produces each token more slowly, so a switch between the two changes both the price and the wait."
+  context="The lesson follows a team that sends a short prompt asking for a five-bullet summary of meeting notes, and prices it on a small and a large model from the same vendor family."
   title="What does the switch change?"
-  hint="The token counts stay the same. What does the small model charge for each token, and how fast does it write one?"
+  hint="The token counts stay the same. Does the price or the speed of a token depend on the model?"
   options={[
     { text: 'The price and the wait both drop, because each token costs less and comes faster.', correct: true },
     { text: 'The price drops, and the wait stays the same, because the answer has the same number of tokens.', why: 'The small model also writes each token faster, so the same answer arrives sooner.' },
     { text: 'The wait drops, and the price stays the same, because the model reads and writes the same tokens.', why: 'The price is per token, and the small model charges less for each one.' },
-    { text: 'Neither changes, because the prompt and the answer are the same.', why: 'The tokens are the same, but the small model is cheaper and faster for each of them.' },
+    { text: 'Neither changes, because the prompt and the answer are the same.', why: 'The token counts are the same, but the price and the speed of each token depend on the model as well.' },
   ]}>
 
 The team moves the meeting summaries from the large model to the small
