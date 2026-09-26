@@ -386,4 +386,7 @@ def test_git_variables_in_the_shell_do_not_change_the_output(
     hostile = _run(fixture, _hostile_env(tmp_path))
     assert "HOOK-RAN" not in hostile.stdout + hostile.stderr
     assert "EXTERNAL-DIFF" not in hostile.stdout + hostile.stderr
-    assert (hostile.returncode, hostile.stdout) == (clean.returncode, clean.stdout)
+    assert (hostile.returncode, hostile.stdout) == (clean.returncode, clean.stdout), (
+        f"stderr with the caller's environment:\n{clean.stderr}\n"
+        f"stderr with the git variables:\n{hostile.stderr}"
+    )
