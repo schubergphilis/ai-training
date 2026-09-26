@@ -33,6 +33,7 @@ sources-checked: 2026-09-24
 review-by: 2027-03-24
 issue: 137
 minutes: 15
+proofs: [concepts/what-tokens-cost/price_prompts.py]
 notes: >-
   Dilution here is about one instruction competing with the text after it, in one prompt or file.
   Context rot (concepts/memory) is the session-level effect of a filling window. The price table
@@ -41,6 +42,5 @@ notes: >-
   large model several times a small one) was checked against the Claude Platform pricing page on
   2026-09-24, and the example numbers match no price row on that page. The fixture
   site/examples/concepts/what-tokens-cost/price_prompts.py is the source of every number in the two
-  text fences and is not wired into CI yet, because a foundations page may not carry a Predict run
-  tag and #237 decides how a hidden fixture backs such a page. The instruction file and the meeting
-  notes are illustrative.
+  text fences. It is listed in proofs, so mise run examples fails when it prints a line those
+  fences don't show (#497). The instruction file and the meeting notes are illustrative.

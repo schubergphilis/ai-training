@@ -67,7 +67,7 @@ function tree(files: Record<string, string | null> = {}) {
 
 /** The repo's exemption list names real lessons, so the fixture tree runs with its own (empty by default). */
 const check = (root: string, foundationsExempt = new Map<string, number>()) =>
-	checkData(join(root, 'data'), join(root, 'content'), { foundationsExempt });
+	checkData(join(root, 'data'), join(root, 'content'), { foundationsExempt, examplesDir: join(root, 'examples') });
 
 describe('checkData', () => {
 	it('passes a consistent tree and counts lessons and pages', () => {
@@ -514,6 +514,43 @@ describe('foundations audience', () => {
 		expect(check(clean, new Map([['a/gone', 998]])).errors).toEqual([
 			'scripts/lib/data.mjs: FOUNDATIONS_EXEMPT lists a/gone (#998), which is not a foundations lesson page, so remove the line',
 		]);
+	});
+	describe('proofs (#497)', () => {
+		const withProofs = (proofs: string) => LIVE.replace('minutes: 10\n', `minutes: 10\nproofs: ${proofs}\n`);
+		const fixture = { 'examples/a/x/price.py': 'print(1)\n', 'examples/a/x/notes.txt': 'data\n' };
+		const foundations = { 'data/groups.yaml': FOUNDATIONS, 'data/areas/a/area.yaml': AREA_F, ...fixture };
+		it('passes a foundations lesson whose proofs name .py files under site/examples/', () => {
+			const root = tree({ ...foundations, 'data/areas/a/lessons/x.yaml': withProofs('[a/x/price.py]') });
+			expect(check(root).errors).toEqual([]);
+		});
+		it('fails proofs on a lesson outside the foundations group', () => {
+			const root = tree({ ...fixture, 'data/areas/a/lessons/x.yaml': withProofs('[a/x/price.py]') });
+			expect(check(root).errors).toEqual([
+				'src/data/areas/a/lessons/x.yaml: proofs is only for a lesson in the foundations group (spec S09 "Groups"), and this area is in "g"; an engineering page shows its fixture with <Predict run=...>',
+			]);
+		});
+		it('fails a proof that is not a .py file under site/examples/', () => {
+			const root = tree({
+				...foundations,
+				'data/areas/a/lessons/x.yaml': withProofs(
+					'[a/x/notes.txt, a/x/gone.py, ../a/x/price.py, /a/x/price.py, a/./x/price.py, a/x, 3]',
+				),
+			});
+			const where = 'src/data/areas/a/lessons/x.yaml: proofs';
+			expect(check(root).errors).toEqual([
+				`${where} "a/x/notes.txt" is not a .py fixture path`,
+				`${where} "a/x/gone.py" is not a file under site/examples/`,
+				`${where} "../a/x/price.py" is not a plain path relative to site/examples/`,
+				`${where} "/a/x/price.py" is not a plain path relative to site/examples/`,
+				`${where} "a/./x/price.py" is not a plain path relative to site/examples/`,
+				`${where} "a/x" is not a .py fixture path`,
+				`${where} 3 is not a .py fixture path`,
+			]);
+		});
+		it('fails proofs that is not a list', () => {
+			const root = tree({ ...foundations, 'data/areas/a/lessons/x.yaml': withProofs('a/x/price.py') });
+			expect(check(root).errors).toEqual(['src/data/areas/a/lessons/x.yaml: proofs is not a list of fixture paths']);
+		});
 	});
 	it('names an issue for every exemption in the repo list', () => {
 		for (const [id, issue] of FOUNDATIONS_EXEMPT) {

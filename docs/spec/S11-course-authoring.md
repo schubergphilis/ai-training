@@ -135,6 +135,7 @@ notes: >-
 | `minutes`         | yes       | Target length. Keep lessons short.                                                                                                                                                                                                                                                        |
 | `sources-checked` | no        | The day the sources were last checked, shown in the page's review line. Set with `review-by`, and move both only after re-checking the sources.                                                                                                                                           |
 | `review-by`       | no        | The date by which the sources must be checked again, for a lesson whose facts move (S03 "Frontmatter").                                                                                                                                                                                   |
+| `proofs`          | no        | Fixture paths relative to `site/examples/` that back a `foundations` page, which may not carry a `<Predict run=...>` (S03 "Examples"). `mise run examples` runs each and fails on a printed line no `text` fence on the page shows. Rejected outside that group.                          |
 | `notes`           | no        | Free prose for authors: rationale, a content sketch, pointers to issues, what the plan named that the page later changed. Never rendered.                                                                                                                                                 |
 
 The schema is strict. A fact with no field gets a field, and a comment in
@@ -219,7 +220,9 @@ no edit to the config.
 - a live lesson has no `description`, or an `assumes` entry without
   `lesson` and `section`;
 - a page `<area>/<lesson>.mdx` has no lesson file, or its frontmatter sets a
-  field the lesson file owns.
+  field the lesson file owns;
+- a lesson outside the `foundations` group lists `proofs`, or a `proofs`
+  entry isn't a `.py` file under `site/examples/`.
 
 It warns, without failing, when a concept of one of the area's topics is
 introduced by no lesson, because a gap in the plan is a content decision.

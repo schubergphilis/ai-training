@@ -143,6 +143,19 @@ pitfall and the exercise.
   2026-09-20). One language and one interpreter keep the runner simple and
   keep bash idiom (`set -euo pipefail`, `trap`) out of the fixtures. The
   runner rejects any other file type.
+- **A hidden fixture backs a foundations page through `proofs`**
+  (decided 2026-09-26, #497). A foundations page may not carry a
+  `<Predict run=...>` (see "Foundations audience"), so its lesson file
+  lists the fixtures behind it in `proofs` (S11 "Lesson file"), as paths
+  relative to `site/examples/`. `mise run examples` runs each one on the
+  same interpreters as a `run=` fixture and fails when it exits non-zero,
+  doesn't run, or prints a non-blank line (trailing whitespace trimmed)
+  that isn't a line of a `text` fence on the page. The fixture prints what
+  the page shows, so a fixture whose output the page quotes only in part
+  prints only that part. Numbers in running prose aren't checked, as with
+  `run=`. `mise run data` rejects `proofs` on a lesson outside the
+  `foundations` group, because an engineering page shows its fixture with
+  `<Predict run=...>`.
 - **Fixtures run on Python 3.9 and use the standard library only.** The
   fixture is what the learner runs, and the `predict` answer must match on
   their machine. A stock macOS `python3` is 3.9. A learner types
@@ -377,9 +390,11 @@ prompt the learner pastes into a chat assistant. Engineering areas keep
 the freedom the rest of this spec gives them.
 
 A runnable fixture under `site/examples/` may still back a claim as CI
-proof (see "Examples"). The foundations page keeps it out of sight: the
-learner never sees its name and is never asked to run it. The page may
-quote a command or a file name in an inline code span, and may show
+proof. The lesson file lists it in `proofs`, and `mise run examples` fails
+when it prints a line that no `text` fence on the page shows (see
+"Examples"). The foundations page keeps it out of sight: the learner
+never sees its name and is never asked to run it. The page may quote a
+command or a file name in an inline code span, and shows the fixture's
 output in a `text` fence.
 
 `mise run data` (`site/scripts/lib/data.mjs`, `checkFoundationsAudience`)

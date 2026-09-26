@@ -16,11 +16,18 @@
  * `src/lib/checkpoint-tags.ts`, so the answer compared is the one the page
  * shows (#286).
  *
+ * A foundations page may not carry a `<Predict run=...>` (S03 "Foundations
+ * audience"), so its lesson file lists the fixtures behind it in `proofs`
+ * (S11 "Lesson file", #497). Each proof runs on the same interpreters, and
+ * every non-blank line it prints must be a line of a `text` fence on the
+ * page (`checkProofs`).
+ *
  * `scripts/check-examples.mjs` is the command-line entry; tests import this.
  */
 import { spawnSync } from 'node:child_process';
-import { lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { extname, join, relative, sep } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import { attrsOf, jsxElements, parseMdx, propValue, stringProp } from '../../src/lib/checkpoint-tags.ts';
 
 /** Every `.mdx` file under `dir`, recursively. */
@@ -204,14 +211,115 @@ export function checkSource(file, src, run, interps = DEFAULT_INTERPRETERS) {
 }
 
 /**
+ * Every line of every `text` fence in a lesson source, with trailing
+ * whitespace trimmed, read from the MDX tree the page build parses. A fence
+ * inside a component counts too, and a fence in an MDX comment doesn't,
+ * because the page shows only the first. A parse error throws, with `where`
+ * in the message.
+ */
+export function textFenceLines(src, where) {
+	let tree;
+	try {
+		tree = parseMdx(src);
+	} catch (e) {
+		throw new Error(`${where}: ${e.message}`);
+	}
+	const lines = new Set();
+	const walk = (node) => {
+		if (node.type === 'code' && node.lang === 'text')
+			for (const line of (node.value ?? '').split('\n')) lines.add(line.trimEnd());
+		for (const child of node.children ?? []) walk(child);
+	};
+	walk(tree);
+	return lines;
+}
+
+/**
+ * The `proofs` list of the lesson file behind the page `file`
+ * (`<contentDir>/<area>/<lesson>.mdx` maps to
+ * `<areasDir>/<area>/lessons/<lesson>.yaml`, spec S11 "Lesson file"), as
+ * `{ proofs }`, or `{ error }` when the file does not parse or `proofs` is
+ * not a list of strings. A page that is not a lesson page, or has no lesson
+ * file, has no proofs: `mise run data` fails a lesson page without its file.
+ */
+export function lessonProofs(contentDir, areasDir, file) {
+	const parts = relative(contentDir, file).split(sep);
+	if (parts.length !== 2 || parts[1] === 'index.mdx') return { proofs: [] };
+	const [area, page] = parts;
+	const yamlFile = join(areasDir, area, 'lessons', page.replace(/\.mdx$/, '.yaml'));
+	if (!existsSync(yamlFile)) return { proofs: [] };
+	let data;
+	try {
+		data = parseYaml(readFileSync(yamlFile, 'utf8'));
+	} catch (e) {
+		return { error: `${yamlFile}: ${e.message}` };
+	}
+	const proofs = data?.proofs;
+	if (proofs === undefined) return { proofs: [] };
+	if (!Array.isArray(proofs) || proofs.some((p) => typeof p !== 'string'))
+		return { error: `${yamlFile}: proofs is not a list of fixture paths` };
+	return { proofs };
+}
+
+/**
+ * Check the `proofs` of one lesson page (#497): run each fixture in `proofs`
+ * with `run(name, interp)`, once per entry in `interps`, and fail when it
+ * doesn't run, exits non-zero, or prints a non-blank line (trailing
+ * whitespace trimmed) that is not a line of a `text` fence in `src`
+ * (`textFenceLines`). The rule is in spec S03 "Examples". Returns
+ * `{ checked, failures }`: how many runs happened and one message per
+ * problem.
+ */
+export function checkProofs(file, src, proofs, run, interps = DEFAULT_INTERPRETERS) {
+	let checked = 0;
+	const failures = [];
+	if (proofs.length === 0) return { checked, failures };
+	let shown;
+	try {
+		shown = textFenceLines(src, file);
+	} catch (e) {
+		return { checked, failures: [e.message] };
+	}
+	for (const name of proofs) {
+		const typeError = fixtureTypeError(name);
+		if (typeError) {
+			failures.push(`${file}: proof ${name}: ${typeError}`);
+			continue;
+		}
+		for (const interp of interps) {
+			const res = run(name, interp);
+			checked++;
+			if (res.error) failures.push(`${file}: proof ${name} [${interp.label}] ${res.error}`);
+			else if (res.status !== 0)
+				failures.push(`${file}: proof ${name} [${interp.label}] exited ${res.status}\n${res.stderr}`);
+			else {
+				const missing = res.stdout
+					.split('\n')
+					.map((line) => line.trimEnd())
+					.filter((line) => line !== '' && !shown.has(line));
+				if (missing.length)
+					failures.push(
+						`${file}: proof ${name} [${interp.label}] prints ${missing.length} line(s) no text fence on the page shows:\n${missing.map((line) => `  ${JSON.stringify(line)}`).join('\n')}`,
+					);
+			}
+		}
+	}
+	return { checked, failures };
+}
+
+/**
  * Check every lesson under `contentDir` against the fixtures in
  * `examplesDir`, on every interpreter from `interpreters()` (or the
- * `interps` given). Returns `{ found, checked, failures, interpreters }`,
- * the last being the labels the fixtures ran on. Zero examples is a failure
- * too: it means the lesson tree or the parser is broken, not that there is
- * nothing to check. So is a missing interpreter. When examples were found,
- * the failures also hold every entry script no `run` names
- * (`unrunFixtures`, with the `exempt` map).
+ * `interps` given): the `<Predict run=...>` tags of each page
+ * (`checkSource`) and the `proofs` of its lesson file under `areasDir`
+ * (`lessonProofs`, `checkProofs`). Returns `{ found, proofs, checked,
+ * failures, interpreters }`: the Predict examples and the proofs found, the
+ * runs, one message per problem, and the labels the fixtures ran on. Zero
+ * Predict examples is a failure too: it means the lesson tree or the parser
+ * is broken, not that there is nothing to check. So is a missing
+ * interpreter. When examples were found, the failures also hold every entry
+ * script no `run` and no proof names (`unrunFixtures`, with the `exempt`
+ * map).
  */
 export function checkExamples(
 	contentDir,
@@ -219,33 +327,46 @@ export function checkExamples(
 	run = (name, interp) => runFixture(examplesDir, name, interp),
 	interps = interpreters(),
 	exempt = UNRUN_EXEMPT,
+	areasDir = join(contentDir, '..', '..', 'data', 'areas'),
 ) {
-	if (interps.error) return { found: 0, checked: 0, failures: [interps.error], interpreters: [] };
+	if (interps.error) return { found: 0, proofs: 0, checked: 0, failures: [interps.error], interpreters: [] };
 	let checked = 0;
 	let found = 0;
+	let proofCount = 0;
 	const failures = [];
 	const runs = new Set();
 	for (const file of walkMdx(contentDir)) {
-		const result = checkSource(file, readFileSync(file, 'utf8'), run, interps.list);
+		const src = readFileSync(file, 'utf8');
+		const result = checkSource(file, src, run, interps.list);
 		found += result.found;
 		checked += result.checked;
 		failures.push(...result.failures);
 		for (const name of result.runs) runs.add(name);
+		const { proofs, error } = lessonProofs(contentDir, areasDir, file);
+		if (error) {
+			failures.push(error);
+			continue;
+		}
+		const proved = checkProofs(file, src, proofs, run, interps.list);
+		proofCount += proofs.length;
+		checked += proved.checked;
+		failures.push(...proved.failures);
+		for (const name of proofs) runs.add(name);
 	}
 	if (found === 0)
 		failures.push(`no <Predict run=...> examples found under ${contentDir}; the lesson tree or parser is broken`);
 	else failures.push(...unrunFixtures(examplesDir, runs, exempt));
-	return { found, checked, failures, interpreters: interps.list.map((i) => i.label) };
+	return { found, proofs: proofCount, checked, failures, interpreters: interps.list.map((i) => i.label) };
 }
 
 /**
- * Entry scripts that no `<Predict run=...>` runs, each with the reason
- * (#460). The rule is in docs/agents/testing.md ("Fixtures without a
+ * Entry scripts that no `<Predict run=...>` and no lesson file's `proofs`
+ * runs, each with the reason (#460, #497). The rule is in docs/agents/testing.md ("Fixtures without a
  * Predict"). The list only shrinks: a fixture on it goes unchecked in CI, so a
  * page claim about its output can go stale with the build green.
  */
 const FOUNDATIONS =
-	'foundations page: `mise run data` rejects `<Predict run=...>` there, so the page states the output in prose until #237 picks the proof mechanism';
+	'foundations page: `mise run data` rejects `<Predict run=...>` there, and the lesson file does not list it in `proofs` yet (#311)';
 const MODEL_ANSWER =
 	'a model answer the learner runs to compare with their own; the page shows the command and none of its output';
 const RED_TEAM_TOOL =
@@ -263,7 +384,6 @@ export const UNRUN_EXEMPT = new Map([
 	],
 	['concepts/agent-loop/tiny_agent.py', FOUNDATIONS],
 	['concepts/retrieval/keyword_search.py', FOUNDATIONS],
-	['concepts/what-tokens-cost/price_prompts.py', FOUNDATIONS],
 	[
 		'customizing-agents/mcp-hardening/issue_token.py',
 		'the learner runs it to make a token for their own session; its output holds the current time, and the page shows the command and none of its output',
@@ -395,9 +515,10 @@ export function deepFileNamed(sources, rel) {
  * to a scratch directory. A deep file that nothing names is reported like
  * an entry script. A file that is not `.py` is data and never reported.
  *
- * `runs` holds the `run` names from the pages. `exempt` maps a fixture path
+ * `runs` holds the `run` names from the pages and the `proofs` paths from
+ * the lesson files. `exempt` maps a fixture path
  * (relative to `examplesDir`) to the reason no Predict runs it. An entry
- * that names no file, a file a Predict runs, or a file the check doesn't
+ * that names no file, a file a Predict or a proof runs, or a file the check doesn't
  * report fails too, so the list can't go stale.
  */
 export function unrunFixtures(examplesDir, runs, exempt = UNRUN_EXEMPT) {
@@ -427,12 +548,13 @@ export function unrunFixtures(examplesDir, runs, exempt = UNRUN_EXEMPT) {
 	for (const path of [...entries].sort()) {
 		if (runs.has(path) || exempt.has(path)) continue;
 		failures.push(
-			`examples/${path}: no <Predict run=...> runs this fixture, so CI never checks its output; name it in a run= or add it to UNRUN_EXEMPT with the reason (docs/agents/testing.md)`,
+			`examples/${path}: no <Predict run=...> runs this fixture, so CI never checks its output; name it in a run= (on a foundations page, in the lesson file's proofs) or add it to UNRUN_EXEMPT with the reason (docs/agents/testing.md)`,
 		);
 	}
 	for (const [path, reason] of exempt) {
 		if (!reason) failures.push(`UNRUN_EXEMPT ${path}: has no reason`);
-		if (runs.has(path)) failures.push(`UNRUN_EXEMPT ${path}: a <Predict run=...> runs it now; drop the entry`);
+		if (runs.has(path))
+			failures.push(`UNRUN_EXEMPT ${path}: a <Predict run=...> or a lesson file's proofs runs it now; drop the entry`);
 		else if (helpers.has(path))
 			failures.push(`UNRUN_EXEMPT ${path}: is a helper another fixture uses, not an entry script; drop the entry`);
 		else if (named.has(path))

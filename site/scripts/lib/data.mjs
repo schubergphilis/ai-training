@@ -41,7 +41,10 @@
  *   words `terminal`, `python3` or `git clone` outside a code span or
  *   fence, unless `FOUNDATIONS_EXEMPT` lists it with the issue that fixes
  *   it; a listed lesson that shows no such surface is a stale entry and
- *   fails too.
+ *   fails too;
+ * - a lesson file lists `proofs` (spec S11 "Lesson file") but its area is
+ *   not in the `foundations` group, or a proof is not a `.py` file under
+ *   site/examples/ (`proofErrors`).
  *
  * It reports a warning, which doesn't fail, when a concept of one of the
  * area's topics is introduced by no lesson: a gap in the plan, which is a
@@ -49,7 +52,7 @@
  * tests import this.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, normalize } from 'node:path';
 import { parse } from 'yaml';
 import { citationKeys, hasMultipleKeys, multipleKeysMessage } from '../../plugins/citation-syntax.mjs';
 import { jsxElements, literalOf, parseMdx, propValue } from '../../src/lib/checkpoint-tags.ts';
@@ -177,6 +180,33 @@ export function foundationsSurfaces(src, where = 'lesson') {
 		if (run !== undefined) out.push({ line, surface: `<Predict run="${run}">` });
 	}
 	return out.sort((a, b) => a.line - b.line);
+}
+
+/**
+ * The `proofs` rule (spec S11 "Lesson file", #497): errors for the `proofs`
+ * of lesson file `l` in an area of group `group`, as `checkData` prints them
+ * after `where`. The field is only for a foundations lesson, because an
+ * engineering page shows its fixture with `<Predict run=...>`. Each entry is
+ * a path relative to `examplesDir` that names a `.py` file there, without
+ * `..` or a leading `/`.
+ */
+export function proofErrors(l, group, examplesDir) {
+	if (l?.proofs === undefined) return [];
+	const errors = [];
+	if (group !== FOUNDATIONS_GROUP)
+		errors.push(
+			`proofs is only for a lesson in the ${FOUNDATIONS_GROUP} group (spec S09 "Groups"), and this area is in ${JSON.stringify(group)}; an engineering page shows its fixture with <Predict run=...>`,
+		);
+	if (!Array.isArray(l.proofs)) return [...errors, 'proofs is not a list of fixture paths'];
+	for (const p of l.proofs) {
+		const bad = (why) => errors.push(`proofs ${JSON.stringify(p)} ${why}`);
+		if (typeof p !== 'string' || !p.endsWith('.py')) bad('is not a .py fixture path');
+		else if (isAbsolute(p) || normalize(p) !== p || p.split('/').includes('..'))
+			bad('is not a plain path relative to site/examples/');
+		else if (!existsSync(join(examplesDir, p)) || !statSync(join(examplesDir, p)).isFile())
+			bad('is not a file under site/examples/');
+	}
+	return errors;
 }
 
 /**
@@ -470,9 +500,14 @@ export function checkBehaviorMarkdown(tree, rel) {
  * Check the tree under `dataDir` against the pages under `contentDir`.
  * `foundationsExempt` is the exemption list for `checkFoundationsAudience`
  * and defaults to `FOUNDATIONS_EXEMPT`; tests pass their own.
+ * `examplesDir` is where `proofs` paths point, site/examples/ by default.
  * Returns `{ errors: string[], warnings: string[], lessons: number, pages: number }`.
  */
-export function checkData(dataDir, contentDir, { foundationsExempt = FOUNDATIONS_EXEMPT } = {}) {
+export function checkData(
+	dataDir,
+	contentDir,
+	{ foundationsExempt = FOUNDATIONS_EXEMPT, examplesDir = join(dataDir, '..', '..', 'examples') } = {},
+) {
 	const errors = [];
 	const warnings = [];
 	const fail = (msg) => errors.push(msg);
@@ -605,6 +640,7 @@ export function checkData(dataDir, contentDir, { foundationsExempt = FOUNDATIONS
 			}
 			const pairError = reviewDatePairError(l);
 			if (pairError) fail(`${where}: ${pairError}`);
+			for (const e of proofErrors(l, grouped.get(a.dir), examplesDir)) fail(`${where}: ${e}`);
 			const page = pages.get(l?.id);
 			if (page) {
 				if (!l?.description) fail(`${where}: the lesson is live, so it needs a description`);

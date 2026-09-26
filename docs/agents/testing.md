@@ -51,9 +51,13 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   asserted in CI (spec S03, Examples): `<Predict run="..." answer="...">`
   names a fixture under `site/examples/` and `mise run examples` fails on a
   mismatch. An example that can't run says so in the page (the component
-  prints this when `run` is absent).
+  prints this when `run` is absent). A `foundations` page can't carry a
+  `run=`, so its lesson file lists the fixtures behind it in `proofs`, and
+  `mise run examples` fails when one prints a non-blank line that no `text`
+  fence on the page shows (spec S03 "Examples", #497).
 - **Fixtures without a Predict.** `mise run examples` also fails on an
-  entry script that no page names in a `run=`, because CI would never
+  entry script that no page names in a `run=` and no lesson file lists
+  in `proofs`, because CI would never
   check its output. An entry script is a `.py` file directly in a lesson
   directory, `site/examples/<area>/<lesson>/<name>.py`. The check skips a
   helper whose name starts with `_`, a module that another `.py` file in
@@ -69,13 +73,14 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   reported like an entry script. The check doesn't look in `.venv`,
   `node_modules`, dot-directories or symlinked directories. A mention in
   a docstring, a comment, a code span or a longer string doesn't count.
-  Wire a new fixture to a `<Predict run=...>`. Add it to `UNRUN_EXEMPT`
-  in `site/scripts/lib/examples.mjs`, with the reason, only when no
-  Predict can run it: a fixture behind a `foundations` page, where
-  `mise run data` rejects `run=`, or a script the learner runs or reads
-  whose output the page doesn't show, such as a setup tool or a model
-  answer. The list only shrinks, and the check fails on an entry that a
-  Predict now runs or that doesn't name an entry script.
+  Wire a new fixture to a `<Predict run=...>`, or on a `foundations` page,
+  where `mise run data` rejects `run=`, list it in the lesson file's
+  `proofs`. Add it to `UNRUN_EXEMPT` in `site/scripts/lib/examples.mjs`,
+  with the reason, only when neither can run it: a script the learner
+  runs or reads whose output the page doesn't show, such as a setup tool
+  or a model answer, or a foundations fixture not moved to `proofs` yet
+  (#311). The list only shrinks, and the check fails on an entry that a
+  Predict or a proof now runs or that doesn't name an entry script.
 - **Links.** Internal links are root-relative. `starlight-links-validator`
   fails `mise run site-build` on a dead one, so the build is the check.
   Don't disable it.

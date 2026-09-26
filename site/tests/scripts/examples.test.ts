@@ -5,14 +5,17 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
 	checkExamples,
+	checkProofs,
 	checkSource,
 	FIXTURE_TIMEOUT_MS,
 	FLOOR,
 	interpreters,
+	lessonProofs,
 	namesPath,
 	predictTags,
 	pythonVersion,
 	runFixture,
+	textFenceLines,
 	UNRUN_EXEMPT,
 	unrunFixtures,
 	usesModule,
@@ -278,7 +281,7 @@ describe('runFixture and checkExamples', () => {
 	});
 	it('fails without running anything when an interpreter is missing', () => {
 		const res = checkExamples(content, examples, undefined, { error: 'no floor' });
-		expect(res).toEqual({ found: 0, checked: 0, failures: ['no floor'], interpreters: [] });
+		expect(res).toEqual({ found: 0, proofs: 0, checked: 0, failures: ['no floor'], interpreters: [] });
 	});
 	it('fails when no example exists at all', () => {
 		const empty = join(dir, 'empty');
@@ -366,7 +369,7 @@ describe('unrunFixtures', () => {
 		writeFileSync(join(lesson, 'exercise.py'), 'print("prose only")\n');
 		try {
 			expect(unrunFixtures(dir, runs, exempt)).toEqual([
-				'UNRUN_EXEMPT area/lesson/run_me.py: a <Predict run=...> runs it now; drop the entry',
+				"UNRUN_EXEMPT area/lesson/run_me.py: a <Predict run=...> or a lesson file's proofs runs it now; drop the entry",
 				'UNRUN_EXEMPT area/lesson/agent.py: is a helper another fixture uses, not an entry script; drop the entry',
 				'UNRUN_EXEMPT area/lesson/fixture-repo/todo.py: a lesson-level fixture names this file or a directory that contains it; drop the entry',
 				'UNRUN_EXEMPT area/lesson/gone.py: names no entry script; drop the entry',
@@ -419,7 +422,7 @@ describe('unrunFixtures below the lesson directory (#468)', () => {
 		return unrunFixtures(dir, runs, exempt);
 	};
 	const reported = (path: string) =>
-		`examples/area/lesson/${path}: no <Predict run=...> runs this fixture, so CI never checks its output; name it in a run= or add it to UNRUN_EXEMPT with the reason (docs/agents/testing.md)`;
+		`examples/area/lesson/${path}: no <Predict run=...> runs this fixture, so CI never checks its output; name it in a run= (on a foundations page, in the lesson file's proofs) or add it to UNRUN_EXEMPT with the reason (docs/agents/testing.md)`;
 
 	it('passes a deep file a lesson-level fixture names directly', () => {
 		expect(check('subprocess.run(["python3", "nightly/importer.py"])\n', ['nightly/importer.py'])).toEqual([]);
@@ -505,5 +508,161 @@ describe('namesPath', () => {
 	];
 	it.each(misses)('%j does not name %j (%s)', (src, rel) => {
 		expect(namesPath(src, rel)).toBe(false);
+	});
+});
+
+describe('proofs of a foundations page (#497)', () => {
+	const PAGE = [
+		'Counted, the two come out like this.',
+		'',
+		'```text',
+		'short: 111 tokens   ',
+		'    one call   1,000 calls',
+		'```',
+		'',
+		'<Aside>',
+		'',
+		'```text',
+		'in an aside: 2',
+		'```',
+		'',
+		'</Aside>',
+		'',
+		'```sh',
+		'shell: 3',
+		'```',
+		'',
+		'{/* ```text',
+		'in a comment: 4',
+		'``` */}',
+		'',
+	].join('\n');
+	const interps = [
+		{ label: 'current', cmd: 'python3' },
+		{ label: 'floor', cmd: 'python3.9' },
+	];
+	const prints =
+		(stdout: string, status = 0) =>
+		() => ({ status, stdout, stderr: status ? 'boom\n' : '' });
+
+	it('reads the lines of every text fence, trailing whitespace trimmed, and skips other fences and comments', () => {
+		expect([...textFenceLines(PAGE, 'p.mdx')]).toEqual([
+			'short: 111 tokens',
+			'    one call   1,000 calls',
+			'in an aside: 2',
+		]);
+	});
+	it('passes a proof whose every non-blank line a text fence shows, on every interpreter', () => {
+		const out = 'short: 111 tokens\n\n    one call   1,000 calls  \nin an aside: 2';
+		expect(checkProofs('p.mdx', PAGE, ['a/b/p.py'], prints(out), interps)).toEqual({ checked: 2, failures: [] });
+	});
+	it('fails a proof that prints a changed line, once per interpreter, naming the line', () => {
+		const res = checkProofs('p.mdx', PAGE, ['a/b/p.py'], prints('short: 112 tokens\nin an aside: 2'), interps);
+		expect(res.checked).toBe(2);
+		expect(res.failures).toEqual([
+			'p.mdx: proof a/b/p.py [current] prints 1 line(s) no text fence on the page shows:\n  "short: 112 tokens"',
+			'p.mdx: proof a/b/p.py [floor] prints 1 line(s) no text fence on the page shows:\n  "short: 112 tokens"',
+		]);
+	});
+	it('fails a line that only a sh fence, a comment or the prose shows, and a line whose indentation changed', () => {
+		const res = checkProofs(
+			'p.mdx',
+			PAGE,
+			['a/b/p.py'],
+			prints('shell: 3\nin a comment: 4\nCounted, the two come out like this.\none call   1,000 calls'),
+			interps.slice(0, 1),
+		);
+		expect(res.failures[0]).toMatch(/prints 4 line\(s\)/);
+	});
+	it('fails a proof that exits 1, that cannot run, or that is not a Python script', () => {
+		expect(checkProofs('p.mdx', PAGE, ['a/b/p.py'], prints('short: 111 tokens', 1), interps.slice(0, 1))).toEqual({
+			checked: 1,
+			failures: ['p.mdx: proof a/b/p.py [current] exited 1\nboom\n'],
+		});
+		expect(
+			checkProofs('p.mdx', PAGE, ['a/b/p.py'], () => ({ error: 'cannot run a/b/p.py with python3: nope' }), interps)
+				.failures,
+		).toHaveLength(2);
+		expect(checkProofs('p.mdx', PAGE, ['a/b/p.sh'], prints(''), interps)).toEqual({
+			checked: 0,
+			failures: ['p.mdx: proof a/b/p.sh: unsupported fixture type .sh; fixtures are Python scripts (S03 "Examples")'],
+		});
+	});
+	it('runs nothing for a page without proofs', () => {
+		const run = () => {
+			throw new Error('ran');
+		};
+		expect(checkProofs('p.mdx', 'no fences\n', [], run, interps)).toEqual({ checked: 0, failures: [] });
+	});
+
+	describe('through checkExamples', () => {
+		const dir = mkdtempSync(join(tmpdir(), 'proofs-'));
+		const content = join(dir, 'src', 'content', 'docs');
+		const areas = join(dir, 'src', 'data', 'areas');
+		const examples = join(dir, 'examples');
+		mkdirSync(join(content, 'eng'), { recursive: true });
+		mkdirSync(join(content, 'found'), { recursive: true });
+		mkdirSync(join(areas, 'found', 'lessons'), { recursive: true });
+		mkdirSync(join(examples, 'eng', 'x'), { recursive: true });
+		mkdirSync(join(examples, 'found', 'y'), { recursive: true });
+		writeFileSync(join(examples, 'eng', 'x', 'shown.py'), 'print("hi")\n');
+		writeFileSync(join(examples, 'found', 'y', 'hidden.py'), 'print("total: 3")\nprint()\nprint("per call: 1")\n');
+		writeFileSync(join(content, 'eng', 'x.mdx'), '<Predict id="a" answer="hi" run="eng/x/shown.py" />\n');
+		writeFileSync(join(content, 'found', 'y.mdx'), 'The total.\n\n```text\ntotal: 3\nper call: 1\n```\n');
+		writeFileSync(join(content, 'found', 'index.mdx'), '```text\nthe course page\n```\n');
+		const lessonFile = join(areas, 'found', 'lessons', 'y.yaml');
+		const withProofs = 'id: found/y\nproofs: [found/y/hidden.py]\n';
+		writeFileSync(lessonFile, withProofs);
+		afterAll(() => rmSync(dir, { recursive: true, force: true }));
+		const one = { list: [{ label: 'python3', cmd: 'python3' }] };
+
+		it('finds the lesson file from the page, next to the content tree by default', () => {
+			expect(lessonProofs(content, areas, join(content, 'found', 'y.mdx'))).toEqual({
+				proofs: ['found/y/hidden.py'],
+			});
+			expect(lessonProofs(content, areas, join(content, 'found', 'index.mdx'))).toEqual({ proofs: [] });
+			expect(lessonProofs(content, areas, join(content, 'eng', 'x.mdx'))).toEqual({ proofs: [] });
+		});
+		it('runs a listed proof for real and counts it as run, so no UNRUN_EXEMPT entry is needed', () => {
+			const res = checkExamples(content, examples, undefined, one, new Map());
+			expect(res).toMatchObject({ found: 1, proofs: 1, checked: 2, failures: [] });
+		});
+		it('fails the page when the proof prints a line the page does not show', () => {
+			writeFileSync(join(examples, 'found', 'y', 'hidden.py'), 'print("total: 4")\nprint("per call: 1")\n');
+			try {
+				const res = checkExamples(content, examples, undefined, one, new Map());
+				expect(res.failures).toEqual([
+					`${join(content, 'found', 'y.mdx')}: proof found/y/hidden.py [python3] prints 1 line(s) no text fence on the page shows:\n  "total: 4"`,
+				]);
+			} finally {
+				writeFileSync(join(examples, 'found', 'y', 'hidden.py'), 'print("total: 3")\nprint("per call: 1")\n');
+			}
+		});
+		it('fails an UNRUN_EXEMPT entry for a fixture a proof runs', () => {
+			const exempt = new Map([['found/y/hidden.py', 'foundations page, not wired yet']]);
+			expect(checkExamples(content, examples, undefined, one, exempt).failures).toEqual([
+				"UNRUN_EXEMPT found/y/hidden.py: a <Predict run=...> or a lesson file's proofs runs it now; drop the entry",
+			]);
+		});
+		it('reports the fixture as unrun once the lesson file drops it', () => {
+			writeFileSync(lessonFile, 'id: found/y\n');
+			try {
+				expect(checkExamples(content, examples, undefined, one, new Map()).failures).toEqual([
+					expect.stringMatching(/^examples\/found\/y\/hidden\.py: no <Predict run=\.\.\.> runs this fixture/),
+				]);
+			} finally {
+				writeFileSync(lessonFile, withProofs);
+			}
+		});
+		it('fails a lesson file whose proofs is not a list of paths', () => {
+			writeFileSync(lessonFile, 'id: found/y\nproofs: found/y/hidden.py\n');
+			try {
+				expect(checkExamples(content, examples, undefined, one, new Map()).failures).toContain(
+					`${lessonFile}: proofs is not a list of fixture paths`,
+				);
+			} finally {
+				writeFileSync(lessonFile, withProofs);
+			}
+		});
 	});
 });

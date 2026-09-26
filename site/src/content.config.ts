@@ -95,6 +95,13 @@ const lessonPlanSchema = z
 		/** The day the sources were last checked, paired with `review-by`. Not Starlight's `lastUpdated`, which is about the page. */
 		'sources-checked': z.coerce.date().optional(),
 		'review-by': z.coerce.date().optional(),
+		/**
+		 * Fixture paths under site/examples/ that back a foundations page, which may not carry a
+		 * `<Predict run=...>` (spec S03 "Foundations audience"). `mise run examples` runs each one and
+		 * fails when it prints a line no `text` fence on the page shows; `mise run data` rejects the
+		 * field on a lesson outside the foundations group.
+		 */
+		proofs: z.array(z.string()).optional(),
 		/** Free prose for authors: rationale, a content sketch, pointers to issues. Never rendered. */
 		notes: z.string().optional(),
 	})
