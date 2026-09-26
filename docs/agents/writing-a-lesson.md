@@ -105,6 +105,7 @@ and bring `serves`, `introduces`, `extends-to` and `sources` in line with
 what the page does. Keep `after` as the plan had it (spec S11 step 3). The
 graph ignores it once the lesson is live, but the lesson plan table still
 shows it.
+Keep `issue` too, because the lesson plan table links it for a live lesson.
 
 The course page also renders the plan as a table under the graph
 (`site/src/components/CoursePlan.astro`), folded into a "Lesson plan"
