@@ -20,6 +20,8 @@ exercise:
     From the spec on the page, brief the agent for the second increment only and land it: the test
     with the two dates first, then the code, then the criterion checked by hand.
 sources: [Academy ai-native-sdlc-playbook, Brilliant INC]
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 issue: 155
 minutes: 15
 notes: >-
