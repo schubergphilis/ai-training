@@ -23,12 +23,14 @@ issue: 141
 minutes: 15
 proofs: [safety/assessing-a-use-case/score_use_cases.py]
 notes: >-
-  The page shows the output of the fixture site/examples/safety/assessing-a-use-case/score_use_cases.py
-  in a text fence, because safety is a foundations area and the page carries no Predict run. The
-  fixture is CI proof only: it is in proofs, so mise run examples fails when it prints a line that
-  no text fence on the page shows (#311). It prints only the three use cases the fence shows, so the
-  pitfall's demo rating and the rating after the control (both level 4) are prose it doesn't check. The graded Predict has an answer and no run, as in tracing-a-planted-instruction.
-  The scales, the threshold of 8 and the three use cases are the lesson's own worked example. AEC-10
-  "Calibrated autonomy" is cited only for sorting work by how easily it can be undone, which the page
-  puts in the impact rating. The two Academy sources in the issue were not used, because
-  no claim on the page rests on them. The page holds no person or company names.
+  The page shows the output of the fixture
+  site/examples/safety/assessing-a-use-case/score_use_cases.py in a text fence, because safety is a
+  foundations area and the page carries no Predict run. The fixture is CI proof only: it is in
+  proofs, so mise run examples fails when it prints a line that no text fence on the page shows
+  (#311). It prints only the three use cases the fence shows, so the pitfall's demo rating and the
+  rating after the control (both level 4) are prose it doesn't check. The graded Predict has an
+  answer and no run, as in tracing-a-planted-instruction. The scales, the threshold of 8 and the
+  three use cases are the lesson's own worked example. AEC-10 "Calibrated autonomy" is cited only
+  for sorting work by how easily it can be undone, which the page puts in the impact rating. The two
+  Academy sources in the issue were not used, because no claim on the page rests on them. The page
+  holds no person or company names.
