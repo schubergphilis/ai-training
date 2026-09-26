@@ -140,9 +140,11 @@ In a code repository they're the git commands that throw work away.
 `reset --hard` discards every uncommitted change to a tracked file, and
 `clean -f` deletes the untracked files. Neither has a way back, because
 nothing was ever committed. The commits that `reset --hard` or
-`branch -D` move away from are less lost than they look: git keeps them
-for a while, under `ORIG_HEAD` and in the reflog, and the documentation
-of `reset` shows the way back (@Git docs git-reset). `push --force`
+`branch -D` move away from are less lost than they look. Git keeps them
+for a while in the reflog of `HEAD`, which records each commit `HEAD`
+pointed at (@Git docs git-reflog). A reset also leaves the old tip under
+`ORIG_HEAD`, and the documentation of `reset` shows the way back
+(@Git docs git-reset). `push --force`
 overwrites a branch on the remote, where no reflog of yours applies.
 Outside the repository the steps with no undo are a deleted file that
 isn't tracked, a dropped table, an email sent, a payment made, a deploy to

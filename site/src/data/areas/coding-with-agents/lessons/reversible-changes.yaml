@@ -20,7 +20,9 @@ exercise:
   brief: >-
     Have the agent land the fixture increments as one commit each on a branch, revert the middle
     one, and write the PR description that names the spec and what was verified.
-sources: [Brilliant INC, DLAI-5, Git docs git-reset]
+sources: [Brilliant INC, DLAI-5, Git docs git-reset, Git docs git-reflog]
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 issue: 157
 minutes: 15
 notes: >-
