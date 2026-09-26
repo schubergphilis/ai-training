@@ -40,6 +40,7 @@ rows:
       - coding-with-agents/verifies-agent-work/reviews-others-code
       - coding-with-agents/verifies-agent-work/observes-and-debugs
       - coding-with-agents/verifies-agent-work/automates-the-check
+      - coding-with-agents/verifies-agent-work/prefers-gates-to-opinions
       - coding-with-agents/verifies-agent-work/screens-for-security
   - code: SEC-3, SEC-5
     asks: Evaluate AI code for vulnerabilities; supply-chain risk

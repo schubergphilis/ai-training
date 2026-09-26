@@ -473,6 +473,7 @@ Learning objectives:
 | `verifies-agent-work` | `reviews-others-code`        | base   | Reviews code they didn't write, against the specification         |
 | `verifies-agent-work` | `observes-and-debugs`        | base   | Observes the running system and isolates a fault systematically   |
 | `verifies-agent-work` | `automates-the-check`        | base   | Turns a check into a bounded, self-checking loop                  |
+| `verifies-agent-work` | `prefers-gates-to-opinions`  | base   | Chooses a deterministic gate over a model's review to block work  |
 | `verifies-agent-work` | `screens-for-security`       | base   | Screens agent output for security and supply-chain problems       |
 | `works-in-team`       | `attributes-honestly`        | base   | Attributes agent work as agent work in commits and reviews        |
 | `works-in-team`       | `follows-team-norms`         | base   | Follows the team's review and CI norms for agent changes          |

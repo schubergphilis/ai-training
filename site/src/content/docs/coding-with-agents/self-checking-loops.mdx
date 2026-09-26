@@ -285,7 +285,7 @@ so a person weighs its findings as well (@Claude Code best practices).
 Use the second model as a second opinion next to the gates, and never
 in place of them.
 
-<Sort id="gate-or-opinion" objective="coding-with-agents/verifies-agent-work/automates-the-check"
+<Sort id="gate-or-opinion" objective="coding-with-agents/verifies-agent-work/prefers-gates-to-opinions"
   concepts={['deterministic-gates']}
   context="A team decides which results can block a merge of agent-written code on their own, and which results a person weighs before deciding."
   title="Gate or opinion?" hint="Would the same input give the same result every time, without anyone's judgment?"
@@ -299,7 +299,7 @@ in place of them.
     { text: 'An AI reviewer flags a possible race condition', bucket: 1 },
   ]} />
 
-<Choice id="drop-the-tests-for-a-reviewer" phase="review" objective="coding-with-agents/verifies-agent-work/automates-the-check"
+<Choice id="drop-the-tests-for-a-reviewer" phase="review" objective="coding-with-agents/verifies-agent-work/prefers-gates-to-opinions"
   concepts={['deterministic-gates']}
   context="A team runs its test suite on every pull request and blocks the merge when it fails. It has also added a second model that reviews every pull request."
   title="A reviewer in place of the tests" hint="Which of the two checks gives the same answer for the same change every time?"

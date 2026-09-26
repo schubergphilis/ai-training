@@ -7,7 +7,9 @@ description: >-
   block a merge from a second model's opinion.
 mode: tutorial
 covers: coding-with-agents/verification
-serves: [coding-with-agents/verifies-agent-work/automates-the-check]
+serves:
+  - coding-with-agents/verifies-agent-work/automates-the-check
+  - coding-with-agents/verifies-agent-work/prefers-gates-to-opinions
 introduces: [bounded-self-checking-loops, deterministic-gates]
 assumes:
   - objective: safety/verifies-output/checks-claims
@@ -49,9 +51,6 @@ notes: >-
   the bounded run's fix with the CSV module or an unbounded run that skips bad rows and deletes the row check from
   the test. The test counts the data rows itself so that a skip-the-row fix fails. The fix's two
   text edits are read with ast from observing-and-debugging/after_fix.py, and only the added
-  `import csv` line is repeated in _common.py. The
-  checkpoints all serve automates-the-check, but they test four ideas (a runnable check, the lines
-  of the loop brief, a changed test, and gate against opinion), so a review alternate can be asked
-  in place of a sibling on another idea. The mismatch is accepted for now because the plan gives
-  the lesson one objective. Issue #408 asks the maintainer whether deterministic gates get an
-  objective of their own.
+  `import csv` line is repeated in _common.py. The gate-or-opinion checkpoint and its review
+  alternate serve prefers-gates-to-opinions, added in issue #408, and the other checkpoints serve
+  automates-the-check.

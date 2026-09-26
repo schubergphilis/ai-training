@@ -17,6 +17,9 @@ assumes:
   - objective: coding-with-agents/verifies-agent-work/automates-the-check
     lesson: coding-with-agents/self-checking-loops
     section: brief-the-loop-with-a-limit
+  - objective: coding-with-agents/verifies-agent-work/prefers-gates-to-opinions
+    lesson: coding-with-agents/self-checking-loops
+    section: gates-and-second-opinions
 after: [coding-with-agents/self-checking-loops]
 shorts:
   - an agent review pass in CI with a security lane, evals in CI (a pointer to
@@ -51,7 +54,8 @@ notes: >-
   default `pull_request` activity types. The concept team-hooks is named "Team hooks" so its
   glossary entry stays distinct from the hooks concept of customizing-agents/hooks-permissions.
   The assumes entry on automates-the-check is added because the page opens from the
-  self-checking-loops fixture and bound. The fixtures under
+  self-checking-loops fixture and bound, and the one on prefers-gates-to-opinions (issue #408)
+  because "Run the gates in CI" starts from the deterministic gates taught there. The fixtures under
   site/examples/coding-with-agents/ci-and-hooks/ load self-checking-loops/_common.py with importlib
   for the copy and the fix, add the hook, its settings and checks.yml, feed the hook five tool
   calls (two in a worktree under .claude/worktrees/, per Claude Code worktrees), and run the `run` lines of checks.yml before and after the fix. They run no git. Evals in

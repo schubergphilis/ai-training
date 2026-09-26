@@ -57,6 +57,28 @@ objectives:
         why: The shortest path to a green check is often to change the check.
         example: The brief says the test file is read-only, and the review confirms the assertions did not
           change.
+  - id: coding-with-agents/verifies-agent-work/prefers-gates-to-opinions
+    statement: Chooses a deterministic gate over a model's review to block work
+    level: base
+    behaviors:
+      - claim: The learner lets a merge or an agent's loop depend only on checks whose result needs no
+          judgment, such as tests, type checks, builds and schema checks.
+        why: A gate that isn't flaky gives the same result for the same input, so a failure means the
+          same thing on every run.
+        example: The team makes the test suite and the type checker required checks on every pull
+          request, and marks the AI reviewer's comments as advisory.
+      - claim: The learner treats a second model's review as an opinion that a person weighs, next to
+          the gates and never in place of them.
+        why: A model's verdict is a judgment. It can miss what the writing model missed, and it can differ
+          from one run to the next.
+        example: An AI reviewer approves a change whose type check fails, and the learner holds the merge
+          until the type check passes.
+      - claim: The learner reads an agent's report that the checks pass as a claim, and looks at the
+          result of the gate itself.
+        why: The report is the agent's words about the gate, and only the gate's own output shows what
+          ran.
+        example: The agent says all tests pass, so the learner opens the CI run and finds the test job was
+          skipped.
   - id: coding-with-agents/verifies-agent-work/screens-for-security
     statement: Screens agent output for security and supply-chain problems
     level: base
