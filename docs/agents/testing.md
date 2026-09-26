@@ -51,8 +51,8 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   asserted in CI (spec S03, Examples): `<Predict run="..." answer="...">`
   names a fixture under `site/examples/` and `mise run examples` fails on a
   mismatch. An example that can't run says so in the page (the component
-  prints this when `run` is absent and the lesson file lists no `proofs`,
-  #311). A `foundations` page can't carry a
+  prints this when `answer` is set, `run` is absent and the lesson file
+  lists no `proofs`, #311). A `foundations` page can't carry a
   `run=`, so its lesson file lists the fixtures behind it in `proofs`, and
   `mise run examples` fails when one prints a non-blank line that no `text`
   fence on the page shows (spec S03 "Examples", #497).
