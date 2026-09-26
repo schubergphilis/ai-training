@@ -14,9 +14,9 @@
  * data-tree text. `title` and `data-key` are not read, because a resolved
  * citation link carries its key there.
  * The JSON exports under `site/dist/data/` are out of scope: `citationsOutsideCode`
- * in `bundles.mjs` checks a bundle's `prose`, and the raw tokens left in
- * bundle `behaviors[].why`, `checkpoints[].stem` and `checkpoints.json` are
- * issue #437.
+ * in `bundles.mjs` checks a bundle's `prose`, `behaviors[]` and
+ * `checkpoints[].stem`, and `checkExportCitations` there checks the stems in
+ * `checkpoints.json`.
  *
  * The page is parsed with happy-dom and read as the text of its elements,
  * so a `(@` that inline markup splits (`(<em>@key</em>)`) or a line break

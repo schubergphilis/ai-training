@@ -6,7 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('astro:content', async () => (await import('./content')).mockContent());
 
 const body = (b: string): Lesson => ({ id: 'x/y', data: { title: 'X' }, body: b }) as unknown as Lesson;
-const one = (b: string) => checkpointItemsOf(body(b))[0];
+const bib = { 'AEC-02': { type: 'course', title: 'How agents think', container: 'Agent Engineer Course' } };
+const one = (b: string) => checkpointItemsOf(body(b), bib)[0];
 const base = 'id="a" objective="o" title="T" hint="h" concepts={[\'token\']}';
 
 describe('knownConceptIds and assertKnownConcepts', () => {
@@ -93,12 +94,21 @@ describe('checkpointItemsOf', () => {
 		});
 		expect(one(`<Predict ${base}>\n</Predict>`)).toMatchObject({ options: null, answer: null, reviewable: false });
 		// An ungraded example (no objective) is not an item at all.
-		expect(checkpointItemsOf(body('<Predict id="e" title="T" answer="1" run="x.py">\n</Predict>'))).toEqual([]);
+		expect(checkpointItemsOf(body('<Predict id="e" title="T" answer="1" run="x.py">\n</Predict>'), bib)).toEqual([]);
 		expect(one(`<Repair ${base} broken={\`b\`} model="m">\n</Repair>`)).toMatchObject({
 			options: { broken: 'b' },
 			answer: 'm',
 			reviewable: false,
 		});
+	});
+	it('renders a citation in the stem as its source and leaves one in a code span unchanged', () => {
+		const item = one(
+			`<Choice ${base} options={[{ text: 'a', correct: true }]}>\nRun in (@AEC-02), not \`(@AEC-02)\`?\n</Choice>`,
+		);
+		expect(item?.stem).toBe('Run in (How agents think, Agent Engineer Course), not `(@AEC-02)`?');
+		expect(() => one(`<Choice ${base} options={[{ text: 'a', correct: true }]}>\nIn (@Nope)?\n</Choice>`)).toThrow(
+			/^x\/y#a stem: unknown citation key "Nope"/,
+		);
 	});
 	it('names the lesson and the prop when an expression is not a literal', () => {
 		expect(() => one(`<Order ${base} steps={[oops]} />`)).toThrow(/x\/y: cannot read steps=\{\.\.\.\} of <Order>/);
@@ -119,6 +129,22 @@ describe('buildCheckpointExport', () => {
 			'safety/agent-risk#s1',
 		]);
 		expect(data.items[0]?.concepts).toEqual(['token', 'context-window']);
+	});
+	it('renders a citation in a stem from the bibliography collection', async () => {
+		const { mockContent, docs: fixtures } = await import('./content');
+		const cited = fixtures.map((d) =>
+			d.id === 'safety/agent-risk'
+				? {
+						...d,
+						body: d.body?.replace('options={[]}>\n</Scenario>', 'options={[]}>\nWhy (@Brilliant TAS)?\n</Scenario>'),
+					}
+				: d,
+		);
+		const content = await import('astro:content');
+		const swapped = mockContent({ docs: cited }).getCollection as unknown as typeof content.getCollection;
+		vi.mocked(content.getCollection).mockImplementation(swapped);
+		const data = await buildCheckpointExport();
+		expect(data.items.find((i) => i.id === 's1')?.stem).toBe('Why (Taste, Brilliant)?');
 	});
 	it('fails on a concept id no topic defines', async () => {
 		const { mockContent, docs: fixtures } = await import('./content');

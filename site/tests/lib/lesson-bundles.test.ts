@@ -8,6 +8,7 @@ import {
 	setAsideCode,
 } from '@lib/lesson-bundles';
 import type { Lesson } from '@lib/lessons';
+import { plainCitations } from '@lib/plain-citations';
 import { describe, expect, it, vi } from 'vitest';
 import { bibliography, competencies, docs, topics } from './content';
 
@@ -316,6 +317,21 @@ describe('citations in proseOf', () => {
 	});
 });
 
+describe('plainCitations', () => {
+	const bib = { 'AEC-02': { type: 'course', title: 'How agents think', container: 'Agent Engineer Course' } };
+	it('renders a token as proseOf does and leaves one in a code span or fenced block unchanged', () => {
+		expect(plainCitations('Run in (@AEC-02), not `(@AEC-02)`?', bib, 'x#a stem')).toBe(
+			'Run in (How agents think, Agent Engineer Course), not `(@AEC-02)`?',
+		);
+		expect(plainCitations('A\n\n```\n(@AEC-02)\n```\n', bib, 'x#a stem')).toBe('A\n\n```\n(@AEC-02)\n```\n');
+		expect(plainCitations('No token.', bib, 'x#a stem')).toBe('No token.');
+	});
+	it('rejects an unknown key and a token with two keys, naming where', () => {
+		expect(() => plainCitations('(@Nope)', bib, 'x#a stem')).toThrow(/^x#a stem: unknown citation key "Nope"/);
+		expect(() => plainCitations('(@AEC-02, @B)', bib, 'x#a stem')).toThrow(/^x#a stem: citation key "AEC-02, @B"/);
+	});
+});
+
 describe('bundleOf and buildLessonBundles', () => {
 	it('builds one bundle per live lesson, in id order, with an id equal to its path', async () => {
 		const bundles = await buildLessonBundles(site);
@@ -383,6 +399,19 @@ describe('bundleOf and buildLessonBundles', () => {
 		);
 		expect(bare.assumes).toEqual([{ objective: 'o1', lesson: null, section: null, url: null }]);
 		expect(bare.extends_to).toEqual([{ label: 'Next', url: `${ROOT}/safety/deeper/` }]);
+		// A behavior's citations render as their sources in each of its three fields, and code stays as written.
+		const judged = bundleOf(lesson({ serves: ['o2'] }), sources);
+		expect(judged.objectives[0]?.behaviors).toEqual([
+			{
+				claim: 'Reads the diff before `git push` (How agents think, Agent Engineer Course).',
+				why: 'A wrong line ships otherwise (Taste, Brilliant).',
+				example: 'Runs the tests once more (How agents think, Agent Engineer Course).',
+			},
+		]);
+		const unknown = { ...sources, bibliography: {} };
+		expect(() => bundleOf(lesson({ serves: ['o2'] }), unknown)).toThrow(
+			/^safety\/agent-risk: o2 behavior 1 claim: unknown citation key "AEC-02"/,
+		);
 		// An external entry (an https:// URL under a bibliography url) is passed through as is.
 		const academy = 'https://academy.claude.com/courses/ai-capabilities-and-limitations';
 		const external = bundleOf(lesson({ 'extends-to': [{ label: 'Academy', href: academy }] }), sources);

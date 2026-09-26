@@ -1,7 +1,10 @@
+import { getCollection } from 'astro:content';
 import type { CheckpointKind, CheckpointPhase } from './checkpoint-rules';
 import { type CheckpointAttr, propValue, stringProp } from './checkpoint-tags';
+import type { BibliographyEntry } from './citations';
 import { assertKnownConcepts, knownConceptIds } from './concepts';
 import { checkpointOf, checkpointTagsOf, getLessons, type Lesson } from './lessons';
+import { plainCitations } from './plain-citations';
 
 /**
  * A checkpoint as a standalone item (spec S03 "Checkpoint export"): what the
@@ -91,8 +94,12 @@ function shapeOf(kind: CheckpointKind, attrs: Map<string, CheckpointAttr>): { op
 	}
 }
 
-/** The standalone items of one lesson. Concept ids are not checked here; `buildCheckpointExport` does that. */
-export function checkpointItemsOf(lesson: Lesson): CheckpointItem[] {
+/**
+ * The standalone items of one lesson. Concept ids are not checked here; `buildCheckpointExport` does that.
+ * Each `(@key)` in a stem is rendered as its source from `bibliography` (`plainCitations`), the form the
+ * bundle's `prose` uses (spec S08 "Lesson bundles"), since the page renders the stem's citations too.
+ */
+export function checkpointItemsOf(lesson: Lesson, bibliography: Record<string, BibliographyEntry>): CheckpointItem[] {
 	return checkpointTagsOf(lesson).map((tag) => {
 		const c = checkpointOf(lesson, tag);
 		const where = `${lesson.id}#${c.id}`;
@@ -104,7 +111,7 @@ export function checkpointItemsOf(lesson: Lesson): CheckpointItem[] {
 			objective: c.objective,
 			concepts: c.concepts,
 			context: c.context ?? null,
-			stem: c.stem,
+			stem: plainCitations(c.stem, bibliography, `${where} stem`),
 			options,
 			answer,
 			hint: c.hint,
@@ -120,7 +127,9 @@ export function checkpointItemsOf(lesson: Lesson): CheckpointItem[] {
 export async function buildCheckpointExport(): Promise<CheckpointExport> {
 	const known = await knownConceptIds();
 	const lessons = await getLessons();
-	const items = lessons.flatMap((l) => checkpointItemsOf(l));
+	const entries = await getCollection('bibliography');
+	const bibliography = Object.fromEntries(entries.map((e) => [e.id, e.data]));
+	const items = lessons.flatMap((l) => checkpointItemsOf(l, bibliography));
 	for (const item of items) assertKnownConcepts(`${item.lesson}#${item.id}`, item.concepts, known);
 	return { version: 1, items };
 }

@@ -12,8 +12,13 @@
  *   not in the bundle's `prose` byte for byte. The prose pass in
  *   `src/lib/lesson-bundles.ts` sets code aside so its rewrites skip it, and
  *   this is the check that it did;
- * - a `(@` is in `prose` outside a fenced block or an inline code span, since
- *   the prose pass renders each citation as its source (S08 "Lesson bundles").
+ * - a `(@` is in `prose`, a behavior's `claim`, `why` or `example`
+ *   (`objectives[].behaviors[]`) or a checkpoint `stem` outside a fenced block or an inline code span,
+ *   since the build renders each citation in them as its source (S08 "Lesson
+ *   bundles", `src/lib/plain-citations.ts`).
+ *
+ * `checkExportCitations` applies the same token rule to the `stem` of every
+ * item in the site-wide `dist/data/checkpoints.json`.
  *
  * The bundles are written by `src/pages/data/lessons/[...id].json.ts` from
  * the same content collections as the pages, and their unit tests run on
@@ -65,7 +70,7 @@ function fenceChar(line) {
  * or tildes (after optional indentation), closed by a line of the same
  * character at least as long and nothing else but whitespace, or by the end
  * of the text. This reader is on purpose not the regex `setAsideCode` in
- * `src/lib/lesson-bundles.ts` uses, so a mistake there is not repeated in
+ * `src/lib/plain-citations.ts` uses, so a mistake there is not repeated in
  * the check of its output.
  */
 export function fencedBlocks(src) {
@@ -167,6 +172,59 @@ export function checkBundle(id, file, src) {
 		}
 		for (const line of citationsOutsideCode(bundle.prose)) {
 			errors.push(`${id}: prose keeps a raw citation token outside code: ${JSON.stringify(line)}`);
+		}
+	}
+	for (const [field, text] of citedFields(bundle)) {
+		for (const line of citationsOutsideCode(text)) {
+			errors.push(`${id}: ${field} keeps a raw citation token outside code: ${JSON.stringify(line)}`);
+		}
+	}
+	return errors;
+}
+
+/**
+ * The text fields of a bundle besides `prose` that the build renders
+ * citations in, as `[where, text]` pairs: each behavior's `claim`, `why` and
+ * `example`, and each checkpoint's `stem`. A field that is missing or not a string is skipped,
+ * since the type checks above report a malformed bundle.
+ */
+function citedFields(bundle) {
+	const out = [];
+	for (const [o, objective] of (Array.isArray(bundle.objectives) ? bundle.objectives : []).entries()) {
+		for (const [b, behavior] of (Array.isArray(objective?.behaviors) ? objective.behaviors : []).entries()) {
+			for (const field of ['claim', 'why', 'example']) {
+				if (typeof behavior?.[field] === 'string')
+					out.push([`objectives[${o}] (${objective.id}) behaviors[${b}].${field}`, behavior[field]]);
+			}
+		}
+	}
+	for (const [c, item] of (Array.isArray(bundle.checkpoints) ? bundle.checkpoints : []).entries()) {
+		if (typeof item?.stem === 'string') out.push([`checkpoints[${c}] (${item.id}) stem`, item.stem]);
+	}
+	return out;
+}
+
+/**
+ * The raw citation tokens in the checkpoint stems of the site-wide export at
+ * `file` (`dist/data/checkpoints.json`), as error strings. The export's shape
+ * is `mise run checkpoints`' check, so a file that is missing or not the
+ * expected JSON is reported here only as that.
+ */
+export function checkExportCitations(file) {
+	if (!existsSync(file)) return [`${file} does not exist; run site-build first`];
+	let data;
+	try {
+		data = JSON.parse(readFileSync(file, 'utf8'));
+	} catch (e) {
+		return [`checkpoints.json: not JSON: ${e.message}`];
+	}
+	const errors = [];
+	for (const item of Array.isArray(data?.items) ? data.items : []) {
+		if (typeof item?.stem !== 'string') continue;
+		for (const line of citationsOutsideCode(item.stem)) {
+			errors.push(
+				`checkpoints.json: ${item.lesson}#${item.id} stem keeps a raw citation token outside code: ${JSON.stringify(line)}`,
+			);
 		}
 	}
 	return errors;

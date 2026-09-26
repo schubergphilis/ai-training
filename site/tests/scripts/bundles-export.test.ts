@@ -6,6 +6,7 @@ import {
 	bundleIds,
 	checkBundle,
 	checkBundles,
+	checkExportCitations,
 	citationsOutsideCode,
 	fencedBlocks,
 	isLessonUrl,
@@ -147,8 +148,53 @@ describe('checkBundles', () => {
 			'a/x: prose keeps a raw citation token outside code: "See (@AEC-02) and `(@AEC-02)`."',
 		]);
 	});
+	it('reports a raw citation token in a behavior field or a checkpoint stem outside code', () => {
+		const objectives = [
+			{
+				id: 'a/c/o1',
+				behaviors: [
+					{ claim: 'c', why: 'Cheaper (@AEC-02).', example: 'e' },
+					{ claim: 'Reads (@AEC-02).', why: 'Fine `(@AEC-02)`.', example: 'Runs (@AEC-02).' },
+				],
+			},
+		];
+		const checkpoints = [
+			{ id: 'k1', stem: 'Which mode\nruns in (@Claude Code subagents)?' },
+			{ id: 'k2', stem: 'Rendered (Subagents, Claude Code docs).' },
+		];
+		expect(check(tree({ 'a/x': bundle({ objectives, checkpoints }) })).errors).toEqual([
+			'a/x: objectives[0] (a/c/o1) behaviors[0].why keeps a raw citation token outside code: "Cheaper (@AEC-02)."',
+			'a/x: objectives[0] (a/c/o1) behaviors[1].claim keeps a raw citation token outside code: "Reads (@AEC-02)."',
+			'a/x: objectives[0] (a/c/o1) behaviors[1].example keeps a raw citation token outside code: "Runs (@AEC-02)."',
+			'a/x: checkpoints[0] (k1) stem keeps a raw citation token outside code: "runs in (@Claude Code subagents)?"',
+		]);
+	});
 	it('checks one bundle file against its page source', () => {
 		const root = tree();
 		expect(checkBundle('a/x', join(root, 'dist/data/lessons/a/x.json'), PAGE)).toEqual([]);
+	});
+});
+
+describe('checkExportCitations', () => {
+	const write = (text: string) => {
+		const root = tree();
+		const file = join(root, 'dist/data/checkpoints.json');
+		writeFileSync(file, text);
+		return file;
+	};
+	it('passes an export whose stems hold no raw token outside code', () => {
+		const items = [{ id: 'k', lesson: 'a/x', stem: 'Rendered (Taste, Brilliant) and `(@AEC-02)`.' }];
+		expect(checkExportCitations(write(JSON.stringify({ version: 1, items })))).toEqual([]);
+	});
+	it('reports a raw citation token in a stem, naming the item', () => {
+		const items = [{ id: 'k', lesson: 'a/x', stem: 'Runs in (@Claude Code subagents)?' }];
+		expect(checkExportCitations(write(JSON.stringify({ version: 1, items })))).toEqual([
+			'checkpoints.json: a/x#k stem keeps a raw citation token outside code: "Runs in (@Claude Code subagents)?"',
+		]);
+	});
+	it('reports a missing file and a file that is not JSON', () => {
+		const file = write('{');
+		expect(checkExportCitations(file)[0]).toMatch(/^checkpoints\.json: not JSON/);
+		expect(checkExportCitations(`${file}.gone`)).toEqual([`${file}.gone does not exist; run site-build first`]);
 	});
 });

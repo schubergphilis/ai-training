@@ -1,10 +1,4 @@
 import { getCollection } from 'astro:content';
-import {
-	hasMultipleKeys,
-	multipleKeysMessage,
-	splitCitations,
-	unknownKeyMessage,
-} from '../../plugins/citation-syntax.mjs';
 import { BUNDLE_VERSION } from './bundle-version';
 import { buildCheckpointExport, type CheckpointItem } from './checkpoint-items';
 import { KIND_OF_TAG } from './checkpoint-rules';
@@ -20,6 +14,7 @@ import {
 } from './checkpoint-tags';
 import type { BibliographyEntry } from './citations';
 import { getLessons, type Lesson } from './lessons';
+import { type CodeAside, citationText, plainCitations, resolveCitations, setAsideCode } from './plain-citations';
 import { absoluteUrl } from './url';
 
 /**
@@ -31,7 +26,7 @@ import { absoluteUrl } from './url';
  * is the one function that reads the collections.
  */
 
-export { BUNDLE_VERSION };
+export { BUNDLE_VERSION, citationText, setAsideCode };
 
 export interface BundleTopic {
 	id: string;
@@ -82,7 +77,7 @@ export interface BundleSources {
 	items: CheckpointItem[];
 	/** Every lesson page's id, so an `assumes[].lesson` that names no page fails the build. */
 	lessonIds: Set<string>;
-	/** site/src/data/bibliography.yaml, keyed by citation key, so a `(@key)` in the prose renders as its source. */
+	/** site/src/data/bibliography.yaml, keyed by citation key, so a `(@key)` in the prose or a behavior renders as its source. */
 	bibliography: Record<string, BibliographyEntry>;
 	/** Astro's `site`, the origin the absolute URLs start with. */
 	site: string;
@@ -105,68 +100,6 @@ function fenced(text: string, lang = 'text'): string {
 }
 
 const CHECKPOINT_TAGS = new Set(Object.keys(KIND_OF_TAG));
-
-/**
- * Code set aside while the prose passes run. A fenced block or an inline
- * code span is swapped for a placeholder no lesson text contains, and `restore`
- * puts the code back, so a `<Tag>` or a `](/path)` inside code is never read
- * as a component or a link.
- */
-interface CodeAside {
-	text: string;
-	/** Sets more text aside, so it is copied unchanged through the passes that follow. */
-	keep: (code: string) => string;
-	restore: (s: string) => string;
-}
-
-// Private-use characters, which no lesson text contains.
-const PLACEHOLDER = /\uE000(\d+)\uE001/g;
-
-/** The fenced blocks (```` ``` ```` or `~~~`, three or more, closed by a fence of the same character at least as long) and inline code spans of `src`, set aside. */
-export function setAsideCode(src: string): CodeAside {
-	const kept: string[] = [];
-	const keep = (code: string) => {
-		kept.push(code);
-		return `\uE000${kept.length - 1}\uE001`;
-	};
-	const lines = src.split('\n');
-	const out: string[] = [];
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i] as string;
-		const open = /^(\s*)(`{3,}|~{3,})/.exec(line);
-		if (!open) {
-			out.push(line);
-			continue;
-		}
-		const fence = open[2] as string;
-		const block = [line];
-		for (i++; i < lines.length; i++) {
-			block.push(lines[i] as string);
-			const close = /^\s*(`{3,}|~{3,})\s*$/.exec(lines[i] as string);
-			if (close && close[1]?.[0] === fence[0] && (close[1]?.length ?? 0) >= fence.length) break;
-		}
-		out.push(keep(block.join('\n')));
-	}
-	// Inline spans are matched over the whole text, since a span may wrap across a line break. A blank line
-	// ends a paragraph and so a span, so the body pattern excludes one and a stray backtick before a blank
-	// line pairs with nothing. The fenced blocks are placeholders by now, so no backtick is theirs.
-	// A backtick next to a brace (`={\`` and `\`}`) delimits a template literal in a component attribute, and
-	// is never a span's edge, so two such attributes on adjacent lines don't pair up as one span. The same rule
-	// makes a span whose whole body is one brace (`{` or `}`) no span, since its closing backtick follows a `{`
-	// or its opening backtick precedes a `}`, and the backticks it leaves pair with the next span's. No lesson
-	// has such a span (write the brace in a fenced block instead), and `scripts/lib/bundles.mjs` checks only
-	// fenced blocks, so a rewrite inside one would pass. Extend the rule before writing one.
-	// The body's edges are not backticks, and its middle may hold one, so ``a ` b`` is one span.
-	const edge = '(?:[^`\\n]|\\n(?![ \\t]*\\n))';
-	const middle = '(?:[^\\n]|\\n(?![ \\t]*\\n))';
-	const span = new RegExp(`(?<!\\{)(\`+)(?!\\})(${edge}|${edge}${middle}*?${edge})(?<!\\{)\\1(?!\`)(?!\\})`, 'g');
-	const text = out.join('\n').replace(span, (m) => keep(m));
-	return {
-		text,
-		keep,
-		restore: (s) => s.replace(PLACEHOLDER, (_, n: string) => kept[Number(n)] ?? ''),
-	};
-}
 
 /**
  * One component, as plain Markdown. `children` is already rendered, with code set aside. A `Prompt` or
@@ -296,41 +229,6 @@ function parseAside(text: string, where: string): MdxNode {
 	}
 }
 
-/**
- * A citation as the prose shows it (spec S08 "Lesson bundles"): the source's
- * title and container in parentheses, or the title alone when the entry has
- * no container or its container is the title, as the References list does.
- */
-export function citationText(entry: BibliographyEntry): string {
-	const container = entry.container && entry.container !== entry.title ? `, ${entry.container}` : '';
-	return `(${entry.title}${container})`;
-}
-
-/**
- * Every `(@key)` token in `text`, the lesson with its code set aside, replaced
- * by `citationText` for its entry. The rendered text is set aside too, so the
- * MDX parser never reads a title as markup, and a token inside code, already
- * a placeholder, stays as written. A token inside a component's children
- * resolves, as it does on the page. An unknown key or a token with more than
- * one key throws the message remark-citations.mjs fails the page build with.
- */
-function resolveCitations(
-	text: string,
-	bibliography: Record<string, BibliographyEntry>,
-	aside: CodeAside,
-	where: string,
-): string {
-	return splitCitations(text)
-		.map((part) => {
-			if (part.type === 'text') return part.value;
-			if (hasMultipleKeys(part.key)) throw new Error(multipleKeysMessage(where, part.key));
-			const entry = bibliography[part.key];
-			if (!entry) throw new Error(unknownKeyMessage(where, part.key));
-			return aside.keep(citationText(entry));
-		})
-		.join('');
-}
-
 /** Every root-relative link and image in Markdown and raw HTML, made absolute. Links with a scheme, `#` and `mailto:` are left alone. */
 function absolutizeLinks(md: string, site: string): string {
 	return md
@@ -389,7 +287,11 @@ export function bundleOf(lesson: Lesson, sources: BundleSources): LessonBundle {
 			statement: objective.statement,
 			level: objective.level,
 			competency_url: absoluteUrl(`/competencies/${owner.id}/#${tail}`, site),
-			behaviors: objective.behaviors,
+			behaviors: objective.behaviors.map((b, i) => {
+				const cite = (field: 'claim' | 'why' | 'example') =>
+					plainCitations(b[field], sources.bibliography, `${lesson.id}: ${id} behavior ${i + 1} ${field}`);
+				return { claim: cite('claim'), why: cite('why'), example: cite('example') };
+			}),
 		};
 	});
 	const assumes = (data.assumes ?? []).map((a): BundleAssumed => {
