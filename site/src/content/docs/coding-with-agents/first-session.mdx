@@ -8,9 +8,10 @@ can touch your own work.
 
 A coding agent is an agent that works in your terminal or editor with the
 tools a programmer has: it reads and edits files, and it runs commands. Claude
-Code is one example; there are others, and this lesson uses none of
-their specific features. Wherever it says "your coding agent", use the one
-you have installed. If yours is Claude Code, the vendor's own short course
+Code is one example, and there are others. The steps in this lesson work
+with any of them, and the notes that name Claude Code are for readers who
+use it. Wherever it says "your coding agent", use the one you have
+installed. If yours is Claude Code, the vendor's own short course
 covers installing it and the commands this lesson leaves out, so read it
 after this lesson (@Academy claude-code-101). If you get stuck, the site's
 tutor can give you hints on this lesson inside your own agent.
@@ -21,14 +22,27 @@ tutor can give you hints on this lesson inside your own agent.
 The fixture is a to-do list command in about seventy lines of Python. It
 lives in the course repository under
 `site/examples/coding-with-agents/first-session/fixture-repo/`. Copy that
-directory somewhere, or work in a clone of the course repository; either
-way, `git checkout -- .` inside it puts every file back the way it was. Expect
-to reset it at least once.
+directory out of the course repository, for example into your home
+directory, and work in the copy. The course repository has
+instruction files for agents of its own, and an agent started inside it
+can read those in place of the fixture's. Make the copy a git repository
+with one commit, so that git can show you what changed and put it back.
+
+```sh
+cd fixture-repo
+git init -q
+git add .
+git commit -qm "fixture as shipped"
+```
+
+If git asks who you are, follow its message and run the commit again.
+From then on, `git checkout -- .` inside the copy puts every file back the
+way it was. Expect to reset it at least once.
 
 Inside are five files: `todo.py`, the program; `test_todo.py`, its
 tests; `todos.json`, a committed list of three items; `README.md`; and
-`AGENTS.md`, four lines of instructions for the agent. Change into the
-directory, then run the program before you run the agent. You want to know
+`AGENTS.md`, four lines of instructions for the agent. Run the program
+before you run the agent. You want to know
 what "working" looks like before someone else changes it.
 
 The program needs Python 3.9 or newer and nothing else. On a Mac, the
@@ -55,7 +69,7 @@ working with the agent is what this lesson teaches.
 
 ## Start the agent and ask it to explain
 
-Start your coding agent from inside `fixture-repo`. The directory you start
+Start your coding agent from inside your copy of `fixture-repo`. The directory you start
 in is the agent's world: it reads and edits files there, and it runs
 commands there. Starting one level too high hands it your whole home directory.
 
@@ -63,10 +77,12 @@ Check one setting before your first message. This lesson is built around
 the moment the agent asks you before it edits a file, and some agents start
 in a mode that doesn't ask. Recent versions of Claude Code start in auto
 mode, in which file edits in the working directory go through without a
-prompt and a second model reviews the other actions in place of you. The
-mode that asks before each edit is called Manual there, and
-`claude --permission-mode default` starts a session in it
-(@Claude Code permission modes). The section on permission modes later in
+prompt and a second model reviews most of the other actions in place of
+you. The mode that asks before each edit is called Manual there, and
+`claude --permission-mode default` starts a session in it. In a session
+you have already started, Shift+Tab switches from auto mode to Manual,
+and in the VS Code extension the mode indicator at the bottom of the
+prompt box does the same (@Claude Code permission modes). The section on permission modes later in
 this lesson explains the other choices.
 
 Your first message isn't a task. It is a question, and its purpose is to
@@ -94,8 +110,10 @@ unprompted. Either is fine, because you are about to hand it the evidence.
 Notice what the agent read without being asked: `AGENTS.md`. Most coding
 agents load a project-instructions file at start. The lines in that file
 set the rules for the whole session, and you didn't have to repeat them.
-Claude Code reads `AGENTS.md` when the project has no `CLAUDE.md`, which is
-the case in this fixture (@Claude Code memory).
+Claude Code reads `AGENTS.md` when there is no `CLAUDE.md` in the
+directory it starts in or in any directory above it. That holds for your
+copy of the fixture, and it doesn't hold inside the course repository,
+which has a `CLAUDE.md` at its root (@Claude Code memory).
 
 Many coding agents have a read-only mode, often called plan mode, in which
 the agent reads, searches and runs commands to explore, but edits nothing.
