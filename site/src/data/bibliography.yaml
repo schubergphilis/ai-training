@@ -237,6 +237,27 @@ Claude support enabling-and-using-web-search:
   author: Anthropic
   license: Proprietary
   url: https://support.claude.com/en/articles/10684626-enabling-and-using-web-search
+Claude support get-started-with-Cowork:
+  type: reference
+  title: Get started with Claude Cowork
+  container: Claude Help Center
+  author: Anthropic
+  license: Proprietary
+  url: https://support.claude.com/en/articles/13345190-get-started-with-claude-cowork
+Claude privacy consumer-training:
+  type: reference
+  title: Is my data used for model training?
+  container: Anthropic Privacy Center, consumer products
+  author: Anthropic
+  license: Proprietary
+  url: https://privacy.claude.com/en/articles/10023580-is-my-data-used-for-model-training
+Claude privacy commercial-training:
+  type: reference
+  title: Is my data used for model training?
+  container: Anthropic Privacy Center, commercial products
+  author: Anthropic
+  license: Proprietary
+  url: https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training
 Claude docs messages:
   type: reference
   title: Messages
@@ -958,20 +979,6 @@ GitHub docs workflow-syntax:
   author: GitHub
   license: CC BY 4.0
   url: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
-Claude privacy consumer-training:
-  type: reference
-  title: Is my data used for model training? (consumer products)
-  container: Anthropic Privacy Center
-  author: Anthropic
-  license: Proprietary
-  url: https://privacy.claude.com/en/articles/10023580-is-my-data-used-for-model-training
-Claude privacy commercial-training:
-  type: reference
-  title: Is my data used for model training? (commercial products)
-  container: Anthropic Privacy Center
-  author: Anthropic
-  license: Proprietary
-  url: https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training
 GitHub docs code-referencing:
   type: reference
   title: GitHub Copilot code referencing
