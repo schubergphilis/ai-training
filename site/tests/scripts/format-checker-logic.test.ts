@@ -151,14 +151,14 @@ describe('the JSON format', () => {
 
 describe('file-level errors', () => {
 	it.each([
-		['', 'the file is empty'],
-		['   \n\n', 'the file is empty'],
-		['```\n```\n', 'the file is empty'],
+		['', 'the answer is empty'],
+		['   \n\n', 'the answer is empty'],
+		['```\n```\n', 'the answer is empty'],
 		['[]', 'no items found'],
 		['{}', 'expected a JSON array of objects, got a JSON object with keys: '],
 		['{"a": 1, "b": 2}', 'expected a JSON array of objects, got a JSON object with keys: a, b'],
 		['[1, 2]', 'expected a JSON array of objects, one per item'],
-		['Here you go:\n[{}]', 'the file does not start with [ (is there text before the JSON?)'],
+		['Here you go:\n[{}]', 'the answer does not start with [ (is there text before the JSON?)'],
 	])('reports %j as one FAIL line and no summary', (text, error) => {
 		expect(printed(text)).toEqual([`FAIL: ${error}`]);
 	});

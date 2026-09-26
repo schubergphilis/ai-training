@@ -62,11 +62,11 @@ def parse(text):
     """Return the items as a list of dicts, or an error message."""
     text = strip_fences(text).strip()
     if not text:
-        return [], "the file is empty"
+        return [], "the answer is empty"
     if not text.startswith(("[", "{")):
         starts_json = any(line.lstrip().startswith(("[", "{")) for line in text.splitlines())
         if starts_json:
-            return [], "the file does not start with [ (is there text before the JSON?)"
+            return [], "the answer does not start with [ (is there text before the JSON?)"
         return parse_lines(text), None
     try:
         data = json.loads(text)

@@ -153,13 +153,13 @@ function isObject(value: unknown): value is Record<string, unknown> {
 /** `parse`: the items, or the message that says why the text holds none the checker can read. */
 export function parse(input: string): { items: Item[]; error: string | null } {
 	const text = pyStrip(stripFences(input));
-	if (!text) return { items: [], error: 'the file is empty' };
+	if (!text) return { items: [], error: 'the answer is empty' };
 	if (!text.startsWith('[') && !text.startsWith('{')) {
 		const startsJson = pySplitLines(text).some((line) => {
 			const start = pyLstrip(line);
 			return start.startsWith('[') || start.startsWith('{');
 		});
-		if (startsJson) return { items: [], error: 'the file does not start with [ (is there text before the JSON?)' };
+		if (startsJson) return { items: [], error: 'the answer does not start with [ (is there text before the JSON?)' };
 		return { items: parseLines(text), error: null };
 	}
 	let data: unknown;
@@ -202,7 +202,11 @@ export function isDate(value: string): boolean {
 	return year >= 1 && day <= daysInMonth(year, month);
 }
 
-/** `problems`: every reason this one item would be rejected by the import. */
+/**
+ * `problems`: every reason this one item would be rejected by the import.
+ * As in `check_items.py`, the owner, task, due and priority checks run by
+ * name, whatever `config.fields` lists.
+ */
 export function problems(item: Item, config: CheckerConfig = DEFAULT_CONFIG): string[] {
 	const found: string[] = [];
 	for (const part of item.unnamed) {

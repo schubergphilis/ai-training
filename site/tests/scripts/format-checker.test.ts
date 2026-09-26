@@ -64,7 +64,7 @@ describe('mountFormatChecker', () => {
 		const root = await show();
 		mountFormatChecker(root);
 		part<HTMLButtonElement>(root, '.fc-check').click();
-		expect(results(root)).toEqual([{ cls: 'fc-fail', text: 'FAIL: the file is empty' }]);
+		expect(results(root)).toEqual([{ cls: 'fc-fail', text: 'FAIL: the answer is empty' }]);
 		expect(part(root, '.fc-summary').textContent).toBe('');
 		type(root, 'owner: A | task: t | due: 2026-10-03 | priority: high');
 		expect(results(root)).toEqual([]);

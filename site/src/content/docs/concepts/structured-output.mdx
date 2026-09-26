@@ -10,9 +10,9 @@ answer is prose and the checker can't read it. By the end the answer
 passes, and the difference is what the prompt now says about the format.
 
 You need any chat assistant, and the checker is on this page. Every
-response shown here is illustrative: the author wrote it to show the pattern, and
-the component says so. Your model gives a different text, and the checker
-tells you whether that text passes.
+response shown here is illustrative: the author wrote it to show the
+pattern, and the component says so. Your model gives a different text,
+and the checker tells you whether that text passes.
 
 ## Prose that someone retypes
 
@@ -66,7 +66,7 @@ that someone retypes. While retyping they decide what the priority of item
 2 is, and they decide which year "17 October" is in. Each decision is a
 place for a mistake, and a second person retyping the same notes would
 decide some of them the other way. The prompt said nothing about the format, so the model chose the
-format it uses for a general reader, as it did in the last lesson.
+format it uses for a general reader, as it did in the lesson on instruction, context, and format.
 
 ## One line per item
 
@@ -96,7 +96,7 @@ owner: Dana | task: book the accessibility check with the agency | due: 2026-10-
 </Response>
 
 Now check the answer. The checker below accepts the same items as the
-tracker's import. It reads the text in its box and prints one line per
+tracker's import. It reads the text in its box and shows one line per
 item, `ok` or `FAIL`, then a summary line. It reads the one-line format
 from this round. The next round asks for the same fields as JSON
 (JavaScript Object Notation, a common text format for data that programs
@@ -164,8 +164,8 @@ Return only the JSON, with no text before or after it.
 
 The checker reads an answer that starts with `[` as JSON and applies the same
 four checks: every key present, no extra keys, a date the import can
-parse, and a priority from the allowed set. This box holds the JSON answer
-above.
+parse, and a priority from the allowed set. The box below contains the
+same answer, laid out one key per line.
 
 <FormatChecker sample="concepts/structured-output/sample/items.json" />
 
@@ -180,7 +180,7 @@ ok 4: Dana, book the accessibility check with the agency, 2026-10-08, medium
 ```
 
 Paste your own JSON answer into the box and check it too. Both rounds
-print the same report, because the checker looks at the fields and the
+show the same report, because the checker looks at the fields and the
 values, whatever the packaging. Naming the fields is what made the two
 answers comparable, and it is also what makes a missing value visible: an
 item without a due date fails a check instead of disappearing into a
@@ -301,7 +301,7 @@ you do next?
 
 </Scenario>
 
-<Exercise stretch="Add a fifth field to your request, such as a status that is one of open, blocked or done, and change the prompt until every item has a status with one of those values. The checker knows only the four fields, so it reports the status as unexpected on each item. When that is the only failure left, read the status values yourself.">
+<Exercise stretch="Add a fifth field to your request, such as a status that is one of open, blocked or done, and change the prompt until every item has a status with one of those values. The checker knows only the four fields, so it reports the status as unexpected on each item. The tracker's import would reject the fifth field too, so at work you would add the field to the import first. Here, check that no other failure is left, and read the status values yourself.">
 
 Take the sample notes from this lesson, and write your own format request
 from scratch without looking at the ones on this page. Ask for the four
