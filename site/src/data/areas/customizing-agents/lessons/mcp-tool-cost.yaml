@@ -14,8 +14,8 @@ assumes:
   - objective: customizing-agents/connects-tools-safely/adds-a-tool
     lesson: customizing-agents/mcp-first-server
     section: connect-the-real-server
-sources-checked: 2026-09-25
-review-by: 2027-03-25
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 after: [customizing-agents/mcp-first-server]
 shorts:
   - On-demand tool loading and why disabling unused servers is still the control (Academy claude-code-101)
@@ -28,6 +28,7 @@ exercise:
 sources:
   - MCP specification
   - MCP filesystem server
+  - MCP deprecated features
   - AEC-16
   - Claude Code mcp
   - Claude Code costs
@@ -48,5 +49,6 @@ notes: >-
   loaded definition stays in the conversation and counts as input tokens from the API's tool search
   page; /context from the context-window and commands pages; /clear from the commands page; prefer the
   CLI and disable unused servers, and prompt caching, from code.claude.com/docs/en/costs; the bare
-  deny rule that removes a tool from context from code.claude.com/docs/en/permissions. All must be
-  re-checked by review-by.
+  deny rule that removes a tool from context from code.claude.com/docs/en/permissions. The tools/list
+  fields were re-checked against MCP specification revision 2026-07-28, and the deprecation of roots in
+  that revision comes from its deprecated-features registry. All must be re-checked by review-by.

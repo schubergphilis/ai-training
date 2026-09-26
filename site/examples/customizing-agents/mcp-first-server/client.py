@@ -1,7 +1,8 @@
 """The client side of the lesson's stand-in: start the server, send one request, read the answer.
 
 A real MCP client does the same over the stdio transport, and adds the
-initialize handshake, which the stand-in skips.
+initialize handshake of revisions up to 2025-11-25 or the per-request
+`_meta` field of revision 2026-07-28. The stand-in skips both.
 """
 
 import json
