@@ -1322,3 +1322,10 @@ AGENTS.md format:
   author: AGENTS.md contributors
   license: MIT
   url: https://agents.md/
+MCP deprecated features:
+  type: reference
+  title: Deprecated Features, Model Context Protocol specification 2026-07-28
+  container: modelcontextprotocol.io
+  author: Anthropic and the MCP contributors
+  license: Apache-2.0 and MIT
+  url: https://modelcontextprotocol.io/specification/2026-07-28/deprecated

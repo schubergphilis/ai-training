@@ -28,6 +28,13 @@ sources:
   - Academy introduction-to-model-context-protocol
   - Academy model-context-protocol-advanced-topics
   - Academy claude-code-101
+  - MCP specification
+  - MCP deprecated features
+  - MCP filesystem server
+  - Claude Code mcp
+  - Claude Code costs
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 minutes: 20
 notes: >-
   Delegated identity is the section "Whose identity does the agent act under?", which #17 asked for.
