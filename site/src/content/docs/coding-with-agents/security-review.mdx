@@ -109,17 +109,18 @@ one of the classic mistakes?
 A static analyzer reads source code without running it and reports
 patterns that are often mistakes. For Python, Bandit is a free,
 Apache-2.0 licensed analyzer that looks for common security problems
-(@Bandit). This lesson shows a recorded run, so you don't install
-anything. On September 25, 2026, Bandit 1.9.4 running on Python 3.13.15
-printed this for `notes_search.py` in a fresh copy of the fixture, with
-the start time left out:
+(@Bandit). In the exercise at the end of this lesson, you install Bandit
+and run it on your own copy of the fixture. The recorded run below is for
+reading now, and for readers who skip the install. On September 27, 2026,
+Bandit 1.8.6 running on Python 3.9.25 printed this for `notes_search.py`
+in a fresh copy of the fixture, with the start time left out:
 
 ```text
 Test results:
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'notes-admin-2026'
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
-   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b105_hardcoded_password_string.html
    Location: ./notes_search.py:11:17
 10	
 11	ADMIN_PASSWORD = "notes-admin-2026"
@@ -129,8 +130,8 @@ Test results:
 >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
    Severity: Medium   Confidence: Low
    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
-   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
-   Location: ./notes_search.py:22:10
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./notes_search.py:22:8
 21	    query = (
 22	        f"SELECT title FROM notes WHERE owner = '{owner}' AND title LIKE '%{term}%' ORDER BY title"
 23	    )
@@ -139,7 +140,9 @@ Test results:
 ```
 
 The run also printed a summary with the line count and the issues per
-severity, and it exited with status 1 because it found issues.
+severity, and it exited with status 1 because it found issues. On
+Python 3.12 and 3.13, the same Bandit version printed the same findings
+with the location of the B608 finding as `22:10`.
 
 Bandit found two of the classic mistakes. B105 is a password in the
 source, which Bandit spots because the variable name contains
@@ -155,11 +158,6 @@ as well and matches no rule. An analyzer finds patterns that someone
 wrote a rule for. What the code means for this app, such as whether an
 empty list means that nothing matched, is a question only a reader can
 answer.
-
-Running Bandit yourself is optional, and it isn't part of this course's
-setup. Bandit 1.9.4 needs Python 3.10 or newer (@Bandit PyPI), and the
-course's own scripts run on Python 3.9. The stretch goal of the exercise
-below has the steps.
 
 <Choice id="what-bandit-missed" objective="coding-with-agents/verifies-agent-work/screens-for-security"
   concepts={['security-review-of-agent-output']}
@@ -327,7 +325,7 @@ an agent's access has to be limited instead.
 
 <Sort id="found-or-missed" phase="review" objective="coding-with-agents/verifies-agent-work/screens-for-security"
   concepts={['security-review-of-agent-output']}
-  context="The lesson runs the Bandit 1.9.4 static analyzer over an agent-written search function for a notes app. Bandit has rules for a hardcoded password string, SQL built with string formatting, and an except block whose only statement is pass."
+  context="The lesson runs the Bandit 1.8.6 static analyzer over an agent-written search function for a notes app. Bandit has rules for a hardcoded password string, SQL built with string formatting, and an except block whose only statement is pass."
   title="Which would Bandit report?" hint="Bandit matches patterns it has a rule for. Which of these match a rule, and which need a reader who knows the app?"
   buckets={['Bandit reports it', 'Only a reader finds it']}
   items={[
@@ -379,7 +377,7 @@ shows.
 Which line of the brief gives you proof that the fix works?
 </Choice>
 
-<Exercise stretch="Run Bandit yourself, outside the course repository and on Python 3.10 or newer. Clone a public Python project into a scratch directory, create a virtual environment outside that project, install bandit==1.9.4 into it, and run bandit -r on the project's source directory. Pick one finding with Low confidence, and decide in writing whether it is a real problem in that code, and why.">
+<Exercise stretch="Run Bandit on a public Python project. Clone one into a scratch directory outside the course repository and run ~/bandit-1.8.6/bin/bandit -r on its source directory, without -q. Read the Files skipped list at the end first: Bandit lists a file there when it can't parse it, for example a file that uses syntax newer than your Python. Pick one finding with Low confidence, and decide in writing whether it is a real problem in that code, and why.">
 After this exercise you can review an agent's change to code that reads
 user input without trusting a clean analyzer run.
 
@@ -397,14 +395,42 @@ rm -r ~/search-fix/fixed ~/search-fix/test_notes_search.py ~/search-fix/run_test
 rm -r ~/search-before/fixed ~/search-before/test_notes_search.py ~/search-before/run_test.py
 ```
 
-Start from the recorded Bandit findings in this lesson and write them
-down. Then read the function yourself, list every place where input
-enters and every `except`, and note which problems Bandit missed. Start
-a coding agent session in `~/search-fix`, which is a copy you can
-delete, and give it a brief for the parameterized version with a test,
-in your own words. Before you accept the change, the agent's test must
-fail when you copy it into `~/search-before` and run it there. In
-`~/search-fix` it must pass.
+Next, install Bandit 1.8.6 into a virtual environment in your home
+directory. A virtual environment is a directory with its own Python
+packages, and installing into it leaves the course repository, both
+copies and the rest of your machine unchanged. First check which Python
+you have:
+
+```sh
+python3 --version
+```
+
+Bandit 1.8.6 needs Python 3.9 or newer (@Bandit PyPI). In a test run on
+Python 3.14.7, it printed two `ERROR` lines for `notes_search.py`, listed
+none of the findings and exited with status 0, which looks like a clean
+run. If your version is 3.14 or newer, skip the install and the Bandit
+steps, and work from the recorded run in this lesson. Otherwise, create
+the environment, install the pinned version and run it on the agent's
+version:
+
+```sh
+python3 -m venv ~/bandit-1.8.6
+~/bandit-1.8.6/bin/pip install bandit==1.8.6
+cd ~/search-fix
+~/bandit-1.8.6/bin/bandit -q notes_search.py
+```
+
+Compare the findings with the recorded run and write them down. Then
+read the function yourself, list every place where input enters and
+every `except`, and note which problems Bandit missed. Start a coding
+agent session in `~/search-fix`, which is a copy you can delete, and
+give it a brief for the parameterized version with a test, in your own
+words. Before you accept the change, the agent's test must fail when you
+copy it into `~/search-before` and run it there. In `~/search-fix` it
+must pass. Then run Bandit on `~/search-fix/notes_search.py` again. A
+clean run there means that no rule matched, and the test is what shows
+that the fix works. When you are done, delete the environment with
+`rm -r ~/bandit-1.8.6`.
 
 A good result is a short note with the Bandit findings, the problem it
 missed, your brief, and the two test results. The agent's diff changes

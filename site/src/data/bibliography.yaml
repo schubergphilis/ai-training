@@ -1072,11 +1072,11 @@ Bandit:
   url: https://bandit.readthedocs.io/en/latest/
 Bandit PyPI:
   type: reference
-  title: bandit 1.9.4
+  title: bandit 1.8.6
   container: Python Package Index
   author: PyCQA
   license: Apache-2.0
-  url: https://pypi.org/project/bandit/1.9.4/
+  url: https://pypi.org/project/bandit/1.8.6/
 Python sqlite3:
   type: reference
   title: sqlite3 - DB-API 2.0 interface for SQLite databases
