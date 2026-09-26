@@ -333,8 +333,9 @@ and on `python3.9`, and asserts the same stdout for both. Fixtures use the
 standard library only. A `foundations` or `safety` lesson asks the learner
 to install nothing. A `coding-with-agents`, `customizing-agents` or
 `building-agents` lesson may have the learner install one third-party tool,
-at an exact version, outside the course repository: a throwaway
-`python3 -m venv` for a Python tool, or `npx -y pkg@X.Y.Z` for a Node tool.
+at an exact version, outside the course repository: a throwaway virtual
+environment (`python3 -m venv`) for a Python tool, or `npx -y pkg@X.Y.Z`
+for a Node tool.
 A Python tool's pinned version runs on the 3.9 floor. The page keeps a
 recorded, dated run of the tool's output for a reader who skips the
 install, and `mise run examples` never installs the tool. S03 "Examples"

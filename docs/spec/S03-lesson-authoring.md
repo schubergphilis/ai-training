@@ -181,7 +181,7 @@ pitfall and the exercise.
 - **Fixtures run on Python 3.9 and use the standard library only.** The
   fixture is what the learner runs, and the `predict` answer must match on
   their machine. A stock macOS `python3` is 3.9. A learner types
-  `python3` and gets what the lesson shows without installing anything.
+  `python3` and runs the fixture without installing anything.
   The repo pins both the current Python and 3.9 in `.mise.toml`, CI runs
   every fixture on both and asserts the same stdout, and ruff checks the
   fixtures at the 3.9 target.
@@ -190,10 +190,11 @@ pitfall and the exercise.
   learner to install nothing. A lesson in `coding-with-agents`,
   `customizing-agents` or `building-agents` may ask the learner to install
   one third-party tool when all of these hold:
-  - The lesson installs one tool, at an exact version.
+  - The learner installs one tool per lesson, at an exact version.
   - The install happens outside the course repository: a throwaway
-    virtual environment for a Python tool (`python3 -m venv`, then
-    `pip install tool==X.Y.Z`), or `npx -y pkg@X.Y.Z` for a Node tool.
+    virtual environment for a Python tool (`python3 -m venv .venv`, then
+    `.venv/bin/pip install tool==X.Y.Z`), or `npx -y pkg@X.Y.Z` for a
+    Node tool.
   - The pinned version of a Python tool runs on the 3.9 floor.
   - The page keeps a recorded, dated run of the tool's output, so a
     reader who skips the install can still follow the lesson.
