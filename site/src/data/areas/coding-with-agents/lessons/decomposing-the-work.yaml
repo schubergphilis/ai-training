@@ -22,7 +22,9 @@ exercise:
     Split the fixture's import feature into components with one responsibility each and order them
     by dependency. Then write the failing acceptance test for the first one before briefing the
     agent.
-sources: [Academy ai-native-sdlc-playbook, Brilliant SPC]
+sources: [Academy ai-native-sdlc-playbook, Brilliant SPC, Claude Code memory]
+sources-checked: 2026-09-26
+review-by: 2027-03-26
 issue: 150
 minutes: 15
 notes: >-
