@@ -63,8 +63,9 @@ TWO_WORD_COMMANDS = frozenset(
 SLEEP_DURATION = re.compile(r"(\d+(?:\.\d+)?)([smh]?)")
 SLEEP_UNITS = {"": 1.0, "s": 1.0, "m": 60.0, "h": 3600.0}
 ENV_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
-# `<<EOF`, `<<-EOF`, `<< 'EOF'` or `<<"EOF"`. The here-string `<<<` is not one.
-HEREDOC = re.compile(r"<<(-?)[ \t]*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\2")
+# `<<EOF`, `<<-EOF`, `<< 'END-OF'`, `<<"EOF"` or `<<\EOF`. The here-string
+# `<<<` is not one, and `heredoc_at` checks for it.
+HEREDOC = re.compile(r"""<<(-?)[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|([^\s;&|()<>'"]+))""")
 SEPARATORS = frozenset(";&|()\n")
 TOP = 15
 
@@ -119,12 +120,29 @@ def parse_source(spec: str, index: int) -> tuple[str, Path]:
     return label, Path(path).expanduser()
 
 
+def last_stamp(path: Path) -> str:
+    """The latest record timestamp in a transcript, or an empty string."""
+    return max((as_str(r.get("timestamp")) for r in records(path)), default="")
+
+
 def discover(label: str, root: Path) -> list[Transcript]:
-    """Every main session and subagent transcript under a project directory."""
+    """Every main session and subagent transcript under a project directory.
+
+    Main sessions come first, in the order they ended, and then each
+    session's subagents in the same order. A session continued into
+    another ends at its `continued-in` record, before the session that
+    repeats its records, so the original is read first and owns them.
+    """
     found: list[Transcript] = []
-    for main in sorted(root.glob("*.jsonl")):
+    mains = sorted(root.glob("*.jsonl"), key=lambda p: (last_stamp(p), p.name))
+    position = {main.stem: index for index, main in enumerate(mains)}
+    for main in mains:
         found.append(Transcript(label, main.stem, "main", main))
-    for sub in sorted(root.glob("*/subagents/agent-*.jsonl")):
+    subs = sorted(
+        root.glob("*/subagents/agent-*.jsonl"),
+        key=lambda p: (position.get(p.parent.parent.name, len(position)), str(p)),
+    )
+    for sub in subs:
         meta_path = sub.with_suffix(".meta.json")
         role = "subagent"
         if meta_path.exists():
@@ -162,6 +180,63 @@ def skip_heredocs(command: str, start: int, delimiters: Sequence[tuple[str, bool
     return min(i, len(command))
 
 
+def heredoc_at(command: str, i: int) -> tuple[str, bool, int] | None:
+    """The delimiter, `<<-` flag and end index of a heredoc operator at `i`."""
+    if command.startswith("<<<", i):
+        return None
+    match = HEREDOC.match(command, i)
+    if match is None:
+        return None
+    single, double, bare = match.group(2, 3, 4)
+    delimiter = single if single is not None else double if double is not None else bare
+    return delimiter.replace("\\", ""), match.group(1) == "-", match.end()
+
+
+def quote_end(command: str, i: int) -> int:
+    """The index after the quoted string that opens at `i`. A double-quoted
+    string may hold `$(...)`, which may hold quotes and heredocs."""
+    quote = command[i]
+    i += 1
+    while i < len(command):
+        c = command[i]
+        if quote == '"' and c == "\\":
+            i += 2
+        elif quote == '"' and command.startswith("$(", i):
+            i = substitution_end(command, i)
+        elif c == quote:
+            return i + 1
+        else:
+            i += 1
+    return len(command)
+
+
+def substitution_end(command: str, i: int) -> int:
+    """The index after the `$(...)` that opens at `i`, skipping quoted
+    strings, nested substitutions and heredoc bodies."""
+    depth = 0
+    heredocs: list[tuple[str, bool]] = []
+    i += 1
+    while i < len(command):
+        c = command[i]
+        heredoc = heredoc_at(command, i) if c == "<" else None
+        if c == "\\":
+            i += 2
+        elif c in "'\"":
+            i = quote_end(command, i)
+        elif heredoc is not None:
+            heredocs.append(heredoc[:2])
+            i = heredoc[2]
+        elif c == "\n" and heredocs:
+            i = skip_heredocs(command, i + 1, heredocs)
+            heredocs.clear()
+        else:
+            depth += {"(": 1, ")": -1}.get(c, 0)
+            i += 1
+            if depth == 0:
+                return i
+    return len(command)
+
+
 class Segmenter:
     """Splits a shell command line into simple commands, each as its words.
 
@@ -190,58 +265,26 @@ class Segmenter:
             self.result.append(self.words.copy())
             self.words.clear()
 
-    def quoted(self, i: int, quote: str) -> int:
-        """Copy a quoted string that opens at `i`; return the index after it."""
-        command = self.command
-        self.word.append(quote)
-        i += 1
-        while i < len(command):
-            c = command[i]
-            if c == "\\" and quote == '"' and i + 1 < len(command):
-                self.word.append(command[i : i + 2])
-                i += 2
-                continue
-            self.word.append(c)
-            i += 1
-            if c == quote:
-                break
-        return i
-
-    def substitution(self, i: int) -> int:
-        """Copy a `$(...)` or backtick substitution that opens at `i`,
-        nested parentheses included; return the index after it."""
-        command = self.command
-        if command[i] == "`":
-            end = command.find("`", i + 1)
-            end = len(command) if end < 0 else end + 1
-            self.word.append(command[i:end])
-            return end
-        depth = 0
-        start = i
-        i += 1
-        while i < len(command):
-            c = command[i]
-            i += 1
-            if c == "(":
-                depth += 1
-            elif c == ")":
-                depth -= 1
-                if depth == 0:
-                    break
-        self.word.append(command[start:i])
-        return i
+    def copy(self, start: int, end: int) -> int:
+        """Add `command[start:end]` to the current word; return `end`."""
+        self.word.append(self.command[start:end])
+        return end
 
     def split(self) -> list[list[str]]:
         command = self.command
         i = 0
         while i < len(command):
             c = command[i]
-            heredoc = HEREDOC.match(command, i) if c == "<" else None
+            heredoc = heredoc_at(command, i) if c == "<" else None
             if c in "'\"":
-                i = self.quoted(i, c)
+                i = self.copy(i, quote_end(command, i))
                 continue
-            if c == "`" or command.startswith("$(", i):
-                i = self.substitution(i)
+            if command.startswith("$(", i):
+                i = self.copy(i, substitution_end(command, i))
+                continue
+            if c == "`":
+                end = command.find("`", i + 1)
+                i = self.copy(i, len(command) if end < 0 else end + 1)
                 continue
             if c == "\\" and i + 1 < len(command):
                 if command[i + 1] != "\n":
@@ -254,8 +297,8 @@ class Segmenter:
                 continue
             if heredoc is not None:
                 self.end_word()
-                self.heredocs.append((heredoc.group(3), heredoc.group(1) == "-"))
-                i = heredoc.end()
+                self.heredocs.append(heredoc[:2])
+                i = heredoc[2]
                 continue
             if c == "&" and (self.word[-1:] == [">"] or command.startswith(">", i + 1)):
                 self.word.append(c)
@@ -322,7 +365,8 @@ def sleep_seconds(command: str) -> list[float]:
         words = command_words(segment)
         if command_name(words) != "sleep" or len(words) < 2:
             continue
-        duration = SLEEP_DURATION.fullmatch(words[1])
+        # `sleep "5"` and `sleep '5'` wait as long as `sleep 5`.
+        duration = SLEEP_DURATION.fullmatch(re.sub(r"""^(['"])(.*)\1$""", r"\2", words[1]))
         if duration:
             found.append(float(duration.group(1)) * SLEEP_UNITS[duration.group(2)])
     return found
