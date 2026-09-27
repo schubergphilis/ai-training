@@ -163,6 +163,27 @@ def test_sleep_and_afplay_only_at_command_position() -> None:
     assert harness_metrics.sleep_seconds("cat <<< 'sleep 3'; sleep 2") == [2]
 
 
+@pytest.mark.parametrize(
+    "command",
+    [
+        # A here-document inside "$(...)", with an odd number of quotes.
+        'git commit -m "$(cat <<\'EOF\'\nfix: the "x\nafplay chime\nsleep 30\nEOF\n)"',
+        # An unquoted $(...) whose here-document holds a `)`.
+        "x=$(cat <<EOF\n1) item\nsleep 9\nafplay y\nEOF\n)",
+        # A delimiter that isn't an identifier.
+        "cat <<'END-OF' > f\nsleep 8\nafplay z\nEND-OF",
+        "cat <<\\EOF\nsleep 8\nEOF",
+    ],
+)
+def test_substitutions_and_here_documents_hide_their_commands(command: str) -> None:
+    assert harness_metrics.sleep_seconds(command + "\nsleep 1") == [1]
+    assert not harness_metrics.runs_afplay(command)
+
+
+def test_sleep_reads_a_quoted_duration() -> None:
+    assert harness_metrics.sleep_seconds('sleep "5"; sleep \'2m\'; sleep "x"') == [5, 120]
+
+
 def test_segments_split_at_operators_outside_quotes() -> None:
     assert harness_metrics.segments("a 'b; c' && d \\\n e | f 2>&1 &> g; (h)") == [
         ["a", "'b; c'"],
@@ -248,8 +269,10 @@ def test_streamed_usage_takes_the_maximum_of_each_field(tmp_path: pathlib.Path) 
 
 
 def test_continued_session_counts_repeated_records_once(tmp_path: pathlib.Path) -> None:
-    # Item 2: session b continues session a and repeats its records, with
+    # Item 2: session b continues session z and repeats its records, with
     # the same uuids and message ids, in its main transcript and subagent.
+    # b sorts before z by name, so only the order by end time gives z its
+    # own records.
     first = [
         human("10:00:00", "start", uuid="u1"),
         assistant(
@@ -258,9 +281,9 @@ def test_continued_session_counts_repeated_records_once(tmp_path: pathlib.Path) 
     ]
     subagent = [assistant("10:00:02", "m2", uuid="u3", output_tokens=40)]
     continued = {"type": "continued-in", "timestamp": "2026-09-26T10:00:03.000Z"}
-    write_jsonl(tmp_path / "a.jsonl", [*first, continued])
-    write_jsonl(tmp_path / "a" / "subagents" / "agent-1.jsonl", subagent)
-    write_meta(tmp_path / "a" / "subagents" / "agent-1.jsonl", "builder")
+    write_jsonl(tmp_path / "z.jsonl", [*first, continued])
+    write_jsonl(tmp_path / "z" / "subagents" / "agent-1.jsonl", subagent)
+    write_meta(tmp_path / "z" / "subagents" / "agent-1.jsonl", "builder")
     write_jsonl(
         tmp_path / "b.jsonl",
         [
@@ -271,12 +294,19 @@ def test_continued_session_counts_repeated_records_once(tmp_path: pathlib.Path) 
     )
     write_jsonl(tmp_path / "b" / "subagents" / "agent-2.jsonl", subagent)
     write_meta(tmp_path / "b" / "subagents" / "agent-2.jsonl", "builder")
+    found = harness_metrics.discover("a", tmp_path)
+    assert [(t.session, t.role) for t in found] == [
+        ("z", "main"),
+        ("b", "main"),
+        ("z", "builder"),
+        ("b", "builder"),
+    ]
     data = harness_metrics.collect([("a", tmp_path)])
     assert section(data, "totals")["output"] == 147
     assert section(data, "human")["messages"] == 2
     assert data["tools"] == {"Bash": 1}
     rows = sessions(data)
-    assert (rows["a"]["output"], rows["a"]["subagents"], rows["a"]["human"]) == (140, 1, 1)
+    assert (rows["z"]["output"], rows["z"]["subagents"], rows["z"]["human"]) == (140, 1, 1)
     assert (rows["b"]["output"], rows["b"]["subagents"], rows["b"]["human"]) == (7, 0, 1)
     by_role = cast("dict[str, dict[str, int]]", data["by_role"])
     assert (by_role["builder"]["transcripts"], by_role["builder"]["turns"]) == (1, 1)
