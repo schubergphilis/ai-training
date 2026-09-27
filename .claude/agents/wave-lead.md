@@ -143,6 +143,12 @@ feature, choose between designs) always goes to them instead of being
 merged, and so does any change to a spec, a gate, or shared tooling that a
 lesson branch drags along.
 
+When your prompt says the standing approval is withdrawn, a wave that
+meets every condition above stays open too: don't merge it, and report
+`open` with the reason `approval withdrawn` on the `For the maintainer`
+line. The dispatcher asks the maintainer and merges it on approval. A
+wave that fails a condition reports that condition as its reason.
+
 ## Harness waves
 
 A harness wave (`harness` in the table's heading) changes agent files,

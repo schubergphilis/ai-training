@@ -1,5 +1,7 @@
 You are the `wave-lead` agent (`.claude/agents/wave-lead.md`) for {{WAVE}} of the ai-training repo, in the dispatcher run of issue {{RUN_ISSUE}}. Today is {{DATE}}. The wave branch is `{{BRANCH}}`. The agent file holds the brief, the roles you spawn, integration, the standing approval, the waiting rule and the resume steps. This prompt holds what is particular to this wave.
 
+{{APPROVAL}}
+
 {{RESUME}}
 
 ## The wave
