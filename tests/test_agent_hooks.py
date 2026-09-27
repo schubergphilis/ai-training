@@ -622,7 +622,77 @@ def test_commands_that_keep_the_git_hooks_pass(command: str) -> None:
 def test_split_segments_records_the_assignment_names_it_drops() -> None:
     segment = agent_hooks.split_segments("A=1 SKIP=x git commit", ".")[0]
     assert segment.words == ["git", "commit"]
-    assert segment.assignments == ("A", "SKIP")
+    assert segment.assignments == ("A=1", "SKIP=x")
+
+
+# Findings 1 to 3 of the review of #421.
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "gh api --method POST graphql -f query='mutation { deleteRef(input: $in) { x } }'",
+        "gh api -X POST graphql -f query='mutation { deleteRef(input: $in) { x } }'",
+        "gh api -H 'Accept: x' graphql -f query='mutation { deleteIssue(input: $in) { x } }'",
+        "gh api --hostname h graphql -f query='mutation { deleteIssue(input: $in) { x } }'",
+        "AI_TRAINING_ROLE=wave-lead gh pr merge 12 --rebase -d",
+        "AI_TRAINING_ROLE=dispatcher gh pr merge 12 --delete-branch",
+        "AI_TRAINING_ROLE=wave-lead gh pr merge 12 -rd",
+        "AI_TRAINING_ROLE=wave-lead gh pr merge 12 --rebase --delete-branch",
+        "gh pr close 12 --delete-branch",
+        "gh pr close 12 -d",
+        "gh pr close 12 -c done -d",
+    ],
+)
+def test_review_findings_of_421_on_github_deletes_are_rejected(command: str) -> None:
+    reason = check(command)
+    assert reason is not None
+    assert "for the maintainer" in reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "gh repo create delete-test --private",
+        "gh pr close 12 -c 'delete it later'",
+        "AI_TRAINING_ROLE=wave-lead gh pr merge 12 --delete-branch=false",
+        "gh pr view 12 -d",
+        "gh pr close -- -d",
+    ],
+)
+def test_gh_commands_near_the_421_review_findings_pass(command: str) -> None:
+    assert check(command) is None
+
+
+def test_a_merging_role_still_merges_without_deleting_the_branch() -> None:
+    assert check("AI_TRAINING_ROLE=wave-lead gh pr merge 12 --rebase") is None
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=x git commit",
+        "GIT_CONFIG_KEY_3=CORE.HOOKSPATH git push origin feat/x",
+        "export GIT_CONFIG_KEY_0=core.hooksPath",
+        "GIT_CONFIG_PARAMETERS=\"'core.hooksPath'='/dev/null'\" git commit -m x",
+        "env GIT_CONFIG_PARAMETERS=\"'core.hookspath'='x'\" git commit -m x",
+    ],
+)
+def test_core_hooks_path_through_the_git_environment_is_rejected(command: str) -> None:
+    reason = check(command)
+    assert reason is not None
+    assert "core.hooksPath" in reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=user.name GIT_CONFIG_VALUE_0=x git log",
+        "GIT_CONFIG_PARAMETERS=\"'user.name'='x'\" git log",
+    ],
+)
+def test_other_config_through_the_git_environment_passes(command: str) -> None:
+    assert check(command) is None
 
 
 def git(*args: str, cwd: Path) -> None:

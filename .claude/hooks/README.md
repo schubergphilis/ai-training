@@ -14,9 +14,11 @@ and #342. `.claude/settings.json` registers them.
   length followed by `tail`, `cat`, `ls`, `head`, `grep` or `wc`, which
   polls a background run. It also rejects
   `--no-verify` on `git commit`, `push`, `merge`, `pull` or `rebase` (and
-  `git commit -n`), the other ways to skip the git hooks (a `SKIP=<hook>`
-  or `PREK_SKIP=<hook>` prefix or export, `git -c core.hooksPath=...`, and
-  `git config core.hooksPath <value>`), every `gh <noun> delete`, a
+  `git commit -n`), a `SKIP=<hook>` or `PREK_SKIP=<hook>` prefix or
+  export, `core.hooksPath` set with `git -c`, `git --config-env`,
+  `git config core.hooksPath <value>`, a `GIT_CONFIG_KEY_<n>` or a
+  `GIT_CONFIG_PARAMETERS` assignment, every `gh <noun> delete`,
+  `gh pr merge` or `gh pr close` with `--delete-branch` or `-d`, a
   `gh api` call with the DELETE method in any flag form or place, a
   `gh api graphql` mutation that calls a `delete...` field, a push that
   deletes a remote branch or tag (`--delete`, `-d`, `:<branch>`,
