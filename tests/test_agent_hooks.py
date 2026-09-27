@@ -354,6 +354,10 @@ def test_guard_exits_0_or_2_and_never_1_on_odd_input(
         "sleep 30; cat /private/tmp/task.output",
         "sleep 50\nls -la .scratch",
         "mise run fast > .scratch/f.txt 2>&1 & sleep 55; tail .scratch/f.txt",
+        "sleep 55 && head -5 out.txt",
+        "sleep 30; grep done log.txt",
+        "sleep 10 && wc -l out.txt",
+        "sleep 1 && ls",
     ],
 )
 def test_sleep_then_read_is_polling_and_names_the_foreground_run(command: str) -> None:
@@ -367,6 +371,13 @@ def test_reading_without_a_sleep_before_it_passes() -> None:
     assert check("tail -5 .scratch/fast.txt") is None
     assert check("cat a.txt && sleep 5") is None
     assert check("ls .scratch; sleep 1") is None
+    assert check("head -5 out.txt") is None
+    assert check("grep x f") is None
+    assert check("wc -l out.txt") is None
+
+
+def test_sleep_before_a_command_that_does_not_read_passes() -> None:
+    assert check("sleep 2 && mise run fast") is None
 
 
 @pytest.mark.parametrize(

@@ -33,7 +33,8 @@ null character, exits 2 as well: Claude Code runs a command after a hook's
 exit 1 (#449).
 
 Besides pushes, merges and discarding commands, it rejects a long `sleep`,
-polling (a `gh` loop, or a `sleep` before `tail`, `cat` or `ls`),
+polling (a `gh` loop, or a `sleep` before `tail`, `cat`, `ls`, `head`,
+`grep` or `wc`, #422),
 `--no-verify`, deletes on GitHub, and an `rm` that leaves `.scratch/`
 (#391).
 
@@ -294,17 +295,19 @@ def stash_reason(sub: str, rest: list[str], args: list[str]) -> str | None:
     )
 
 
-READ_COMMANDS = frozenset({"tail", "cat", "ls"})
+READ_COMMANDS = frozenset({"tail", "cat", "ls", "head", "grep", "wc"})
 COMMIT_VALUE_FLAGS = frozenset({"-m", "-F", "-c", "-C", "-t", "--message", "--file", "--template"})
 COMMIT_SHORT_VALUE = frozenset("mFcCtuS")
 SCRATCH = ".scratch"
 
 
 def sleeps_then_reads(segments: Sequence[Segment]) -> bool:
-    """True when a `sleep` comes before a `tail`, `cat` or `ls` in one command.
+    """True when a `sleep` comes before a read (`READ_COMMANDS`) in one command.
 
     That is how a builder polls a command it started in the background
-    (`sleep 55 && tail -5 out.txt`), and a foreground run replaces it.
+    (`sleep 55 && tail -5 out.txt`), and a foreground run replaces it. A
+    `sleep` of any length counts, since every poll costs a model turn (#422).
+    Polling across two Bash calls is out of reach of a per-command hook.
     """
     slept = False
     for seg in segments:
@@ -515,9 +518,11 @@ def check_command(
         )
     if sleeps_then_reads(segments):
         return (
-            "`sleep` and then `tail`, `cat` or `ls` polls a command that runs in the "
-            "background. Run the command in the foreground instead, with a long Bash "
-            "timeout (600000 ms for `mise run fast`), and read its output when it ends."
+            "`sleep` and then `tail`, `cat`, `ls`, `head`, `grep` or `wc` polls a command "
+            "that runs in the background. Run the command in the foreground instead, with "
+            "a long Bash timeout (600000 ms for `mise run fast`), and read its output when "
+            "it ends. A Bash call with run_in_background wakes you when it ends, so it "
+            "needs no poll either."
         )
     for segment in segments:
         reason = check_segment(segment, env, main_checkout, branch_of)
