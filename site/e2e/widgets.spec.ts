@@ -51,21 +51,29 @@ test('the format checker checks a pasted answer', async ({ page }) => {
 
 test('the redactor prints what the page shows for the email, the colleague version and the reply', async ({ page }) => {
 	await page.goto('safety/redact-before-you-paste/');
-	const email = page.locator('.redactor[data-action=redact]').filter({ has: page.locator('.rd-map:not(:empty)') });
-	const reply = page.locator('.redactor[data-action=restore]');
 	// A code block's innerText renders a blank line differently from a plain pre, so both sides drop blank lines.
 	const lines = (text: string) => text.split('\n').filter((line) => line.trim() !== '');
-	const fenceAfter = async (widget: typeof reply) => lines(await widget.locator('xpath=following::pre[1]').innerText());
-	for (const widget of [email, reply]) {
+	// The fence that shows a widget's output, picked by its content; exactly one fence on the page holds it.
+	const fence = async (text: string) => {
+		const found = page.locator('pre[data-language=text]').filter({ hasText: text });
+		await expect(found).toHaveCount(1);
+		return lines(await found.innerText());
+	};
+	const email = page.locator('.redactor[data-action=redact]').filter({ has: page.locator('.rd-map:not(:empty)') });
+	const reply = page.locator('.redactor[data-action=restore]');
+	for (const [widget, shown] of [
+		[email, 'From: Person 1 <[email]>'],
+		[reply, 'Dear Renske Adelhof,'],
+	] as const) {
 		await expect(widget).toHaveCount(1);
 		await expect(widget.locator('.rd-output')).toBeHidden();
 		await widget.locator('.rd-run').click();
-		expect(lines(await widget.locator('.rd-output').innerText())).toEqual(await fenceAfter(widget));
+		expect(lines(await widget.locator('.rd-output').innerText())).toEqual(await fence(shown));
 	}
 	const partial = page.locator('.redactor').filter({ has: page.locator('.rd-watch') });
 	await expect(partial).toHaveCount(1);
 	await partial.getByRole('button', { name: 'Redact' }).click();
-	await expect(partial.locator('.rd-leaks')).toHaveText((await fenceAfter(partial)).join('\n'));
+	await expect(partial.locator('.rd-leaks')).toHaveText((await fence('still identifying:')).join('\n'));
 	await partial.locator('.rd-map').fill('R. A. => Person 1\nNB-4471-0928 => [account number]\nZwolle => [city]');
 	await expect(partial.locator('.rd-leaks')).toBeEmpty();
 	await partial.getByRole('button', { name: 'Redact' }).click();

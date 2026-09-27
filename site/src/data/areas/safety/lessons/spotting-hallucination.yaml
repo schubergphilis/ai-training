@@ -32,5 +32,5 @@ notes: >-
   source set and prints which ones have no source. It is a port of
   site/examples/safety/spotting-hallucination/check_claims.py, which stays in CI as a proof through
   missing_claims.py and all_claims.py, so mise run examples fails when the text fences on the page
-  and the fixture disagree. The page never names the fixtures. The report, minutes, ordinance, council chair and quotes are fictional
-  and were searched for before publishing.
+  and the fixture disagree. The page never names the fixtures. The report, minutes, ordinance,
+  council chair and quotes are fictional and were searched for before publishing.

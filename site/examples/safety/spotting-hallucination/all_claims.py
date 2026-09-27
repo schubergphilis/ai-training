@@ -1,8 +1,8 @@
 """Runs the checker on the first sample summary with the full report.
 
-The lesson shows `python3 check_claims.py sample/summary_1.txt`. Every claim
-gets an entry, found or not, so the learner can compare a found figure with
-the sentence it was found in.
+This is `check_claims.py sample/summary_1.txt`, and the lesson page shows
+this output in a `text` fence. Every claim gets an entry, found or not, so
+the learner can compare a found figure with the sentence it was found in.
 """
 
 import os

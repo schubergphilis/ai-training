@@ -63,7 +63,7 @@ account number become `[account number]`, and the reader still knows
 they're one thing.
 
 The box below holds the email and a map of six rows, each an original
-value and its placeholder. Press Redact. The pass replaces every value with
+value and its placeholder. Press Redact. Redact replaces every value with
 its placeholder, longest value first, so a full name is replaced before a
 shorter value it contains.
 
@@ -143,25 +143,25 @@ of nothing. Take out every detail that points at the person, and read the
 subject line and the signature as carefully as the body.
 </Pitfall>
 
-The colleague's version is in the box below the next question, with an
-empty map. Under it is a list of eight details from the original, in this
-order: name, initials, phone, email, account number, street, city,
-technician. After a pass, the box prints `still identifying:` and then the
-labels of the details it still finds, separated by a comma and a space.
+The colleague's version is in the box below, with an empty map. Under it
+is a list of eight details from the original, in this order: name,
+initials, phone, email, account number, street, city, technician. After a
+pass, the box prints `still identifying:` and then the labels of the
+details it still finds, separated by a comma and a space.
+
+<Redactor text="safety/redact-before-you-paste/sample/partial.txt"
+  watch="safety/redact-before-you-paste/sample/watch.txt" />
 
 <Predict id="what-the-partial-redaction-leaves" objective="safety/handles-data-safely/decides-what-to-share"
   concepts={['data-privacy']}
   context="A colleague redacted a customer's support email by hand: the name became the initials R. A., the phone number, the email address and the street were removed, and the account number in the subject line, the city under the signature and the technician's name stayed. The checker looks for eight details from the original in this order: name, initials, phone, email, account number, street, city, technician, and prints the labels of the ones still present after the words still identifying: separated by a comma and a space."
   title="What does the check print?" hint="Read the colleague's version line by line, including the subject and the signature. Which of the eight details are still there, and in which order does the check list them?"
   answer="still identifying: initials, account number, city, technician">
-Read the colleague's version in the box below, including the subject line
+Read the colleague's version in the box above, including the subject line
 and the signature. Before you press Redact, write down what the box prints.
 </Predict>
 
-<Redactor text="safety/redact-before-you-paste/sample/partial.txt"
-  watch="safety/redact-before-you-paste/sample/watch.txt" />
-
-For the colleague's version as it is, the box prints this line.
+For the colleague's version as it is, the box above prints this line.
 
 ```text
 still identifying: initials, account number, city, technician
@@ -265,6 +265,7 @@ signature, and then keep the map with the original. When the answer comes
 back, the map puts the people back in.
 
 <Exercise stretch="Take one document from your own work and do the same on paper: list the values you would replace and their placeholders, without pasting the document anywhere.">
+
 The box below holds the full ticket the email came from: the customer's
 email, an internal note from the technician, and a message from the
 planner, about forty lines in all. Its map is empty. Write a map in the map
@@ -280,7 +281,8 @@ A good result doesn't name a person or hold a phone number, email address,
 account number, ticket number, order number, or street. A reader can still
 tell that a door seal was replaced and that the inlet hose is the next
 suspect, and that Thursday afternoon is on offer. After your own pass,
-compare your map with this one, which gets there.
+compare your map with this one, which leaves none of those details in the
+ticket.
 
 ```text
 Renske Adelhof => Person 1
@@ -300,6 +302,7 @@ Zwolle => [city]
 
 Then answer one question: which detail in the ticket did you notice last,
 and where in the document was it?
+
 </Exercise>
 
 <Recap>

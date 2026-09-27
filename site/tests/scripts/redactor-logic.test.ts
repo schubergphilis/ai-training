@@ -174,3 +174,29 @@ describe('runPass', () => {
 		});
 	});
 });
+
+describe('the map the lesson page shows in its exercise', () => {
+	const PAGE = join(import.meta.dirname, '../../src/content/docs/safety/redact-before-you-paste.mdx');
+
+	/** The body of every `text` fence in `src` whose lines are all map rows. */
+	function mapFences(src: string): string[] {
+		const fences = [...src.matchAll(/^```text\n([\s\S]*?)^```$/gm)].map((m) => m[1] ?? '');
+		return fences.filter(
+			(body) =>
+				body.trim() !== '' &&
+				body
+					.trimEnd()
+					.split('\n')
+					.every((l) => l.includes(' => ')),
+		);
+	}
+
+	it('is sample/map.txt, the map the ticket test above redacts with', () => {
+		expect(mapFences(readFileSync(PAGE, 'utf8'))).toEqual([sample('map.txt')]);
+	});
+	it('fails when the page and the file drift apart', () => {
+		const drifted = readFileSync(PAGE, 'utf8').replace('Zwolle => [city]\n', '');
+		expect(drifted).not.toBe(readFileSync(PAGE, 'utf8'));
+		expect(mapFences(drifted)).not.toEqual([sample('map.txt')]);
+	});
+});
