@@ -1,18 +1,20 @@
 """A toy model that answers one fixed question, run several times.
 
-The lesson "Same prompt, different answer" runs this ten times at two
-temperatures. The model is five candidate answers with made-up scores, the
-same idea as the sampling widget in "How a language model works". The
-scores never change between runs. The pick does.
+The model of the lesson "Same prompt, different answer": five candidate
+answers with made-up scores, the same idea as the sampling widget in "How a
+language model works". The scores never change between runs. The pick does.
+The widget on the lesson page is a port of this program with fresh random
+numbers on every press.
 
-    python3 sample.py --temperature 0 --runs 10 --quiet
-    python3 sample.py --temperature 1.0 --runs 10
-    python3 sample.py --temperature 0 --runs 10 --jitter
-    python3 sample.py --temperature 1.0 --runs 10 --check
+    sample.py --temperature 0 --runs 10 --quiet
+    sample.py --temperature 1.0 --runs 10
+    sample.py --temperature 0 --runs 10 --jitter
+    sample.py --temperature 1.0 --runs 10 --check
 
-The random numbers come from a fixed seed, so the output on the lesson page
-is the output on your machine. Pass --seed with another number to see
-other runs. A real model gives you no such knob.
+The random numbers come from a fixed seed, so greedy.py, sampled.py,
+jitter.py and checked.py print the same lines on every machine, and the page
+shows those lines as recorded runs. --seed with another number gives other
+runs.
 """
 
 import argparse

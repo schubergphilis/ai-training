@@ -1,8 +1,8 @@
 """How many pages of a given token count fit in a context window.
 
 Run it with the token count of your page:   python3 pages_per_window.py 150
-Run it with no argument and it uses the estimate for the sample paragraph
-in count_tokens.py.
+Run it with no argument and it uses the estimate count_tokens.py prints for
+the meeting notes in sample/notes.txt.
 
 The window sizes are round numbers that stand for the sizes on the market
 in 2026: small open models at the low end, the large vendor models at the

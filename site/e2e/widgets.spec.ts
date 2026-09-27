@@ -14,8 +14,12 @@ test('the token counter prints the two reports the page shows for the sample', a
 	const counter = page.locator('[data-token-counter]');
 	await expect(counter).toHaveCount(1);
 	await counter.getByRole('button', { name: 'Count' }).click();
-	const counts = (await counter.locator('xpath=following::pre[1]').innerText()).trim();
-	const pages = (await counter.locator('xpath=following::pre[2]').innerText()).trim();
+	const countsFence = page.locator('pre').filter({ hasText: 'tokens (estimate):' });
+	const pagesFence = page.locator('pre').filter({ hasText: 'one page:' });
+	await expect(countsFence).toHaveCount(1);
+	await expect(pagesFence).toHaveCount(1);
+	const counts = (await countsFence.innerText()).trim();
+	const pages = (await pagesFence.innerText()).trim();
 	expect((await counter.locator('.tc-counts li').allInnerTexts()).join('\n')).toBe(counts);
 	expect((await counter.locator('.tc-pages li').allInnerTexts()).join('\n')).toBe(pages);
 	await counter.locator('textarea').fill('Hello, world!');
@@ -32,7 +36,9 @@ test('the repeated runs widget prints the summary the page shows at temperature 
 	await expect(widget.locator('output')).toHaveText('0.0');
 	await widget.getByRole('button', { name: 'Run 10 times' }).click();
 	await expect(widget.locator('.rr-lines li')).toHaveCount(10);
-	const fence = (await widget.locator('xpath=following::pre[1]').innerText()).trim();
+	const fenceLocator = page.locator('pre').filter({ hasText: '10 of 10 runs give the same answer' });
+	await expect(fenceLocator).toHaveCount(1);
+	const fence = (await fenceLocator.innerText()).trim();
 	await expect(widget.locator('.rr-summary li')).toHaveText([fence]);
 	await widget.getByLabel('Check each answer').check();
 	await expect(widget.locator('.rr-lines li')).toHaveCount(0);

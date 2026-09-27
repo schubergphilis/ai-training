@@ -29,14 +29,14 @@ press the button, predict the summary line for ten runs.
 
 <Choice id="predict-greedy" objective="concepts/explains-models/explains-generation"
   concepts={['sampling-and-temperature', 'non-determinism']}
-  context="A toy model has five candidate answers to one question, with fixed scores. A button runs it ten times at the temperature the learner sets and prints a summary line: how many of the runs gave the same text as run 1."
+  context="A toy model has five candidate answers to one question, with fixed scores. A button runs it ten times at the temperature the learner sets and prints a summary line: how many of the runs gave the same text as run 1. The widget has two boxes, both unchecked at the start: shake the scores before each pick, and check each answer."
   title="Predict the summary at temperature 0"
   hint="At temperature 0, how much probability is left for any candidate below the top score?"
   options={[
     { text: '10 of 10 runs give the same answer as run 1', correct: true },
     { text: '9 of 10 runs give the same answer as run 1', why: 'For one run to differ, another candidate needs some probability. At temperature 0 all of it is on the top candidate.' },
     { text: 'A count between 3 and 6, different on every press', why: 'Each press draws new random numbers, but at temperature 0 every draw lands on the one candidate that has all of the probability.' },
-    { text: '1 of 10 runs give the same answer as run 1', why: 'Run 1 does count itself, and the other nine runs take the same top candidate that run 1 took.' },
+    { text: '1 of 10 runs give the same answer as run 1', why: 'Run 1 counts itself. At temperature 0, which candidate do the other nine runs take?' },
   ]}>
 
 You set the toy model to temperature 0, leave both boxes unchecked, and
@@ -189,7 +189,7 @@ to put it in the payment process today. What do you tell them?
 
 ## The check a workflow needs
 
-A person reading the ten answers above sees at once that nine of them are
+A person reading the ten recorded runs at temperature 1.0 sees at once that nine of them are
 right. A program comparing them with the first answer sees four matches
 and six failures, and a program comparing them with the full sentence
 sees two matches and eight failures. Neither count is the one the workflow
@@ -204,8 +204,8 @@ loose is fine here because a person reads the answer, and a person reads
 answer, as in the ticket system of the pitfall, the wording is part of
 what the check has to pin down. The box "Check each answer" in the
 widget applies the check to every run and adds a second summary line. Set
-the temperature to 1.0, uncheck the shake, check the check, and press the
-button. Here is the check applied to the recorded set from temperature
+the temperature to 1.0, uncheck "Shake the scores before each pick", check
+"Check each answer", and press the button. Here is the check applied to the recorded set from temperature
 1.0:
 
 ```text

@@ -1,6 +1,8 @@
-"""Ten runs at temperature 0, for the lesson's first Predict block.
+"""Ten runs at temperature 0, summary line only: sample.py with
+--temperature 0 --runs 10 --quiet.
 
-The lesson shows `python3 sample.py --temperature 0 --runs 10 --quiet`.
+A proof of the lesson (its lesson file lists it in proofs): the page shows
+the line this prints in a text fence.
 """
 
 import os

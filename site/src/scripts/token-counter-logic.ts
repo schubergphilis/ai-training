@@ -20,7 +20,8 @@
  *   the same for letters and digits, and may differ for a few rare
  *   characters that Unicode gives a numeric value.
  * - Python's `\s` and `str.split()` treat the control characters U+001C to
- *   U+001F as whitespace, and JavaScript's `\s` doesn't. JavaScript's `\s`
+ *   U+001F and U+0085 (next line) as whitespace, and JavaScript's `\s`
+ *   doesn't. JavaScript's `\s`
  *   takes U+FEFF, and Python's doesn't.
  */
 

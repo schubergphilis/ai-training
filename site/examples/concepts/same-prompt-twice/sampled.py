@@ -1,6 +1,7 @@
-"""Ten runs at temperature 1.0, for the lesson's second example.
+"""Ten runs at temperature 1.0: sample.py with --temperature 1.0 --runs 10.
 
-The lesson shows `python3 sample.py --temperature 1.0 --runs 10`.
+A proof of the lesson (its lesson file lists it in proofs): the page shows
+the lines this prints in a text fence.
 """
 
 import os

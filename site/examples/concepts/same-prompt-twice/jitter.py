@@ -1,6 +1,8 @@
-"""Ten runs at temperature 0 with jittered scores, for the lesson's third example.
+"""Ten runs at temperature 0 with jittered scores: sample.py with
+--temperature 0 --runs 10 --jitter.
 
-The lesson shows `python3 sample.py --temperature 0 --runs 10 --jitter`.
+A proof of the lesson (its lesson file lists it in proofs): the page shows
+the lines this prints in a text fence.
 """
 
 import os
