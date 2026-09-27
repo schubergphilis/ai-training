@@ -10,8 +10,9 @@ and #342. `.claude/settings.json` registers them.
   every worktree (all but `list` and `show`), `git reset --hard`,
   `git checkout -- .` or `git restore .` in the main checkout, a
   `sleep` over 60 seconds, a loop that polls `gh`
-  (`while` or `until`, or a `for` loop that sleeps), and a `sleep` followed
-  by `tail`, `cat` or `ls`, which polls a background run. It also rejects
+  (`while` or `until`, or a `for` loop that sleeps), and a `sleep` of any
+  length followed by `tail`, `cat`, `ls`, `head`, `grep` or `wc`, which
+  polls a background run. It also rejects
   `--no-verify` on `git commit` or `git push` (and `git commit -n`),
   `gh repo delete`, a `gh api` call with the DELETE method in any flag form
   or place, and an `rm` that names `.scratch` and also a path outside
