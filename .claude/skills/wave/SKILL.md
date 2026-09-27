@@ -78,6 +78,14 @@ below first:
   never picked again in this run.
 - `## Pending collision notes`: the add and remove lines from the leads'
   reports that the maintainer hasn't read yet (step 8).
+- `## Standing approval`: one line each time the maintainer withdraws the
+  standing approval or gives it again, `wave <k>: withdrawn` or
+  `wave <k>: given again`, where `<k>` is the first wave it applies to
+  (step 8). Empty, or missing in an older run issue, means the standing
+  approval holds. A wave's approval is the last line whose `<k>` is at
+  most that wave's number. `/wave --resume` reads the section back with
+  the rest of the body, so a withdrawal holds across waves and sessions
+  until the maintainer gives the approval again.
 - `## Waves`: one line per finished wave, `wave <k>: <status>, PR #<n>`,
   and while a lead runs, one more line,
   `In flight: wave <k>, branch <b>, issues #a #b ...`. An `In flight` line
@@ -360,6 +368,14 @@ printed.
      below, as written, with the run issue's number filled in.
    - `{{RESUME}}`: for a new wave, `This is a fresh wave.` For a resume
      (step 3), these three sentences: `You are RESUMING <NAME> wave <k> on branch <branch>.` `A previous lead stopped before reporting.` `Follow "Resuming a half-done wave" in your agent file before anything else.`
+   - `{{APPROVAL}}`: first record any withdrawal or new approval the
+     maintainer gave since the last wave (step 8, "Standing approval").
+     When the `## Standing approval` section says the approval is
+     withdrawn for wave `<k>`, replace the placeholder with
+     `The standing approval is withdrawn for this wave. When the wave meets every condition of the standing approval, open the wave pull request, don't merge it, and return open with the reason "approval withdrawn".`
+     Otherwise, and always in a harness run, delete the placeholder's
+     line and the blank line after it, so the prompt is the same as
+     without the placeholder.
 7. **Mark the wave in flight, then spawn the lead.** Add
    `In flight: wave <k>, branch <b>, issues #a #b ...` to `## Waves` on
    the run issue (on a resume the line is already there), with the check
@@ -399,9 +415,27 @@ printed.
      quotes that issue's options and its recommendation (`triage.md`,
      "What a maintainer decision needs"). An issue number alone is never
      the question.
+   - Standing approval: when the maintainer withdraws the standing
+     approval or gives it again, in the session at any time or in a
+     comment on the run issue (`gh issue view <run> --comments`), add
+     the line to `## Standing approval` with the next wave you start as
+     `<k>`: one more than the last wave on `## Waves`, counting a wave
+     that is in flight or awaiting restart. A wave already running keeps
+     the approval it started with. Say in your next message which wave
+     the change applies from.
    - Then act on the status.
    - `merged`: play `afplay /System/Library/Sounds/Glass.aiff` and go to
      step 1.
+   - `open` with the reason `approval withdrawn` on the `For the maintainer`
+     line, from a wave whose prompt said the approval is withdrawn: chime, and ask the maintainer
+     one yes-or-no question, whether to merge PR #<n>, with the PR's
+     link. On yes, merge it with
+     `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`, wait for CI
+     on `main` with `gh run watch` on the newest run, and replace the
+     wave's line with `wave <k>: merged, PR #<n>`. Then treat the wave as
+     `merged` and go to step 1, and give the CI result in your next
+     message. On no, stop as on any other `open`. An `open` with any
+     other reason is the next bullet.
    - `open`: chime, report the lead's reason to the maintainer, and stop.
    - `open` on a harness wave: chime and stop with the stop condition
      "harness wave awaiting restart". Leave the run issue open, and end
@@ -570,7 +604,8 @@ Stop, and say which one it was, when:
 - the picker exits non-zero (quote its `next-wave:` line and name the
   fix, step 4 of the loop);
 - under `--only`, the `Remaining --only` list is empty;
-- the lead reports `open` or `failed`;
+- the lead reports `open` or `failed`, except an `open` with the reason
+  `approval withdrawn` that the maintainer approves (step 8);
 - a harness wave is awaiting restart (the lead's `open` report on a
   harness wave, step 8);
 - the harness exclusivity check refuses the run ("Starting a run"
