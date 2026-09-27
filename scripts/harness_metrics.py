@@ -181,8 +181,9 @@ def skip_heredocs(command: str, start: int, delimiters: Sequence[tuple[str, bool
 
 
 def heredoc_at(command: str, i: int) -> tuple[str, bool, int] | None:
-    """The delimiter, `<<-` flag and end index of a heredoc operator at `i`."""
-    if command.startswith("<<<", i):
+    """The delimiter, `<<-` flag and end index of a heredoc operator at `i`.
+    The here-string `<<<` and the arithmetic `<<=` are not heredocs."""
+    if command.startswith(("<<<", "<<="), i):
         return None
     match = HEREDOC.match(command, i)
     if match is None:
@@ -210,9 +211,23 @@ def quote_end(command: str, i: int) -> int:
     return len(command)
 
 
+def arithmetic_end(command: str, i: int) -> int:
+    """The index after the `((...))` that opens at `i`. Its `<<` is a shift,
+    so it holds no heredoc."""
+    depth = 0
+    while i < len(command):
+        depth += {"(": 1, ")": -1}.get(command[i], 0)
+        i += 1
+        if depth == 0:
+            return i
+    return len(command)
+
+
 def substitution_end(command: str, i: int) -> int:
-    """The index after the `$(...)` that opens at `i`, skipping quoted
-    strings, nested substitutions and heredoc bodies."""
+    """The index after the `$(...)` or `$((...))` that opens at `i`,
+    skipping quoted strings, nested substitutions and heredoc bodies."""
+    if command.startswith("$((", i):
+        return arithmetic_end(command, i + 1)
     depth = 0
     heredocs: list[tuple[str, bool]] = []
     i += 1
@@ -221,6 +236,8 @@ def substitution_end(command: str, i: int) -> int:
         heredoc = heredoc_at(command, i) if c == "<" else None
         if c == "\\":
             i += 2
+        elif depth > 0 and command.startswith("((", i):
+            i = arithmetic_end(command, i)
         elif c in "'\"":
             i = quote_end(command, i)
         elif heredoc is not None:
@@ -294,6 +311,9 @@ class Segmenter:
             if command.startswith("<<<", i):
                 self.word.append("<<<")
                 i += 3
+                continue
+            if command.startswith("((", i):
+                i = self.copy(i, arithmetic_end(command, i))
                 continue
             if heredoc is not None:
                 self.end_word()
