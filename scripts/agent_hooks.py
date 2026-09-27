@@ -530,8 +530,10 @@ def deletes_pr_branch(words: Sequence[str]) -> bool:
     for word in words:
         if word == "--":
             return False
-        if word == "--delete-branch" or word.startswith("--delete-branch="):
-            return not word.endswith("=false")
+        if word == "--delete-branch" or (
+            word.startswith("--delete-branch=") and not word.endswith("=false")
+        ):
+            return True
         if re.match(r"^-[A-Za-z]", word):
             for flag in word[1:]:
                 if flag == "d":

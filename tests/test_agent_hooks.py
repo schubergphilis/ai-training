@@ -625,7 +625,7 @@ def test_commands_that_keep_the_git_hooks_pass(command: str) -> None:
     assert check(command) is None
 
 
-def test_split_segments_records_the_assignment_names_it_drops() -> None:
+def test_split_segments_records_the_assignments_it_drops_as_written() -> None:
     segment = agent_hooks.split_segments("A=1 SKIP=x git commit", ".")[0]
     assert segment.words == ["git", "commit"]
     assert segment.assignments == ("A=1", "SKIP=x")
@@ -648,6 +648,8 @@ def test_split_segments_records_the_assignment_names_it_drops() -> None:
         "gh pr close 12 --delete-branch",
         "gh pr close 12 -d",
         "gh pr close 12 -c done -d",
+        "AI_TRAINING_ROLE=wave-lead gh pr merge 12 --delete-branch=false -d",
+        "gh pr close 12 --delete-branch=true",
     ],
 )
 def test_review_findings_of_421_on_github_deletes_are_rejected(command: str) -> None:
