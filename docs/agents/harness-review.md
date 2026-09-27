@@ -27,9 +27,14 @@ repository, so it may run while a dispatcher run is open.
   like `laptop-a` that don't reveal a hostname.
 - **Numbers.** `mise run harness-metrics` (`scripts/harness_metrics.py`,
   tested in `tests/test_harness_metrics.py`) reads the transcripts and
-  prints tokens by session, day, model and role, tool calls, the top Bash
-  commands, `sleep` totals, human messages and waits, chimes, the largest
-  tool results and the most-read files.
+  prints tokens by session, day, model and role, the models and peak
+  context of each role, tool calls, the top Bash commands, `sleep`
+  totals, human messages and waits, chimes, the largest tool results and
+  the most-read files. Since #395 it counts the full output of a streamed
+  message, counts a continued session's repeated records once, skips
+  leading `cd` in the Bash key, and ignores `sleep` and `afplay` inside
+  quotes and heredocs. So output tokens are about 3 times higher, and
+  `sleep` and chime counts a little lower, than in a report made before.
 - **Report.** An HTML page outside the repository, in
   `../ai-training-improvements/<date>/`, with the data next to it. It is
   kept on this machine, because transcripts hold private material.
