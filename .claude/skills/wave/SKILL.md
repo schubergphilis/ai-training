@@ -79,19 +79,23 @@ below first:
 - `## Pending collision notes`: the add and remove lines from the leads'
   reports that the maintainer hasn't read yet (step 8).
 - `## Standing approval`: one line each time the maintainer withdraws the
-  standing approval or gives it again, `wave <k>: withdrawn` or
-  `wave <k>: given again`, where `<k>` is the first wave it applies to
-  (step 8). Empty, or missing in an older run issue, means the standing
-  approval holds. A wave's approval is the last line whose `<k>` is at
-  most that wave's number. `/wave --resume` reads the section back with
-  the rest of the body, so a withdrawal holds across waves and sessions
-  until the maintainer gives the approval again.
+  standing approval or gives it again, `wave <k>: withdrawn (<source>)`
+  or `wave <k>: given again (<source>)`. `<k>` is the first wave it
+  applies to, and `<source>` is the run issue comment's URL or
+  `in session <yyyy-mm-dd>` (step 8). Empty, or missing in an older run
+  issue, means the standing approval holds. A wave's approval is the
+  last line whose `<k>` is at most that wave's number. `/wave --resume`
+  reads the section back with the rest of the body. A withdrawal then
+  lasts across waves and sessions until the maintainer gives the
+  approval again.
 - `## Waves`: one line per finished wave, `wave <k>: <status>, PR #<n>`,
   and while a lead runs, one more line,
   `In flight: wave <k>, branch <b>, issues #a #b ...`. An `In flight` line
   marks a wave to resume. A harness wave that waits for the restart has
-  the line `wave <k>: awaiting restart, PR #<n>`, and it counts as
-  unfinished until the merge replaces it with `wave <k>: merged, PR #<n>`.
+  the line `wave <k>: awaiting restart, PR #<n>`, and a wave whose merge
+  waits for the maintainer's answer under a withdrawn approval has the
+  line `wave <k>: awaiting approval, PR #<n>`. Both count as unfinished
+  until the merge replaces them with `wave <k>: merged, PR #<n>`.
 
 Each wave report is a comment on the run issue. The issue closes when the
 run stops, with a last comment that names the stop condition.
@@ -265,7 +269,13 @@ printed.
    resume, skip steps 4 to 6: fill the template for that wave, the table
    from the `In flight` issues (as the picker would print them, or one row
    per issue with its title), and the resuming form of `{{RESUME}}`
-   (below). Then go to step 7.
+   (below). Then go to step 7. When the last line of `## Waves` is
+   `wave <k>: awaiting approval, PR #<n>`, a merge question is still
+   open: skip steps 4 to 7 and ask it as step 8 says for `open` with the
+   reason `approval withdrawn`, before any new wave. When
+   `gh pr view <n> --json state` shows the pull request already merged,
+   replace the line with `wave <k>: merged, PR #<n>` and go on, and when
+   it shows it closed, stop as on any other `open`.
 4. **Pick.** Run `mise run next-wave -- --kind <kind>`, add
    `--size <size>` when the run's arguments give a size, and
    add `--only <remaining>` under `--only`, where `<remaining>` is the run
@@ -307,7 +317,8 @@ printed.
    - `{{RESUME}}`: for a new wave, `This is a fresh wave.` For a resume
      (step 3), these three sentences: `You are RESUMING <NAME> wave <k> on branch <branch>.` `A previous lead stopped before reporting.` `Follow "Resuming a half-done wave" in your agent file before anything else.`
    - `{{APPROVAL}}`: first record any withdrawal or new approval the
-     maintainer gave since the last wave (step 8, "Standing approval").
+     maintainer gave that the section doesn't hold yet (step 8,
+     "Standing approval").
      When the `## Standing approval` section says the approval is
      withdrawn for wave `<k>`, replace the placeholder with
      `The standing approval is withdrawn for this wave. When the wave meets every condition of the standing approval, open the wave pull request, don't merge it, and return open with the reason "approval withdrawn".`
@@ -335,7 +346,9 @@ printed.
      `open`, replace the wave's `In flight` line with
      `wave <k>: <status>, PR #<n>`, except for the `open` report of a
      harness wave, whose line is `wave <k>: awaiting restart, PR #<n>`.
-     On `failed`, leave the `In flight` line in place.
+     On an `open` with the reason `approval withdrawn` (below), the line
+     is `wave <k>: awaiting approval, PR #<n>`. On `failed`, leave the
+     `In flight` line in place.
    - Copy every line under `Add to collision notes` and
      `Remove from collision notes` into the `## Pending collision notes`
      section, each marked add or remove and with its list (lessons or
@@ -356,24 +369,32 @@ printed.
    - Standing approval: when the maintainer withdraws the standing
      approval or gives it again, in the session at any time or in a
      comment on the run issue (`gh issue view <run> --comments`), add
-     the line to `## Standing approval` with the next wave you start as
-     `<k>`: one more than the last wave on `## Waves`, counting a wave
-     that is in flight or awaiting restart. A wave already running keeps
-     the approval it started with. Say in your next message which wave
-     the change applies from.
+     the line to `## Standing approval`. Its source is the comment's URL,
+     or `in session` with today's date. Skip a comment whose URL the
+     section already holds, so a resume never records an old comment a
+     second time. `<k>` is the wave of the next lead you spawn. While a
+     lead runs in this session, that is one more than its wave, since a
+     wave already running keeps the approval it started with. When no
+     lead runs, it is the wave of the `In flight` line, whose resume
+     spawns a new lead, and otherwise one more than the last wave on
+     `## Waves`. Say in your next message which wave the change applies
+     from.
    - Then act on the status.
    - `merged`: play `afplay /System/Library/Sounds/Glass.aiff` and go to
      step 1.
    - `open` with the reason `approval withdrawn` on the `For the maintainer`
-     line, from a wave whose prompt said the approval is withdrawn: chime, and ask the maintainer
-     one yes-or-no question, whether to merge PR #<n>, with the PR's
-     link. On yes, merge it with
+     line, from a wave whose prompt said the approval is withdrawn:
+     chime, and ask the maintainer one yes-or-no question, whether to
+     merge PR #<n>, with the PR's link. The run issue's line says
+     `awaiting approval` while you wait, so a resume asks again (step 3).
+     On yes, merge it with
      `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`, wait for CI
      on `main` with `gh run watch` on the newest run, and replace the
      wave's line with `wave <k>: merged, PR #<n>`. Then treat the wave as
      `merged` and go to step 1, and give the CI result in your next
-     message. On no, stop as on any other `open`. An `open` with any
-     other reason is the next bullet.
+     message. On no, replace the line with `wave <k>: open, PR #<n>` and
+     stop as on any other `open`. An `open` with any other reason is the
+     next bullet.
    - `open`: chime, report the lead's reason to the maintainer, and stop.
    - `open` on a harness wave: chime and stop with the stop condition
      "harness wave awaiting restart". Leave the run issue open, and end

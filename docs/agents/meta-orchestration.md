@@ -99,8 +99,8 @@ the maintainer to reconcile.
 A run is one `/wave` session from its start to its stop condition, and
 its record is one GitHub issue with the `dispatcher-run` label, titled
 `Run: <Name> (<kind>)`. The body holds the arguments, `Remaining --only`,
-`Parked`, `Pending collision notes` and the `## Waves` list with the
-`In flight` line, and the dispatcher edits it as the run goes. Each wave
+`Parked`, `Pending collision notes`, `Standing approval` and the
+`## Waves` list with the `In flight` line, and the dispatcher edits it as the run goes. Each wave
 report is a comment, and the issue closes with a comment that names the
 stop condition. The dispatcher commits nothing to `main`, so its record
 costs one API call and no commit, lint pass, CI run or deploy, and the
@@ -192,7 +192,9 @@ One tick:
    Only the issues on the `In flight` line count for
    `origin/feat/<issue>-*` branches, so a stale branch from an earlier
    run starts nothing. The wave branch has no date, so a next-day resume
-   finds it.
+   finds it. A last line `wave <k>: awaiting approval, PR #<n>` is a
+   merge question the maintainer hasn't answered yet ("Standing
+   approval"), and the dispatcher asks it again before any new wave.
 4. **Pick.** Run `mise run next-wave -- --size 6`, with `--kind` and the
    remaining whitelist as `--only`. The picker is
    `scripts/next_wave.py`, and it reads the lessons of the checkout as
@@ -251,11 +253,12 @@ One tick:
    body. Then, on `merged`, play the chime and go to step 1. On `open`,
    the lead has hit the standing-approval exception (below). Report it to
    the maintainer and stop, except for an `open` with the reason
-   `approval withdrawn`, where the dispatcher asks the maintainer and
-   goes on after a merge ("Standing approval"). On a harness wave's `open`, the line is
+   `approval withdrawn`. Its line is `wave <k>: awaiting approval, PR #<n>`,
+   and the dispatcher asks the maintainer and goes on after a merge
+   ("Standing approval"). On a harness wave's `open`, the line is
    `wave <k>: awaiting restart, PR #<n>` and the run stops at "harness
-   wave awaiting restart" ("Harness runs"). On `failed`, the `In flight` line stays,
-   report to the maintainer and stop. The next `/wave --resume <Name>`
+   wave awaiting restart" ("Harness runs"). On `failed`, the `In flight`
+   line stays, report to the maintainer and stop. The next `/wave --resume <Name>`
    finds the wave in step 3 and resumes it.
 7. **File the follow-ups.** Every item on the report's maintainer line,
    every nit the lead left open on a merged branch, and every improvement
@@ -276,11 +279,11 @@ The dispatcher edits no code, commits nothing and runs no check of the
 site, except for a small fix on a harness wave branch after the restart.
 The loop ends on a failed preflight, a refusal by the harness
 exclusivity check, an empty wave, an exhausted whitelist, an `open` or
-`failed` report (for a harness wave, "harness wave awaiting restart"),
-except an `open` with the reason `approval withdrawn` that the
-maintainer approves, a
+`failed` report (for a harness wave, "harness wave awaiting restart"), a
 failed step after a restart, the maintainer declining a harness merge,
-or the maintainer saying stop, and the dispatcher reports which. On most
+or the maintainer saying stop, and the dispatcher reports which. An
+`open` with the reason `approval withdrawn` that the maintainer approves
+doesn't end the loop. On most
 stops it comments the stop condition on the run issue, files the
 `--no-filing` follow-ups and closes it. It leaves the run open, with
 nothing filed, on `failed`, on "harness wave awaiting restart", on a failed step
@@ -306,15 +309,19 @@ standing approval never covers a harness wave ("Harness runs").
 
 The maintainer withdraws the standing approval by saying so in the
 session or in a comment on the run issue. The dispatcher records it in
-the run issue's `## Standing approval` section, so a later wave and a
-`/wave --resume` read it back. A wave already running keeps the
-approval it started with, and from the next wave the dispatcher starts,
-it goes back to per-PR approval. It fills the lead prompt's
+the run issue's `## Standing approval` section, with the comment's URL
+or `in session` as its source, so a later wave and a `/wave --resume`
+read it back and never record one comment twice. A wave whose lead is
+running keeps the approval it started with, and from the next lead the
+dispatcher spawns, including the new lead of a resumed wave, it goes
+back to per-PR approval. It fills the lead prompt's
 `{{APPROVAL}}` line with the withdrawal, which is otherwise left out.
 The lead of such a wave opens the wave pull request, doesn't merge it,
 and returns `open` with the reason `approval withdrawn` when every
-condition above holds. The dispatcher plays the chime, asks the
-maintainer to approve the pull request, and on approval merges it with
+condition above holds, after it removes the wave's worktrees. The
+dispatcher marks the wave `awaiting approval` on the run issue, plays
+the chime, asks the maintainer to approve the pull request, and on
+approval merges it with
 `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`. It then treats
 the wave as `merged` and goes on to the next wave. Without the approval
 it stops as on any other `open`, and an `open` for any other reason
