@@ -1,4 +1,5 @@
 import { Predict, Scenario, Pitfall, Exercise, Recap, Prompt, Response, MultiChoice, Sort } from '@components/lesson';
+import Redactor from '@components/widgets/Redactor.astro';
 
 A customer writes to support about a dishwasher that leaks again after a
 repair. You want an assistant to draft the reply. The email holds the
@@ -8,13 +9,11 @@ values out before the email goes anywhere and check that the task still
 works on what's left. Afterwards a map that never left your computer puts
 the values back into the reply.
 
-You need a terminal and `python3`. The scripts are in the course
-repository under `site/examples/safety/redact-before-you-paste/`. Copy that
-directory and change into it. Every person and company in the email is
-invented, and the one step that puts text into an AI tool is optional and
-uses the redacted version only.
+Every person and company in the email is invented. The redaction boxes on
+this page run in your browser and send the text nowhere. The one step that
+puts text into an AI tool is optional and uses the redacted version only.
 
-Here is the email, as the fixture holds it.
+Here is the email.
 
 ```text
 From: Renske Adelhof <renske.adelhof@example.net>
@@ -63,13 +62,18 @@ same placeholder goes everywhere the value appears. Both mentions of the
 account number become `[account number]`, and the reader still knows
 they're one thing.
 
-The fixture holds the email and a map of six rows, each an original value
-and its placeholder. `redact.py` replaces every value with its placeholder,
-longest value first, so a full name is replaced before a shorter value it
-contains.
+The box below holds the email and a map of six rows, each an original
+value and its placeholder. Press Redact. The pass replaces every value with
+its placeholder, longest value first, so a full name is replaced before a
+shorter value it contains.
 
-<Predict id="redact-the-email" title="Redact the email"
-  answer={`From: Person 1 <[email]>
+<Redactor text="safety/redact-before-you-paste/sample/email.txt"
+  map="safety/redact-before-you-paste/sample/email-map.txt" />
+
+This is the redacted email.
+
+```text
+From: Person 1 <[email]>
 To: support@norrbeck-appliances.example
 Subject: Dishwasher still leaking after repair (account [account number])
 
@@ -83,15 +87,8 @@ back under the sink. I leave for work at 7:30, so please call me on
 
 Kind regards,
 Person 1
-[address]`} run="safety/redact-before-you-paste/redact.py">
-Run the script with no arguments, and compare what you see with the output
-below.
-
-```sh
-python3 redact.py
+[address]
 ```
-
-</Predict>
 
 Read the result as the model would. It's still a complaint about a leak
 that came back, from someone who has to leave early. The technician was
@@ -146,35 +143,50 @@ of nothing. Take out every detail that points at the person, and read the
 subject line and the signature as carefully as the body.
 </Pitfall>
 
-The fixture has the colleague's version in `check_partial.py`. The script
-looks for eight details from the original, in this order: name, initials,
-phone, email, account number, street, city, technician. It prints
-`still identifying:` and then the labels of the ones it finds, separated by
-a comma and a space.
+The colleague's version is in the box below the next question, with an
+empty map. Under it is a list of eight details from the original, in this
+order: name, initials, phone, email, account number, street, city,
+technician. After a pass, the box prints `still identifying:` and then the
+labels of the details it still finds, separated by a comma and a space.
 
 <Predict id="what-the-partial-redaction-leaves" objective="safety/handles-data-safely/decides-what-to-share"
   concepts={['data-privacy']}
   context="A colleague redacted a customer's support email by hand: the name became the initials R. A., the phone number, the email address and the street were removed, and the account number in the subject line, the city under the signature and the technician's name stayed. The checker looks for eight details from the original in this order: name, initials, phone, email, account number, street, city, technician, and prints the labels of the ones still present after the words still identifying: separated by a comma and a space."
-  title="What does the checker print?" hint="Read the colleague's version line by line, including the subject and the signature. Which of the eight details are still there, and in which order does the checker list them?"
-  answer="still identifying: initials, account number, city, technician" run="safety/redact-before-you-paste/check_partial.py">
-Open `check_partial.py` and read the `PARTIAL` text at the top. Before you
-run it, write down what the script prints.
+  title="What does the check print?" hint="Read the colleague's version line by line, including the subject and the signature. Which of the eight details are still there, and in which order does the check list them?"
+  answer="still identifying: initials, account number, city, technician">
+Read the colleague's version in the box below, including the subject line
+and the signature. Before you press Redact, write down what the box prints.
+</Predict>
 
-```sh
-python3 check_partial.py
+<Redactor text="safety/redact-before-you-paste/sample/partial.txt"
+  watch="safety/redact-before-you-paste/sample/watch.txt" />
+
+For the colleague's version as it is, the box prints this line.
+
+```text
+still identifying: initials, account number, city, technician
 ```
 
-</Predict>
+Now finish the colleague's redaction. Add a map row for each detail the
+line names, such as `Zwolle => [city]`, and press Redact again. When the
+line says `none of the listed details`, compare the result with the
+redacted email above.
 
 ## The redaction map stays with you
 
 The reply says "Dear Person 1", and that isn't the customer's name. The
-map that produced the redaction turns it back. `restore.py` holds the
-reply from the illustrative response and puts the real values back for
-every placeholder in it.
+map that produced the redaction turns it back. The box below holds the
+reply from the illustrative response and the same map. Press Restore, and
+each placeholder is replaced by the value it stood for.
 
-<Predict id="restore-the-reply" title="Restore the reply"
-  answer={`Dear Renske Adelhof,
+<Redactor action="restore" textLabel="The reply"
+  text="safety/redact-before-you-paste/sample/reply.txt"
+  map="safety/redact-before-you-paste/sample/email-map.txt" />
+
+This is the restored reply.
+
+```text
+Dear Renske Adelhof,
 
 Thank you for letting us know, and I am sorry the leak came back so soon
 after Tijmen Boskoorn's visit. We would like to send a technician again this
@@ -183,14 +195,8 @@ suit you, outside your morning departure? Until then, please keep the
 water supply to the dishwasher closed.
 
 Kind regards,
-Norrbeck Appliances customer support`} run="safety/redact-before-you-paste/restore.py">
-Run the restore script, and compare what you see with the output below.
-
-```sh
-python3 restore.py
+Norrbeck Appliances customer support
 ```
-
-</Predict>
 
 The map is the one file in this lesson that holds every identifier in
 one place, so it is the one file that never goes into the tool. Keep it
@@ -202,8 +208,8 @@ dishwasher model, the Tuesday visit and the company address are still in
 it, and someone with the ticket system could match them. With the map the
 reply is still addressed to a person. For a
 document you redact by hand, the map is a two-column table in a text file.
-`redact.py` reads one `value => placeholder` per line, the form the
-exercise below uses.
+The map box on this page takes one `value => placeholder` per line, and so
+does the exercise below.
 
 <Scenario id="the-full-signature" objective="safety/handles-data-safely/decides-what-to-share"
   concepts={['confidentiality', 'data-privacy']}
@@ -259,22 +265,41 @@ signature, and then keep the map with the original. When the answer comes
 back, the map puts the people back in.
 
 <Exercise stretch="Take one document from your own work and do the same on paper: list the values you would replace and their placeholders, without pasting the document anywhere.">
-The fixture directory has the full ticket the email came from, in
-`sample/ticket.txt`: the customer's email, an internal note from the
-technician, and a message from the planner, about forty lines in all.
-Write a map for it in a new file `my-map.txt`, one `value => placeholder`
-per line, and run `python3 redact.py sample/ticket.txt my-map.txt`. Read
-the output line by line and add a row for every detail that still points
-at a person, then run it again. Plan on ten minutes. This is the whole
-procedure, and after one full pass you can apply it to the next document
-without looking anything up.
+The box below holds the full ticket the email came from: the customer's
+email, an internal note from the technician, and a message from the
+planner, about forty lines in all. Its map is empty. Write a map in the map
+box, one `value => placeholder` per line, and press Redact. Read the output
+line by line and add a row for every detail that still points at a person,
+then press Redact again. Plan on ten minutes. This is the whole procedure,
+and after one full pass you can apply it to the next document without
+looking anything up.
+
+<Redactor text="safety/redact-before-you-paste/sample/ticket.txt" />
 
 A good result doesn't name a person or hold a phone number, email address,
-account number, ticket number, order number, or street. A reader can still tell that a
-door seal was replaced and that the inlet hose is the next suspect, and
-that Thursday afternoon is on offer. `sample/map.txt` is one map that gets
-there. Compare yours with it, and then answer one question: which detail
-in the ticket did you notice last, and where in the document was it?
+account number, ticket number, order number, or street. A reader can still
+tell that a door seal was replaced and that the inlet hose is the next
+suspect, and that Thursday afternoon is on offer. After your own pass,
+compare your map with this one, which gets there.
+
+```text
+Renske Adelhof => Person 1
+renske.adelhof@example.net => [email 1]
+Tijmen Boskoorn => Person 2
+Sander Adelhof => Person 3
+Marit Zandvliet-Oosterhuis => Person 4
++31 6 1234 5678 => [phone 1]
++31 6 8765 4321 => [phone 2]
+NB-4471-0928 => [account number]
+NB-2026-08814 => [ticket number]
+55-31972 => [order number]
+Kastanjelaan 12, Zwolle => [address]
+Kastanjelaan 12 => [address]
+Zwolle => [city]
+```
+
+Then answer one question: which detail in the ticket did you notice last,
+and where in the document was it?
 </Exercise>
 
 <Recap>

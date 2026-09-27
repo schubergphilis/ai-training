@@ -1,0 +1,8 @@
+Renske Adelhof => name
+R. A. => initials
++31 6 1234 5678 => phone
+renske.adelhof@example.net => email
+NB-4471-0928 => account number
+Kastanjelaan 12 => street
+Zwolle => city
+Tijmen Boskoorn => technician

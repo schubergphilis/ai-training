@@ -1,0 +1,147 @@
+---
+/**
+ * Redactor: a redaction pass the learner can run on any text. It holds a
+ * text box, a map box (`value => placeholder`, one per line) and, when the
+ * page gives a watch list, a box of details to look for (`value => label`).
+ * The button replaces every value with its placeholder (`action="redact"`)
+ * or puts the values back (`action="restore"`), shows the result, and with
+ * a watch list prints the `still identifying:` line `check_partial.py`
+ * prints. Teaches and never grades (spec S03 "Widgets"), writes nothing to
+ * the progress record, and sends nothing anywhere. The rules are
+ * `scripts/redactor-logic.ts`, and `scripts/redactor.ts` binds each instance.
+ *
+ * `text`, `map` and `watch` name files in a `sample/` directory under
+ * `site/examples/`, the files the lesson's proof fixtures read, so the page
+ * shows what CI checks. A widget without `map` starts with an empty map box.
+ */
+import { exampleFile } from '@lib/example-files';
+
+interface Props {
+	text: string;
+	map?: string;
+	watch?: string;
+	action?: 'redact' | 'restore';
+	/** The label above the text box. */
+	textLabel?: string;
+}
+
+const { text, map, watch, action = 'redact', textLabel = 'The document' } = Astro.props;
+if (action !== 'redact' && action !== 'restore')
+	throw new Error(`Redactor: action is ${String(action)}, and it must be redact or restore`);
+
+const textValue = exampleFile(text, 'Redactor');
+const mapValue = map === undefined ? '' : exampleFile(map, 'Redactor');
+const watchValue = watch === undefined ? null : exampleFile(watch, 'Redactor');
+const rows = (value: string) => Math.min(Math.max(value.split('\n').length, 4), 24);
+const button = action === 'redact' ? 'Redact' : 'Restore';
+---
+
+<div class="not-content redactor" data-redactor data-action={action}>
+	<label class="rd-label">
+		<span>{textLabel}</span>
+		<textarea class="rd-text" rows={rows(textValue)} spellcheck="false" autocomplete="off">{textValue}</textarea>
+	</label>
+	<label class="rd-label">
+		<span>The map, one <code>value =&gt; placeholder</code> per line</span>
+		<textarea class="rd-map" rows={rows(mapValue)} spellcheck="false" autocomplete="off">{mapValue}</textarea>
+	</label>
+	{
+		watchValue !== null && (
+			<label class="rd-label">
+				<span>Details to look for, one <code>value =&gt; label</code> per line</span>
+				<textarea class="rd-watch" rows={rows(watchValue)} spellcheck="false" autocomplete="off">{watchValue}</textarea>
+			</label>
+		)
+	}
+	<button type="button" class="rd-run">{button}</button>
+	<div class="rd-report" aria-live="polite">
+		<pre class="rd-output" tabindex="0" hidden></pre>
+		<p class="rd-leaks"></p>
+		<p class="rd-error"></p>
+	</div>
+</div>
+
+<style>
+	.redactor {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background: var(--sl-color-bg-nav);
+		font-size: var(--sl-text-sm);
+	}
+
+	.rd-label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.rd-label textarea {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		resize: vertical;
+	}
+
+	.rd-label textarea:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 1px;
+	}
+
+	.rd-run {
+		align-self: flex-start;
+		padding: 0.35rem 0.85rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: 0.25rem;
+		background: transparent;
+		color: var(--sl-color-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.rd-run:hover,
+	.rd-run:focus-visible {
+		background: var(--sl-color-accent);
+		color: var(--sl-color-text-invert);
+	}
+
+	.rd-output {
+		margin: 0;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	.rd-leaks {
+		margin: 0;
+		font-family: var(--sl-font-mono);
+		font-weight: 600;
+	}
+
+	.rd-error {
+		margin: 0;
+		color: var(--sl-color-red-high);
+	}
+</style>
+
+<script>
+	import { mountRedactors } from '@scripts/redactor';
+
+	mountRedactors(document);
+</script>

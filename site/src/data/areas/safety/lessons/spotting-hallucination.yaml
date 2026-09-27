@@ -2,7 +2,7 @@ id: safety/spotting-hallucination
 title: What an invented fact looks like
 description: >-
   Read a model's fluent summary of a report, predict which of its figures, quotes and references have
-  no source, and run a checker that looks each one up in the report itself.
+  no source, and check each one against the report with a checker on the page.
 mode: tutorial
 covers: safety/failure-modes
 serves: [safety/verifies-output/checks-claims]
@@ -20,11 +20,17 @@ exercise:
   kind: judge
   brief: >-
     Read the lesson's second summary before running the check, predict from their specificity which
-    of its claims are invented, then run the fixture and record where the prediction held and where
-    it did not.
+    of its claims are invented, then check it in the claim checker on the page and record where the
+    prediction held and where it did not.
 sources: [Academy ai-capabilities-and-limitations]
 minutes: 15
+proofs:
+  - safety/spotting-hallucination/missing_claims.py
+  - safety/spotting-hallucination/all_claims.py
 notes: >-
-  A fixture checks a summary's citations and figures against a small offline source set and prints
-  which ones have no source. The report, minutes, ordinance, council chair and quotes are fictional
+  The claim checker widget (#238) checks a summary's citations and figures against a small offline
+  source set and prints which ones have no source. It is a port of
+  site/examples/safety/spotting-hallucination/check_claims.py, which stays in CI as a proof through
+  missing_claims.py and all_claims.py, so mise run examples fails when the text fences on the page
+  and the fixture disagree. The page never names the fixtures. The report, minutes, ordinance, council chair and quotes are fictional
   and were searched for before publishing.
