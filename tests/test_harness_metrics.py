@@ -184,6 +184,26 @@ def test_sleep_reads_a_quoted_duration() -> None:
     assert harness_metrics.sleep_seconds('sleep "5"; sleep \'2m\'; sleep "x"') == [5, 120]
 
 
+@pytest.mark.parametrize(
+    ("command", "seconds"),
+    [
+        # Malformed input runs to the end of the command and never raises.
+        ('sleep 1; echo "abc', [1]),
+        ("sleep 1; x=$(echo; sleep 2", [1]),
+        ("sleep 1; echo `sleep 2", [1]),
+        ('x=$(echo ")"); sleep 1', [1]),
+        # `<<` in arithmetic is a shift, not a here-document.
+        ("(( n <<= 1 ))\nsleep 3", [3]),
+        ("(( n = 1 << 2 ))\nsleep 3", [3]),
+        ("x=$(( 1 << 2 ))\nsleep 3", [3]),
+        ('echo "$(( 1 << 2 ))"\nsleep 3', [3]),
+        ("x=$(echo $(( 1 << 2 )))\nsleep 3", [3]),
+    ],
+)
+def test_sleep_seconds_on_edge_cases(command: str, seconds: list[float]) -> None:
+    assert harness_metrics.sleep_seconds(command) == seconds
+
+
 def test_segments_split_at_operators_outside_quotes() -> None:
     assert harness_metrics.segments("a 'b; c' && d \\\n e | f 2>&1 &> g; (h)") == [
         ["a", "'b; c'"],
