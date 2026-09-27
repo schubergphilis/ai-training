@@ -1,7 +1,7 @@
 """Estimate the token count of a text, for the lesson "What the model can see".
 
 Run it on your own text:   python3 count_tokens.py page.txt
-Run it with no argument and it counts the sample paragraph below.
+Run it with no argument and it counts the meeting notes in sample/notes.txt.
 
 This is an estimate. Every vendor has its own tokenizer, and only that
 tokenizer gives the exact count for its models. The rule used here is the
@@ -11,6 +11,7 @@ characters (rounded up), and every punctuation mark is a token of its own.
 """
 
 import math
+import os
 import re
 import sys
 
@@ -22,16 +23,9 @@ ONE_TOKEN_WORD = 6
 # token in most real tokenizers.
 PIECE = re.compile(r"\w+|[^\w\s]")
 
-SAMPLE = """\
-Meeting notes, project Lantern, 14 March.
-
-Present: Ana, Bram, Chidi. Ana reported that the supplier moved the delivery
-of the sensor boards from April to June. Bram asked whether the June date is
-firm. Ana will confirm it in writing by Friday. Chidi showed the first draft
-of the installation guide; the team asked for a shorter version with one
-photo per step. Decision: the pilot in the Utrecht warehouse moves to July.
-Next meeting on 28 March, same room.
-"""
+# The sample is a file so that the counter on the lesson page shows the same
+# text in its box.
+SAMPLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample", "notes.txt")
 
 
 def estimate_tokens(text: str) -> int:
@@ -61,7 +55,8 @@ def main(argv: "list[str]") -> None:
         with open(argv[1], encoding="utf-8") as handle:
             text = handle.read()
     else:
-        text = SAMPLE
+        with open(SAMPLE_FILE, encoding="utf-8") as handle:
+            text = handle.read()
     print(report(text))
 
 

@@ -1,0 +1,124 @@
+---
+/**
+ * TokenCounter: the learner pastes a page of text, presses Count, and reads
+ * the characters, words and estimated tokens of the text, then how many
+ * pages of that size fit in each window size. These are the lines
+ * `count_tokens.py` and `pages_per_window.py` print for the same text.
+ * Teaches and never grades (spec S03 "Widgets"), and writes nothing to the
+ * progress record. The rules are `scripts/token-counter-logic.ts`, and
+ * `scripts/token-counter.ts` binds each instance.
+ *
+ * `sample` names a file under `site/examples/` (such as
+ * `concepts/context-window/sample/notes.txt`) that fills the text box, so
+ * the page shows the file its proof fixture counts.
+ */
+interface Props {
+	sample?: string;
+}
+
+const { sample } = Astro.props;
+
+const SAMPLE_ROOT = '../../../examples/';
+const samples = import.meta.glob<string>('../../../examples/**/sample/*', {
+	query: '?raw',
+	import: 'default',
+	eager: true,
+});
+
+let text = '';
+if (sample !== undefined) {
+	const found = samples[SAMPLE_ROOT + sample];
+	if (found === undefined)
+		throw new Error(`TokenCounter: no sample ${sample} (a file in a sample/ directory under site/examples/)`);
+	text = found;
+}
+---
+
+<div class="not-content token-counter" data-token-counter>
+	<label class="tc-label">
+		<span>Paste a page of text here</span>
+		<textarea class="tc-input" rows="8" spellcheck="false" autocomplete="off">{text}</textarea>
+	</label>
+	<button type="button" class="tc-count">Count</button>
+	<div class="tc-report" aria-live="polite">
+		<ul class="tc-counts"></ul>
+		<ul class="tc-pages"></ul>
+	</div>
+</div>
+
+<style>
+	.token-counter {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background: var(--sl-color-bg-nav);
+		font-size: var(--sl-text-sm);
+	}
+
+	.tc-label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.tc-input {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		resize: vertical;
+	}
+
+	.tc-input:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 1px;
+	}
+
+	.tc-count {
+		align-self: flex-start;
+		padding: 0.35rem 0.85rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: 0.25rem;
+		background: transparent;
+		color: var(--sl-color-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.tc-count:hover,
+	.tc-count:focus-visible {
+		background: var(--sl-color-accent);
+		color: var(--sl-color-text-invert);
+	}
+
+	.tc-report {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.tc-counts,
+	.tc-pages {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+	}
+</style>
+
+<script>
+	import { mountTokenCounters } from '@scripts/token-counter';
+
+	mountTokenCounters(document);
+</script>

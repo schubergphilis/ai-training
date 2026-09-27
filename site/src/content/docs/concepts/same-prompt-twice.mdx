@@ -1,4 +1,5 @@
-import { Choice, Predict, Scenario, Pitfall, Exercise, Recap, MultiChoice, Sort } from '@components/lesson';
+import { Choice, Scenario, Pitfall, Exercise, Recap, MultiChoice, Sort } from '@components/lesson';
+import RepeatedRuns from '@components/widgets/RepeatedRuns.astro';
 
 In the lesson on how a model works you saw the widget score five candidate
 tokens and pick one, and you saw that the pick is where the randomness is.
@@ -8,41 +9,53 @@ with a small wobble in the scores, and then with a check applied to every
 answer. By the end you can say what one good answer proves about a prompt,
 and what a process built on a model needs instead.
 
-You need a terminal and `python3`. The model is a short Python program in
-the course repository, under `site/examples/concepts/same-prompt-twice/`.
-Copy that directory or work in a clone, and change into it. The program
-draws its random numbers from a fixed seed, so the output on this page is
-the output on your machine, and `--seed` with another number shows you
-other runs. A real model gives you no such knob, and the lesson comes back
-to that.
+You need only this page. The toy model is a widget further down, and it
+runs in your browser. It draws new random numbers on every press, so your
+runs differ from the ones this page shows. Each set of runs shown on the
+page is one recorded set from the same toy model.
 
 ## Run it at temperature 0
 
-`sample.py` holds five candidate answers to "What is the capital of
-Australia?" with made-up scores, in the same spirit as the widget. Four of
-the candidates name Canberra in different wordings, and the fifth, with
-the lowest score, says Sydney. Each run turns the scores into
-probabilities at the temperature you give, draws one answer, and prints
-it. The summary line counts how many runs gave the same text as the first
-run.
+The toy model holds five candidate answers to "What is the capital of
+Australia?" with made-up scores, in the same spirit as the widget in the
+lesson on how a model works. Four of the candidates name Canberra in
+different wordings, and the fifth, with the lowest score, says Sydney.
+Each run turns the scores into probabilities at the temperature you set,
+draws one answer, and lists it. The summary line counts how many runs gave
+the same text as the first run.
 
 At temperature 0 the probabilities collapse onto the top score. Before you
-run the program, predict the summary line it prints for ten runs.
+press the button, predict the summary line for ten runs.
 
-<Predict id="predict-greedy" objective="concepts/explains-models/explains-generation"
+<Choice id="predict-greedy" objective="concepts/explains-models/explains-generation"
   concepts={['sampling-and-temperature', 'non-determinism']}
-  context="A toy model has five candidate answers with fixed scores. A program draws one answer per run and, with --quiet, prints one summary line: how many of the runs gave the same text as run 1."
+  context="A toy model has five candidate answers to one question, with fixed scores. A button runs it ten times at the temperature the learner sets and prints a summary line: how many of the runs gave the same text as run 1."
   title="Predict the summary at temperature 0"
   hint="At temperature 0, how much probability is left for any candidate below the top score?"
-  answer="10 of 10 runs give the same answer as run 1"
-  run="concepts/same-prompt-twice/greedy.py">
-What does this print?
+  options={[
+    { text: '10 of 10 runs give the same answer as run 1', correct: true },
+    { text: '9 of 10 runs give the same answer as run 1', why: 'For one run to differ, another candidate needs some probability. At temperature 0 all of it is on the top candidate.' },
+    { text: 'A count between 3 and 6, different on every press', why: 'Each press draws new random numbers, but at temperature 0 every draw lands on the one candidate that has all of the probability.' },
+    { text: '1 of 10 runs give the same answer as run 1', why: 'Run 1 does count itself, and the other nine runs take the same top candidate that run 1 took.' },
+  ]}>
 
-```sh
-python3 sample.py --temperature 0 --runs 10 --quiet
+You set the toy model to temperature 0, leave both boxes unchecked, and
+press the button for ten runs. What does the summary line say?
+
+</Choice>
+
+Now try it. Set the temperature to 0, leave both boxes unchecked, and
+press the button.
+
+<RepeatedRuns />
+
+Every line reads `Canberra`, because with all the probability on one
+candidate the draw has only one place to land. The summary line is the
+same on every press:
+
+```text
+10 of 10 runs give the same answer as run 1
 ```
-
-</Predict>
 
 <Choice id="ten-runs-at-zero" phase="review" objective="concepts/explains-models/explains-generation"
   concepts={['sampling-and-temperature', 'non-determinism']}
@@ -60,36 +73,27 @@ expect?
 
 </Choice>
 
-Drop `--quiet` and the program lists the ten answers above the summary.
-Every line reads `Canberra`, because with all the probability on one
-candidate the draw has only one place to land.
-
 ## Raise the temperature
 
-Now raise the temperature. The scores are unchanged, and so is the order
+Now raise the temperature. Move the slider in the widget above to 1.0
+and press the button again. The scores are unchanged, and so is the order
 of the candidates. The candidates below the top one keep more of the
-probability. Run it and compare with the output below.
+probability. Here is one recorded set of ten runs at 1.0:
 
-<Predict id="run-sampled" title="Ten runs at temperature 1"
-  answer={`What is the capital of Australia? (temperature 1.0, 10 runs)
-   1  Canberra
-   2  Canberra.
-   3  Canberra
-   4  The capital of Australia is Canberra.
-   5  Canberra
-   6  Canberra.
-   7  It's Canberra.
-   8  Canberra
-   9  Sydney
-  10  The capital of Australia is Canberra.
-  4 of 10 runs give the same answer as run 1`} run="concepts/same-prompt-twice/sampled.py">
-Run this, and compare what you see with the output below.
-
-```sh
-python3 sample.py --temperature 1.0 --runs 10
+```text
+What is the capital of Australia? (temperature 1.0, 10 runs)
+ 1  Canberra
+ 2  Canberra.
+ 3  Canberra
+ 4  The capital of Australia is Canberra.
+ 5  Canberra
+ 6  Canberra.
+ 7  It's Canberra.
+ 8  Canberra
+ 9  Sydney
+10  The capital of Australia is Canberra.
+4 of 10 runs give the same answer as run 1
 ```
-
-</Predict>
 
 Ten runs, five different texts, and one of them wrong. This is
 **non-determinism**: the same prompt gives different answers on different
@@ -99,8 +103,8 @@ ai-capabilities-and-limitations). Nothing about the prompt changed between
 run 1 and run 9. Run 9 says Sydney because Sydney had a few percent of the
 probability and, on the ninth draw, the number came up.
 
-Run it a few more times with `--seed 1`, `--seed 2` and so on, and tally
-how often the ten runs agree with run 1. The count moves. The exact value
+Press the button a few more times and tally how often the ten runs agree
+with run 1. The count moves. The exact value
 is the toy's, but the picture is the real one, and it is the picture
 behind the exercise in the lesson on how a model works, where the opening
 sentence of a book came out differently in two fresh chats.
@@ -117,32 +121,29 @@ score that differs in the last decimal places. When two candidates are
 close, that last decimal is enough to swap which one is on top, and the
 greedy pick follows the swap.
 
-`--jitter` imitates that wobble. Before each pick it shakes every score a
-little. The shake is far larger than the rounding wobble in a real model,
-so ten runs are enough to see the effect.
+The box "Shake the scores before each pick" in the widget imitates that
+wobble. Before each pick it shakes every score a little. The shake is far
+larger than the rounding wobble in a real model, so ten runs are enough to
+see the effect. Set the temperature back to 0, check the box, and press
+the button a few times. Here is one recorded set:
 
-<Predict id="run-jitter" title="Ten runs at temperature 0 with jitter"
-  answer={`What is the capital of Australia? (temperature 0.0, 10 runs)
-   1  Canberra
-   2  Canberra
-   3  Canberra
-   4  Canberra
-   5  Canberra.
-   6  Canberra
-   7  Canberra
-   8  Canberra
-   9  Canberra
-  10  Canberra
-  9 of 10 runs give the same answer as run 1`} run="concepts/same-prompt-twice/jitter.py">
-Run this, and compare what you see with the output below.
-
-```sh
-python3 sample.py --temperature 0 --runs 10 --jitter
+```text
+What is the capital of Australia? (temperature 0.0, 10 runs)
+ 1  Canberra
+ 2  Canberra
+ 3  Canberra
+ 4  Canberra
+ 5  Canberra.
+ 6  Canberra
+ 7  Canberra
+ 8  Canberra
+ 9  Canberra
+10  Canberra
+9 of 10 runs give the same answer as run 1
 ```
 
-</Predict>
-
-One run in ten differs from the rest, at the lowest temperature there is. In
+In this set one run in ten differs from the rest, at the lowest
+temperature there is. In
 the toy the difference is a full stop. In a real model the swapped token
 is somewhere in the middle of a long answer, and every token after it is predicted
 from a slightly different prefix, so two temperature-0 answers can share
@@ -201,30 +202,27 @@ wording that names it passes, and the Sydney answer fails. A check this
 loose is fine here because a person reads the answer, and a person reads
 "It's Canberra." and "Canberra" as the same fact. When a program reads the
 answer, as in the ticket system of the pitfall, the wording is part of
-what the check has to pin down. `--check` applies the check to every run
-and adds a second summary line.
+what the check has to pin down. The box "Check each answer" in the
+widget applies the check to every run and adds a second summary line. Set
+the temperature to 1.0, uncheck the shake, check the check, and press the
+button. Here is the check applied to the recorded set from temperature
+1.0:
 
-<Predict id="run-checked" title="Ten runs with the check applied"
-  answer={`What is the capital of Australia? (temperature 1.0, 10 runs)
-   1  pass  Canberra
-   2  pass  Canberra.
-   3  pass  Canberra
-   4  pass  The capital of Australia is Canberra.
-   5  pass  Canberra
-   6  pass  Canberra.
-   7  pass  It's Canberra.
-   8  pass  Canberra
-   9  FAIL  Sydney
-  10  pass  The capital of Australia is Canberra.
-  4 of 10 runs give the same answer as run 1
-  9 of 10 runs pass the check: the answer names Canberra`} run="concepts/same-prompt-twice/checked.py">
-Run this, and compare what you see with the output below.
-
-```sh
-python3 sample.py --temperature 1.0 --runs 10 --check
+```text
+What is the capital of Australia? (temperature 1.0, 10 runs)
+ 1  pass  Canberra
+ 2  pass  Canberra.
+ 3  pass  Canberra
+ 4  pass  The capital of Australia is Canberra.
+ 5  pass  Canberra
+ 6  pass  Canberra.
+ 7  pass  It's Canberra.
+ 8  pass  Canberra
+ 9  FAIL  Sydney
+10  pass  The capital of Australia is Canberra.
+4 of 10 runs give the same answer as run 1
+9 of 10 runs pass the check: the answer names Canberra
 ```
-
-</Predict>
 
 The summary lines answer different questions. The first asks
 whether the text is identical, and a model gives a "no" to that on a regular basis
@@ -288,13 +286,13 @@ are true?
 
 </MultiChoice>
 
-<Exercise stretch="Change the check in sample.py so that only the bare word Canberra passes, run the ten temperature-1 runs again, and decide whether the stricter check helped the workflow or hurt it.">
+<Exercise stretch="Take a stricter check that passes only the bare word Canberra. Apply it by hand to the recorded ten runs at temperature 1.0 above, and decide whether the stricter check helped the workflow or hurt it.">
 
-Run `sample.py --runs 10 --check` six times: at temperature 0.3 and at
-temperature 1.5, each with three different seeds. The temperature scale is
-the toy's own, and a real model's scale differs. Each run prints both
-counts, how many runs agree with run 1 and how many pass the check, so
-note both. Put the twelve numbers in a small table. Then write the check a
+With "Check each answer" checked in the widget, press the button three
+times at temperature 0.3 and three times at temperature 1.5. The
+temperature scale is the toy's own, and a real model's scale differs. Each
+press shows both counts, how many runs agree with run 1 and how many pass
+the check, so note both. Put the twelve numbers in a small table. Then write the check a
 workflow that used this model would need, in one or two sentences, and
 say which wording differences it accepts and which answers it rejects. Ten
 minutes is enough. Doing this once with numbers in front of you is what

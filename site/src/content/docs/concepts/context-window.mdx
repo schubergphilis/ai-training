@@ -1,4 +1,5 @@
-import { Choice, Sort, Predict, Pitfall, Exercise, Recap, Prompt, Response, MultiChoice, Scenario } from '@components/lesson';
+import { Choice, Sort, Pitfall, Exercise, Recap, Prompt, Response, MultiChoice, Scenario } from '@components/lesson';
+import TokenCounter from '@components/widgets/TokenCounter.astro';
 
 You have been working with a chat assistant on a report for two hours. In
 your first message you said the report is for the finance team and must
@@ -27,27 +28,20 @@ past it.
 ## Count the tokens of a page
 
 A context window is measured in tokens, so the first step is to get a
-feel for how many tokens a page of text is. The script is
-`site/examples/concepts/context-window/count_tokens.py` in the repository
-of this course. Save a copy and run it with no arguments. It counts a
-built-in sample of meeting notes,
-about half a page. On a fresh Mac the first `python3` command may offer to
-install the command-line developer tools, and that is expected.
+feel for how many tokens a page of text is. The counter below contains a
+sample of meeting notes, about half a page. Press Count.
 
-<Predict id="count-the-sample" title="Count the sample"
-  answer={`characters: 460
+<TokenCounter sample="concepts/context-window/sample/notes.txt" />
+
+The first part of the report should read:
+
+```text
+characters: 460
 words: 80
-tokens (estimate): 115`} run="concepts/context-window/count_tokens.py">
-Run the counter on its built-in sample and compare what you see with the
-output below.
-
-```sh
-python3 count_tokens.py
+tokens (estimate): 115
 ```
 
-</Predict>
-
-The script says "estimate" for a reason. It applies the common rule of
+The counter says "estimate" for a reason. It applies the common rule of
 thumb for English, about four characters per token. A word of up to six
 letters counts as one token and a longer word as one token per four
 letters, with each punctuation mark counted as a token of its own. Real
@@ -75,29 +69,22 @@ Asking a model how many letters "strawberry" has goes wrong so often for
 the same reason. The model receives the token for "strawberry" as one
 number, and the letters are not in its input, so it predicts a count from
 what it has seen written about the word, the same way it predicts any other
-answer. Counting characters yourself, as the script does, is the reliable
+answer. Counting characters yourself, as the counter does, is the reliable
 way.
 
 ## How many pages fit
 
-Take the token count from the first step and see how many such pages fit
-in windows of different sizes. The second script takes the count as its
-argument.
+The second part of the counter's report takes the token count from the
+first part as the size of one page, and shows how many such pages fit in
+windows of different sizes. For the sample it reads:
 
-<Predict id="pages-per-window" title="Pages per window"
-  answer={`one page: 115 tokens
+```text
+one page: 115 tokens
 8,000-token window: 69 pages
 32,000-token window: 278 pages
 200,000-token window: 1,739 pages
-1,000,000-token window: 8,695 pages`} run="concepts/context-window/pages_per_window.py">
-Run the second script with the token count of the sample. What does it
-print?
-
-```sh
-python3 pages_per_window.py 115
+1,000,000-token window: 8,695 pages
 ```
-
-</Predict>
 
 The window sizes are round numbers that stand for the sizes on the market
 in 2026. The 8,000 row is the size of a few years ago, kept for the
@@ -232,13 +219,12 @@ proposes a plan for 9,000 euros. What do you do?
 
 </Scenario>
 
-<Exercise stretch="Paste the same page into a chat assistant and ask it how many tokens the page is. Compare its answer with the script, and decide which one you trust and why.">
+<Exercise stretch="Paste the same page into a chat assistant and ask it how many tokens the page is. Compare its answer with the counter, and decide which one you trust and why.">
 
-Copy about one page of your own writing, an email or a report section, into
-a file called `page.txt`. Run `python3 count_tokens.py page.txt`, then run
-`python3 pages_per_window.py` with the token count it printed. Write down
-the three numbers: characters, estimated tokens, and how many of your pages
-fit in a 200,000-token window. With these numbers you can judge whether a
+Copy about one page of your own writing, an email or a report section.
+Replace the meeting notes in the counter above with it, and press Count.
+Write down the three numbers: characters, estimated tokens, and how many
+of your pages fit in a 200,000-token window. With these numbers you can judge whether a
 document fits before you paste it, and after how many turns a chat is full.
 
 A good result is one line like "my page is 3,100 characters, about 750

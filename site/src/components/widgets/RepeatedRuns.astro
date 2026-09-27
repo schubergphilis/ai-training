@@ -1,0 +1,119 @@
+---
+/**
+ * RepeatedRuns: the toy model of "Same prompt, different answer". The
+ * learner sets a temperature, turns jitter and the check on or off, and
+ * presses the button to run one fixed question ten times. The widget lists
+ * the ten answers and the summary lines `sample.py` prints for the same
+ * settings, with fresh random numbers on every press. Teaches and never
+ * grades (spec S03 "Widgets"), and writes nothing to the progress record.
+ * The toy model is `scripts/repeated-runs-logic.ts`, and
+ * `scripts/repeated-runs.ts` binds each instance.
+ */
+import { QUESTION, RUNS } from '@scripts/repeated-runs-logic';
+---
+
+<div class="not-content repeated-runs" data-repeated-runs>
+	<p class="rr-question">{QUESTION}</p>
+	<label class="rr-temp">
+		Temperature <input type="range" min="0" max="2" step="0.1" value="1" />
+		<output>1.0</output>
+	</label>
+	<label class="rr-switch"><input type="checkbox" class="rr-jitter" /> Shake the scores before each pick</label>
+	<label class="rr-switch"><input type="checkbox" class="rr-check" /> Check each answer: does it name Canberra?</label>
+	<button type="button" class="rr-go">Run {RUNS} times</button>
+	<div class="rr-report" aria-live="polite">
+		<p class="rr-heading"></p>
+		<ul class="rr-lines"></ul>
+		<ul class="rr-summary"></ul>
+	</div>
+</div>
+
+<style>
+	.repeated-runs {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background: var(--sl-color-bg-nav);
+		font-size: var(--sl-text-sm);
+	}
+
+	.rr-question {
+		margin: 0;
+		font-weight: 700;
+	}
+
+	.rr-temp {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.rr-temp input {
+		flex: 1;
+		max-width: 20rem;
+	}
+
+	.rr-switch {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.rr-go {
+		align-self: flex-start;
+		padding: 0.35rem 0.85rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: 0.25rem;
+		background: transparent;
+		color: var(--sl-color-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.rr-go:hover,
+	.rr-go:focus-visible {
+		background: var(--sl-color-accent);
+		color: var(--sl-color-text-invert);
+	}
+
+	.rr-report {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+	}
+
+	.rr-heading {
+		margin: 0;
+	}
+
+	.rr-lines,
+	.rr-summary {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		white-space: pre;
+		overflow-x: auto;
+	}
+
+	.rr-summary {
+		font-weight: 600;
+	}
+
+	/* The rows are built with createElement and never get Astro's scope class, so their rules need :global(). */
+	.rr-lines :global(.rr-fail) {
+		color: var(--sl-color-red-high);
+	}
+</style>
+
+<script>
+	import { mountRepeatedRuns } from '@scripts/repeated-runs';
+
+	mountRepeatedRuns(document);
+</script>

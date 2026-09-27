@@ -1,8 +1,8 @@
 id: concepts/same-prompt-twice
 title: Same prompt, different answer
 description: >-
-  Run a toy model ten times at two temperatures, count how often the answers agree, and see why one
-  good run proves nothing and what check a workflow built on a model needs.
+  Run a toy model on the page ten times at two temperatures, count how often the answers agree, and
+  see why one good run proves nothing and what check a workflow built on a model needs.
 mode: tutorial
 covers: concepts/limits
 serves:
@@ -24,12 +24,22 @@ shorts: []
 exercise:
   kind: do
   brief: >-
-    Run the sampling fixture ten times at two temperatures, tabulate how often the answers agree,
-    and write the check a workflow would need to accept that variation.
+    Run the toy model on the page ten times at two temperatures, tabulate how often the answers
+    agree, and write the check a workflow would need to accept that variation.
 sources: [Academy ai-capabilities-and-limitations, Claude docs messages]
 minutes: 15
+proofs:
+  - concepts/same-prompt-twice/greedy.py
+  - concepts/same-prompt-twice/sampled.py
+  - concepts/same-prompt-twice/jitter.py
+  - concepts/same-prompt-twice/checked.py
 notes: >-
   The live lesson shows that two runs differ and why. This lesson adds the consequence for a
   process: one good run proves nothing about a prompt, variation remains at the lowest temperature,
-  and any workflow built on a model needs a check that tolerates it. The fixture's --jitter flag
-  stands in for the rounding wobble of real serving, exaggerated so ten runs show it.
+  and any workflow built on a model needs a check that tolerates it. The widget's shake option and
+  the fixture's --jitter flag stand in for the rounding wobble of real serving, exaggerated so ten
+  runs show it. The widget (RepeatedRuns) is a port of sample.py with fresh random numbers on every
+  press, and the text fences on the page are the seeded runs of the four fixtures in proofs, so
+  mise run examples fails when one prints a line those fences don't show (#238). The Sampler widget
+  of concepts/how-models-work was not reused: it draws one token at a time from its own fixed
+  distribution and counts nothing across runs.

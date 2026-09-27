@@ -30,9 +30,17 @@ shorts: [how a tokenizer splits text (why letter counting fails)]
 exercise:
   kind: do
   brief: >-
-    Count the tokens of a page of your own text with the fixture, then work out how many such pages
-    fill a window of a given size.
+    Count the tokens of a page of your own text with the counter on the page, and read how many such
+    pages fill a window of a given size.
 sources:
   - AEC-02
   - Academy ai-capabilities-and-limitations
 minutes: 12
+proofs:
+  - concepts/context-window/count_tokens.py
+  - concepts/context-window/pages_per_window.py
+notes: >-
+  The counter widget (TokenCounter) is a port of the two fixtures, and its text box starts with
+  site/examples/concepts/context-window/sample/notes.txt, the file count_tokens.py counts. The
+  fixtures are in proofs, so mise run examples fails when they print a line the two text fences
+  don't show (#238).

@@ -71,9 +71,18 @@ export const LESSON_TIME = {
 	 * show. Three minutes is the start issue #521 set. A new widget needs an
 	 * entry here, or the estimate fails. `FormatChecker` is one minute: a
 	 * press of Check and a look at a report the page also shows in a fence,
-	 * which the reading time already counts (#237).
+	 * which the reading time already counts (#237). `TokenCounter` is two
+	 * minutes: a press of Count on the sample, then a page of the learner's
+	 * own text. `RepeatedRuns` is three, like `Sampler`: several presses at
+	 * several settings (#238).
 	 */
-	widgetSeconds: { Sampler: 180, InstructionsBuilder: 180, FormatChecker: 60 } as Record<string, number>,
+	widgetSeconds: {
+		Sampler: 180,
+		InstructionsBuilder: 180,
+		FormatChecker: 60,
+		TokenCounter: 120,
+		RepeatedRuns: 180,
+	} as Record<string, number>,
 	/** The shown estimate is rounded to this many minutes, because the constants are not calibrated. */
 	roundToMinutes: 5,
 	/** `mise run data` warns when reading, checkpoints and widgets alone are over this (spec S03 "Length"). */

@@ -9,6 +9,40 @@ test('the sampler redraws its bars when the temperature changes', async ({ page 
 	await expect(sampler.locator('.bar span:last-child').first()).not.toBeEmpty();
 });
 
+test('the token counter prints the two reports the page shows for the sample', async ({ page }) => {
+	await page.goto('concepts/context-window/');
+	const counter = page.locator('[data-token-counter]');
+	await expect(counter).toHaveCount(1);
+	await counter.getByRole('button', { name: 'Count' }).click();
+	const counts = (await counter.locator('xpath=following::pre[1]').innerText()).trim();
+	const pages = (await counter.locator('xpath=following::pre[2]').innerText()).trim();
+	expect((await counter.locator('.tc-counts li').allInnerTexts()).join('\n')).toBe(counts);
+	expect((await counter.locator('.tc-pages li').allInnerTexts()).join('\n')).toBe(pages);
+	await counter.locator('textarea').fill('Hello, world!');
+	await expect(counter.locator('.tc-counts li')).toHaveCount(0);
+	await counter.getByRole('button', { name: 'Count' }).click();
+	await expect(counter.locator('.tc-counts li').last()).toHaveText('tokens (estimate): 4');
+});
+
+test('the repeated runs widget prints the summary the page shows at temperature 0', async ({ page }) => {
+	await page.goto('concepts/same-prompt-twice/');
+	const widget = page.locator('[data-repeated-runs]');
+	await expect(widget).toHaveCount(1);
+	await widget.locator('input[type=range]').fill('0');
+	await expect(widget.locator('output')).toHaveText('0.0');
+	await widget.getByRole('button', { name: 'Run 10 times' }).click();
+	await expect(widget.locator('.rr-lines li')).toHaveCount(10);
+	const fence = (await widget.locator('xpath=following::pre[1]').innerText()).trim();
+	await expect(widget.locator('.rr-summary li')).toHaveText([fence]);
+	await widget.getByLabel('Check each answer').check();
+	await expect(widget.locator('.rr-lines li')).toHaveCount(0);
+	await widget.getByRole('button', { name: 'Run 10 times' }).click();
+	await expect(widget.locator('.rr-summary li')).toHaveText([
+		'10 of 10 runs give the same answer as run 1',
+		'10 of 10 runs pass the check: the answer names Canberra',
+	]);
+});
+
 test('the instructions builder produces a file', async ({ page }) => {
 	await page.goto('customizing-agents/instructions/');
 	const builder = page.locator('.instructions-builder');
