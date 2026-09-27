@@ -10,12 +10,16 @@ import json
 import os
 import random
 import subprocess
-from collections.abc import Callable
+import sys
+from collections.abc import Callable, Sequence
+from datetime import UTC, datetime, tzinfo
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
 import agent_hooks
+import run_name
 
 MAIN = "/repo"
 WORKTREE = "/repo-wt/feat/1-x"
@@ -967,3 +971,212 @@ def test_guard_exits_0_or_2_on_random_shell_text(
         code = agent_hooks.main(["agent_hooks.py", "guard-bash"], event, {})
         assert code in {0, 2}, repr(command)
         assert "Traceback" not in capsys.readouterr().err, repr(command)
+
+
+class TestSessionTitle:
+    """The `session-title` hook (#373): a `/wave` prompt names the session, nothing blocks."""
+
+    ISSUES: ClassVar[list[dict[str, object]]] = [
+        {
+            "number": 363,
+            "title": "Run: Ferret (lessons)",
+            "state": "CLOSED",
+            "createdAt": "2026-09-24T08:00:00Z",
+        },
+        {
+            "number": 586,
+            "title": "Run: Seal (harness)",
+            "state": "OPEN",
+            "createdAt": "2026-09-27T23:59:00Z",
+        },
+    ]
+    NOW = datetime(2026, 9, 28, 7, 30, tzinfo=UTC)
+
+    @staticmethod
+    def gh_with(issues: list[dict[str, object]]) -> Callable[[Sequence[str]], object]:
+        def gh(args: Sequence[str]) -> object:
+            assert list(args[:2]) == ["issue", "list"]
+            return issues
+
+        return gh
+
+    def title(self, prompt: object, issues: list[dict[str, object]] | None = None) -> str | None:
+        return agent_hooks.session_title(
+            {"prompt": prompt},
+            gh=self.gh_with(self.ISSUES if issues is None else issues),
+            now=lambda: self.NOW,
+        )
+
+    def test_a_new_run_takes_the_next_name_the_default_kind_and_today(self) -> None:
+        # Seal is the newest run, so the next name is the one after it.
+        sequence = run_name.run_name_sequence(run_name.NAMES_FILE.read_text(encoding="utf-8"))
+        after_seal = sequence[sequence.index("Seal") + 1].lower()
+        assert self.title("/wave") == f"wave {after_seal} lessons 2026-09-28"
+        assert self.title("  /wave 4 --only 12,13\n") == f"wave {after_seal} lessons 2026-09-28"
+
+    @pytest.mark.parametrize("flag", ["--kind code", "--kind=code"])
+    def test_kind_comes_from_the_kind_flag(self, flag: str) -> None:
+        title = self.title(f"/wave 3 {flag} --no-filing")
+        assert title is not None
+        assert title.endswith(" code 2026-09-28")
+
+    def test_a_resume_takes_the_runs_name_kind_and_start_date(self) -> None:
+        # The run's createdAt date, not today, and its kind, not --kind.
+        assert self.title("/wave --resume Seal") == "wave seal harness 2026-09-27"
+        assert self.title("/wave --kind code --resume seal") == "wave seal harness 2026-09-27"
+
+    @pytest.mark.parametrize(
+        "prompt",
+        [
+            "/wave --resume Ferret",  # closed
+            "/wave --resume Heron",  # never opened
+            "/wave --resume",  # no name
+            "/wave --kind",  # no kind
+            "/wave --kind docs",  # the skill stops on an unknown kind
+        ],
+    )
+    def test_an_unknown_resume_name_or_a_bad_flag_sets_no_title(self, prompt: str) -> None:
+        assert self.title(prompt) is None
+
+    @pytest.mark.parametrize(
+        "prompt",
+        ["fix the tests", "/wave-status", "please run /wave", "", "\n\n", 42, None],
+    )
+    def test_a_prompt_that_is_not_wave_sets_no_title_and_calls_no_gh(self, prompt: object) -> None:
+        def gh(_args: Sequence[str]) -> object:
+            raise AssertionError("gh must not run for this prompt")
+
+        assert agent_hooks.session_title({"prompt": prompt}, gh=gh) is None
+
+    def test_a_long_title_is_cut_to_100_characters(self) -> None:
+        name = "A" + "a" * 120
+        issues: list[dict[str, object]] = [
+            {
+                "number": 900,
+                "title": f"Run: {name} (code)",
+                "state": "OPEN",
+                "createdAt": "2026-09-27T10:00:00Z",
+            }
+        ]
+        title = self.title(f"/wave --resume {name}", issues)
+        assert title is not None
+        assert title == f"wave {name.lower()}"[: agent_hooks.SESSION_TITLE_MAX]
+        assert len(title) == agent_hooks.SESSION_TITLE_MAX
+
+    def main_with(
+        self, monkeypatch: pytest.MonkeyPatch, gh: Callable[[Sequence[str]], object], stdin: str
+    ) -> int:
+        monkeypatch.setattr(agent_hooks, "session_gh", gh)
+        monkeypatch.setattr(agent_hooks, "datetime", FixedDatetime)
+        return agent_hooks.main(["agent_hooks.py", "session-title"], stdin, {})
+
+    def test_main_prints_the_hook_output(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        stdin = json.dumps({"hook_event_name": "UserPromptSubmit", "prompt": "/wave --resume Seal"})
+        assert self.main_with(monkeypatch, self.gh_with(self.ISSUES), stdin) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out == {
+            "hookSpecificOutput": {
+                "hookEventName": "UserPromptSubmit",
+                "sessionTitle": "wave seal harness 2026-09-27",
+            }
+        }
+
+    def test_main_uses_the_utc_date_for_a_new_run(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        stdin = json.dumps({"prompt": "/wave --kind code"})
+        assert self.main_with(monkeypatch, self.gh_with(self.ISSUES), stdin) == 0
+        title = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["sessionTitle"]
+        assert title.endswith(" code 2026-09-28")
+
+    @pytest.mark.parametrize(
+        "error",
+        [
+            run_name.RunNameError("gh issue list failed"),
+            OSError("no gh"),
+            KeyError("title"),
+            TypeError("gh printed a dict"),
+            RuntimeError("anything else"),
+        ],
+    )
+    def test_main_exits_0_with_no_title_when_run_name_fails(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        error: Exception,
+    ) -> None:
+        def gh(_args: Sequence[str]) -> object:
+            raise error
+
+        stdin = json.dumps({"prompt": "/wave"})
+        assert self.main_with(monkeypatch, gh, stdin) == 0
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert "session-title: no title" in captured.err
+
+    def test_main_exits_0_when_gh_prints_the_wrong_json(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        stdin = json.dumps({"prompt": "/wave --resume Seal"})
+        assert self.main_with(monkeypatch, lambda _args: [{"number": 1}], stdin) == 0
+        assert capsys.readouterr().out == ""
+
+    def test_main_exits_0_when_the_names_file_is_missing(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+    ) -> None:
+        monkeypatch.setattr(run_name, "NAMES_FILE", tmp_path / "missing.txt")
+        stdin = json.dumps({"prompt": "/wave"})
+        assert self.main_with(monkeypatch, self.gh_with(self.ISSUES), stdin) == 0
+        assert capsys.readouterr().out == ""
+
+    @pytest.mark.parametrize("stdin", ["not json", "[1]", "", '{"prompt": "/wave"'])
+    def test_main_exits_0_on_bad_json(self, stdin: str, capsys: pytest.CaptureFixture[str]) -> None:
+        assert agent_hooks.main(["agent_hooks.py", "session-title"], stdin, {}) == 0
+        assert capsys.readouterr().out == ""
+
+    def test_session_gh_turns_a_failing_gh_into_a_run_name_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def fail(*_args: object, **_kwargs: object) -> object:
+            raise subprocess.TimeoutExpired(["gh"], agent_hooks.SESSION_GH_TIMEOUT)
+
+        monkeypatch.setattr(agent_hooks.subprocess, "run", fail)
+        with pytest.raises(run_name.RunNameError, match="gh issue list failed"):
+            agent_hooks.session_gh(["issue", "list"])
+
+    def test_session_gh_parses_gh_output(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def ok(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(args, 0, stdout='[{"number": 1}]', stderr="")
+
+        monkeypatch.setattr(agent_hooks.subprocess, "run", ok)
+        assert agent_hooks.session_gh(["issue", "list"]) == [{"number": 1}]
+
+    def test_the_wrapper_exits_0_with_no_title_when_gh_fails(self, tmp_path: Path) -> None:
+        # A PATH whose gh exits 1, and python3 from this interpreter.
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        fake_gh = bin_dir / "gh"
+        fake_gh.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        fake_gh.chmod(0o755)
+        (bin_dir / "python3").symlink_to(sys.executable)
+        wrapper = Path(__file__).resolve().parent.parent / ".claude" / "hooks" / "session-title.sh"
+        env = {"PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path)}
+        for stdin in ('{"prompt": "/wave --kind code"}', "not json", '{"prompt": "hello"}'):
+            done = subprocess.run(
+                [str(wrapper)], input=stdin, capture_output=True, text=True, env=env, check=False
+            )
+            assert done.returncode == 0, stdin
+            assert done.stdout == "", stdin
+
+
+class FixedDatetime(datetime):
+    """`datetime` with `now` fixed at 2026-09-28 07:30 UTC, for the tests through `main`."""
+
+    @classmethod
+    def now(cls, tz: tzinfo | None = None) -> FixedDatetime:
+        return cls(2026, 9, 28, 7, 30, tzinfo=tz)

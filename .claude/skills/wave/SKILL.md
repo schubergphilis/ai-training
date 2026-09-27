@@ -182,6 +182,18 @@ the diff the check printed.
       `mv <that path> .scratch/run-<name>.md`, and edit only that file
       from here on.
 
+   The `session-title` hook has already named this session
+   `wave <name> <kind> <yyyy-mm-dd>` from your `/wave` prompt, in
+   lowercase: the resumed run's name, kind and start date, or for a new
+   run the `next` name, the `--kind` and today's date, both dates in UTC.
+   When the name check above made you take a later name, or in a harness
+   without that hook, start your next message with the line for the maintainer to
+   type, in a code block of its own:
+
+   ```text
+   /rename wave <name> <kind> <yyyy-mm-dd>
+   ```
+
 ## One tick of the loop
 
 1. **Pull.** `git pull --rebase` on `main`. You commit nothing, so the

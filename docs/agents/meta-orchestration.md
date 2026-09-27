@@ -119,6 +119,24 @@ or session a run is on, and `/wave` never guesses it. A session
 continues its own run with `--resume <Name>` and otherwise starts a new
 one.
 
+The dispatcher session has the name `wave <name> <kind> <yyyy-mm-dd>`,
+in lowercase, with the date the run started, for example
+`wave heron code 2026-09-25`, so `/resume` and the terminal show which
+run each session is. The `/wave` prompt is the one prompt the maintainer
+types in a run, and a `UserPromptSubmit` hook,
+`.claude/hooks/session-title.sh`, sets the title from it. A hook can set
+the title this way (<https://code.claude.com/docs/en/hooks>,
+"UserPromptSubmit decision control"). For a new run it uses the next
+name from `run_name.py`, the `--kind` and today's date, and for
+`--resume <Name>` it uses that open run's kind and the date its issue was
+opened, both in UTC. It sets no title for any other prompt, and never
+blocks the prompt when something fails. When the name check gives the
+run a later name, or the harness has no such hook, the dispatcher's next
+message starts with `/rename wave <name> <kind> <yyyy-mm-dd>` for the
+maintainer to type. A new session can also start with its name:
+`claude -n "wave <name> <kind> <yyyy-mm-dd>"`
+(<https://code.claude.com/docs/en/cli-reference>, `--name`).
+
 Wave `k` of run Capybara is on the branch `wave/capybara-<k>`, and reports
 call it `CAPYBARA wave <k>`. The count starts at 1 in every run.
 

@@ -39,6 +39,18 @@ and #342. `.claude/settings.json` registers them.
 - `format-file.sh`, PostToolUse on Edit and Write. It runs Biome on an
   edited file under `site/` and ruff on an edited `.py` file, in the
   worktree that holds the file, and never fails the tool call.
+- `session-title.sh`, UserPromptSubmit (#373). For a prompt that starts
+  with `/wave`, it names the session `wave <name> <kind> <yyyy-mm-dd>`
+  through `hookSpecificOutput.sessionTitle`
+  (<https://code.claude.com/docs/en/hooks>, "UserPromptSubmit decision
+  control"). With `--resume <Name>` it uses the open run's kind and the
+  date its issue was opened. Otherwise it uses the next name from
+  `scripts/run_name.py`, the `--kind` (default `lessons`) and today's
+  date, both in UTC. A hook that exits 2 here blocks the prompt (same
+  page, "Exit code 2 behavior per event"), so this one always exits 0:
+  for any other prompt, an unknown kind, a name no open run holds, bad
+  JSON, a `gh` that fails or takes over 20 seconds, or any other error,
+  it sets no title.
 
 JSON has no comments, so this file says what each layer covers:
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Claude Code hooks for this repo (`.claude/settings.json`, issues #349 and #342).
 
-Three entry points, each reading the hook's JSON event on stdin:
+Four entry points, each reading the hook's JSON event on stdin:
 
 - `guard-bash` (PreToolUse on Bash) rejects a command that breaks a rule
   of `AGENTS.md` or `docs/agents/orchestration.md` and exits 2 with a
@@ -19,6 +19,9 @@ Three entry points, each reading the hook's JSON event on stdin:
 - `format` (PostToolUse on Edit and Write) runs Biome on an edited file
   under `site/` and ruff on an edited `.py` file. It never fails the tool
   call: a formatter that is missing or errors is skipped.
+- `session-title` (UserPromptSubmit, #373) names a dispatcher session
+  `wave <name> <kind> <yyyy-mm-dd>` from its `/wave` prompt. It never
+  blocks the prompt: on any failure it sets no title and exits 0.
 
 The guard matches shell text, so it catches mistakes and not an agent that
 works around it on purpose. It splits the command at `&&`, `||`, `;`, `|`
@@ -49,8 +52,11 @@ import subprocess
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
+
+import run_name
 
 ROLE_VAR = "AI_TRAINING_ROLE"
 PUSH_MAIN_ROLES: frozenset[str] = frozenset()
@@ -1054,9 +1060,132 @@ def format_file(event: Mapping[str, Any]) -> int:
     return 0
 
 
+SESSION_TITLE_MAX = 100
+"""The longest title the hook sets, as #373 decided: a longer one is cut."""
+WAVE_KINDS = frozenset({"lessons", "content", "code", "harness"})
+DEFAULT_WAVE_KIND = "lessons"
+SESSION_GH_TIMEOUT = 20
+"""Seconds for each gh call, under the 30-second UserPromptSubmit hook timeout."""
+
+
+def session_gh(args: Sequence[str]) -> object:
+    """Run gh for the session title and parse its output, or raise RunNameError."""
+    try:
+        done = subprocess.run(
+            ["gh", *args],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=SESSION_GH_TIMEOUT,
+        )
+        return cast("object", json.loads(done.stdout))
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as e:
+        raise run_name.RunNameError(f"session-title: gh {' '.join(args[:2])} failed: {e}") from e
+
+
+def wave_arguments(prompt: str) -> dict[str, str] | None:
+    """The `--kind` and `--resume` values of a `/wave` prompt, or None for any other prompt.
+
+    Only the first line counts, and its first word must be `/wave`
+    exactly, so `/wave-status` is not a `/wave` prompt. Both `--kind code`
+    and `--kind=code` are read. A flag without a value is None, since the
+    skill stops on it.
+    """
+    lines = prompt.strip().splitlines()
+    words = lines[0].split() if lines else []
+    if not words or words[0] != "/wave":
+        return None
+    found: dict[str, str] = {}
+    rest = words[1:]
+    i = 0
+    while i < len(rest):
+        word = rest[i]
+        for flag in ("--kind", "--resume"):
+            if word == flag:
+                if i + 1 >= len(rest):
+                    return None
+                found[flag] = rest[i + 1]
+                i += 1
+            elif word.startswith(flag + "="):
+                found[flag] = word.removeprefix(flag + "=")
+        i += 1
+    return found
+
+
+def wave_title(name: str, kind: str, date: str) -> str:
+    """`wave <name> <kind> <yyyy-mm-dd>` in lowercase, cut to SESSION_TITLE_MAX characters."""
+    return f"wave {name} {kind} {date}".lower()[:SESSION_TITLE_MAX]
+
+
+def session_title(
+    event: Mapping[str, Any],
+    gh: run_name.Gh | None = None,
+    now: Callable[[], datetime] | None = None,
+    names_file: Path | None = None,
+) -> str | None:
+    """The session title for a UserPromptSubmit event, or None to leave the title alone.
+
+    A `/wave --resume <Name>` prompt gets the open run's name, kind and the
+    date its issue was opened. Any other `/wave` prompt gets the name
+    `run-name` gives the next run, the `--kind` (default `lessons`) and
+    today's date. Dates are in UTC, as GitHub gives `createdAt`, so a
+    resume shows the date the new run showed. None for a prompt that
+    isn't `/wave`, an unknown kind, a resume name no open run holds, and
+    when gh or the names file fails: the dispatcher then prints the
+    `/rename` line.
+    """
+    prompt = event.get("prompt")
+    if not isinstance(prompt, str):
+        return None
+    args = wave_arguments(prompt)
+    if args is None:
+        return None
+    issues = run_name.fetch_issues(None, gh or session_gh)
+    runs = [run for issue in issues if (run := run_name.run_of(issue)) is not None]
+    resume = args.get("--resume")
+    if resume is not None:
+        match = next(
+            (r for r in runs if r["open"] and r["name"].lower() == resume.lower()),
+            None,
+        )
+        if match is None:
+            return None
+        return wave_title(match["name"], match["kind"], match["createdAt"][:10])
+    kind = args.get("--kind", DEFAULT_WAVE_KIND)
+    if kind not in WAVE_KINDS:
+        return None
+    text = (names_file or run_name.NAMES_FILE).read_text(encoding="utf-8")
+    name = run_name.next_run_name(run_name.run_name_sequence(text), runs)
+    today = (now or (lambda: datetime.now(UTC)))().date().isoformat()
+    return wave_title(name, kind, today)
+
+
+def session_title_hook(event: Mapping[str, Any]) -> int:
+    """Print the hook output that sets the session title, if there is one. Always 0.
+
+    A UserPromptSubmit hook that exits 2 blocks the prompt, so every
+    failure, whatever it raises, leaves the title alone and exits 0.
+    """
+    try:
+        title = session_title(event)
+    except Exception as e:  # the hook never blocks /wave, whatever went wrong
+        print(f"session-title: no title: {e}", file=sys.stderr)
+        return 0
+    if title is not None:
+        output = {
+            "hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "sessionTitle": title}
+        }
+        print(json.dumps(output))
+    return 0
+
+
 def main(argv: Sequence[str], stdin: str, env: Mapping[str, str]) -> int:
-    if len(argv) != 2 or argv[1] not in {"guard-bash", "review-bash", "format"}:
-        print("usage: agent_hooks.py guard-bash|review-bash|format < event.json", file=sys.stderr)
+    if len(argv) != 2 or argv[1] not in {"guard-bash", "review-bash", "format", "session-title"}:
+        print(
+            "usage: agent_hooks.py guard-bash|review-bash|format|session-title < event.json",
+            file=sys.stderr,
+        )
         return 1
     try:
         parsed: object = json.loads(stdin)
@@ -1067,6 +1196,8 @@ def main(argv: Sequence[str], stdin: str, env: Mapping[str, str]) -> int:
     event = cast("dict[str, Any]", parsed)
     if argv[1] == "format":
         return format_file(event)
+    if argv[1] == "session-title":
+        return session_title_hook(event)
     if argv[1] == "review-bash":
         code, message = review_bash(event)
     else:
