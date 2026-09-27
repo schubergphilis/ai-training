@@ -1,8 +1,9 @@
 """Runs the checker on the first sample summary and prints only the claims with no source.
 
-The lesson shows `python3 check_claims.py sample/summary_1.txt --missing`. The
-summary has four claims the sources do not support, so the checker itself
-exits 1, and this wrapper does not pass that status on.
+This is `check_claims.py sample/summary_1.txt --missing`. The lesson page
+shows this output in a `text` fence. The summary has four claims the
+sources do not support, so the checker itself exits 1, and this wrapper
+does not pass that status on.
 """
 
 import os

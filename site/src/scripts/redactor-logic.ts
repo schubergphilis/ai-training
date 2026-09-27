@@ -10,6 +10,10 @@
  *
  * - `String.prototype.trim` removes a slightly different set of whitespace
  *   than Python's `str.strip()` (Python also strips U+001C to U+001F).
+ * - A map is split into lines at `\r\n`, `\r` and `\n`, where `parse_map`
+ *   splits only at `\n` (Python's universal newlines already turned a file's
+ *   `\r\n` and lone `\r` into `\n`). A browser text box turns every line
+ *   break into `\n`, so the widget never meets a lone `\r`.
  * - A value's length for the longest-first order counts code points, as
  *   `len()` does, through `[...value].length`.
  * - The widget reports "none of the listed details" where

@@ -10,7 +10,8 @@ claim to check before the summary leaves your desk.
 
 The report, the meeting minutes and the two summaries are fictional and
 were written for this lesson. The summaries read the way a model's summary
-reads, and the assistant's words are the author's.
+reads, and the assistant's words are the author's. The checker on this
+page runs in your browser and sends your text nowhere.
 
 ## A summary that reads well
 
@@ -41,6 +42,9 @@ number with the word after it, as in `890 bicycles`. For a claim it finds, it
 prints `found` with the source file, the line number and the sentence. For
 a claim it can't find, it prints `NO SOURCE`.
 
+<ClaimChecker summary="safety/spotting-hallucination/sample/summary_1.txt"
+  sources={['safety/spotting-hallucination/sources/report.txt', 'safety/spotting-hallucination/sources/minutes.txt']} />
+
 <Predict id="predict-the-missing-claims" objective="safety/verifies-output/checks-claims"
   concepts={['hallucination-in-practice']}
   context="A checker reads a model's one-paragraph summary of a council report on cycle parking at a station, pulls out every quoted passage, article reference and figure, and looks each one up in the report and the meeting minutes. The learner lists the claims it cannot find, written as the number with the word after it (890 bicycles) or the quoted text with its quotes, one per line, in summary order. The summary claims a count of 890 bicycles against 640 racks, a legal minimum of one rack per 50 passengers under article 7(3), a 38 percent fall in theft between 2022 and 2024, a recommendation of 300 racks of which 120 covered, about 9,000 passengers a day, and a quote from the council chair."
@@ -50,14 +54,11 @@ a claim it can't find, it prints `NO SOURCE`.
 38 percent
 9,000 passengers
 "Racks before car parks, every time."`}>
-Before you press Check in the checker below, predict which claims in the
-summary have no source. Write each claim the way the checker shows it, as
-the number and the word after it, or the quote with its quotes, one per
-line, in the order they appear in the summary.
+Before you press Check in the checker above, predict which claims in the
+summary have no source. Write only the claims, without the words NO
+SOURCE: the number and the word after it, or the quote with its quotes,
+one per line, in the order they appear in the summary.
 </Predict>
-
-<ClaimChecker summary="safety/spotting-hallucination/sample/summary_1.txt"
-  sources={['safety/spotting-hallucination/sources/report.txt', 'safety/spotting-hallucination/sources/minutes.txt']} />
 
 These are the four claims with no source, in the order the summary makes
 them.
@@ -69,7 +70,7 @@ them.
 "Racks before car parks, every time."
 ```
 
-The whole report puts every claim next to what it was found in.
+The whole report shows every claim with the source line it was found in.
 
 ```text
 found      2025 review
