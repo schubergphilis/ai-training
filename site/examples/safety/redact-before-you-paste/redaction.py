@@ -6,42 +6,28 @@ about a leaking dishwasher, and the task the lesson runs on it (draft a
 reply that offers a second visit and asks for a time window) needs none of
 the names, numbers or addresses in it.
 
+The email is `sample/email.txt` and the map is `sample/email-map.txt`, one
+`value => placeholder` per line: one row per value the task does not need,
+and the same placeholder everywhere the value appears, so the redacted text
+still says which person did what. The lesson page shows the same files in
+its redaction widget.
+
 The scripts next to this file import it: `redact.py` prints the redacted
 email, `check_partial.py` shows what a half-done redaction leaves in, and
 `restore.py` puts the real values back into a reply drafted on the
 redacted text.
 """
 
-EMAIL = """\
-From: Renske Adelhof <renske.adelhof@example.net>
-To: support@norrbeck-appliances.example
-Subject: Dishwasher still leaking after repair (account NB-4471-0928)
+import os
 
-Hello,
+HERE = os.path.dirname(os.path.abspath(__file__))
+SAMPLE = os.path.join(HERE, "sample")
 
-Your technician Tijmen Boskoorn came by on Tuesday to fix the leak in our
-dishwasher, a Norrbeck D410. It worked for two days and now the water is
-back under the sink. I leave for work at 7:30, so please call me on
-+31 6 1234 5678 before that, or write back. My account number is
-NB-4471-0928.
 
-Kind regards,
-Renske Adelhof
-Kastanjelaan 12, Zwolle
-"""
-
-# One row per value the task does not need: the text as it appears in the
-# document, and the placeholder that replaces it. The same placeholder is
-# used everywhere the value appears, so the redacted text still says which
-# person did what.
-MAP = [
-    ("Renske Adelhof", "Person 1"),
-    ("renske.adelhof@example.net", "[email]"),
-    ("Tijmen Boskoorn", "Person 2"),
-    ("+31 6 1234 5678", "[phone]"),
-    ("NB-4471-0928", "[account number]"),
-    ("Kastanjelaan 12, Zwolle", "[address]"),
-]
+def read_sample(name: str) -> str:
+    """The text of one file in `sample/`, which the lesson page's widgets show too."""
+    with open(os.path.join(SAMPLE, name), encoding="utf-8") as handle:
+        return handle.read()
 
 
 def redact(text: str, replacements: "list[tuple[str, str]]") -> str:
@@ -66,16 +52,25 @@ def restore(text: str, replacements: "list[tuple[str, str]]") -> str:
     return text
 
 
+def parse_map(text: str) -> "list[tuple[str, str]]":
+    """Parse a map: one `value => placeholder` per line, blank lines skipped."""
+    rows = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        value, separator, placeholder = line.partition(" => ")
+        if not separator:
+            raise SystemExit(f"map line without ' => ': {line}")
+        rows.append((value, placeholder))
+    return rows
+
+
 def read_map(path: str) -> "list[tuple[str, str]]":
     """Read a map file: one `value => placeholder` per line, blank lines skipped."""
-    rows = []
     with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            value, separator, placeholder = line.partition(" => ")
-            if not separator:
-                raise SystemExit(f"map line without ' => ': {line}")
-            rows.append((value, placeholder))
-    return rows
+        return parse_map(handle.read())
+
+
+EMAIL = read_sample("email.txt")
+MAP = parse_map(read_sample("email-map.txt"))

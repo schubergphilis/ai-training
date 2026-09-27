@@ -1,0 +1,6 @@
+Renske Adelhof => Person 1
+renske.adelhof@example.net => [email]
+Tijmen Boskoorn => Person 2
++31 6 1234 5678 => [phone]
+NB-4471-0928 => [account number]
+Kastanjelaan 12, Zwolle => [address]

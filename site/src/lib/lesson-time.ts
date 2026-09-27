@@ -75,6 +75,8 @@ export const LESSON_TIME = {
 	 * minutes: a press of Count on the sample, then a page of the learner's
 	 * own text. `RepeatedRuns` is three, like `Sampler`: several presses at
 	 * several settings (#238).
+	 * `Redactor` and `ClaimChecker` are one minute, like `FormatChecker`: a
+	 * press and a look at a result the page also shows in a fence (#238).
 	 */
 	widgetSeconds: {
 		Sampler: 180,
@@ -82,6 +84,8 @@ export const LESSON_TIME = {
 		FormatChecker: 60,
 		TokenCounter: 120,
 		RepeatedRuns: 180,
+		Redactor: 60,
+		ClaimChecker: 60,
 	} as Record<string, number>,
 	/** The shown estimate is rounded to this many minutes, because the constants are not calibrated. */
 	roundToMinutes: 5,

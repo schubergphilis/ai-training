@@ -48,3 +48,37 @@ test('the format checker checks a pasted answer', async ({ page }) => {
 	await expect(checker.locator('.fc-lines li').last()).toHaveClass('fc-fail');
 	await expect(checker.locator('.fc-summary')).toHaveText('1 of 2 items pass');
 });
+
+test('the redactor prints what the page shows for the email, the colleague version and the reply', async ({ page }) => {
+	await page.goto('safety/redact-before-you-paste/');
+	const email = page.locator('.redactor[data-action=redact]').filter({ has: page.locator('.rd-map:not(:empty)') });
+	const reply = page.locator('.redactor[data-action=restore]');
+	// A code block's innerText renders a blank line differently from a plain pre, so both sides drop blank lines.
+	const lines = (text: string) => text.split('\n').filter((line) => line.trim() !== '');
+	const fenceAfter = async (widget: typeof reply) => lines(await widget.locator('xpath=following::pre[1]').innerText());
+	for (const widget of [email, reply]) {
+		await expect(widget).toHaveCount(1);
+		await expect(widget.locator('.rd-output')).toBeHidden();
+		await widget.locator('.rd-run').click();
+		expect(lines(await widget.locator('.rd-output').innerText())).toEqual(await fenceAfter(widget));
+	}
+	const partial = page.locator('.redactor').filter({ has: page.locator('.rd-watch') });
+	await expect(partial).toHaveCount(1);
+	await partial.getByRole('button', { name: 'Redact' }).click();
+	await expect(partial.locator('.rd-leaks')).toHaveText((await fenceAfter(partial)).join('\n'));
+	await partial.locator('.rd-map').fill('R. A. => Person 1\nNB-4471-0928 => [account number]\nZwolle => [city]');
+	await expect(partial.locator('.rd-leaks')).toBeEmpty();
+	await partial.getByRole('button', { name: 'Redact' }).click();
+	await expect(partial.locator('.rd-leaks')).toHaveText('still identifying: technician');
+});
+
+test('the claim checker prints the report the page shows for the first summary', async ({ page }) => {
+	await page.goto('safety/spotting-hallucination/');
+	const checker = page.locator('.claim-checker').filter({ has: page.locator('.cc-sources') });
+	await expect(checker).toHaveCount(1);
+	await expect(checker.locator('.cc-lines')).toBeHidden();
+	await checker.getByRole('button', { name: 'Check' }).click();
+	const fence = checker.locator('xpath=following::pre[contains(., "claims have no source")][1]');
+	expect((await checker.locator('.cc-lines').innerText()).trim()).toBe((await fence.innerText()).trim());
+	await expect(checker.locator('.cc-missing')).toHaveCount(4);
+});

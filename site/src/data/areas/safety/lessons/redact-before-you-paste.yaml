@@ -17,12 +17,19 @@ shorts: [Controller and processor in one page, Anonymized data can be re-identif
 exercise:
   kind: do
   brief: >-
-    Redact the lesson's fixture document (the full version of the one the Predict runs on) down to
-    what the task needs, and keep the redaction map outside the tool. Stretch: do the same for one
-    document of your own, on paper, without pasting it anywhere.
+    Redact the full support ticket the lesson's email came from down to what the task needs, in the
+    redaction box on the page, and compare the map with one that gets there. Stretch: do the same for
+    one document of your own, on paper, without pasting it anywhere.
 sources: [Academy ai-fluency-framework-foundations]
 minutes: 15
+proofs:
+  - safety/redact-before-you-paste/redact.py
+  - safety/redact-before-you-paste/check_partial.py
+  - safety/redact-before-you-paste/restore.py
 notes: >-
-  Introduces no concept: deepens data-privacy and confidentiality with a fixture that replaces names
-  and account numbers with placeholders and shows the task still works on the result. DLAI-2 was
-  inspiration only and is not cited on the page.
+  Introduces no concept: deepens data-privacy and confidentiality with a redaction box (the Redactor
+  widget, #238) that replaces names and account numbers with placeholders and shows the task still
+  works on the result. The widget is a port of the fixtures in
+  site/examples/safety/redact-before-you-paste/, which read the same sample files and stay in CI as
+  proofs, so mise run examples fails when the text fences on the page and the fixtures disagree. The
+  page never names the fixtures. DLAI-2 was inspiration only and is not cited on the page.

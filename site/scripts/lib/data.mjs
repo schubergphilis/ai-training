@@ -131,8 +131,6 @@ export const FOUNDATIONS_GROUP = 'foundations';
 export const FOUNDATIONS_EXEMPT = new Map([
 	['concepts/context-window', 238], // #238: widget or graded checkpoint replaces each Predict
 	['concepts/same-prompt-twice', 238], // #238
-	['safety/redact-before-you-paste', 238], // #238
-	['safety/spotting-hallucination', 238], // #238
 	['safety/bias-in-patterns', 284], // #284: went live after #238 was written
 	['safety/saying-ai-helped', 284], // #284
 ]);

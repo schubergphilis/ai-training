@@ -1,0 +1,160 @@
+---
+/**
+ * ClaimChecker: the learner pastes a summary a chat assistant wrote, presses
+ * Check, and reads one entry per quote, reference and figure in it: `found`
+ * with the source file, line number and sentence, or `NO SOURCE`, and a
+ * summary line. These are the lines `check_claims.py` prints for the same
+ * summary. The sources are shown in the widget, numbered, so the learner can
+ * read a found sentence in its place. Teaches and never grades (spec S03
+ * "Widgets"), and writes nothing to the progress record. The rules are
+ * `scripts/claim-checker-logic.ts`, and `scripts/claim-checker.ts` binds
+ * each instance.
+ *
+ * `summary` names a file in a `sample/` directory under `site/examples/`
+ * that fills the text box, and `sources` the files in a `sources/`
+ * directory the summary is checked against, so the page shows what the
+ * proof fixtures check. `showSources={false}` leaves the source text out
+ * for a second instance on a page that already shows it.
+ */
+import { exampleFile } from '@lib/example-files';
+
+interface Props {
+	summary?: string;
+	sources: string[];
+	showSources?: boolean;
+}
+
+const { summary, sources, showSources = true } = Astro.props;
+if (sources.length === 0) throw new Error('ClaimChecker: sources is empty');
+
+const text = summary === undefined ? '' : exampleFile(summary, 'ClaimChecker');
+const files = sources.map((path) => ({
+	name: path.slice(path.lastIndexOf('/') + 1),
+	text: exampleFile(path, 'ClaimChecker'),
+}));
+const numbered = (body: string) =>
+	body
+		.split('\n')
+		.filter((line, i, all) => i < all.length - 1 || line !== '')
+		.map((line, i) => `${String(i + 1).padStart(2)}  ${line}`)
+		.join('\n');
+---
+
+<div class="not-content claim-checker" data-claim-checker data-sources={JSON.stringify(files)}>
+	{
+		showSources && (
+			<div class="cc-sources">
+				{files.map((file) => (
+					<figure class="cc-source">
+						<figcaption>{file.name}</figcaption>
+						<pre tabindex="0">{numbered(file.text)}</pre>
+					</figure>
+				))}
+			</div>
+		)
+	}
+	<label class="cc-label">
+		<span>Paste the summary here</span>
+		<textarea class="cc-input" rows="8" spellcheck="false" autocomplete="off">{text}</textarea>
+	</label>
+	<button type="button" class="cc-check">Check</button>
+	<div class="cc-report" aria-live="polite">
+		<pre class="cc-lines" tabindex="0" hidden></pre>
+	</div>
+</div>
+
+<style>
+	.claim-checker {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background: var(--sl-color-bg-nav);
+		font-size: var(--sl-text-sm);
+	}
+
+	.cc-sources {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.cc-source {
+		margin: 0;
+	}
+
+	.cc-source figcaption {
+		font-family: var(--sl-font-mono);
+		font-weight: 600;
+	}
+
+	.cc-source pre,
+	.cc-lines {
+		margin: 0;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	/* The rows are built with createElement and never get Astro's scope class, so their rules need :global(). */
+	.cc-lines :global(.cc-missing) {
+		color: var(--sl-color-red-high);
+		font-weight: 600;
+	}
+
+	.cc-label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.cc-input {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		resize: vertical;
+	}
+
+	.cc-input:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 1px;
+	}
+
+	.cc-check {
+		align-self: flex-start;
+		padding: 0.35rem 0.85rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: 0.25rem;
+		background: transparent;
+		color: var(--sl-color-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.cc-check:hover,
+	.cc-check:focus-visible {
+		background: var(--sl-color-accent);
+		color: var(--sl-color-text-invert);
+	}
+</style>
+
+<script>
+	import { mountClaimCheckers } from '@scripts/claim-checker';
+
+	mountClaimCheckers(document);
+</script>

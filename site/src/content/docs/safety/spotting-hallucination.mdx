@@ -1,20 +1,16 @@
 import { Choice, Predict, Pitfall, Exercise, Recap, Sort, Scenario } from '@components/lesson';
+import ClaimChecker from '@components/widgets/ClaimChecker.astro';
 
 In this lesson we read a one-paragraph summary that a chat assistant wrote
 from a council report and decide which details in it we would check. A
-small checker then looks up every figure, quote and reference from the
-summary in the report and the meeting minutes. Some of the details have no
+checker on the page then looks up every figure, quote and reference from
+the summary in the report and the meeting minutes. Some of the details have no
 source. By the end, the way a detail is written tells you that it is a
 claim to check before the summary leaves your desk.
 
-You need a terminal and `python3`. On a fresh Mac the first `python3`
-command may open a dialog from Apple offering to install its developer
-tools for the terminal (the Xcode Command Line Tools). Accept it, wait for
-the install to finish, and run the command again. The report, the meeting
-minutes and the two summaries are fictional and were written for this
-lesson. The summaries
-read the way a model's summary reads, and the assistant's words are the
-author's.
+The report, the meeting minutes and the two summaries are fictional and
+were written for this lesson. The summaries read the way a model's summary
+reads, and the assistant's words are the author's.
 
 ## A summary that reads well
 
@@ -36,73 +32,68 @@ before you put the paragraph in a briefing, and write them down.
 
 ## Run the check
 
-The checker is a short Python program in the course repository, under
-`site/examples/safety/spotting-hallucination/`. Copy that directory or
-work in a clone, and change into it. The `sources/` directory has the
-report and the minutes of the council meeting, one sentence per line.
-`check_claims.py` reads a summary, pulls out the specifics, and looks each
-one up in the sources. The specifics it knows are quoted passages, references
-written like `article 7(3)` or `section 12`, and figures, which it shows as
-the number with the word after it, as in `890 bicycles`. With `--missing` it
-prints only the claims it can't find, one per line, in the order they
-appear in the summary.
+The checker below has the council report and the minutes of the meeting,
+one sentence per line, and the summary in its text box. It pulls the
+specifics out of the summary and looks each one up in the sources. It
+looks for quoted passages and for references written like `article 7(3)`
+or `section 12`. It also looks for figures, and shows each one as the
+number with the word after it, as in `890 bicycles`. For a claim it finds, it
+prints `found` with the source file, the line number and the sentence. For
+a claim it can't find, it prints `NO SOURCE`.
 
 <Predict id="predict-the-missing-claims" objective="safety/verifies-output/checks-claims"
   concepts={['hallucination-in-practice']}
-  context="A checker reads a model's one-paragraph summary of a council report on cycle parking at a station, pulls out every quoted passage, article reference and figure, and looks each one up in the report and the meeting minutes. With --missing it prints only the claims it cannot find, as the number with the word after it (890 bicycles) or the quoted text with its quotes, one per line, in summary order. The summary claims a count of 890 bicycles against 640 racks, a legal minimum of one rack per 50 passengers under article 7(3), a 38 percent fall in theft between 2022 and 2024, a recommendation of 300 racks of which 120 covered, about 9,000 passengers a day, and a quote from the council chair."
+  context="A checker reads a model's one-paragraph summary of a council report on cycle parking at a station, pulls out every quoted passage, article reference and figure, and looks each one up in the report and the meeting minutes. The learner lists the claims it cannot find, written as the number with the word after it (890 bicycles) or the quoted text with its quotes, one per line, in summary order. The summary claims a count of 890 bicycles against 640 racks, a legal minimum of one rack per 50 passengers under article 7(3), a 38 percent fall in theft between 2022 and 2024, a recommendation of 300 racks of which 120 covered, about 9,000 passengers a day, and a quote from the council chair."
   title="Which claims have no source?"
   hint="Which details are the most precise, and which of them could the model have produced from the form of a report alone?"
   answer={`50 passengers
 38 percent
 9,000 passengers
-"Racks before car parks, every time."`}
-  run="safety/spotting-hallucination/missing_claims.py">
-Before you run it, predict what this prints. Write each claim the way the
-checker shows it, as the number and the word after it, or the quote with its
-quotes, one per line, in the order they appear in the summary.
-
-```sh
-python3 check_claims.py sample/summary_1.txt --missing
-```
-
+"Racks before car parks, every time."`}>
+Before you press Check in the checker below, predict which claims in the
+summary have no source. Write each claim the way the checker shows it, as
+the number and the word after it, or the quote with its quotes, one per
+line, in the order they appear in the summary.
 </Predict>
 
-Now run it without `--missing` to see every claim, including the ones it
-found. For a found claim the checker prints the source file, the line
-number and the sentence, so you can read what the source says next to what
-the summary says.
+<ClaimChecker summary="safety/spotting-hallucination/sample/summary_1.txt"
+  sources={['safety/spotting-hallucination/sources/report.txt', 'safety/spotting-hallucination/sources/minutes.txt']} />
 
-<Predict id="every-claim" title="Every claim, with its source" canonical
-  answer={`found      2025 review
-             minutes.txt:1  Council meeting, 12 June 2025, item 4: station cycle parking.
-  found      890 bicycles
-             report.txt:3  On a weekday morning in March the team counted 890 bicycles parked at the station against 640 racks.
-  found      640 racks
-             report.txt:3  On a weekday morning in March the team counted 890 bicycles parked at the station against 640 racks.
-  found      Article 7(3)
-             report.txt:5  Article 7(3) of the Cycle Parking Ordinance sets a minimum of one rack per 100 boarding passengers.
-  NO SOURCE  50 passengers
-  NO SOURCE  38 percent
-  found      2022
-             report.txt:7  Reported bicycle theft at the station fell by roughly a third between 2022 and 2024, after the covered section was locked at night.
-  found      2024
-             report.txt:7  Reported bicycle theft at the station fell by roughly a third between 2022 and 2024, after the covered section was locked at night.
-  found      300 racks
-             report.txt:8  The team recommends adding 300 racks, of which 120 covered, on the eastern forecourt.
-  found      120 covered
-             report.txt:8  The team recommends adding 300 racks, of which 120 covered, on the eastern forecourt.
-  NO SOURCE  9,000 passengers
-  NO SOURCE  "Racks before car parks, every time."
-  4 of 12 claims have no source`}
-  run="safety/spotting-hallucination/all_claims.py">
-Run the checker on the same summary, and compare what you see with the
-output below.
+These are the four claims with no source, in the order the summary makes
+them.
 
-```sh
-python3 check_claims.py sample/summary_1.txt
+```text
+50 passengers
+38 percent
+9,000 passengers
+"Racks before car parks, every time."
 ```
 
-</Predict>
+The whole report puts every claim next to what it was found in.
+
+```text
+found      2025 review
+           minutes.txt:1  Council meeting, 12 June 2025, item 4: station cycle parking.
+found      890 bicycles
+           report.txt:3  On a weekday morning in March the team counted 890 bicycles parked at the station against 640 racks.
+found      640 racks
+           report.txt:3  On a weekday morning in March the team counted 890 bicycles parked at the station against 640 racks.
+found      Article 7(3)
+           report.txt:5  Article 7(3) of the Cycle Parking Ordinance sets a minimum of one rack per 100 boarding passengers.
+NO SOURCE  50 passengers
+NO SOURCE  38 percent
+found      2022
+           report.txt:7  Reported bicycle theft at the station fell by roughly a third between 2022 and 2024, after the covered section was locked at night.
+found      2024
+           report.txt:7  Reported bicycle theft at the station fell by roughly a third between 2022 and 2024, after the covered section was locked at night.
+found      300 racks
+           report.txt:8  The team recommends adding 300 racks, of which 120 covered, on the eastern forecourt.
+found      120 covered
+           report.txt:8  The team recommends adding 300 racks, of which 120 covered, on the eastern forecourt.
+NO SOURCE  9,000 passengers
+NO SOURCE  "Racks before car parks, every time."
+4 of 12 claims have no source
+```
 
 Read the entry for `Article 7(3)`. The checker found the article, and the
 sentence next to it says one rack per 100 boarding passengers. The summary
@@ -161,8 +152,8 @@ In daily work the tell shows up in these forms.
 - **The quote from a speech never given.** The right person, the right
   meeting, a line that sounds like her, shorter and sharper than anything
   in the minutes.
-- **The summary that adds a point.** The second sample summary prices the
-  300 racks at 410,000, and the report says no cost estimate was made. The
+- **The summary that adds a point.** The second summary, in the exercise
+  below, prices the 300 racks at 410,000, and the report says no cost estimate was made. The
   checker catches this one because the added point contains a number. An
   added point without a number is caught only by reading the source.
 
@@ -220,15 +211,18 @@ about opening hours. What do you do with the claim?
 
 </Scenario>
 
-<Exercise stretch="Write a third summary of the report yourself, with one invented specific in it, and give it to a colleague with the checker. Did they pick the invented one before running it?">
+<Exercise stretch="Write a third summary of the report yourself, with one invented specific in it, and give it to a colleague. Did they pick the invented one before they pasted it into the checker?">
 
-Open `sample/summary_2.txt` in the same directory and read it before you
-run anything. For each figure, quote and reference in it, write down
+The box below holds a second summary of the same report. Read it before
+you press Check. For each figure, quote and reference in it, write down
 whether you expect the checker to find it in the sources or to print
-`NO SOURCE`, and one word on why. Then run
-`python3 check_claims.py sample/summary_2.txt` and put the checker's
+`NO SOURCE`, and one word on why. Then press Check and put the checker's
 answer next to yours. Ten minutes is enough. Doing the prediction first is
 what teaches your eye to stop at a specific before a checker does.
+
+<ClaimChecker summary="safety/spotting-hallucination/sample/summary_2.txt"
+  sources={['safety/spotting-hallucination/sources/report.txt', 'safety/spotting-hallucination/sources/minutes.txt']}
+  showSources={false} />
 
 A good result is a two-column list, your prediction and the checker's
 answer, with a note on every row where they differ. Which claim did you
