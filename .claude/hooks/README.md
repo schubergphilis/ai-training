@@ -2,7 +2,9 @@
 
 The scripts here are thin wrappers. The rules and their tests are in
 `scripts/agent_hooks.py` and `tests/test_agent_hooks.py`, from issues #349
-and #342. `.claude/settings.json` registers them.
+and #342. `.claude/settings.json` registers them. `session-title.sh` runs
+only after the maintainer adds its `UserPromptSubmit` entry there (#373),
+since agents may not edit that file.
 
 - `guard-bash.sh`, PreToolUse on Bash. It exits 2 with a reason that names
   the alternative for a force push, any push to `main`, `gh pr merge`
@@ -39,9 +41,10 @@ and #342. `.claude/settings.json` registers them.
 - `format-file.sh`, PostToolUse on Edit and Write. It runs Biome on an
   edited file under `site/` and ruff on an edited `.py` file, in the
   worktree that holds the file, and never fails the tool call.
-- `session-title.sh`, UserPromptSubmit (#373). For a prompt that starts
-  with `/wave`, it names the session `wave <name> <kind> <yyyy-mm-dd>`
-  through `hookSpecificOutput.sessionTitle`
+- `session-title.sh`, UserPromptSubmit (#373). Once `settings.json`
+  registers it, for a prompt that starts with `/wave` it names the
+  session `wave <name> <kind> <yyyy-mm-dd>` through
+  `hookSpecificOutput.sessionTitle`
   (<https://code.claude.com/docs/en/hooks>, "UserPromptSubmit decision
   control"). With `--resume <Name>` it uses the open run's kind and the
   date its issue was opened. Otherwise it uses the next name from

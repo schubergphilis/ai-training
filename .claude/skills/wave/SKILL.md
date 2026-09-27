@@ -182,13 +182,18 @@ the diff the check printed.
       `mv <that path> .scratch/run-<name>.md`, and edit only that file
       from here on.
 
-   The `session-title` hook has already named this session
-   `wave <name> <kind> <yyyy-mm-dd>` from your `/wave` prompt, in
-   lowercase: the resumed run's name, kind and start date, or for a new
-   run the `next` name, the `--kind` and today's date, both dates in UTC.
-   When the name check above made you take a later name, or in a harness
-   without that hook, start your next message with the line for the maintainer to
-   type, in a code block of its own:
+   Once `.claude/settings.json` registers the `session-title` hook
+   (`grep -c session-title.sh .claude/settings.json` prints 1 or more),
+   the hook names this session `wave <name> <kind> <yyyy-mm-dd>` from
+   your `/wave` prompt, in lowercase: the resumed run's name, kind and
+   start date, or for a new run the name `run-name` gave as `next` at that
+   moment, the `--kind` and today's date, both dates in UTC. Start your
+   next message with the line for the maintainer to type, in a code block
+   of its own, when the settings don't register the hook, when the
+   harness isn't Claude Code, or when the name this run finally took
+   differs from the `next` of your first `run-name` call in step 1 (a
+   concurrent run opened its issue in between, or the name check above
+   made you take a later name):
 
    ```text
    /rename wave <name> <kind> <yyyy-mm-dd>

@@ -6,12 +6,14 @@ exit code and message Claude Code sees. The git helpers get a throwaway
 repository with a linked worktree.
 """
 
+import contextlib
 import json
 import os
 import random
 import subprocess
 import sys
-from collections.abc import Callable, Sequence
+import time
+from collections.abc import Callable, Generator, Sequence
 from datetime import UTC, datetime, tzinfo
 from pathlib import Path
 from typing import ClassVar
@@ -1086,10 +1088,43 @@ class TestSessionTitle:
     def test_main_uses_the_utc_date_for_a_new_run(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        # At 2026-09-27 23:30 UTC the local date at UTC+2 is already
+        # 2026-09-28, so a hook that asked for local time fails here.
         stdin = json.dumps({"prompt": "/wave --kind code"})
-        assert self.main_with(monkeypatch, self.gh_with(self.ISSUES), stdin) == 0
+        with local_zone("Etc/GMT-2"):  # POSIX sign: this zone is UTC+2
+            assert datetime.fromtimestamp(FixedDatetime.INSTANT.timestamp()).day == 28
+            assert self.main_with(monkeypatch, self.gh_with(self.ISSUES), stdin) == 0
         title = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["sessionTitle"]
-        assert title.endswith(" code 2026-09-28")
+        assert title.endswith(" code 2026-09-27")
+
+    def test_the_fixed_clock_gives_local_time_without_a_zone(self) -> None:
+        # The fake clock must tell UTC from local time, or the test above
+        # proves nothing.
+        with local_zone("Etc/GMT-2"):
+            assert FixedDatetime.now().date().isoformat() == "2026-09-28"
+            assert FixedDatetime.now(UTC).date().isoformat() == "2026-09-27"
+
+    def test_guard_and_session_title_run_when_run_name_cannot_import(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # None in sys.modules makes `import run_name` raise ImportError.
+        monkeypatch.setitem(sys.modules, "run_name", None)
+        push = json.dumps({"tool_input": {"command": "git push --force"}, "cwd": WORKTREE})
+        assert agent_hooks.main(["agent_hooks.py", "guard-bash"], push, {}) == 2
+        wave = json.dumps({"prompt": "/wave"})
+        assert agent_hooks.main(["agent_hooks.py", "session-title"], wave, {}) == 0
+        assert capsys.readouterr().out == ""
+
+    def test_importing_the_hooks_does_not_import_run_name(self) -> None:
+        scripts = Path(agent_hooks.__file__).resolve().parent
+        done = subprocess.run(
+            [sys.executable, "-c", "import sys, agent_hooks; print('run_name' in sys.modules)"],
+            cwd=scripts,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert done.stdout.strip() == "False"
 
     @pytest.mark.parametrize(
         "error",
@@ -1175,8 +1210,31 @@ class TestSessionTitle:
 
 
 class FixedDatetime(datetime):
-    """`datetime` with `now` fixed at 2026-09-28 07:30 UTC, for the tests through `main`."""
+    """`datetime` with `now` fixed at 2026-09-27 23:30 UTC, for the tests through `main`.
+
+    `now(tz)` gives that instant in `tz`, and `now()` in the local zone,
+    as `datetime.now` does.
+    """
+
+    INSTANT: ClassVar[datetime] = datetime(2026, 9, 27, 23, 30, tzinfo=UTC)
 
     @classmethod
-    def now(cls, tz: tzinfo | None = None) -> FixedDatetime:
-        return cls(2026, 9, 28, 7, 30, tzinfo=tz)
+    def now(cls, tz: tzinfo | None = None) -> datetime:
+        moment = cls.INSTANT.astimezone(tz)
+        return moment if tz is not None else moment.replace(tzinfo=None)
+
+
+@contextlib.contextmanager
+def local_zone(zone: str) -> Generator[None]:
+    """Set the process's local time zone (`TZ` and `time.tzset`) and restore it after."""
+    old = os.environ.get("TZ")
+    os.environ["TZ"] = zone
+    time.tzset()
+    try:
+        yield
+    finally:
+        if old is None:
+            del os.environ["TZ"]
+        else:
+            os.environ["TZ"] = old
+        time.tzset()

@@ -56,8 +56,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
-import run_name
-
 ROLE_VAR = "AI_TRAINING_ROLE"
 PUSH_MAIN_ROLES: frozenset[str] = frozenset()
 MERGE_ROLES = frozenset({"dispatcher", "wave-lead", "coordinator"})
@@ -1070,6 +1068,8 @@ SESSION_GH_TIMEOUT = 20
 
 def session_gh(args: Sequence[str]) -> object:
     """Run gh for the session title and parse its output, or raise RunNameError."""
+    import run_name  # here and not at the top, so guard-bash never depends on it
+
     try:
         done = subprocess.run(
             ["gh", *args],
@@ -1120,7 +1120,7 @@ def wave_title(name: str, kind: str, date: str) -> str:
 
 def session_title(
     event: Mapping[str, Any],
-    gh: run_name.Gh | None = None,
+    gh: Callable[[Sequence[str]], object] | None = None,
     now: Callable[[], datetime] | None = None,
     names_file: Path | None = None,
 ) -> str | None:
@@ -1141,6 +1141,10 @@ def session_title(
     args = wave_arguments(prompt)
     if args is None:
         return None
+    # Imported here and not at the top: a broken run_name.py must never stop
+    # guard-bash and review-bash, which import this module too (#373).
+    import run_name
+
     issues = run_name.fetch_issues(None, gh or session_gh)
     runs = [run for issue in issues if (run := run_name.run_of(issue)) is not None]
     resume = args.get("--resume")
