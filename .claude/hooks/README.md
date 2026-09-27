@@ -15,10 +15,15 @@ since agents may not edit that file.
   (`while` or `until`, or a `for` loop that sleeps), and a `sleep` of any
   length followed by `tail`, `cat`, `ls`, `head`, `grep` or `wc`, which
   polls a background run. It also rejects
-  `--no-verify` on `git commit` or `git push` (and `git commit -n`),
-  `gh repo delete`, a `gh api` call with the DELETE method in any flag form
-  or place, and an `rm` that names `.scratch` and also a path outside
-  `.scratch/`, such as `.scratch/../..`. A role sets
+  `--no-verify` on `git commit`, `push`, `merge`, `pull` or `rebase` (and
+  `git commit -n`), the other ways to skip the git hooks (a `SKIP=<hook>`
+  or `PREK_SKIP=<hook>` prefix or export, `git -c core.hooksPath=...`, and
+  `git config core.hooksPath <value>`), every `gh <noun> delete`, a
+  `gh api` call with the DELETE method in any flag form or place, a
+  `gh api graphql` mutation that calls a `delete...` field, a push that
+  deletes a remote branch or tag (`--delete`, `-d`, `:<branch>`,
+  `--prune`, `--mirror`), and an `rm` that names `.scratch` and also a
+  path outside `.scratch/`, such as `.scratch/../..`. A role sets
   `AI_TRAINING_ROLE` in the environment or as a prefix on the command
   (`AI_TRAINING_ROLE=wave-lead gh pr merge`).
 - `review-bash.sh`, PreToolUse on Bash in the `code-reviewer` agent only,

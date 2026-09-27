@@ -485,6 +485,152 @@ def test_rm_inside_scratch_or_without_a_scratch_target_passes(command: str) -> N
     assert check(command) is None
 
 
+# The other ways to skip the git hooks and to delete on GitHub (#421).
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "gh release delete v1 --yes",
+        "gh issue delete 12 --yes",
+        "gh label delete bug",
+        "gh run delete 123",
+        "gh cache delete key",
+        "gh secret delete TOKEN",
+        "gh variable delete NAME",
+        "gh gist delete 1",
+        "gh release delete-asset v1 a.zip",
+        "gh project item-delete 1 --id x",
+        "gh repo deploy-key delete 1",
+        "gh issue delete -R o/r 12",
+        "gh issue -R o/r delete 12",
+        "gh issue view 1 && gh label delete x",
+        "gh api graphql -f query='mutation { deleteIssue(input: $in) { clientMutationId } }'",
+        "gh api graphql -f query='mutation{deleteRef(input:{refId:\"x\"}){clientMutationId}}'",
+    ],
+)
+def test_every_gh_delete_is_rejected(command: str) -> None:
+    reason = check(command)
+    assert reason is not None
+    assert "for the maintainer" in reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "gh issue close 12",
+        "gh label create bug",
+        "gh issue view 12",
+        "gh search issues delete",
+        "gh issue comment 12 --body 'please delete this'",
+        "gh api graphql -f query='mutation { addComment(input: $input) { clientMutationId } }'",
+        "gh api graphql -f query='query { viewer { login } }'",
+    ],
+)
+def test_gh_calls_that_delete_nothing_pass(command: str) -> None:
+    assert check(command) is None
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git push origin --delete feat/x",
+        "git push origin -d feat/x",
+        "git push -d origin feat/x",
+        "git push --del origin feat/x",
+        "git push -ud origin feat/x",
+        "git push -fd origin feat/x",
+        "git push origin :feat/x",
+        "git push origin +:feat/x",
+        "git push origin :refs/tags/v1",
+        "git push --prune origin 'refs/heads/*:refs/heads/*'",
+        "git push --mirror origin",
+        "git -C ../other push origin --delete feat/x",
+    ],
+)
+def test_deleting_a_remote_branch_is_rejected(command: str) -> None:
+    reason = check(command)
+    assert reason is not None
+    assert "Deleting a branch or tag on the remote" in reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git push origin feat/x",
+        "git push -u origin feat/x",
+        "git push origin :",
+        "git push -o ci.skip origin feat/x",
+        "git push -uoci.skip origin feat/x",
+        "git push --dry-run origin feat/x",
+        "git push origin feat/x:feat/x",
+    ],
+)
+def test_pushes_that_delete_nothing_pass(command: str) -> None:
+    assert check(command) is None
+
+
+@pytest.mark.parametrize(
+    ("command", "what"),
+    [
+        ("SKIP=ruff git commit -m x", "`SKIP` or `PREK_SKIP`"),
+        ("SKIP=ruff,mdformat mise run fast", "`SKIP` or `PREK_SKIP`"),
+        ("AI_TRAINING_ROLE=wave-lead SKIP=ruff git commit -m x", "`SKIP` or `PREK_SKIP`"),
+        ("export SKIP=ruff && git commit -m x", "`SKIP` or `PREK_SKIP`"),
+        ("env SKIP=ruff git commit -m x", "`SKIP` or `PREK_SKIP`"),
+        ("typeset -x SKIP=ruff", "`SKIP` or `PREK_SKIP`"),
+        ("PREK_SKIP=ruff git commit -m x", "`SKIP` or `PREK_SKIP`"),
+        ("export PREK_SKIP=ruff", "`SKIP` or `PREK_SKIP`"),
+        ("git -c core.hooksPath=/dev/null commit -m x", "core.hooksPath"),
+        ("git -c core.hookspath= commit -m x", "core.hooksPath"),
+        ("git -c CORE.HOOKSPATH=x push origin feat/x", "core.hooksPath"),
+        ("git --config-env=core.hooksPath=H commit -m x", "core.hooksPath"),
+        ("git --config-env core.hooksPath=H commit -m x", "core.hooksPath"),
+        ("git config core.hooksPath /dev/null", "core.hooksPath"),
+        ("git config --local core.hooksPath .nohooks", "core.hooksPath"),
+        ("git config set core.hooksPath x", "core.hooksPath"),
+        ("git -C ../other config core.hooksPath x", "core.hooksPath"),
+        ("git merge --no-verify feat/x", "--no-verify"),
+        ("git merge -m note --no-verify feat/x", "--no-verify"),
+        ("git pull --no-verify origin main", "--no-verify"),
+        ("git rebase --no-verify origin/main", "--no-verify"),
+    ],
+)
+def test_other_ways_to_skip_the_git_hooks_are_rejected(command: str, what: str) -> None:
+    reason = check(command)
+    assert reason is not None
+    assert what in reason
+    assert "mise run fast" in reason
+    assert "their own terminal" in reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "SKIPPED=1 mise run fast",
+        "echo SKIP=ruff",
+        'git commit -m "SKIP=ruff is not allowed"',
+        "git config user.name x",
+        "git config core.hooksPath",
+        "git config --get core.hooksPath",
+        "git config --unset core.hooksPath",
+        "git -c user.name=x log",
+        "git merge feat/x",
+        "git merge --no-verify-signatures feat/x",
+        "git merge -m --no-verify feat/x",
+        "git rebase -n origin/main",
+    ],
+)
+def test_commands_that_keep_the_git_hooks_pass(command: str) -> None:
+    assert check(command) is None
+
+
+def test_split_segments_records_the_assignment_names_it_drops() -> None:
+    segment = agent_hooks.split_segments("A=1 SKIP=x git commit", ".")[0]
+    assert segment.words == ["git", "commit"]
+    assert segment.assignments == ("A", "SKIP")
+
+
 def git(*args: str, cwd: Path) -> None:
     env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_SYSTEM": os.devnull}
     subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, env=env)

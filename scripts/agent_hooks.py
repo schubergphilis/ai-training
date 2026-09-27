@@ -37,6 +37,10 @@ polling (a `gh` loop, or a `sleep` before `tail`, `cat`, `ls`, `head`,
 `grep` or `wc`, #422),
 `--no-verify`, deletes on GitHub, and an `rm` that leaves `.scratch/`
 (#391).
+It also rejects the other ways to skip the git hooks (`SKIP`, `PREK_SKIP`,
+`core.hooksPath`, `--no-verify` on `git merge`, `pull` and `rebase`), every
+`gh <noun> delete`, a `gh api graphql` delete mutation, and a push that
+deletes a remote branch (#421).
 
 No agent pushes to `main` (#353): every change reaches it through a pull
 request. `gh pr merge` is allowed only when `AI_TRAINING_ROLE` names a
@@ -78,11 +82,16 @@ BIOME_SUFFIXES = frozenset(
 
 @dataclass(frozen=True)
 class Segment:
-    """One simple command: its words, the role prefix it carries, and where it runs."""
+    """One simple command: its words, the role prefix it carries, and where it runs.
+
+    `assignments` holds the names of the assignment prefixes the parser
+    dropped from `words` (`SKIP` for `SKIP=ruff git commit`, #421).
+    """
 
     words: list[str]
     role: str | None
     cwd: str
+    assignments: tuple[str, ...] = ()
 
 
 class UnknownHomeError(RuntimeError):
@@ -160,16 +169,18 @@ def split_segments(
         while words and words[0] in KEYWORDS:
             words = words[1:]
         role: str | None = None
+        names: list[str] = []
         while not keep_assignments and words and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[0]):
             name, _, value = words[0].partition("=")
             if name == ROLE_VAR:
                 role = value
+            names.append(name)
             words = words[1:]
         if not words:
             continue
         if words[0] == "cd" and len(words) > 1:
             here = str(Path(here, expand_user(words[1])))
-        segments.append(Segment(words, role, here))
+        segments.append(Segment(words, role, here, tuple(names)))
     return segments
 
 
@@ -259,6 +270,45 @@ def pushes_main(args: Sequence[str], branch: str) -> bool:
     return False
 
 
+PUSH_VALUE_FLAGS = frozenset({"-o", "--push-option", "--repo", "--receive-pack", "--exec"})
+
+
+def is_delete_option(arg: str) -> bool:
+    """True for `--delete` of `git push`, or a prefix down to `--de`, which git accepts."""
+    return len(arg) >= len("--de") and "--delete".startswith(arg)
+
+
+def push_deletes(args: Sequence[str]) -> bool:
+    """True when a `git push` argument list deletes a branch or tag on the remote (#421).
+
+    That is `--delete` (or a prefix down to `--de`), `-d`, also in a group
+    of short flags (`-fd`), a refspec with an empty source (`:feat/x`,
+    `+:feat/x`), `--prune`, and `--mirror`, which removes the remote refs
+    that aren't local. A lone `:` pushes the matching branches and deletes
+    nothing (https://git-scm.com/docs/git-push).
+    """
+    skip_next = False
+    for arg in args:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg == "--":
+            break
+        if arg in PUSH_VALUE_FLAGS:
+            skip_next = True
+        elif arg in {"--prune", "--mirror"} or is_delete_option(arg):
+            return True
+        elif re.match(r"^-[A-Za-z0-9]", arg):
+            # `-o` takes a value, so the group ends there (`-uoci.skip`).
+            group = arg[1:].split("o", 1)[0]
+            if "d" in group:
+                return True
+    positional = [a for a in args if not a.startswith("-")]
+    return any(
+        len(spec.lstrip("+")) > 1 and spec.lstrip("+").startswith(":") for spec in positional
+    )
+
+
 def force_push(args: Sequence[str]) -> bool:
     for a in args:
         if a in {"--force", "-f"}:
@@ -318,15 +368,23 @@ def sleeps_then_reads(segments: Sequence[Segment]) -> bool:
     return False
 
 
-def skips_hooks(sub: str, args: Sequence[str]) -> bool:
-    """True when `git commit` or `git push` arguments turn the git hooks off.
+NO_VERIFY_COMMANDS = frozenset({"commit", "push", "merge", "pull", "rebase"})
+MERGE_VALUE_FLAGS = frozenset(
+    {"-m", "-F", "-s", "-X", "--message", "--file", "--strategy", "--strategy-option"}
+)
 
-    Both take `--no-verify`, and git accepts a long option cut to any
-    unambiguous prefix (`--no-veri`). For `git commit` only, `-n` is the
-    same option, also inside a group of short flags (`-an`). For `git push`,
-    `-n` is `--dry-run`.
+
+def skips_hooks(sub: str, args: Sequence[str]) -> bool:
+    """True when `git commit|push|merge|pull|rebase` arguments turn the git hooks off.
+
+    All take `--no-verify` (#421 adds `merge`, and `pull` and `rebase` with
+    it, https://git-scm.com/docs/git-merge, https://git-scm.com/docs/git-pull,
+    https://git-scm.com/docs/git-rebase), and git accepts a long option cut
+    to any unambiguous prefix (`--no-veri`). For `git commit` only, `-n` is the same option, also
+    inside a group of short flags (`-an`). For `git push`, `-n` is
+    `--dry-run`, and for `merge`, `pull` and `rebase` it is `--no-stat`.
     """
-    if sub not in {"commit", "push"}:
+    if sub not in NO_VERIFY_COMMANDS:
         return False
     skip_next = False
     for arg in args:
@@ -337,6 +395,8 @@ def skips_hooks(sub: str, args: Sequence[str]) -> bool:
             return False
         if len(arg) >= len("--no-veri") and "--no-verify".startswith(arg):
             return True
+        if sub in {"merge", "pull"} and arg in MERGE_VALUE_FLAGS:
+            skip_next = True
         if sub != "commit":
             continue
         if arg in COMMIT_VALUE_FLAGS:
@@ -352,19 +412,104 @@ def skips_hooks(sub: str, args: Sequence[str]) -> bool:
     return False
 
 
-def gh_deletes(words: Sequence[str]) -> bool:
-    """True for `gh repo delete` and for a `gh api` call with the DELETE method.
+HOOKS_PATH_KEY = "core.hookspath"
+SHELL_EXPORTS = frozenset({"export", "env", "typeset", "declare", "readonly", "local"})
+GH_DELETE_VERB = re.compile(r"^(delete|delete-[a-z-]+|[a-z-]+-delete)$")
+GRAPHQL_DELETE = re.compile(r"\bdelete[A-Z_]")
 
-    gh reads flags anywhere after the subcommand, and the method as
-    `-X DELETE`, `-XDELETE`, `-X=DELETE`, `--method DELETE` or
-    `--method=DELETE`.
+
+PREK_SKIP_VARS = frozenset({"PREK_SKIP", "SKIP"})
+
+
+def sets_skip(segment: Segment) -> bool:
+    """True when a command sets a variable that makes prek skip hooks (#421).
+
+    prek reads `PREK_SKIP`, and `SKIP` as its fallback
+    (https://prek.j178.dev/reference/environment-variables/). That is a
+    `SKIP=<hook>` prefix, and the name after `export`, `env`, `typeset`,
+    `declare`, `readonly` or `local`. Another name, such as `SKIPPED`,
+    passes.
+    """
+    if PREK_SKIP_VARS & set(segment.assignments):
+        return True
+    words = segment.words
+    return words[0] in SHELL_EXPORTS and any(
+        w.split("=", 1)[0] in PREK_SKIP_VARS for w in words[1:]
+    )
+
+
+def sets_hooks_path(words: Sequence[str]) -> bool:
+    """True when a git command points `core.hooksPath` somewhere else (#421).
+
+    That is `git -c core.hooksPath=...` and `git --config-env
+    core.hooksPath=...` for one command, and `git config` with a value
+    after the key (`git config core.hooksPath /dev/null`, `git config set
+    core.hooksPath x`), which lasts. git reads the section and key names
+    of a config key in any case (https://git-scm.com/docs/git-config,
+    "Syntax"). Reading the key (`git config
+    core.hooksPath`, `--get`) and `--unset` pass.
+    """
+    if words[:1] != ["git"]:
+        return False
+    rest = list(words[1:])
+    while rest and rest[0].startswith("-"):
+        flag = rest.pop(0)
+        value = ""
+        if flag in {"-c", "--config-env"} and rest:
+            value = rest.pop(0)
+        elif flag.startswith("--config-env="):
+            value = flag.removeprefix("--config-env=")
+        elif flag in {"-C", "--git-dir", "--work-tree", "--namespace"} and rest:
+            rest.pop(0)
+        if value.split("=", 1)[0].lower() == HOOKS_PATH_KEY:
+            return True
+    if rest[:1] != ["config"]:
+        return False
+    keys = [i for i, w in enumerate(rest) if w.lower() == HOOKS_PATH_KEY]
+    if not keys:
+        return False
+    after = rest[keys[0] + 1 :]
+    reads = {"--get", "--get-all", "--unset", "--unset-all", "get", "unset"}
+    return not reads & set(rest[: keys[0]]) and any(not w.startswith("-") for w in after)
+
+
+def gh_positional(words: Sequence[str]) -> list[str]:
+    """The words of a `gh` command after `gh`, without flags and the value of `-R`/`--repo`."""
+    out: list[str] = []
+    skip_next = False
+    for word in words[1:]:
+        if skip_next:
+            skip_next = False
+        elif word in {"-R", "--repo"}:
+            skip_next = True
+        elif not word.startswith("-"):
+            out.append(word)
+    return out
+
+
+def gh_deletes(words: Sequence[str]) -> bool:
+    """True for a `gh` command that deletes something on GitHub.
+
+    That is any `gh <noun> delete` (`gh release delete`, `gh issue delete`,
+    `gh label delete`...), a verb such as `delete-asset` or `item-delete`,
+    `gh repo <noun> delete` (`gh repo deploy-key delete`), a `gh api graphql`
+    call whose mutation names a `delete...` field (#421), and a `gh api`
+    call with the DELETE method. gh reads flags anywhere after the
+    subcommand, and the method as `-X DELETE`, `-XDELETE`, `-X=DELETE`,
+    `--method DELETE` or `--method=DELETE`.
     """
     if words[:1] != ["gh"]:
         return False
-    if words[1:3] == ["repo", "delete"]:
+    positional = gh_positional(words)
+    if positional[:1] != ["api"]:
+        if len(positional) > 1 and GH_DELETE_VERB.match(positional[1]):
+            return True
+        return positional[:1] == ["repo"] and bool(
+            positional[2:3] and GH_DELETE_VERB.match(positional[2])
+        )
+    text = " ".join(words[2:])
+    if positional[1:2] == ["graphql"] and "mutation" in text and GRAPHQL_DELETE.search(text):
         return True
-    if words[1:2] != ["api"]:
-        return False
     rest = list(words[2:])
     for i, arg in enumerate(rest):
         following = rest[i + 1] if i + 1 < len(rest) else ""
@@ -415,20 +560,30 @@ def rm_leaves_scratch(words: Sequence[str], cwd: str) -> str | None:
     return None
 
 
+def hooks_skipped(what: str) -> str:
+    """The block message for a command that turns git hooks off (#391, #421)."""
+    return (
+        f"{what} skips the git hooks, and the hooks are checks. Fix what the hook reports "
+        "and run `mise run fast`. When the maintainer means to skip a hook, they run the "
+        "command in their own terminal."
+    )
+
+
 def check_hooks_and_deletes(segment: Segment) -> str | None:
     """The reason a simple command is rejected by the rules of #391, or None."""
     words = segment.words
     if gh_deletes(words):
         return (
-            "`gh repo delete` and `gh api` with the DELETE method are for the maintainer. "
-            "Report what should go."
+            "Deletes on GitHub (`gh <noun> delete`, `gh api` with the DELETE method or a "
+            "graphql delete mutation) are for the maintainer. Report what should go."
         )
+    if sets_skip(segment):
+        return hooks_skipped("Setting `SKIP` or `PREK_SKIP`")
+    if sets_hooks_path(words):
+        return hooks_skipped("Setting `core.hooksPath`")
     parsed = git_args(words, segment.cwd)
     if parsed and parsed[0] and skips_hooks(parsed[0][0], parsed[0][1:]):
-        return (
-            "`--no-verify` (or `git commit -n`) skips the git hooks, and the hooks are "
-            "checks. Fix what the hook reports, run `mise run fast`, and commit again."
-        )
+        return hooks_skipped("`--no-verify` (or `git commit -n`)")
     outside = rm_leaves_scratch(words, segment.cwd)
     if outside is not None:
         return (
@@ -471,6 +626,11 @@ def check_segment(
         return None
     sub, rest = args[0], args[1:]
     if sub == "push":
+        if push_deletes(rest):
+            return (
+                "Deleting a branch or tag on the remote (`--delete`, `-d`, `:<branch>`, "
+                "`--prune`, `--mirror`) is for the maintainer. Report what should go."
+            )
         if force_push(rest):
             return (
                 "Force push: use `git push --force-with-lease` on your own branch instead, "
