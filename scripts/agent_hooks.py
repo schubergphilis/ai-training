@@ -91,8 +91,8 @@ BIOME_SUFFIXES = frozenset(
 class Segment:
     """One simple command: its words, the role prefix it carries, and where it runs.
 
-    `assignments` holds the names of the assignment prefixes the parser
-    dropped from `words` (`SKIP` for `SKIP=ruff git commit`, #421).
+    `assignments` holds the assignment prefixes the parser dropped from
+    `words`, as written (`SKIP=ruff` for `SKIP=ruff git commit`, #421).
     """
 
     words: list[str]
@@ -176,18 +176,18 @@ def split_segments(
         while words and words[0] in KEYWORDS:
             words = words[1:]
         role: str | None = None
-        names: list[str] = []
+        dropped: list[str] = []
         while not keep_assignments and words and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[0]):
             name, _, value = words[0].partition("=")
             if name == ROLE_VAR:
                 role = value
-            names.append(name)
+            dropped.append(words[0])
             words = words[1:]
         if not words:
             continue
         if words[0] == "cd" and len(words) > 1:
             here = str(Path(here, expand_user(words[1])))
-        segments.append(Segment(words, role, here, tuple(names)))
+        segments.append(Segment(words, role, here, tuple(dropped)))
     return segments
 
 
@@ -437,12 +437,38 @@ def sets_skip(segment: Segment) -> bool:
     `declare`, `readonly` or `local`. Another name, such as `SKIPPED`,
     passes.
     """
-    if PREK_SKIP_VARS & set(segment.assignments):
-        return True
-    words = segment.words
-    return words[0] in SHELL_EXPORTS and any(
-        w.split("=", 1)[0] in PREK_SKIP_VARS for w in words[1:]
-    )
+    return any(name in PREK_SKIP_VARS for name, _ in assigned(segment))
+
+
+def assigned(segment: Segment) -> list[tuple[str, str]]:
+    """The names and values a command sets: its assignment prefixes, and the
+    words after `export`, `env`, `typeset`, `declare`, `readonly` or `local`.
+
+    A word after one of those without `=` gives the value "".
+    """
+    pairs = [(w.split("=", 1)[0], w.partition("=")[2]) for w in segment.assignments]
+    if segment.words[0] in SHELL_EXPORTS:
+        pairs += [(w.split("=", 1)[0], w.partition("=")[2]) for w in segment.words[1:]]
+    return pairs
+
+
+def sets_hooks_path_in_env(segment: Segment) -> bool:
+    """True when a command sets `core.hooksPath` through git's environment (#421 review).
+
+    git reads `GIT_CONFIG_COUNT` pairs of `GIT_CONFIG_KEY_<n>` and
+    `GIT_CONFIG_VALUE_<n>` (https://git-scm.com/docs/git-config,
+    "ENVIRONMENT"). git 2.55 also reads `GIT_CONFIG_PARAMETERS`, in which
+    `git -c` passes its values to the commands it runs. That variable isn't
+    on the git-config page, so this rests on a test with git 2.55. A key of
+    `core.hooksPath` in any case, or a `GIT_CONFIG_PARAMETERS` value that
+    mentions it, counts.
+    """
+    for name, value in assigned(segment):
+        if re.fullmatch(r"GIT_CONFIG_KEY_\d+", name) and value.lower() == HOOKS_PATH_KEY:
+            return True
+        if name == "GIT_CONFIG_PARAMETERS" and HOOKS_PATH_KEY in value.lower():
+            return True
+    return False
 
 
 def sets_hooks_path(words: Sequence[str]) -> bool:
@@ -494,14 +520,37 @@ def gh_positional(words: Sequence[str]) -> list[str]:
     return out
 
 
+# The short flags of `gh pr merge` and `gh pr close` that take a value
+# (https://cli.github.com/manual/gh_pr_merge, https://cli.github.com/manual/gh_pr_close).
+GH_PR_SHORT_VALUE = frozenset("bFAtcR")
+
+
+def deletes_pr_branch(words: Sequence[str]) -> bool:
+    """True when `gh pr merge|close` words carry `--delete-branch` or `-d`, also in a group."""
+    for word in words:
+        if word == "--":
+            return False
+        if word == "--delete-branch" or word.startswith("--delete-branch="):
+            return not word.endswith("=false")
+        if re.match(r"^-[A-Za-z]", word):
+            for flag in word[1:]:
+                if flag == "d":
+                    return True
+                if flag in GH_PR_SHORT_VALUE:
+                    break
+    return False
+
+
 def gh_deletes(words: Sequence[str]) -> bool:
     """True for a `gh` command that deletes something on GitHub.
 
     That is any `gh <noun> delete` (`gh release delete`, `gh issue delete`,
     `gh label delete`...), a verb such as `delete-asset` or `item-delete`,
-    `gh repo <noun> delete` (`gh repo deploy-key delete`), a `gh api graphql`
-    call whose mutation names a `delete...` field (#421), and a `gh api`
-    call with the DELETE method. gh reads flags anywhere after the
+    `gh repo deploy-key delete` and `gh repo autolink delete`, a
+    `gh api graphql` call whose mutation names a `delete...` field (#421),
+    also with flags before `graphql`, `gh pr merge` and `gh pr close` with
+    `--delete-branch` or `-d` (#421 review), and a `gh api` call with the
+    DELETE method. gh reads flags anywhere after the
     subcommand, and the method as `-X DELETE`, `-XDELETE`, `-X=DELETE`,
     `--method DELETE` or `--method=DELETE`.
     """
@@ -511,11 +560,15 @@ def gh_deletes(words: Sequence[str]) -> bool:
     if positional[:1] != ["api"]:
         if len(positional) > 1 and GH_DELETE_VERB.match(positional[1]):
             return True
-        return positional[:1] == ["repo"] and bool(
+        if positional[:2] in (["pr", "merge"], ["pr", "close"]):
+            return deletes_pr_branch(words)
+        return positional[:2] in (["repo", "deploy-key"], ["repo", "autolink"]) and bool(
             positional[2:3] and GH_DELETE_VERB.match(positional[2])
         )
     text = " ".join(words[2:])
-    if positional[1:2] == ["graphql"] and "mutation" in text and GRAPHQL_DELETE.search(text):
+    # A flag value before the endpoint (`--method POST graphql`) is also a
+    # positional word here, so look for `graphql` anywhere after `api`.
+    if "graphql" in positional[1:] and "mutation" in text and GRAPHQL_DELETE.search(text):
         return True
     rest = list(words[2:])
     for i, arg in enumerate(rest):
@@ -581,12 +634,13 @@ def check_hooks_and_deletes(segment: Segment) -> str | None:
     words = segment.words
     if gh_deletes(words):
         return (
-            "Deletes on GitHub (`gh <noun> delete`, `gh api` with the DELETE method or a "
-            "graphql delete mutation) are for the maintainer. Report what should go."
+            "Deletes on GitHub (`gh <noun> delete`, `gh pr merge|close --delete-branch`, "
+            "`gh api` with the DELETE method or a graphql delete mutation) are for the "
+            "maintainer. Report what should go."
         )
     if sets_skip(segment):
         return hooks_skipped("Setting `SKIP` or `PREK_SKIP`")
-    if sets_hooks_path(words):
+    if sets_hooks_path(words) or sets_hooks_path_in_env(segment):
         return hooks_skipped("Setting `core.hooksPath`")
     parsed = git_args(words, segment.cwd)
     if parsed and parsed[0] and skips_hooks(parsed[0][0], parsed[0][1:]):
