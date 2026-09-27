@@ -16,6 +16,9 @@ Four entry points, each reading the hook's JSON event on stdin:
   `$(...)`, backtick pair or process substitution is checked the same
   way. `git -c`, `git --output` and assignments (`NAME=value`) are
   rejected. Anything else exits 2, and so does a command it can't read.
+  A backtick body is unescaped before the check, a `for` loop over an
+  upper-case name or `path` and an unquoted here-document are rejected,
+  and a brace expansion counts with escaped or quoted text in it (#448).
 - `format` (PostToolUse on Edit and Write) runs Biome on an edited file
   under `site/` and ruff on an edited `.py` file. It never fails the tool
   call: a formatter that is missing or errors is skipped.
@@ -70,7 +73,11 @@ MAIN_BRANCH = "main"
 OPERATORS = frozenset({"&&", "||", ";", "|", "&", "\n", ";;", "|&"})
 KEYWORDS = frozenset({"do", "then", "else", "elif", "{", "(", "!", "time"})
 LOOP_WORDS = frozenset({"for", "while", "until"})
-HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+# `(?<!<)` and `(?!<)` leave out the zsh here-string `<<<word`, whose next
+# lines are commands, and `\?` reads a delimiter with a backslash before it,
+# `<<\EOF`, which the shell reads as quoted (#448,
+# https://zsh.sourceforge.io/Doc/Release/Redirection.html).
+HEREDOC = re.compile(r"(?<!<)<<(?!<)-?\s*\\?(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
 SLEEP_ARG = re.compile(r"^(\d+(?:\.\d+)?)([smhd]?)$")
 GH_SUBSHELL = re.compile(r"(?:\$\(|`)\s*gh\s")
 UNITS = {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}
@@ -759,6 +766,12 @@ REVIEW_TASKS = (
     "bundles",
 )
 
+# zsh arrays tied to a colon-separated variable (`path` is `PATH`), so a
+# loop over one sets that variable (#448,
+# https://zsh.sourceforge.io/Doc/Release/Parameters.html, "Parameters Used
+# By The Shell").
+ZSH_TIED_ARRAYS = frozenset({"path", "fpath", "cdpath", "manpath", "module_path", "mailpath"})
+
 # `mise tasks` subcommands that change or run something.
 MISE_TASKS_WRITERS = frozenset({"add", "edit", "run", "r"})
 
@@ -918,6 +931,10 @@ def scan_substitutions(text: str, i: int, stop: str, inner: list[str]) -> tuple[
             continue
         if char == "`":
             body, i = backtick_body(text, i + 1)
+            # The shell drops the `\` before `$`, `` ` `` and `\` in a
+            # backtick body before it runs the body (#448, POSIX shell
+            # 2.6.3, https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html).
+            body = re.sub(r"\\([$`\\])", r"\1", body)
             inner.append(scan_substitutions(body, 0, "", inner)[0])
             out.append(SUBSTITUTION)
             continue
@@ -933,6 +950,8 @@ def scan_substitutions(text: str, i: int, stop: str, inner: list[str]) -> tuple[
                 continue
             if char in "()":
                 raise ValueError(f"an unquoted `{char}`")
+            if pair == "<<" and text[i : i + 3] != "<<<" and text[i - 1 : i] != "<":
+                check_heredoc_quoted(text, i + 2)
             if char == "{" and text[i - 1 : i] != "$" and is_brace_expansion(text, i):
                 raise ValueError("a brace expansion")
         out.append(char)
@@ -940,6 +959,20 @@ def scan_substitutions(text: str, i: int, stop: str, inner: list[str]) -> tuple[
     if stop:
         raise ValueError("an unclosed quote or substitution")
     return "".join(out), i
+
+
+def check_heredoc_quoted(text: str, i: int) -> None:
+    """Raise `ValueError` unless the here-document delimiter after `<<` at `i - 2` is quoted.
+
+    The shell expands `$(...)` in the body of `cat <<EOF`, and reads a `'`
+    there as text, so the scanner can't follow it. A reviewer doesn't need
+    one, and `<<'EOF'`, `<<"EOF"` and `<<\\EOF` keep the body as data (#448).
+    """
+    j = i + 1 if text[i : i + 1] == "-" else i
+    while text[j : j + 1] in {" ", "\t"}:
+        j += 1
+    if text[j : j + 1] not in {"'", '"', "\\"}:
+        raise ValueError("an unquoted here-document (quote its delimiter, as in <<'EOF')")
 
 
 def quote_end(text: str, i: int) -> int | None:
@@ -975,12 +1008,30 @@ def backtick_body(text: str, i: int) -> tuple[str, int]:
 
 
 def is_brace_expansion(text: str, i: int) -> bool:
-    """True when the `{` at `i` opens a brace expansion such as `{a,b}` or `{1..3}`."""
+    """True when the `{` at `i` opens a brace expansion such as `{a,b}` or `{1..3}`.
+
+    An escaped character and quoted text are part of the word, so
+    `{-o,\\ out.txt}` and `{-o,' out.txt'}` count (#448).
+    """
     j = i + 1
     while j < len(text) and text[j] not in BRACE_WORD_END:
-        j += 1
+        if text[j] == "\\":
+            j += 2
+        elif text[j] in "'\"":
+            j = quoted_text_end(text, j)
+        else:
+            j += 1
     body = text[i + 1 : j]
     return text[j : j + 1] == "}" and ("," in body or ".." in body)
+
+
+def quoted_text_end(text: str, j: int) -> int:
+    """The index after the quoted text that starts at `j`, or the end of the text."""
+    quote = text[j]
+    k = j + 1
+    while k < len(text) and text[k] != quote:
+        k += 2 if quote == '"' and text[k] == "\\" else 1
+    return min(k + 1, len(text))
 
 
 def sed_prints_only(args: Sequence[str]) -> bool:
@@ -1075,7 +1126,15 @@ def review_allows(words: Sequence[str]) -> bool:
     if words[0] == "for":
         # The loop header. The body segments are checked one by one, and
         # review_reason checks a substitution in the word list (#414).
-        return len(words) >= 2 and words[1].isidentifier() and words[2:3] in ([], ["in"])
+        # A loop variable is an assignment, so an upper-case name (`PATH`,
+        # `GIT_DIR`) or a zsh array tied to one (`path`) is rejected (#448).
+        return (
+            len(words) >= 2
+            and words[1].isidentifier()
+            and not words[1].isupper()
+            and words[1] not in ZSH_TIED_ARRAYS
+            and words[2:3] in ([], ["in"])
+        )
     if words[0] == "sed":
         return sed_prints_only(words[1:])
     if words[0] == "sort" and sort_writes(words[1:]):

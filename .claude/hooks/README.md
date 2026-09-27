@@ -33,14 +33,18 @@ since agents may not edit that file.
   `REVIEW_TASKS` in `scripts/agent_hooks.py`. `fast` and `ci` aren't in
   that list, because their `lint` step runs fixers. It checks the command
   inside each `$(...)`, backtick pair and process substitution (`<(...)`,
-  `>(...)`, `=(...)`) as a command of its own. It rejects a command it
-  can't read: an unclosed quote, `$((...))`, the zsh flags `${(e)X}` and
-  `${~X}`, any other unquoted `(` or `)` (zsh glob qualifiers such as
-  `*(e:...:)` run code), and an unquoted brace expansion such as
-  `{-o,out.txt}`. In a `sed -n` script a `$` is only the last-line address
-  or the anchor before a regex's closing `/`. It also rejects `git -c` and
+  `>(...)`, `=(...)`) as a command of its own, and drops the `\` before
+  `$`, `` ` `` and `\` in a backtick body first, as the shell does. It
+  rejects a command it can't read: an unclosed quote, `$((...))`, the zsh
+  flags `${(e)X}` and `${~X}`, any other unquoted `(` or `)` (zsh glob
+  qualifiers such as `*(e:...:)` run code), an unquoted brace expansion
+  such as `{-o,out.txt}`, also with an escaped or quoted space in it, and
+  an unquoted here-document (`<<EOF`, where `<<'EOF'` passes). In a
+  `sed -n` script a `$` is only the last-line address or the anchor
+  before a regex's closing `/`. It also rejects `git -c` and
   `git --config-env`, `--output` on `git diff`, `git log` and `git show`,
-  and any `NAME=value` assignment, on its own or as a prefix, since a git
+  any `NAME=value` assignment, on its own or as a prefix, and a `for` loop
+  over an upper-case name or a zsh tied array such as `path`, since a git
   config value or an environment variable such as `GIT_EXTERNAL_DIFF` can
   run a program. The hook catches mistakes and isn't a sandbox, since the
   branch under review defines the tasks it runs.
