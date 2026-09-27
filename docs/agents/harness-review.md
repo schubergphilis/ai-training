@@ -33,7 +33,7 @@ repository, so it may run while a dispatcher run is open.
   the most-read files. Since #395 it counts the full output of a streamed
   message, counts a continued session's repeated records once, skips
   leading `cd` in the Bash key, and ignores `sleep` and `afplay` inside
-  quotes and heredocs. So output tokens are about 3 times higher, and
+  quotes and here-documents. So output tokens are about 3 times higher, and
   `sleep` and chime counts a little lower, than in a report made before.
 - **Report.** An HTML page outside the repository, in
   `../ai-training-improvements/<date>/`, with the data next to it. It is
