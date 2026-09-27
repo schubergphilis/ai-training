@@ -17,6 +17,7 @@ The script prints Markdown tables and, with `--json`, writes the same
 numbers as JSON, so every review computes them the same way:
 
 - tokens by session, day (UTC), model and role (`main`, or the agent type);
+- the models each role ran on, and each role's peak context;
 - tool calls and the most frequent Bash commands;
 - `sleep` calls and their total;
 - human messages, interruptions, and the waits before each human message;
@@ -24,8 +25,14 @@ numbers as JSON, so every review computes them the same way:
 - the largest tool results and the most-read files.
 
 A transcript records one assistant message as several lines, one per
-content block, each with the same usage, so usage counts once per message
-id. A human message is a user record whose `origin.kind` is `human`, or,
+content block. A streamed message carries partial usage on its earlier
+lines, so a message counts once per message id, with the maximum of each
+usage field over its lines. A session continued into another (a
+`continued-in` record) repeats its records, with the same `uuid` and
+message ids, in the new session and its subagents. So a record or a
+message id counts once in the whole run, in the transcript read first.
+Peak context is the largest input plus cache write plus cache read of one
+message. A human message is a user record whose `origin.kind` is `human`, or,
 in transcripts that have no `origin`, a text message that isn't meta, a
 command, a notification or an interruption.
 """
@@ -53,9 +60,12 @@ USAGE_FIELDS = {
 TWO_WORD_COMMANDS = frozenset(
     {"git", "gh", "mise", "bun", "bunx", "npx", "uv", "python", "python3", "claude-history"}
 )
-SLEEP = re.compile(r"(?:^|[\s;&|(])sleep\s+(\d+(?:\.\d+)?)([smh]?)(?=$|[\s;&|)])")
+SLEEP_DURATION = re.compile(r"(\d+(?:\.\d+)?)([smh]?)")
 SLEEP_UNITS = {"": 1.0, "s": 1.0, "m": 60.0, "h": 3600.0}
 ENV_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+# `<<EOF`, `<<-EOF`, `<< 'EOF'` or `<<"EOF"`. The here-string `<<<` is not one.
+HEREDOC = re.compile(r"<<(-?)[ \t]*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\2")
+SEPARATORS = frozenset(";&|()\n")
 TOP = 15
 
 
@@ -137,21 +147,190 @@ def records(path: Path) -> Iterator[dict[str, object]]:
                 continue
 
 
+def skip_heredocs(command: str, start: int, delimiters: Sequence[tuple[str, bool]]) -> int:
+    """The index after the heredoc bodies that start at `start`, one body
+    per delimiter. With `<<-` the delimiter line may start with tabs."""
+    i = start
+    for delimiter, strip_tabs in delimiters:
+        while i < len(command):
+            end = command.find("\n", i)
+            end = len(command) if end < 0 else end
+            line = command[i:end]
+            i = end + 1
+            if (line.lstrip("\t") if strip_tabs else line) == delimiter:
+                break
+    return min(i, len(command))
+
+
+class Segmenter:
+    """Splits a shell command line into simple commands, each as its words.
+
+    It splits at `;`, `&`, `|`, parentheses and line ends outside quotes,
+    keeps `2>&1`, `&>`, `$(...)` and backticks in one word, and drops
+    heredoc bodies. So a word inside a quoted string, a command
+    substitution or a heredoc is never at command position, and
+    `X=$(pwd)` stays an assignment. Quotes stay part of their word.
+    """
+
+    def __init__(self, command: str) -> None:
+        self.command = command
+        self.result: list[list[str]] = []
+        self.words: list[str] = []
+        self.word: list[str] = []
+        self.heredocs: list[tuple[str, bool]] = []
+
+    def end_word(self) -> None:
+        if self.word:
+            self.words.append("".join(self.word))
+            self.word.clear()
+
+    def end_segment(self) -> None:
+        self.end_word()
+        if self.words:
+            self.result.append(self.words.copy())
+            self.words.clear()
+
+    def quoted(self, i: int, quote: str) -> int:
+        """Copy a quoted string that opens at `i`; return the index after it."""
+        command = self.command
+        self.word.append(quote)
+        i += 1
+        while i < len(command):
+            c = command[i]
+            if c == "\\" and quote == '"' and i + 1 < len(command):
+                self.word.append(command[i : i + 2])
+                i += 2
+                continue
+            self.word.append(c)
+            i += 1
+            if c == quote:
+                break
+        return i
+
+    def substitution(self, i: int) -> int:
+        """Copy a `$(...)` or backtick substitution that opens at `i`,
+        nested parentheses included; return the index after it."""
+        command = self.command
+        if command[i] == "`":
+            end = command.find("`", i + 1)
+            end = len(command) if end < 0 else end + 1
+            self.word.append(command[i:end])
+            return end
+        depth = 0
+        start = i
+        i += 1
+        while i < len(command):
+            c = command[i]
+            i += 1
+            if c == "(":
+                depth += 1
+            elif c == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+        self.word.append(command[start:i])
+        return i
+
+    def split(self) -> list[list[str]]:
+        command = self.command
+        i = 0
+        while i < len(command):
+            c = command[i]
+            heredoc = HEREDOC.match(command, i) if c == "<" else None
+            if c in "'\"":
+                i = self.quoted(i, c)
+                continue
+            if c == "`" or command.startswith("$(", i):
+                i = self.substitution(i)
+                continue
+            if c == "\\" and i + 1 < len(command):
+                if command[i + 1] != "\n":
+                    self.word.append(command[i : i + 2])
+                i += 2
+                continue
+            if command.startswith("<<<", i):
+                self.word.append("<<<")
+                i += 3
+                continue
+            if heredoc is not None:
+                self.end_word()
+                self.heredocs.append((heredoc.group(3), heredoc.group(1) == "-"))
+                i = heredoc.end()
+                continue
+            if c == "&" and (self.word[-1:] == [">"] or command.startswith(">", i + 1)):
+                self.word.append(c)
+            elif c in SEPARATORS:
+                self.end_segment()
+                if c == "\n" and self.heredocs:
+                    i = skip_heredocs(command, i + 1, self.heredocs)
+                    self.heredocs.clear()
+                    continue
+            elif c in " \t":
+                self.end_word()
+            else:
+                self.word.append(c)
+            i += 1
+        self.end_segment()
+        return self.result
+
+
+def segments(command: str) -> list[list[str]]:
+    """The simple commands of a shell command line, each as its words."""
+    return Segmenter(command).split()
+
+
+def command_words(segment: Sequence[str]) -> list[str]:
+    """A segment without its leading `VAR=value` assignments."""
+    for index, word in enumerate(segment):
+        if not ENV_ASSIGNMENT.match(word):
+            return list(segment[index:])
+    return []
+
+
+def command_name(segment: Sequence[str]) -> str:
+    """The program a segment runs, without its directory, or an empty string."""
+    words = command_words(segment)
+    return words[0].rsplit("/", 1)[-1] if words else ""
+
+
 def bash_key(command: str) -> str:
-    """The first command of a Bash call, as one or two words (`git push`)."""
-    first = re.split(r"&&|\|\||;|\||\n", command.strip(), maxsplit=1)[0]
-    words = [w for w in first.split() if not ENV_ASSIGNMENT.match(w)]
-    if not words:
-        return "(empty)"
-    head = words[0].rsplit("/", 1)[-1]
-    if head in TWO_WORD_COMMANDS and len(words) > 1 and not words[1].startswith("-"):
-        return f"{head} {words[1]}"
-    return head
+    """The first command of a Bash call, as one or two words (`git push`).
+
+    Leading `cd` segments (`cd site && bunx vitest`) and segments that only
+    set variables (`X=1; mise run ci`) are skipped. A call that runs only
+    `cd` gets the key `cd`.
+    """
+    saw_cd = False
+    for segment in segments(command):
+        words = command_words(segment)
+        if not words:
+            continue
+        head = command_name(words)
+        if head == "cd":
+            saw_cd = True
+            continue
+        if head in TWO_WORD_COMMANDS and len(words) > 1 and not words[1].startswith("-"):
+            return f"{head} {words[1]}"
+        return head
+    return "cd" if saw_cd else "(empty)"
 
 
 def sleep_seconds(command: str) -> list[float]:
-    """The durations of the `sleep` calls in a Bash command."""
-    return [float(n) * SLEEP_UNITS[unit] for n, unit in SLEEP.findall(command)]
+    """The durations of the `sleep` calls at command position in a Bash call."""
+    found: list[float] = []
+    for segment in segments(command):
+        words = command_words(segment)
+        if command_name(words) != "sleep" or len(words) < 2:
+            continue
+        duration = SLEEP_DURATION.fullmatch(words[1])
+        if duration:
+            found.append(float(duration.group(1)) * SLEEP_UNITS[duration.group(2)])
+    return found
+
+
+def runs_afplay(command: str) -> bool:
+    """Whether a Bash call runs `afplay` (a chime) at command position."""
+    return any(command_name(segment) == "afplay" for segment in segments(command))
 
 
 def message_text(content: object) -> str:
@@ -229,7 +408,6 @@ def total(counts: dict[str, int]) -> int:
 class Session:
     source: str
     session: str
-    title: str = ""
     start: str = ""
     end: str = ""
     models: set[str] = field(default_factory=set[str])
@@ -242,6 +420,31 @@ class Session:
 
 
 @dataclass
+class Message:
+    """One assistant message: the largest usage seen so far on its lines,
+    the rows that usage adds to, and its role's row for the peak context."""
+
+    rows: list[dict[str, int]]
+    role: dict[str, int]
+    usage: dict[str, int] = field(default_factory=tokens)
+
+    def update(self, usage: dict[str, int]) -> None:
+        """Raise each field to the new line's value and add the difference."""
+        for kind in TOKEN_KINDS:
+            delta = usage[kind] - self.usage[kind]
+            if delta > 0:
+                self.usage[kind] = usage[kind]
+                for row in self.rows:
+                    row[kind] += delta
+        context = self.usage["input"] + self.usage["cache_write"] + self.usage["cache_read"]
+        self.role["peak_context"] = max(self.role["peak_context"], context)
+
+
+def role_row() -> dict[str, int]:
+    return {"transcripts": 0, "turns": 0, "peak_context": 0, **tokens()}
+
+
+@dataclass
 class Tally:
     """Every count the report prints, filled one transcript at a time."""
 
@@ -250,6 +453,16 @@ class Tally:
     by_day: dict[str, dict[str, int]] = field(default_factory=dict[str, dict[str, int]])
     by_model: dict[str, dict[str, int]] = field(default_factory=dict[str, dict[str, int]])
     by_role: dict[str, dict[str, int]] = field(default_factory=dict[str, dict[str, int]])
+    # role -> model -> turns and tokens
+    by_role_model: dict[str, dict[str, dict[str, int]]] = field(
+        default_factory=dict[str, dict[str, dict[str, int]]]
+    )
+    titles: dict[tuple[str, str], str] = field(default_factory=dict[tuple[str, str], str])
+    # Run-wide, so a continued session's repeated records count once.
+    seen_records: set[str] = field(default_factory=set[str])
+    messages: dict[str, Message] = field(default_factory=dict[str, Message])
+    calls: dict[str, tuple[str, str]] = field(default_factory=dict[str, tuple[str, str]])
+    result_ids: set[str] = field(default_factory=set[str])
     tools: collections.Counter[str] = field(default_factory=collections.Counter[str])
     bash: collections.Counter[str] = field(default_factory=collections.Counter[str])
     reads: collections.Counter[str] = field(default_factory=collections.Counter[str])
@@ -267,24 +480,30 @@ class Tally:
         self.add_records(transcript, records(transcript.path))
 
     def add_records(self, transcript: Transcript, lines: Iterable[dict[str, object]]) -> None:
-        session = self.session(transcript)
-        role = self.by_role.setdefault(transcript.role, {"transcripts": 0, "turns": 0, **tokens()})
-        seen_messages: set[str] = set()
-        calls: dict[str, tuple[str, str]] = {}
+        # The session and role rows exist once a record inside the window
+        # adds to them, so a session or role outside `--since` has no row.
+        session: Session | None = None
+        role: dict[str, int] = {}
         last_assistant: datetime | None = None
-        counted_start = False
         for record in lines:
             kind = record.get("type")
             if kind == "ai-title" and not transcript.subagent:
-                session.title = as_str(record.get("aiTitle"))
+                self.titles[(transcript.source, transcript.session)] = as_str(record.get("aiTitle"))
                 continue
             stamp = as_str(record.get("timestamp"))
             if not stamp or stamp < self.since:
                 continue
-            day = stamp[:10]
-            day_row = self.by_day.setdefault(day, {"human": 0, "subagents": 0, **tokens()})
-            if not counted_start:
-                counted_start = True
+            if kind == "assistant":
+                last_assistant = parse_time(stamp) or last_assistant
+            uuid = as_str(record.get("uuid"))
+            if uuid in self.seen_records:
+                continue
+            if uuid:
+                self.seen_records.add(uuid)
+            day_row = self.by_day.setdefault(stamp[:10], {"human": 0, "subagents": 0, **tokens()})
+            if session is None:
+                session = self.session(transcript)
+                role = self.by_role.setdefault(transcript.role, role_row())
                 role["transcripts"] += 1
                 if transcript.subagent:
                     session.subagents += 1
@@ -292,10 +511,9 @@ class Tally:
             session.start = min(session.start or stamp, stamp)
             session.end = max(session.end, stamp)
             if kind == "assistant":
-                last_assistant = parse_time(stamp) or last_assistant
-                self.add_assistant(transcript, session, role, day_row, record, seen_messages, calls)
+                self.add_assistant(transcript, session, role, day_row, record)
             elif kind == "user":
-                self.add_user(transcript, session, day_row, record, calls, stamp, last_assistant)
+                self.add_user(transcript, session, day_row, record, stamp, last_assistant)
 
     def add_assistant(
         self,
@@ -304,40 +522,45 @@ class Tally:
         role: dict[str, int],
         day_row: dict[str, int],
         record: dict[str, object],
-        seen: set[str],
-        calls: dict[str, tuple[str, str]],
     ) -> None:
         message = as_dict(record.get("message"))
         model = as_str(message.get("model")) or "unknown"
         message_id = as_str(message.get("id")) or as_str(record.get("uuid"))
-        if message_id not in seen:
-            seen.add(message_id)
-            raw = as_dict(message.get("usage"))
-            usage = {k: as_int(raw.get(f)) for k, f in USAGE_FIELDS.items()}
+        entry = self.messages.get(message_id)
+        if entry is None:
+            rows = [
+                role,
+                day_row,
+                session.sub_tokens if transcript.subagent else session.main_tokens,
+            ]
+            role["turns"] += 1
             if model != "<synthetic>":
                 session.models.add(model)
                 model_row = self.by_model.setdefault(model, {"turns": 0, **tokens()})
-                model_row["turns"] += 1
-                add_tokens(model_row, usage)
-            role["turns"] += 1
-            add_tokens(role, usage)
-            add_tokens(day_row, usage)
-            add_tokens(session.sub_tokens if transcript.subagent else session.main_tokens, usage)
+                by_model = self.by_role_model.setdefault(transcript.role, {})
+                role_model = by_model.setdefault(model, {"turns": 0, **tokens()})
+                for row in (model_row, role_model):
+                    row["turns"] += 1
+                    rows.append(row)
+            entry = Message(rows, role)
+            self.messages[message_id] = entry
+        raw = as_dict(message.get("usage"))
+        entry.update({k: as_int(raw.get(f)) for k, f in USAGE_FIELDS.items()})
         for block in (as_dict(b) for b in as_list(message.get("content"))):
             if block.get("type") != "tool_use":
                 continue
             call_id = as_str(block.get("id"))
-            if call_id in calls:
+            if call_id in self.calls:
                 continue
             name = as_str(block.get("name"))
             tool_input = as_dict(block.get("input"))
-            calls[call_id] = (name, tool_label(name, tool_input))
+            self.calls[call_id] = (name, tool_label(name, tool_input))
             self.tools[name] += 1
             if name == "Bash":
                 command = as_str(tool_input.get("command"))
                 self.bash[bash_key(command)] += 1
                 self.sleeps.extend(sleep_seconds(command))
-                if "afplay" in command:
+                if runs_afplay(command):
                     session.chimes += 1
             elif name == "Read":
                 self.reads[as_str(tool_input.get("file_path"))] += 1
@@ -348,14 +571,18 @@ class Tally:
         session: Session,
         day_row: dict[str, int],
         record: dict[str, object],
-        calls: dict[str, tuple[str, str]],
         stamp: str,
         last_assistant: datetime | None,
     ) -> None:
         content = as_dict(record.get("message")).get("content")
         for block in (as_dict(b) for b in as_list(content)):
             if block.get("type") == "tool_result":
-                name, label = calls.get(as_str(block.get("tool_use_id")), ("unknown", ""))
+                call_id = as_str(block.get("tool_use_id"))
+                if call_id in self.result_ids:
+                    continue
+                if call_id:
+                    self.result_ids.add(call_id)
+                name, label = self.calls.get(call_id, ("unknown", ""))
                 chars = result_chars(block.get("content"))
                 self.results.append(
                     {"chars": chars, "tool": name, "label": label, "session": transcript.session}
@@ -393,7 +620,7 @@ def report(tally: Tally, sources: Sequence[tuple[str, Path]]) -> dict[str, objec
             {
                 "source": s.source,
                 "session": s.session[:8],
-                "title": s.title,
+                "title": tally.titles.get((s.source, s.session), ""),
                 "start": s.start,
                 "end": s.end,
                 "models": sorted(s.models),
@@ -406,11 +633,14 @@ def report(tally: Tally, sources: Sequence[tuple[str, Path]]) -> dict[str, objec
                 "chimes": s.chimes,
             }
             for s in sessions
-            if s.start
         ],
         "by_day": {d: {**row, "total": total(row)} for d, row in sorted(tally.by_day.items())},
         "by_model": {m: {**row, "total": total(row)} for m, row in sorted(tally.by_model.items())},
         "by_role": {r: {**row, "total": total(row)} for r, row in sorted(tally.by_role.items())},
+        "by_role_model": {
+            r: {m: {**row, "total": total(row)} for m, row in sorted(models.items())}
+            for r, models in sorted(tally.by_role_model.items())
+        },
         "tools": dict(tally.tools.most_common()),
         "bash_top": dict(tally.bash.most_common(TOP)),
         "sleep": {
@@ -481,7 +711,6 @@ def markdown(data: dict[str, object]) -> str:
     for heading, key, first in (
         ("By day (UTC)", "by_day", "day"),
         ("By model", "by_model", "model"),
-        ("By role", "by_role", "role"),
     ):
         rows = cast("dict[str, dict[str, int]]", data[key])
         out += [f"## {heading}", ""]
@@ -492,6 +721,33 @@ def markdown(data: dict[str, object]) -> str:
                 for name, r in rows.items()
             ),
         )
+    roles = cast("dict[str, dict[str, int]]", data["by_role"])
+    out += ["## By role", ""]
+    out += table(
+        ["role", "transcripts", "turns", "output", "cache read", "total", "peak context"],
+        (
+            [
+                name,
+                r["transcripts"],
+                r["turns"],
+                millions(r["output"]),
+                millions(r["cache_read"]),
+                millions(r["total"]),
+                f"{r['peak_context']:,}",
+            ]
+            for name, r in roles.items()
+        ),
+    )
+    role_models = cast("dict[str, dict[str, dict[str, int]]]", data["by_role_model"])
+    out += ["## Model by role", ""]
+    out += table(
+        ["role", "model", "turns", "output", "total"],
+        (
+            [role, model, r["turns"], millions(r["output"]), millions(r["total"])]
+            for role, models in role_models.items()
+            for model, r in models.items()
+        ),
+    )
     for heading, key, first in (
         ("Tool calls", "tools", "tool"),
         ("Top Bash commands", "bash_top", "command"),
