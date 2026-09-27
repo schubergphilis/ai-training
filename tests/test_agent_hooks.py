@@ -1105,6 +1105,75 @@ def test_guard_hook_script_blocks_the_unknown_home_of_449(tmp_path: Path) -> Non
     assert "`~nosuchuser`" in run.stderr
 
 
+# More spellings that got past the #414 and #415 checks (#448).
+
+
+@pytest.mark.parametrize(
+    ("command", "what"),
+    [
+        ("for X in $'a/w pwn\\n/a'; do echo `sed -n \"/\\$X/p\" f`; done", "not a review"),
+        ("for x in $'a/w pwn\\n/a'; do echo `sed -n \"/\\$x/p\" f`; done", "not a review"),
+        ('echo `sed -n "/\\$x/p" f`', "not a review"),
+        ("echo `echo \\`touch x\\``", "nested backtick"),
+        ("sort {-o,\\ out.txt} names.txt", "brace expansion"),
+        ("sort {-o,' out.txt'} names.txt", "brace expansion"),
+        ('sort {-o," out.txt"} names.txt', "brace expansion"),
+        ("for PATH in ./bin; do ls; done", "not a review"),
+        ("for GIT_DIR in x; do git log; done", "not a review"),
+        ("for HOME in x; do ls; done", "not a review"),
+        ("for path in ./bin; do ls; done", "not a review"),
+        ("for fpath in x; do ls; done", "not a review"),
+        ("cat <<EOF\nit's\n$(touch x)\nit's\nEOF", "unquoted here-document"),
+        ("cat <<EOF\ntext\nEOF", "unquoted here-document"),
+        ("cat <<-EOF\n\ttext\n\tEOF", "unquoted here-document"),
+        ("cat << EOF\ntext\nEOF", "unquoted here-document"),
+        ("echo $(cat <<EOF\ntext\nEOF\n)", "unquoted here-document"),
+        ("grep a <<<EOF\ntouch x\nEOF", "not a review"),
+        ("grep a <<<'EOF'\ntouch x\nEOF", "not a review"),
+    ],
+)
+def test_review_bash_rejects_the_spellings_of_448(command: str, what: str) -> None:
+    code, message = agent_hooks.review_bash({"tool_input": {"command": command}})
+    assert code == 2
+    assert what in message
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "for f in a b; do echo $f; done",
+        "for file in $(git ls-files site); do wc -l $file; done",
+        "for x_1 in a; do echo $x_1; done",
+        "echo `git log -1 --format=%h`",
+        "echo `echo a\\\\b`",
+        "cat <<'EOF'\nsome text\nEOF",
+        'cat <<"EOF"\nsome text\nEOF',
+        "cat <<\\EOF\nsome text\nEOF",
+        "cat <<-'EOF'\n\tsome text\n\tEOF",
+        "grep a <<<'some text'",
+        'grep "{a,b}" f',
+        "grep -E 'x{1,3}' f",
+        "echo {a}",
+    ],
+)
+def test_review_bash_still_allows_the_read_ones_near_448(command: str) -> None:
+    assert agent_hooks.review_bash({"tool_input": {"command": command}}) == (0, "")
+
+
+def test_guard_checks_the_lines_after_a_here_string() -> None:
+    assert check("cat <<<EOF\ngit push --force\nEOF") is not None
+    assert check("cat <<<'EOF'\ngit push --force\nEOF") is not None
+    assert check("git commit -F - <<'EOF'\ngit push --force\nEOF") is None
+
+
+def test_brace_expansion_skips_escaped_and_quoted_text() -> None:
+    assert agent_hooks.is_brace_expansion("{-o,\\ x}", 0)
+    assert agent_hooks.is_brace_expansion("{-o,'x}'}", 0)
+    assert agent_hooks.is_brace_expansion('{-o,"a\\"b"}', 0)
+    assert not agent_hooks.is_brace_expansion("{-o 'x,y'", 0)
+    assert not agent_hooks.is_brace_expansion("{'unclosed,", 0)
+
+
 FUZZ_PIECES = [
     *("git", "-C", "cd", "push", "main", "rm", "-rf", ".scratch/", "..", "sleep", "900"),
     *("while", "gh", "do", "done", "stash", "reset", "--hard", "~nosuchuser", "~", "~+"),
