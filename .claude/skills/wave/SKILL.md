@@ -67,7 +67,11 @@ the file has the run's name only after the name check in "Starting a
 run" step 3 confirms it, and every edit passes "Before each body edit"
 below first:
 
-- `## Arguments`: the arguments of the run, as given.
+- `## Arguments`: the arguments of the run, as given, and the line
+  `Run: #<n>` with the run issue's own number, right after the heading.
+  The new-run path adds it once the issue has its number ("Starting a
+  run" step 3.4), and the resume path adds it when it writes the file
+  from an issue that doesn't hold it yet.
 - `## Remaining --only`: the whitelist numbers not yet handled (only with
   `--only`).
 - `## Parked`: issues a lead left out, with the reason. A parked issue is
@@ -89,31 +93,53 @@ run stops, with a last comment that names the stop condition.
 Run this check right before every `gh issue edit <run> --body-file`, in
 the same Bash call, and post only when it passes. It compares the
 `## Arguments` section of the file with the same section of the run
-issue's current body. The section is the `## Arguments` heading line and
+issue's current body, and it checks that the file belongs to the issue
+it is about to edit. The section is the `## Arguments` heading line and
 every line after it up to the next level-two heading (`##`). The
-check removes carriage returns and drops blank lines in both. The file's
-section must equal the issue's section line for line, and it must hold
-at least one line besides the heading. The snippet needs bash or zsh
-(the Bash tool here runs zsh):
+check removes carriage returns and drops blank lines in both, and it
+takes the lines that start with `Run:` out of both sections before it
+compares them. The check passes when all of these hold:
+
+- the file's section has exactly one `Run:` line, and it is
+  `Run: #<run>`, the number of the issue the edit goes to;
+- the issue's section has no `Run:` line (a run opened before this line
+  existed, or a new run before its first edit), or the same one line;
+- the rest of the file's section equals the rest of the issue's section
+  line for line, and holds at least one line besides the heading.
+
+Two plain `/wave` runs have the same arguments, so the `Run:` line is
+what tells their files apart. The snippet needs bash or zsh (the Bash
+tool here runs zsh). Set `run` and `f` to the run's number and file:
 
 ```bash
+run=<run>; f=.scratch/run-<name>.md
 args() { tr -d '\r' | awk '/^## /{p=($0=="## Arguments")} p' | grep -v '^[[:space:]]*$'; }
-a=$(args < .scratch/run-<name>.md); b=$(gh issue view <run> --json body -q .body | args)
-if [ "$a" = "$b" ] && [ "$(printf '%s\n' "$a" | wc -l)" -gt 1 ]; then
-  gh issue edit <run> --body-file .scratch/run-<name>.md
+a=$(args < "$f"); b=$(gh issue view "$run" --json body -q .body | args)
+ra=$(printf '%s\n' "$a" | grep '^Run:'); rb=$(printf '%s\n' "$b" | grep '^Run:')
+a=$(printf '%s\n' "$a" | grep -v '^Run:'); b=$(printf '%s\n' "$b" | grep -v '^Run:')
+if [ "$ra" = "Run: #$run" ] && { [ -z "$rb" ] || [ "$rb" = "$ra" ]; } &&
+   [ "$a" = "$b" ] && [ "$(printf '%s\n' "$a" | wc -l)" -gt 1 ]; then
+  gh issue edit "$run" --body-file "$f"
 else
-  echo "STOP: Arguments check failed"; diff <(printf '%s\n' "$b") <(printf '%s\n' "$a")
+  echo "STOP: run body check failed for #$run"
+  echo "file: ${ra:-no Run line}; issue: ${rb:-no Run line}"
+  diff <(printf '%s\n' "$b") <(printf '%s\n' "$a")
 fi
 ```
 
 When it prints `STOP`, don't post, and don't repair the file from memory.
-The check fails when the two sections differ, when the section is
-missing from the file or the issue, when it holds only the heading, and
-when `gh issue view` failed, which leaves the issue's side empty. The
-diff shows which one it was. A difference can mean that another session
-wrote the file or that someone edited the issue by hand. Stop the run,
-and give the maintainer the run number and the file name with
-the diff the check printed.
+The check fails when the file's `Run:` line is missing, names another
+run or appears twice, when the issue's `Run:` line names another run,
+when the rest of the two sections differ, when the section is missing
+from the file or the issue, when it holds only the heading, and when
+`gh issue view` failed, which leaves the issue's side empty. The `file:`
+line and the diff show which one it was. A wrong `Run:` line means that
+another run's body is in this file, for example because a dispatcher
+loaded older skill text or two sessions resumed the same run. A
+difference in the rest can mean that another session wrote the file or
+that someone edited the issue by hand. Stop the run, and give the
+maintainer the run number and the file name with the lines the check
+printed.
 
 ## Starting a run
 
@@ -159,9 +185,19 @@ the diff the check printed.
 3. **Resume or open.** With `--resume <Name>`, find the open run issue
    with that name among them, and stop when there is none. Its body gives
    the arguments, and its `In flight` line, if any, is the wave to resume
-   (step 3 of the loop). Write its current body to the run's file,
-   `mkdir -p .scratch && gh issue view <run> --json body -q .body > .scratch/run-<name>.md`,
-   so the file you edit from is the issue as it is now and never a file
+   (step 3 of the loop). Write its current body to the run's file, with
+   the `Run: #<run>` line right after the `## Arguments` heading:
+
+   ```bash
+   mkdir -p .scratch && gh issue view <run> --json body -q .body |
+     awk -v r='Run: #<run>' '{sub(/\r$/, "")} /^## /{p=($0=="## Arguments")} p && /^Run:/{next} {print} $0=="## Arguments"{print r}' > .scratch/run-<name>.md
+   ```
+
+   The `awk` drops any `Run:` line the issue's section already holds and
+   writes the one for this run, so the file has it once, and an older
+   body without it gets it here. A wrong `Run:` line in the issue stays in
+   the issue, and "Before each body edit" stops on it. Then the file you
+   edit from is the issue as it is now and never a file
    an earlier session left. The file is in the `.scratch/` of the checkout
    you run in, so a resume in a wave worktree rebuilds it there from the
    run issue alone. Without `--resume`, open the run issue:
@@ -178,9 +214,13 @@ the diff the check printed.
       step 2 with the name `run-name` prints now and the same file. Never
       write to `.scratch/run-<name>.md` for a name that failed the check,
       because it is the other run's file.
-   4. When `takenBy` is null, the name is yours. Rename the file,
-      `mv <that path> .scratch/run-<name>.md`, and edit only that file
-      from here on.
+   4. When `takenBy` is null, the name is yours. Rename the file, and
+      add the `Run: #<number>` line with the new issue's number right
+      after the `## Arguments` heading as you do:
+      `awk -v r='Run: #<number>' '{print} $0=="## Arguments"{print r}' <that path> > .scratch/run-<name>.md && rm <that path>`.
+      Post the file at once with the check in "Before each body edit",
+      so the issue holds the line too, and edit only that file from
+      here on.
 
    Once `.claude/settings.json` registers the `session-title` hook
    (`grep -c session-title.sh .claude/settings.json` prints 1 or more),
