@@ -133,10 +133,13 @@ run or appears twice, when the issue's `Run:` line names another run,
 when the rest of the two sections differ, when the section is missing
 from the file or the issue, when it holds only the heading, and when
 `gh issue view` failed, which leaves the issue's side empty. The `file:`
-line and the diff show which one it was. A wrong `Run:` line means that
-another run's body is in this file, for example because a dispatcher
-loaded older skill text or two sessions resumed the same run. A
-difference in the rest can mean that another session wrote the file or
+line and the diff show which one it was. A `Run:` line that
+names another run means that another run's session wrote this file, for
+example through step 3.4 under a name it didn't get. A missing `Run:`
+line means that the file was written by older skill text or without the
+`awk` of "Starting a run" step 3. Two sessions that resume the same run
+both write `Run: #<run>`, so this check passes for both of them and
+doesn't catch that case. A difference in the rest can mean that another session wrote the file or
 that someone edited the issue by hand. Stop the run, and give the
 maintainer the run number and the file name with the lines the check
 printed.
