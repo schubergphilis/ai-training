@@ -46,6 +46,15 @@ starting `re-checked by lead` is the lead's check of a fix commit, and any
 other trusted comment after a verdict is a builder reply. An approve with a
 builder reply after it and no lead re-check after that reply is
 `lead-re-check`, so a resumed lead never joins a fix commit that nobody read.
+
+A lead that puts one issue's commits on another issue's branch posts a
+pointer comment on the first issue with a `Branch:` line for that branch
+(#455). A trusted comment on issue N whose `Branch:` line names a pushed
+`feat/<M>-*` branch with M not N lists that branch under issue N too, with
+a `pointer` field, and its verdict and `next` come from the comments of
+issue M, where the branch is reviewed. `main` fetches the comments of M
+for that even when M is not an issue of the wave. A pointer comment
+applies to none of issue N's own branches.
 """
 
 import json
@@ -53,7 +62,7 @@ import re
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
-from typing import Literal, NoReturn, TypedDict, cast
+from typing import Literal, NoReturn, NotRequired, TypedDict, cast
 
 REPO = "lsimons/ai-training"
 USAGE = "usage: mise run wave-status -- <wave-branch> <issue> [<issue> ...]"
@@ -107,6 +116,8 @@ LINE_END = re.compile(r"\r\n?|\n")
 ORIGIN_PREFIX = re.compile(r"\Aorigin/")
 TRAILING_PUNCTUATION = re.compile(r"[.,;:!?)\]]+\Z")
 ISSUE_NUMBER = re.compile(r"[1-9][0-9]*", _FLAGS)
+# The issue a `feat/<issue>-*` branch belongs to.
+FEAT_BRANCH = re.compile(r"feat/([1-9][0-9]*)-", _FLAGS)
 # A lone UTF-16 surrogate, which JSON.stringify writes as a `\uXXXX` escape.
 LONE_SURROGATE = re.compile("[\ud800-\udfff]")
 
@@ -143,11 +154,17 @@ class Worktree(TypedDict):
     branch: str | None
 
 
+class Pointer(TypedDict):
+    issue: int
+    url: str
+
+
 class BranchStatus(TypedDict):
     name: str
     verdict: Verdict | None
     unfinished: Unfinished | None
     next: str
+    pointer: NotRequired[Pointer]
 
 
 class IssueStatus(TypedDict):
@@ -405,6 +422,57 @@ def feat_branches(heads: Sequence[str], issue: int) -> list[str]:
     return sorted((h for h in heads if h.startswith(f"feat/{issue}-")), key=utf16_order)
 
 
+def owner_issue(branch: str) -> int | None:
+    """The issue of a `feat/<issue>-*` branch name, or None for any other branch."""
+    match = FEAT_BRANCH.match(branch)
+    return int(match.group(1)) if match else None
+
+
+def points_to(body: str, issue: int, heads: Sequence[str]) -> str | None:
+    """The pushed branch of another issue a comment's `Branch:` line names, or None."""
+    named = branch_of(body)
+    if named is None or named not in heads:
+        return None
+    owner = owner_issue(named)
+    return named if owner is not None and owner != issue else None
+
+
+def pointer_branches(
+    comments: Sequence[IssueComment],
+    issue: int,
+    heads: Sequence[str],
+    trusted: Sequence[str] = TRUSTED_VERDICT_AUTHORS,
+) -> dict[str, Pointer]:
+    """The pushed branches of other issues that trusted comments on an issue point to.
+
+    A comment points to a branch when its `Branch:` line (as `branch_of`
+    reads it) names a pushed `feat/<M>-*` branch with M not the issue. Per
+    branch: the owner issue M and the url of the last comment that points
+    to it, in branch order. A comment from another account points nowhere.
+    """
+    found: dict[str, Pointer] = {}
+    for c in trusted_in_order(comments, trusted):
+        named = points_to(c["body"], issue, heads)
+        owner = owner_issue(named) if named else None
+        if named and owner is not None:
+            found[named] = {"issue": owner, "url": c["url"]}
+    return {name: found[name] for name in sorted(found, key=utf16_order)}
+
+
+def branch_status(
+    name: str, comments: Sequence[IssueComment], names: Sequence[str]
+) -> BranchStatus:
+    """A branch with the verdict and next step its issue's comments give it."""
+    verdict = last_trusted_verdict(comments, name, names)
+    unfinished = open_unfinished(comments, name, names)
+    return {
+        "name": name,
+        "verdict": verdict,
+        "unfinished": unfinished,
+        "next": next_step(verdict, unfinished),
+    }
+
+
 def parse_ls_remote(output: str) -> list[str]:
     """Branch names from `git ls-remote --heads` output."""
     refs: list[str] = []
@@ -460,23 +528,27 @@ def wave_status(
     comments_by_issue: Mapping[int, Sequence[IssueComment]],
     worktrees: list[Worktree],
 ) -> WaveStatus:
-    """The report `mise run wave-status` prints as JSON."""
+    """The report `mise run wave-status` prints as JSON.
+
+    `comments_by_issue` holds the comments of every issue of the wave and
+    of every issue that owns a branch a pointer comment names. An owner
+    issue that is missing counts as one without comments. A pointer
+    comment applies to none of the issue's own branches, so a pointer on an
+    issue that has its own branch too is no builder reply there.
+    """
     issue_statuses: list[IssueStatus] = []
     for issue in issues:
         comments = comments_by_issue.get(issue, [])
         names = feat_branches(heads, issue)
-        branches: list[BranchStatus] = []
-        for name in names:
-            verdict = last_trusted_verdict(comments, name, names)
-            unfinished = open_unfinished(comments, name, names)
-            branches.append(
-                {
-                    "name": name,
-                    "verdict": verdict,
-                    "unfinished": unfinished,
-                    "next": next_step(verdict, unfinished),
-                }
+        own = [c for c in comments if points_to(c["body"], issue, heads) is None]
+        branches = [branch_status(name, own, names) for name in names]
+        for name, pointer in pointer_branches(comments, issue, heads).items():
+            owner = pointer["issue"]
+            status = branch_status(
+                name, comments_by_issue.get(owner, []), feat_branches(heads, owner)
             )
+            status["pointer"] = pointer
+            branches.append(status)
         issue_statuses.append(
             {
                 "issue": issue,
@@ -588,6 +660,11 @@ def main(argv: Sequence[str]) -> int:
         return 2
     heads = parse_ls_remote(run("git", ["ls-remote", "--heads", "origin"]))
     comments_by_issue = {n: issue_comments(n) for n in args["issues"]}
+    for issue in args["issues"]:
+        for pointer in pointer_branches(comments_by_issue[issue], issue, heads).values():
+            owner = pointer["issue"]
+            if owner not in comments_by_issue:
+                comments_by_issue[owner] = issue_comments(owner)
     worktrees = parse_worktrees(run("git", ["worktree", "list", "--porcelain"]))
     status = wave_status(args["waveBranch"], args["issues"], heads, comments_by_issue, worktrees)
     sys.stdout.buffer.write(to_json(status).encode("utf-8"))

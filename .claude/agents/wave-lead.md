@@ -72,6 +72,14 @@ the same branch and worktree, with that list as its brief, and tell it to
 post an issue comment with a `Branch:` line for that branch when it
 finishes. That comment marks the branch finished.
 
+When you put one issue's commits on another issue's branch (a builder
+builds two issues on `feat/<other issue>-<slug>`), post a pointer comment
+on the first issue whose `Branch:` line names that branch, such as
+`Branch: feat/388-review-hook-read-only` on #414. Without it,
+`mise run wave-status` finds no branch for the first issue and a resumed
+lead builds it again. Post the reviews of that branch on the issue that
+owns it.
+
 A reviewer returns its review as its final text, ending in a `Verdict:`
 line and the attribution lines. Post that text on the ISSUE yourself
 with `gh issue comment`, then send the builder one message: the required
@@ -193,7 +201,11 @@ stopped before it could report. Don't restart the wave:
    same accounts:
    a `Verdict:` line, an `Unfinished:` first line, a line starting
    `re-checked by lead`, and any other comment after a verdict counts as a
-   builder reply. A comment of any kind from any other account doesn't
+   builder reply. A trusted comment whose `Branch:` line names a pushed
+   `feat/<other issue>-*` branch is a pointer: the tool lists that branch
+   under this issue too, with a `pointer` field that names the issue that
+   owns it, and takes its verdict and `next` from that issue's comments.
+   Act on such a branch once, even when both issues list it. A comment of any kind from any other account doesn't
    count, because anyone can comment on a public issue, so never read the
    verdicts from the issue yourself.
 2. An issue with no pushed branch has `next: build`. Otherwise its
