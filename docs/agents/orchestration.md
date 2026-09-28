@@ -277,11 +277,15 @@ The cases that come up:
   sub-agents (angles and verifiers). Their notifications arrive at the
   coordinator too, and sometimes only there. The reviewer then gets an
   empty result from the skill. Ignore the notifications at the coordinator
-  and act on the reviewer's consolidated verdict. An empty skill result, or
-  findings on files outside the worktree, on a non-empty `review.diff` is
-  a failed run: the reviewer doesn't run it again, says so in the review,
-  and bases the verdict on a hand review of `review.diff`, never on the
-  skill result.
+  and act on the reviewer's consolidated verdict. The skill runs as a
+  background fork, so its first Skill result is a launch notice
+  (`Skill "code-review" launched (forked execution, running in the background).`). The reviewer waits for the fork's task notification and
+  judges only that. A `(none)` result is clean only when the fork's text
+  names a file in `review.diff`. A bare `(none)`, a result that names no
+  file, "nothing to review", or findings on files outside the worktree,
+  on a non-empty `review.diff` is a failed run: the reviewer doesn't run
+  it again, says so in the review, and bases the verdict on a hand review
+  of `review.diff`, never on the skill result.
 - GitHub reports `mergeable: UNKNOWN` for about a minute after every merge.
   Wait and list again. A pull request in `CONFLICTING` state gets no
   `pull_request` CI run at all, so a builder that pushes into a conflict
