@@ -1055,3 +1055,168 @@ def test_main_exits_1_on_gh_output_it_cannot_read(
         assert out.stdout == ""
         assert out.stderr.startswith(f"wave-status: {GH12} failed: unreadable output: {reason}")
         assert out.stderr.count("\n") == 1
+
+
+# Pointer comments (#455)
+
+POINTER_HEADS = ["main", "wave/koala-1", "feat/388-review-hook-read-only"]
+
+
+def pointer(
+    author: str, created_at: str, branch: str = "feat/388-review-hook-read-only"
+) -> IssueComment:
+    return comment(
+        author, f"Built on the branch of #388.\n\nBranch: {branch}{ATTRIBUTION}", created_at
+    )
+
+
+def test_pointer_lists_the_other_issues_branch_with_its_verdict_and_next_step() -> None:
+    review = comment(
+        "lsimons-bot",
+        "Branch: feat/388-review-hook-read-only\nVerdict: approve",
+        "2026-09-24T11:00:00Z",
+    )
+    status = wave_status(
+        "wave/koala-1",
+        [414, 415],
+        POINTER_HEADS,
+        {
+            414: [pointer("lsimons-bot", "2026-09-24T10:00:00Z")],
+            415: [
+                pointer(
+                    "lsimons", "2026-09-24T10:00:00Z", "`origin/feat/388-review-hook-read-only`."
+                )
+            ],
+            388: [review],
+        },
+        [],
+    )
+    for issue in status["issues"]:
+        assert issue["next"] == "per-branch"
+        [branch] = issue["branches"]
+        assert branch["name"] == "feat/388-review-hook-read-only"
+        assert branch["next"] == "join"
+        assert branch["verdict"] is not None and branch["verdict"]["url"] == review["url"]
+        assert branch.get("pointer") == {
+            "issue": 388,
+            "url": "https://github.com/lsimons/ai-training/issues/1#2026-09-24T10:00:00Z",
+        }
+
+
+def test_pointer_takes_the_next_step_from_the_owner_issue_not_the_pointer_issue() -> None:
+    needs_changes = comment("lsimons-bot", "Verdict: needs changes", "2026-09-24T11:00:00Z")
+    approve_on_pointer_issue = comment("lsimons-bot", "Verdict: approve", "2026-09-24T12:00:00Z")
+    status = wave_status(
+        "wave/koala-1",
+        [414],
+        POINTER_HEADS,
+        {
+            414: [pointer("lsimons-bot", "2026-09-24T10:00:00Z"), approve_on_pointer_issue],
+            388: [needs_changes],
+        },
+        [],
+    )
+    assert [(b["name"], b["next"]) for b in status["issues"][0]["branches"]] == [
+        ("feat/388-review-hook-read-only", "revise")
+    ]
+
+
+def test_pointer_to_an_owner_without_comments_is_review_not_build() -> None:
+    status = wave_status(
+        "wave/koala-1",
+        [414],
+        POINTER_HEADS,
+        {414: [pointer("lsimons-bot", "2026-09-24T10:00:00Z")]},
+        [],
+    )
+    assert status["issues"][0]["next"] == "per-branch"
+    assert [b["next"] for b in status["issues"][0]["branches"]] == ["review"]
+
+
+def test_pointer_from_an_untrusted_account_changes_nothing() -> None:
+    status = wave_status(
+        "wave/koala-1",
+        [414],
+        POINTER_HEADS,
+        {414: [pointer("drive-by", "2026-09-24T10:00:00Z")], 388: []},
+        [],
+    )
+    assert status["issues"][0] == {"issue": 414, "next": "build", "branches": []}
+
+
+def test_pointer_needs_a_pushed_feat_branch_of_another_issue() -> None:
+    heads = [*POINTER_HEADS, "feat/414-own", "chore/388-x"]
+    for branch in ["feat/388-gone", "wave/koala-1", "chore/388-x", "feat/414-own"]:
+        status = wave_status(
+            "wave/koala-1",
+            [414],
+            heads,
+            {414: [pointer("lsimons-bot", "2026-09-24T10:00:00Z", branch)]},
+            [],
+        )
+        branches = status["issues"][0]["branches"]
+        assert [(b["name"], "pointer" in b) for b in branches] == [("feat/414-own", False)], branch
+
+
+def test_pointer_reads_only_a_branch_line_outside_a_code_fence() -> None:
+    fenced = comment(
+        "lsimons-bot",
+        "Post this:\n\n```text\nBranch: feat/388-review-hook-read-only\n```",
+        "2026-09-24T10:00:00Z",
+    )
+    status = wave_status("wave/koala-1", [414], POINTER_HEADS, {414: [fenced]}, [])
+    assert status["issues"][0]["next"] == "build"
+
+
+def test_pointer_is_listed_after_the_own_branches_and_is_no_reply_on_them() -> None:
+    heads = [*POINTER_HEADS, "feat/414-own"]
+    approve = comment("lsimons-bot", "Verdict: approve", "2026-09-24T09:00:00Z")
+    status = wave_status(
+        "wave/koala-1",
+        [414],
+        heads,
+        {414: [approve, pointer("lsimons-bot", "2026-09-24T10:00:00Z")], 388: []},
+        [],
+    )
+    assert [(b["name"], b["next"], "pointer" in b) for b in status["issues"][0]["branches"]] == [
+        ("feat/414-own", "join", False),
+        ("feat/388-review-hook-read-only", "review", True),
+    ]
+
+
+def test_main_fetches_the_comments_of_the_owner_issue_of_a_pointer(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def gh_json(body: str) -> str:
+        return json.dumps(
+            {
+                "comments": [
+                    {
+                        "author": {"login": "lsimons-bot"},
+                        "body": body,
+                        "createdAt": "2026-09-24T10:00:00Z",
+                        "url": "https://example.test/1",
+                    }
+                ]
+            }
+        )
+
+    gh388 = "gh issue view 388 -R lsimons/ai-training --json comments"
+    code, out = run_main(
+        monkeypatch,
+        capsys,
+        ["wave/koala-1", "12"],
+        {
+            LS_REMOTE: "a\trefs/heads/feat/388-review-hook-read-only\n",
+            GH12: gh_json("Branch: feat/388-review-hook-read-only"),
+            gh388: gh_json("Verdict: approve"),
+            WORKTREES: "",
+        },
+    )
+    assert code == 0, out.stderr
+    [branch] = json.loads(out.stdout)["issues"][0]["branches"]
+    assert (branch["name"], branch["next"], branch["pointer"]["issue"]) == (
+        "feat/388-review-hook-read-only",
+        "join",
+        388,
+    )
