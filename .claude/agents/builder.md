@@ -126,10 +126,12 @@ Review finds these in almost every first pass. Check each one yourself.
 
 - After every `git commit`, run `git log -1 --oneline` and check that it
   shows your message. A pre-commit hook that fails leaves no commit, and
-  `HEAD` is then still the base commit from `main`. Never run
-  `git commit --amend` until `git log origin/main..HEAD` lists a commit
-  of your own, since an amend before that rewrites the copy of `main`'s
-  tip that your branch starts from.
+  `HEAD` is then still the commit you were on. Fix what the hook reported
+  and run `git commit` again. Never run `git commit --amend` until
+  `git log <base>..HEAD` lists a commit you made in this session, where
+  `<base>` is the branch you started from (`origin/main`, or
+  `origin/feat/M-slug` for a stacked branch). An amend before that
+  rewrites a commit you didn't make.
 
 ## Where this repo differs from the `build` and `complete` skills
 
