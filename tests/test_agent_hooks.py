@@ -938,6 +938,67 @@ def test_security_bash_rejects_anything_else(command: str) -> None:
     assert "not a review command" in message
 
 
+HOOK_CALL = "python3 scripts/agent_hooks.py guard-bash"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"{HOOK_CALL} < e.json",
+        f"{HOOK_CALL} <<< '{{}}'",
+        f"{HOOK_CALL} <e.json",
+        f"{HOOK_CALL} 0<e.json",
+    ],
+)
+def test_security_bash_rejects_stdin_from_a_file_or_here_string(command: str) -> None:
+    code, _ = security_bash(command)
+    assert code == 2
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"cd /tmp && echo '{{}}' | {HOOK_CALL}",
+        f"cd ../x && echo '{{}}' | {HOOK_CALL}",
+        f"cd ~ && echo '{{}}' | {HOOK_CALL}",
+        f"cd - ; echo '{{}}' | {HOOK_CALL}",
+        f"cd /tmp\necho '{{}}' | {HOOK_CALL}",
+        f"echo '{{}}' | {HOOK_CALL}; cd /tmp",
+        f"chdir /tmp && echo '{{}}' | {HOOK_CALL}",
+        f"pushd ../x && echo '{{}}' | {HOOK_CALL}",
+        f"popd && echo '{{}}' | {HOOK_CALL}",
+        f"for d in ../x; do cd $d; done; echo '{{}}' | {HOOK_CALL}",
+    ],
+)
+def test_security_bash_runs_a_hook_call_only_without_a_directory_change(command: str) -> None:
+    code, message = security_bash(command)
+    assert code == 2
+    assert "runs only in a command without cd" in message
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"cd /tmp && echo $({HOOK_CALL})",
+        f"cd /tmp && echo `{HOOK_CALL}`",
+        f'echo "$(cd /tmp && {HOOK_CALL})"',
+        f"echo $(cd /tmp) | {HOOK_CALL}",
+        f"cat <(cd /tmp && {HOOK_CALL})",
+    ],
+)
+def test_security_bash_sees_a_directory_change_in_a_substitution(command: str) -> None:
+    code, _ = security_bash(command)
+    assert code == 2
+
+
+def test_security_bash_keeps_cd_for_everything_else() -> None:
+    assert security_bash(f"echo '{{}}' | {HOOK_CALL}") == (0, "")
+    assert security_bash("cd ../x && mise run vuln") == (0, "")
+    assert security_bash("cd ../x && git log -1 && mise run site-audit") == (0, "")
+    # `cd` in the text of a quoted argument is data.
+    assert security_bash(f"echo 'cd /tmp' | {HOOK_CALL}") == (0, "")
+
+
 def test_security_bash_rejects_a_redirect_and_an_unreadable_command() -> None:
     code, message = security_bash("mise run vuln > report.txt")
     assert code == 2

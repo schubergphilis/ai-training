@@ -29,17 +29,26 @@ in `REVIEW_TASKS` in `scripts/agent_hooks.py`. On top of those it allows
 `mise run vuln` (osv-scanner), and
 `python3 scripts/agent_hooks.py guard-bash`, `review-bash` or
 `security-bash`, so you can feed a command to a hook and see whether it
-blocks it. Pipe the event in, for example
-`echo '{"tool_input": {"command": "git push -f"}}' | python3 scripts/agent_hooks.py guard-bash; echo $?`,
-since the hook rejects a `<` redirect. Exit 2 means blocked. The hook rejects a redirect to any
-file but `/dev/null`, a `NAME=value` assignment, `git -c`, and an
-unquoted `(`, `)` or brace expansion, so quote those when they are text.
+blocks it. Pipe the event in, since the hook rejects a `<` redirect, for
+example:
+
+```sh
+echo '{"tool_input": {"command": "git push -f"}}' | python3 scripts/agent_hooks.py guard-bash; echo $?
+```
+
+Exit 2 means blocked. The path is relative, so run a hook call in a Bash
+call of its own and without `cd`: it then runs the hooks of the
+directory the session started in, which are the hooks in force. The hook
+rejects a hook call in a command that has a `cd`, `chdir`, `pushd` or
+`popd` anywhere in it. The hook also rejects a redirect to any file but
+`/dev/null`, a `NAME=value` assignment, `git -c`, and an unquoted `(`,
+`)` or brace expansion, so quote those when they are text.
 When the hook rejects a command you need, say so in the report, with the
 command and what it would have shown. Don't look for a way around the
 hook.
 
-Start every Bash command with `cd <checkout> && <command>`, or name the
-checkout in the command (`git -C <checkout> ...`, absolute paths). A
+Start every other Bash command with `cd <checkout> && <command>`, or
+name the checkout in the command (`git -C <checkout> ...`, absolute paths). A
 `cd` on its own does nothing for the next command
 ([Subagents](https://code.claude.com/docs/en/sub-agents)). Run
 `mise run setup` there once. The platform may not give you Grep and Glob
