@@ -124,6 +124,13 @@ Review finds these in almost every first pass. Check each one yourself.
   ("Process"), and no `Signed-off-by`. The `Assisted-by` line names the
   model you are running, for example `claude-opus-5-5`.
 
+- After every `git commit`, run `git log -1 --oneline` and check that it
+  shows your message. A pre-commit hook that fails leaves no commit, and
+  `HEAD` is then still the base commit from `main`. Never run
+  `git commit --amend` until `git log origin/main..HEAD` lists a commit
+  of your own, since an amend before that rewrites the copy of `main`'s
+  tip that your branch starts from.
+
 ## Where this repo differs from the `build` and `complete` skills
 
 The `build` skill ends in the `complete` skill. Where the two disagree,
