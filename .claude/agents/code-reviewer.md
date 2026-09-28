@@ -52,11 +52,13 @@ the branch tip) and the diff file the lead wrote there (`review.diff`).
    The skill reads the level only when it comes first, and it runs as a
    forked agent in the main checkout without your `cd`. Use `low` or
    `medium`. The fork runs in the background. The first Skill result is
-   a launch notice (`Skill "code-review" launched (forked execution, running in the background).`), and it isn't the result. Wait for the
-   fork's task notification and judge only that. A result of `(none)` is
-   a clean review only when the fork's text names a file that is in
-   `review.diff`. A bare `(none)`, a result that names no file, "nothing
-   to review", or findings on files outside the worktree, while
+   a launch notice (`Skill "code-review" launched (forked execution, running in the background).`).
+   The review arrives later in the fork's task notification. Wait for it
+   and judge only that. A result of `(none)` is a clean review only when
+   the fork's text names a file that is in `review.diff` and under the
+   review worktree path. A bare `(none)`, a result that names no file,
+   "nothing to review", a result that names any file outside the
+   worktree, or a task notification that never arrives, while
    `review.diff` isn't empty, is a failed run. Don't run it again. Say in
    the review that the skill run failed, review by hand from
    `review.diff`, and base the verdict on that hand review alone.
