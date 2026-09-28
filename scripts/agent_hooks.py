@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Claude Code hooks for this repo (`.claude/settings.json`, issues #349 and #342).
 
-Four entry points, each reading the hook's JSON event on stdin:
+Five entry points, each reading the hook's JSON event on stdin:
 
 - `guard-bash` (PreToolUse on Bash) rejects a command that breaks a rule
   of `AGENTS.md` or `docs/agents/orchestration.md` and exits 2 with a
@@ -19,6 +19,11 @@ Four entry points, each reading the hook's JSON event on stdin:
   A backtick body is unescaped before the check, a `for` loop over an
   upper-case name or `path` and an unquoted here-document are rejected,
   and a brace expansion counts with escaped or quoted text in it (#448).
+- `security-bash` (PreToolUse on Bash in the `security-reviewer` agent,
+  `.claude/agents/security-reviewer.md`, #495) applies the `review-bash`
+  rules and also allows `mise run audit`, `site-audit` and `vuln`, and
+  `python3 scripts/agent_hooks.py` with a Bash hook mode, so the
+  reviewer can feed a command to the hooks (`SECURITY_REVIEW`).
 - `format` (PostToolUse on Edit and Write) runs Biome on an edited file
   under `site/` and ruff on an edited `.py` file. It never fails the tool
   call: a formatter that is missing or errors is skipped.
@@ -822,6 +827,40 @@ REVIEW_TASKS = (
     "bundles",
 )
 
+
+@dataclass(frozen=True)
+class ReviewScope:
+    """What one reviewer agent's Bash hook allows besides REVIEW_COMMANDS.
+
+    `agent` names the agent in the block message, `tasks` are the
+    `mise run` tasks it may run, and `exact` are whole commands it may run
+    word for word.
+    """
+
+    agent: str
+    tasks: tuple[str, ...]
+    exact: frozenset[tuple[str, ...]] = frozenset()
+
+
+CODE_REVIEW = ReviewScope("code-reviewer", REVIEW_TASKS)
+
+# The security reviewer of #495 may also run the audits the #384 pass
+# triages. Each one reads a lockfile or the workflows and queries a remote
+# database, and none writes to the tree: `audit` runs zizmor, `site-audit`
+# runs `bun audit` and `vuln` runs osv-scanner. A code review has no use
+# for them, and they need the network. It may also run the Bash hooks of
+# this file, reading an event on stdin, to check a guard bypass by hand.
+# They print a reason and exit, and write nothing: `guard-bash` only reads
+# git (the worktree list and the branch).
+SECURITY_REVIEW = ReviewScope(
+    "security-reviewer",
+    (*REVIEW_TASKS, "audit", "site-audit", "vuln"),
+    frozenset(
+        ("python3", "scripts/agent_hooks.py", mode)
+        for mode in ("guard-bash", "review-bash", "security-bash")
+    ),
+)
+
 # zsh arrays tied to a colon-separated variable (`path` is `PATH`), so a
 # loop over one sets that variable (#448,
 # https://zsh.sourceforge.io/Doc/Release/Parameters.html, "Parameters Used
@@ -1171,13 +1210,13 @@ def is_git_output_option(word: str) -> bool:
     return len(name) > len("--") and "--output".startswith(name)
 
 
-def review_allows(words: Sequence[str]) -> bool:
-    """True when a simple command is one the code reviewer may run.
+def review_allows(words: Sequence[str], scope: ReviewScope = CODE_REVIEW) -> bool:
+    """True when a simple command is one the reviewer of `scope` may run.
 
     An assignment prefix (`GIT_EXTERNAL_DIFF=sh git diff`) or an
     assignment on its own (`PATH=.; ls`) is never one (#415).
     """
-    if words[0] in {"cd", "done"}:
+    if words[0] in {"cd", "done"} or tuple(words) in scope.exact:
         return True
     if words[0] == "for":
         # The loop header. The body segments are checked one by one, and
@@ -1198,7 +1237,7 @@ def review_allows(words: Sequence[str]) -> bool:
     if words[0] == "uniq" and uniq_writes(words[1:]):
         return False
     if words[:2] == ["mise", "run"]:
-        return len(words) == 3 and words[2] in REVIEW_TASKS
+        return len(words) == 3 and words[2] in scope.tasks
     if words[:2] == ["mise", "tasks"] and MISE_TASKS_WRITERS & set(words[2:]):
         return False
     if words[0] == "git":
@@ -1212,8 +1251,8 @@ def review_allows(words: Sequence[str]) -> bool:
     return any(tuple(words[: len(allowed)]) == allowed for allowed in REVIEW_COMMANDS)
 
 
-def review_reason(command: str) -> str | None:
-    """The reason the code reviewer may not run a command, or None when it may.
+def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
+    """The reason the reviewer of `scope` may not run a command, or None when it may.
 
     Each command or process substitution in it is checked as a command of
     its own (#414).
@@ -1225,7 +1264,7 @@ def review_reason(command: str) -> str | None:
         )
     outer, inner = extract_substitutions(command)
     for body in inner:
-        reason = review_reason(body)
+        reason = review_reason(body, scope)
         if reason:
             return reason
     # The splitter reads the `&` of `2>&1` as an operator, so drop the
@@ -1233,15 +1272,15 @@ def review_reason(command: str) -> str | None:
     harmless = re.sub(r"(\d*|&)>>?(&(\d+|-)|\s*/dev/null)", " ", outer)
     segments = split_segments(mark_expansions(harmless), ".", strict=True, keep_assignments=True)
     for segment in segments:
-        if segment.role is not None or not review_allows(segment.words):
-            allowed = ", ".join(" ".join(c) for c in REVIEW_COMMANDS)
-            tasks = ", ".join(REVIEW_TASKS)
+        if segment.role is not None or not review_allows(segment.words, scope):
+            allowed = ", ".join(" ".join(c) for c in (*REVIEW_COMMANDS, *sorted(scope.exact)))
+            task_list = ", ".join(scope.tasks)
             shown = " ".join(segment.words).replace(EXPANSION, "$")
             shown = shown.replace(SUBSTITUTION, "$(...)")
             return (
                 f"`{shown}` is not a review command. A reviewer runs only {allowed}, "
                 "sed -n with p scripts, for loops over these, cd, and mise run with one "
-                f"of {tasks}. A reviewer never edits."
+                f"of {task_list}. A reviewer never edits."
             )
     return None
 
@@ -1263,18 +1302,19 @@ def unknown_home(error: UnknownHomeError) -> str:
     return unreadable(f"a `~` path it can't resolve (`{error.word}`)", "use an absolute path.")
 
 
-def review_bash(event: Mapping[str, Any]) -> tuple[int, str]:
-    """Exit code and message for the code reviewer's PreToolUse event on Bash.
+def review_bash(event: Mapping[str, Any], scope: ReviewScope = CODE_REVIEW) -> tuple[int, str]:
+    """Exit code and message for a reviewer's PreToolUse event on Bash.
 
-    A command the checks can't read, such as one with an unclosed quote or
-    a zsh glob qualifier, is blocked too: only exit 2 blocks the call.
+    `scope` says which reviewer it is. A command the checks can't read,
+    such as one with an unclosed quote or a zsh glob qualifier, is blocked
+    too: only exit 2 blocks the call.
     """
     tool_input: Mapping[str, Any] = event.get("tool_input") or {}
     command = tool_input.get("command")
     if not isinstance(command, str):
         return 0, ""
     try:
-        reason = review_reason(command)
+        reason = review_reason(command, scope)
     except RecursionError:
         reason = unreadable("substitutions nested too deep")
     except ValueError as error:
@@ -1282,7 +1322,7 @@ def review_bash(event: Mapping[str, Any]) -> tuple[int, str]:
     except UnknownHomeError as error:
         reason = unknown_home(error)
     if reason:
-        return 2, f"Blocked by the code-reviewer hook: {reason}"
+        return 2, f"Blocked by the {scope.agent} hook: {reason}"
     return 0, ""
 
 
@@ -1465,9 +1505,11 @@ def session_title_hook(event: Mapping[str, Any]) -> int:
 
 
 def main(argv: Sequence[str], stdin: str, env: Mapping[str, str]) -> int:
-    if len(argv) != 2 or argv[1] not in {"guard-bash", "review-bash", "format", "session-title"}:
+    modes = {"guard-bash", "review-bash", "security-bash", "format", "session-title"}
+    if len(argv) != 2 or argv[1] not in modes:
         print(
-            "usage: agent_hooks.py guard-bash|review-bash|format|session-title < event.json",
+            "usage: agent_hooks.py guard-bash|review-bash|security-bash|format|session-title"
+            " < event.json",
             file=sys.stderr,
         )
         return 1
@@ -1484,6 +1526,8 @@ def main(argv: Sequence[str], stdin: str, env: Mapping[str, str]) -> int:
         return session_title_hook(event)
     if argv[1] == "review-bash":
         code, message = review_bash(event)
+    elif argv[1] == "security-bash":
+        code, message = review_bash(event, SECURITY_REVIEW)
     else:
         code, message = guard_bash(event, env)
     if message:
