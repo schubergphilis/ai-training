@@ -53,12 +53,16 @@ since agents may not edit that file.
 - `security-bash.sh`, PreToolUse on Bash in the `security-reviewer` agent
   only, registered in that agent's frontmatter (#495). It applies every
   rule of `review-bash.sh` and also allows `mise run audit`,
-  `mise run site-audit` and `mise run vuln`, which the #384 pass needs
-  and which write nothing to the tree, and
-  `python3 scripts/agent_hooks.py` with `guard-bash`, `review-bash` or
-  `security-bash`, so the reviewer can feed a command to a hook on stdin
-  to check a bypass. `SECURITY_REVIEW` in `scripts/agent_hooks.py` holds
-  that list.
+  `mise run site-audit` and `mise run vuln`, which the #384 pass needs,
+  and `python3 scripts/agent_hooks.py` with `guard-bash`, `review-bash`
+  or `security-bash`, so the reviewer can feed a command to a hook on
+  stdin to check a bypass. `SECURITY_REVIEW` in `scripts/agent_hooks.py`
+  holds that list. The audits query remote databases and write nothing
+  to the tree, as `.mise.toml` defines them in the checkout the reviewer
+  runs them in. The hook-call path is relative to the shell's directory,
+  so the hook allows a hook call only in a command without `cd`,
+  `chdir`, `pushd` or `popd`, substitutions included. It then runs the
+  copy in the directory the session started in.
 - `format-file.sh`, PostToolUse on Edit and Write. It runs Biome on an
   edited file under `site/` and ruff on an edited `.py` file, in the
   worktree that holds the file, and never fails the tool call.

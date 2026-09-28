@@ -64,7 +64,7 @@ import shlex
 import subprocess
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -850,8 +850,12 @@ CODE_REVIEW = ReviewScope("code-reviewer", REVIEW_TASKS)
 # runs `bun audit` and `vuln` runs osv-scanner. A code review has no use
 # for them, and they need the network. It may also run the Bash hooks of
 # this file, reading an event on stdin, to check a guard bypass by hand.
-# They print a reason and exit, and write nothing: `guard-bash` only reads
-# git (the worktree list and the branch).
+# The path is relative, so the shell runs the `scripts/agent_hooks.py` of
+# its current directory. review_reason allows these commands only in a
+# command that never changes directory (DIRECTORY_CHANGERS), so that is
+# the event's `cwd`, the checkout the session started in. That copy prints
+# a reason and exits, and writes nothing: `guard-bash` only reads git (the
+# worktree list and the branch).
 SECURITY_REVIEW = ReviewScope(
     "security-reviewer",
     (*REVIEW_TASKS, "audit", "site-audit", "vuln"),
@@ -860,6 +864,10 @@ SECURITY_REVIEW = ReviewScope(
         for mode in ("guard-bash", "review-bash", "security-bash")
     ),
 )
+
+# The commands that change the shell's directory. `chdir` is zsh's other
+# name for `cd` (https://zsh.sourceforge.io/Doc/Release/Shell-Builtin-Commands.html).
+DIRECTORY_CHANGERS = frozenset({"cd", "chdir", "pushd", "popd"})
 
 # zsh arrays tied to a colon-separated variable (`path` is `PATH`), so a
 # loop over one sets that variable (#448,
@@ -1251,12 +1259,40 @@ def review_allows(words: Sequence[str], scope: ReviewScope = CODE_REVIEW) -> boo
     return any(tuple(words[: len(allowed)]) == allowed for allowed in REVIEW_COMMANDS)
 
 
+def review_segments(command: str) -> list[Segment]:
+    """The simple commands in a command's text, as the review checks read them."""
+    # The splitter reads the `&` of `2>&1` as an operator, so drop the
+    # redirects writes_a_file allows before splitting.
+    harmless = re.sub(r"(\d*|&)>>?(&(\d+|-)|\s*/dev/null)", " ", command)
+    return split_segments(mark_expansions(harmless), ".", strict=True, keep_assignments=True)
+
+
+def changes_directory(command: str) -> bool:
+    """True when a command, or a substitution in it, runs one of DIRECTORY_CHANGERS."""
+    outer, inner = extract_substitutions(command)
+    segments = review_segments(outer)
+    if any(segment.words[:1] and segment.words[0] in DIRECTORY_CHANGERS for segment in segments):
+        return True
+    return any(changes_directory(body) for body in inner)
+
+
 def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
     """The reason the reviewer of `scope` may not run a command, or None when it may.
 
     Each command or process substitution in it is checked as a command of
-    its own (#414).
+    its own (#414). The exact commands of `scope` run a script by a
+    relative path, so they count only in a command that never changes
+    directory, substitutions included (#495).
     """
+    if scope.exact and changes_directory(command):
+        for segment in review_segments(extract_substitutions(command)[0]):
+            if tuple(segment.words) in scope.exact:
+                return (
+                    f"`{' '.join(segment.words)}` runs the script of the current directory, "
+                    "so it runs only in a command without cd, chdir, pushd or popd. Run it "
+                    "in a Bash call of its own, from the directory the session started in."
+                )
+        scope = replace(scope, exact=frozenset())
     if writes_a_file(command):
         return (
             "the command redirects output to a file. A reviewer never writes files. "
@@ -1267,11 +1303,7 @@ def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
         reason = review_reason(body, scope)
         if reason:
             return reason
-    # The splitter reads the `&` of `2>&1` as an operator, so drop the
-    # redirects writes_a_file allows before splitting.
-    harmless = re.sub(r"(\d*|&)>>?(&(\d+|-)|\s*/dev/null)", " ", outer)
-    segments = split_segments(mark_expansions(harmless), ".", strict=True, keep_assignments=True)
-    for segment in segments:
+    for segment in review_segments(outer):
         if segment.role is not None or not review_allows(segment.words, scope):
             allowed = ", ".join(" ".join(c) for c in (*REVIEW_COMMANDS, *sorted(scope.exact)))
             task_list = ", ".join(scope.tasks)
