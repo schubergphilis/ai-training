@@ -187,6 +187,13 @@ Each of these came from a review finding in a wave.
 - A change to markup that a Starlight client script reads (the sidebar's
   `details` and `summary`) is tested from the restored state, and on a
   fresh page as well.
+- A check over rendered HTML ends the text of each block element (`p`,
+  `li`, `td`, `h1` to `h6`, `div` and the other layout blocks) with a
+  space, so words from two blocks don't join. It also reads the `alt` and
+  `aria-label` attributes and the `content` of the meta description. The
+  #310 review (LEMUR wave 1) found both gaps in
+  `site/scripts/lib/rendered-citations.mjs`, which now has `BLOCKS` and
+  `ATTRIBUTES` lists for them.
 
 ## Coverage
 
