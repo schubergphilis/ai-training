@@ -437,6 +437,18 @@ def points_to(body: str, issue: int, heads: Sequence[str]) -> str | None:
     return named if owner is not None and owner != issue else None
 
 
+def own_comments(
+    comments: Sequence[IssueComment], issue: int, heads: Sequence[str]
+) -> list[IssueComment]:
+    """The comments of an issue without its pointer comments.
+
+    The comments that give a branch of the issue its verdict and next step,
+    both in the issue's own rows and in the rows of an issue that points to
+    it, so one branch always gets one `next`.
+    """
+    return [c for c in comments if points_to(c["body"], issue, heads) is None]
+
+
 def pointer_branches(
     comments: Sequence[IssueComment],
     issue: int,
@@ -534,19 +546,19 @@ def wave_status(
     of every issue that owns a branch a pointer comment names. An owner
     issue that is missing counts as one without comments. A pointer
     comment applies to none of the issue's own branches, so a pointer on an
-    issue that has its own branch too is no builder reply there.
+    issue that has its own branch too is no builder reply there, in its own
+    rows or in the rows of an issue that points to it.
     """
     issue_statuses: list[IssueStatus] = []
     for issue in issues:
         comments = comments_by_issue.get(issue, [])
         names = feat_branches(heads, issue)
-        own = [c for c in comments if points_to(c["body"], issue, heads) is None]
+        own = own_comments(comments, issue, heads)
         branches = [branch_status(name, own, names) for name in names]
         for name, pointer in pointer_branches(comments, issue, heads).items():
             owner = pointer["issue"]
-            status = branch_status(
-                name, comments_by_issue.get(owner, []), feat_branches(heads, owner)
-            )
+            owner_comments = own_comments(comments_by_issue.get(owner, []), owner, heads)
+            status = branch_status(name, owner_comments, feat_branches(heads, owner))
             status["pointer"] = pointer
             branches.append(status)
         issue_statuses.append(

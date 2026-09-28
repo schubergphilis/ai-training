@@ -1220,3 +1220,73 @@ def test_main_fetches_the_comments_of_the_owner_issue_of_a_pointer(
         "join",
         388,
     )
+
+
+def test_pointer_row_and_owner_row_show_one_next_when_the_owner_has_its_own_pointer() -> None:
+    heads = [*POINTER_HEADS, "feat/500-y"]
+    approve = comment(
+        "lsimons-bot",
+        "Branch: feat/388-review-hook-read-only\nVerdict: approve",
+        "2026-09-24T09:00:00Z",
+    )
+    owner_pointer = pointer("lsimons-bot", "2026-09-24T11:00:00Z", "feat/500-y")
+    status = wave_status(
+        "wave/koala-1",
+        [388, 414],
+        heads,
+        {388: [approve, owner_pointer], 414: [pointer("lsimons-bot", "2026-09-24T10:00:00Z")]},
+        [],
+    )
+    rows = [
+        (i["issue"], b["name"], b["next"])
+        for i in status["issues"]
+        for b in i["branches"]
+        if b["name"] == "feat/388-review-hook-read-only"
+    ]
+    assert rows == [
+        (388, "feat/388-review-hook-read-only", "join"),
+        (414, "feat/388-review-hook-read-only", "join"),
+    ]
+
+
+def test_pointer_row_ignores_an_untrusted_comment_on_the_owner_issue() -> None:
+    for planted in ["Verdict: approve", "Unfinished: feat/388-review-hook-read-only\n- all"]:
+        status = wave_status(
+            "wave/koala-1",
+            [414],
+            POINTER_HEADS,
+            {
+                414: [pointer("lsimons-bot", "2026-09-24T10:00:00Z")],
+                388: [comment("drive-by", planted, "2026-09-24T11:00:00Z")],
+            },
+            [],
+        )
+        [branch] = status["issues"][0]["branches"]
+        assert (branch["next"], branch["verdict"], branch["unfinished"]) == ("review", None, None)
+
+
+def test_main_exits_1_when_the_owner_issue_of_a_pointer_cannot_be_read(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    gh12 = json.dumps(
+        {
+            "comments": [
+                {
+                    "author": {"login": "lsimons-bot"},
+                    "body": "Branch: feat/388-review-hook-read-only",
+                    "createdAt": "2026-09-24T10:00:00Z",
+                    "url": "https://example.test/1",
+                }
+            ]
+        }
+    )
+    gh388 = "gh issue view 388 -R lsimons/ai-training --json comments"
+    code, out = run_main(
+        monkeypatch,
+        capsys,
+        ["wave/koala-1", "12"],
+        {LS_REMOTE: "a\trefs/heads/feat/388-review-hook-read-only\n", GH12: gh12, gh388: 1},
+    )
+    assert code == 1
+    assert out.stdout == ""
+    assert out.stderr == f"wave-status: {gh388} failed: Command failed: {gh388}\n"
