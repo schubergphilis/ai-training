@@ -279,11 +279,14 @@ The cases that come up:
   empty result from the skill. Ignore the notifications at the coordinator
   and act on the reviewer's consolidated verdict. The skill runs as a
   background fork, so its first Skill result is a launch notice
-  (`Skill "code-review" launched (forked execution, running in the background).`). The reviewer waits for the fork's task notification and
-  judges only that. A `(none)` result is clean only when the fork's text
-  names a file in `review.diff`. A bare `(none)`, a result that names no
-  file, "nothing to review", or findings on files outside the worktree,
-  on a non-empty `review.diff` is a failed run: the reviewer doesn't run
+  (`Skill "code-review" launched (forked execution, running in the background).`).
+  The review arrives later in the fork's task notification, and the
+  reviewer judges only that. A `(none)` result is clean only when the
+  fork's text names a file that is in `review.diff` and under the review
+  worktree path. A bare `(none)`, a result that names no file, "nothing
+  to review", a result that names any file outside the worktree, or a
+  task notification that never arrives, on a non-empty `review.diff`, is
+  a failed run: the reviewer doesn't run
   it again, says so in the review, and bases the verdict on a hand review
   of `review.diff`, never on the skill result.
 - GitHub reports `mergeable: UNKNOWN` for about a minute after every merge.
