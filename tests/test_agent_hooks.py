@@ -875,6 +875,103 @@ def test_review_bash_through_main(capsys: pytest.CaptureFixture[str]) -> None:
     assert agent_hooks.review_bash({"tool_input": {}}) == (0, "")
 
 
+# The security reviewer's hook of #495: the review rules plus three audits.
+
+SECURITY_AUDITS = ["mise run audit", "mise run site-audit", "mise run vuln"]
+
+
+def security_bash(command: str) -> tuple[int, str]:
+    event = {"tool_input": {"command": command}}
+    return agent_hooks.review_bash(event, agent_hooks.SECURITY_REVIEW)
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        *SECURITY_AUDITS,
+        "cd ../ai-training-wt/x && mise run vuln 2>&1 | tail -20",
+        "mise run site-test",
+        "git log -p --all -- .env",
+        "gh issue view 384 --comments",
+        'echo \'{"tool_input": {"command": "git push -f"}}\''
+        " | python3 scripts/agent_hooks.py guard-bash",
+        "cat .scratch/e.json | python3 scripts/agent_hooks.py review-bash; echo $?",
+    ],
+)
+def test_security_bash_allows_the_review_commands_and_the_audits(command: str) -> None:
+    assert security_bash(command) == (0, "")
+
+
+@pytest.mark.parametrize("command", [*SECURITY_AUDITS, "python3 scripts/agent_hooks.py guard-bash"])
+def test_the_code_reviewer_may_not_run_the_security_commands(command: str) -> None:
+    code, message = agent_hooks.review_bash({"tool_input": {"command": command}})
+    assert code == 2
+    assert "not a review command" in message
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "mise run fast",
+        "mise run ci",
+        "mise run site-format",
+        "mise run audit extra",
+        "mise run vuln && git push",
+        "echo $(mise run site-audit; rm -rf site)",
+        "gh issue create --title x --body y",
+        "gh api -X POST repos/lsimons/ai-training/security-advisories",
+        "zizmor .",
+        "osv-scanner scan -L uv.lock",
+        "GH_TOKEN=x mise run audit",
+        "python3 scripts/agent_hooks.py format",
+        "python3 scripts/agent_hooks.py session-title",
+        "python3 scripts/agent_hooks.py guard-bash extra",
+        "python3 -c 'import os' scripts/agent_hooks.py guard-bash",
+        "python3 other.py guard-bash",
+        "python3 ../x/scripts/agent_hooks.py guard-bash",
+    ],
+)
+def test_security_bash_rejects_anything_else(command: str) -> None:
+    code, message = security_bash(command)
+    assert code == 2
+    assert "security-reviewer hook" in message
+    assert "not a review command" in message
+
+
+def test_security_bash_rejects_a_redirect_and_an_unreadable_command() -> None:
+    code, message = security_bash("mise run vuln > report.txt")
+    assert code == 2
+    assert "redirects output to a file" in message
+    code, message = security_bash("mise run 'vuln")
+    assert code == 2
+    assert "can't check" in message
+
+
+def test_security_bash_through_main(capsys: pytest.CaptureFixture[str]) -> None:
+    allowed = json.dumps({"tool_input": {"command": "mise run site-audit"}})
+    assert agent_hooks.main(["agent_hooks.py", "security-bash"], allowed, {}) == 0
+    blocked = json.dumps({"tool_input": {"command": "git push"}})
+    assert agent_hooks.main(["agent_hooks.py", "security-bash"], blocked, {}) == 2
+    assert "security-reviewer hook" in capsys.readouterr().err
+
+
+def test_the_security_reviewer_agent_is_wired_to_its_hook_and_has_no_write_tools() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / ".claude" / "agents" / "security-reviewer.md").read_text(encoding="utf-8")
+    frontmatter = text.split("---\n")[1]
+    # The top-level `key: value` lines. `hooks:` holds a nested list instead.
+    top = [line for line in frontmatter.splitlines() if not line.startswith(" ")]
+    fields = dict(line.split(": ", 1) for line in top if ": " in line)
+    assert fields["model"] == "fable"
+    assert fields["effort"] == "high"
+    tools = {tool.strip() for tool in fields["tools"].split(",")}
+    assert tools == {"Read", "Grep", "Glob", "WebFetch", "WebSearch", "Bash"}
+    assert '.claude/hooks/security-bash.sh"' in frontmatter
+    hook = root / ".claude" / "hooks" / "security-bash.sh"
+    assert os.access(hook, os.X_OK)
+    assert hook.read_text(encoding="utf-8").rstrip().endswith('agent_hooks.py" security-bash')
+
+
 # The read-only commands and the named check tasks of #388.
 
 

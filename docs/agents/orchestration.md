@@ -17,6 +17,7 @@ else is delegated.
 | Coordinator | the session itself                 | one                                 | the main checkout, on `main`             | the session's own |
 | Builder     | `builder`                          | one per issue                       | its own worktree and branch              | Opus 5.5, medium  |
 | Reviewer    | `lesson-reviewer`, `code-reviewer` | one per pull request, sometimes two | its own worktree, detached at the PR tip | Opus 5.5, medium  |
+| Security    | `security-reviewer`                | one per security pass (#384)        | its own worktree, detached at `main`     | Fable 5.1, high   |
 
 The agents are defined in `.claude/agents/`, and the coordinator spawns
 them by name, so the model, the effort, the turn limit and the tools come
