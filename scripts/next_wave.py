@@ -57,8 +57,10 @@ label that no plan file claims as its lesson issue, in ascending issue
 number, leaving out the ones its dependency lines block. Its Blocked list
 is printed only when it has an entry, and in JSON it is the last key, so
 a wave without dependency lines prints as it did before them. An issue
-that also has the `code` label is included and marked, so the lead can
-give it a code review too.
+with more than one of the `content`, `code` and `harness` labels breaks
+the rule that the kind labels are exclusive (docs/agents/issue-tracker.md),
+so every kind lists it under Skipped with the reason
+`has more than one kind label`, and it waits until someone relabels it.
 A nits issue (title starting `Nits` or `Cosmetic nits`) is left out, since
 the dispatcher adds those to a wave as the nits row.
 
@@ -100,6 +102,12 @@ SITE = Path(__file__).resolve().parent.parent / "site"
 
 # The skipped reason `--only` gives. `format_wave` groups these on one line.
 NOT_IN_ONLY = "not in --only"
+
+# The kind labels, of which an open issue has exactly one (docs/agents/issue-tracker.md).
+KIND_LABELS = frozenset({"content", "code", "harness"})
+
+# The skipped reason of an issue with more than one kind label (#522).
+MANY_KINDS = "has more than one kind label"
 
 # A nits issue by title, the marker the dispatcher and `/wave` use (the repo
 # has no nits label). re.ASCII keeps `\b` and IGNORECASE to ASCII letters, as
@@ -695,7 +703,8 @@ def pick_issue_wave(
 
     Ready, unassigned issues with the kind's label, in `issue_order`, and
     for content only the ones that no plan file names as its `issue`. A
-    nits issue is left out. The first `size` are the wave and the rest
+    nits issue is left out. An issue with more than one kind label is
+    skipped, ahead of the planned and nits rules. The first `size` are the wave and the rest
     wait. An assigned issue, or one outside `only`, is skipped with the
     reason. One that its dependency lines hold is blocked.
     """
@@ -715,10 +724,17 @@ def pick_issue_wave(
     candidates: list[ContentEntry] = []
     for i in sorted(ready_issues, key=issue_order(kind)):
         labels = i["labels"]
-        if kind not in labels or i["number"] in planned or NITS_TITLE.match(i["title"]):
+        if kind not in labels:
+            continue
+        # A label error is reported, so it gets fixed, ahead of the silent skips.
+        many = has_many_kinds(labels)
+        if not many and (i["number"] in planned or NITS_TITLE.match(i["title"])):
             continue
         if only_set is not None and i["number"] not in only_set:
             skipped.append({"issue": i["number"], "reason": NOT_IN_ONLY})
+            continue
+        if many:
+            skipped.append({"issue": i["number"], "reason": MANY_KINDS})
             continue
         if i["assignees"]:
             reason = f"issue is assigned to {', '.join(i['assignees'])}"
@@ -741,6 +757,8 @@ def pick_issue_wave(
         issue = ready.get(n)
         if issue is None:
             reason = issue_reason_outside(kind, n, lookup(n), planned)
+        elif kind in issue["labels"] and has_many_kinds(issue["labels"]):
+            reason = MANY_KINDS
         elif n in planned:
             reason = "a planned lesson (use --kind lessons)"
         elif kind not in issue["labels"]:
@@ -766,12 +784,19 @@ def pick_issue_wave(
     }
 
 
+def has_many_kinds(labels: Iterable[str]) -> bool:
+    """Whether the labels hold more than one of the kind labels."""
+    return len(KIND_LABELS.intersection(labels)) > 1
+
+
 def issue_reason_outside(kind: IssueKind, n: int, state: IssueState, planned: set[int]) -> str:
     """The `notPicked` reason of an `only` number outside the fetched set, from its lookup."""
     if not is_open_issue(state):
         return "no such open issue"
     if "ready-for-agent" not in state["labels"]:
         return "not ready-for-agent"
+    if kind in state["labels"] and has_many_kinds(state["labels"]):
+        return MANY_KINDS
     if n in planned:
         return "a planned lesson (use --kind lessons)"
     if kind not in state["labels"]:

@@ -861,6 +861,70 @@ def test_harness_blocks_on_the_dependency_lines_and_names_the_kind_under_only() 
     assert format_wave(r).startswith("## Wave (1 of 4, harness)\n")
 
 
+# An issue with more than one kind label (#522)
+
+MANY_KINDS = "has more than one kind label"
+
+
+def test_a_content_and_code_issue_is_skipped_in_a_content_wave_and_in_a_code_wave() -> None:
+    ready = [
+        issue(80, [], ["content", "code"]),
+        issue(81, [], ["content"]),
+        issue(82, [], ["code"]),
+    ]
+    c = content_wave(plan_lessons(), ready)
+    assert [w["issue"] for w in c["wave"]] == [81]
+    assert c["skipped"] == [{"issue": 80, "reason": MANY_KINDS}]
+    k = code_wave(plan_lessons(), ready)
+    assert [w["issue"] for w in k["wave"]] == [82]
+    assert k["skipped"] == [{"issue": 80, "reason": MANY_KINDS}]
+
+
+def test_a_harness_issue_with_a_second_kind_label_is_skipped_in_a_harness_wave() -> None:
+    ready = [
+        issue(83, [], ["harness", "code", "bug"]),
+        issue(84, [], ["harness", "content", "code"]),
+        issue(85, [], ["harness", "bug"]),
+    ]
+    r = harness_wave(plan_lessons(), ready)
+    assert [w["issue"] for w in r["wave"]] == [85]
+    assert r["skipped"] == [
+        {"issue": 83, "reason": MANY_KINDS},
+        {"issue": 84, "reason": MANY_KINDS},
+    ]
+    assert f"- #83: {MANY_KINDS}" in format_wave(r)
+
+
+def test_the_kind_label_skip_wins_over_the_planned_lesson_and_nits_rules() -> None:
+    # Issue 10 is planned as lesson a/1. A planned lesson or a nits issue is
+    # left out silently, but a label error is reported so that it gets fixed.
+    ready = [
+        issue(10, [], ["content", "code"]),
+        titled(86, "Nits: two typos", ["content", "harness"]),
+    ]
+    c = content_wave(plan_lessons(), ready)
+    assert c["wave"] == []
+    assert c["skipped"] == [
+        {"issue": 10, "reason": MANY_KINDS},
+        {"issue": 86, "reason": MANY_KINDS},
+    ]
+    assert code_wave(plan_lessons(), ready)["skipped"] == [{"issue": 10, "reason": MANY_KINDS}]
+
+
+def test_the_kind_label_skip_comes_after_only_and_names_the_reason_under_not_picked() -> None:
+    ready = [issue(80, [], ["content", "code"]), issue(81, [], ["code"])]
+    lookup = Lookups({87: state(labels=["ready-for-agent", "code", "harness"])})
+    r = code_wave(plan_lessons(), ready, lookup, only=[81, 80, 87])
+    assert [w["issue"] for w in r["wave"]] == [81]
+    assert r["skipped"] == [{"issue": 80, "reason": MANY_KINDS}]
+    assert r["notPicked"] == [
+        {"issue": 80, "reason": MANY_KINDS},
+        {"issue": 87, "reason": MANY_KINDS},
+    ]
+    o = code_wave(plan_lessons(), ready, only=[81])
+    assert o["skipped"] == [{"issue": 80, "reason": NOT_IN_ONLY}]
+
+
 # formatWave
 
 

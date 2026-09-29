@@ -226,7 +226,9 @@ One tick:
    for an open #N or a `Not before` line with a later date (`triage.md`,
    "Dependency lines"). The lead adds a code review for a branch whose diff
    changes code, which is every branch of a code wave. A nits issue is left
-   out because it arrives as the nits row.
+   out because it arrives as the nits row. An issue with more than one
+   kind label is listed under Skipped as `has more than one kind label`
+   in every kind of wave, until someone relabels it.
    The picker reads the tree of the checkout it runs in, which is why the
    pull comes first.
    The dispatcher then decides on the nits row: the one open
