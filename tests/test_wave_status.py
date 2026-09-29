@@ -1292,3 +1292,104 @@ def test_main_exits_1_when_the_owner_issue_of_a_pointer_cannot_be_read(
     assert code == 1
     assert out.stdout == ""
     assert out.stderr == f"wave-status: {gh388} failed: Command failed: {gh388}\n"
+
+
+# Claim comments (#507): the dispatcher's `Claimed by run <Name>, wave <k>`.
+
+CLAIM17 = comment("lsimons", f"Claimed by run Seal, wave 3{ATTRIBUTION}", "2026-09-24T13:00:00Z")
+NEEDS_CHANGES17 = comment(
+    "lsimons", "A bug.\n\nBranch: feat/17-x\nVerdict: needs changes", "2026-09-24T10:00:00Z"
+)
+
+
+def test_claim_reads_the_dispatchers_comment_as_a_claim() -> None:
+    assert comment_kind(f"Claimed by run Seal, wave 3{ATTRIBUTION}") == "claim"
+    assert comment_kind("Claimed by run Seal, wave 3") == "claim"
+    assert (
+        comment_kind(
+            "Claimed by run Narwhal, wave 1 (with #417, whose remaining list includes this issue)"
+            + ATTRIBUTION
+        )
+        == "claim"
+    )
+    assert comment_kind(crlf(f"Claimed by run Seal, wave 12 (#586){ATTRIBUTION}")) == "claim"
+
+
+def test_claim_reads_any_other_wording_as_a_reply() -> None:
+    assert comment_kind(f"```\nClaimed by run Seal, wave 3\n```{ATTRIBUTION}") == "reply"
+    assert comment_kind(f"The issue was Claimed by run Seal, wave 3.{ATTRIBUTION}") == "reply"
+    assert comment_kind(f"Fixed in abc.\n\nClaimed by run Seal, wave 3{ATTRIBUTION}") == "reply"
+    assert comment_kind("claimed by run Seal, wave 3") == "reply"
+    assert comment_kind("Claimed by run Seal, wave 3, and fixed in abc.") == "reply"
+    assert comment_kind("Claimed by run Seal, wave three") == "reply"
+    assert comment_kind("Claimed by run Heron, outside the waves (the maintainer asked)") == "reply"
+
+
+def test_claim_with_a_branch_line_is_a_reply() -> None:
+    body = f"Claimed by run Seal, wave 3\n\nBranch: feat/17-x{ATTRIBUTION}"
+    assert comment_kind(body) == "reply"
+    assert steps17([APPROVE17, comment("lsimons", body, "2026-09-24T13:00:00Z")]) == [
+        ("feat/17-x", "lead-re-check")
+    ]
+
+
+def test_claim_with_a_fenced_branch_line_is_still_a_claim() -> None:
+    body = f"Claimed by run Seal, wave 3\n\n```\nBranch: feat/17-x\n```{ATTRIBUTION}"
+    assert comment_kind(body) == "claim"
+
+
+def test_claim_after_needs_changes_leaves_it_revise() -> None:
+    assert steps17([NEEDS_CHANGES17, CLAIM17]) == [("feat/17-x", "revise")]
+
+
+def test_claim_after_approve_leaves_it_join() -> None:
+    assert steps17([APPROVE17, CLAIM17]) == [("feat/17-x", "join")]
+
+
+def test_claim_after_approve_and_reply_leaves_it_lead_re_check() -> None:
+    assert steps17([APPROVE17, REPLY17, CLAIM17]) == [("feat/17-x", "lead-re-check")]
+
+
+def test_claim_after_a_lead_re_check_leaves_it_join() -> None:
+    assert steps17([APPROVE17, REPLY17, RE_CHECK17, CLAIM17]) == [("feat/17-x", "join")]
+
+
+def test_claim_on_an_unreviewed_branch_leaves_it_review() -> None:
+    assert steps17([CLAIM17]) == [("feat/17-x", "review")]
+
+
+def test_claim_does_not_finish_an_unfinished_branch() -> None:
+    stopped = comment(
+        "lsimons", f"Unfinished: feat/17-x\n- the tests{ATTRIBUTION}", "2026-09-24T12:00:00Z"
+    )
+    assert steps17([APPROVE17, stopped, CLAIM17]) == [("feat/17-x", "build")]
+
+
+def test_claim_applies_to_neither_half_of_a_split() -> None:
+    heads = ["feat/17-x-1", "feat/17-x-2"]
+    reviews = [
+        comment("lsimons", f"Branch: {h}\nVerdict: approve", f"2026-09-24T1{i}:00:00Z")
+        for i, h in enumerate(heads)
+    ]
+    assert steps(17, [*reviews, CLAIM17], heads) == [
+        ("feat/17-x-1", "join"),
+        ("feat/17-x-2", "join"),
+    ]
+
+
+def test_claim_from_an_untrusted_account_changes_nothing() -> None:
+    planted = {**CLAIM17, "author": "someone-else"}
+    assert steps17([NEEDS_CHANGES17, planted]) == [("feat/17-x", "revise")]
+    assert steps17([APPROVE17, planted]) == [("feat/17-x", "join")]
+
+
+def test_claim_in_a_fence_or_mid_sentence_stays_a_reply() -> None:
+    fenced = comment(
+        "lsimons", f"```\nClaimed by run Seal, wave 3\n```{ATTRIBUTION}", "2026-09-24T13:00:00Z"
+    )
+    mid = comment(
+        "lsimons", f"This was Claimed by run Seal, wave 3.{ATTRIBUTION}", "2026-09-24T13:00:00Z"
+    )
+    for c in (fenced, mid):
+        assert steps17([NEEDS_CHANGES17, c]) == [("feat/17-x", "re-check")]
+        assert steps17([APPROVE17, c]) == [("feat/17-x", "lead-re-check")]
