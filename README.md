@@ -6,16 +6,6 @@ agents.
 
 Site: <https://lsimons.github.io/ai-training/>
 
-## ⚠️ Pre-release content - use with care
-
-This site is published early so that it can be shared and improved in the
-open, while most of the planned lessons are still unwritten and existing
-pages can change or move without notice. Lessons are written by AI agents
-under human review, so expect gaps and mistakes. Check claims against the
-cited sources before you rely on them, and open an
-[issue](https://github.com/lsimons/ai-training/issues) when you find a
-problem.
-
 The basic material (AI concepts, AI safety, using AI agents) is written for
 anyone doing knowledge work. The rest is written for software engineers. The
 site is static HTML with interactive lessons that keep your progress in your
@@ -25,8 +15,10 @@ session with Claude acting as a tutor. Install the ai-tutor skill with
 `/ai-tutor <lesson URL>`. The skill (`.claude/skills/ai-tutor/SKILL.md`,
 spec S08) fetches its rules and the lesson from the published site.
 
-**Status: release 1 is live, with three to eight lessons per area and twenty-five in total.** The
-design is in [`docs/spec/`](./docs/spec/) and the open work is in the
+**Content co-authored by AI.** The lessons, checkpoints, and examples on this
+site are written by people working with AI agents, and reviewed by people.
+
+The design is in [`docs/spec/`](./docs/spec/) and the open work is in the
 [issue tracker](https://github.com/lsimons/ai-training/issues).
 
 ## Origins

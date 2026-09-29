@@ -131,8 +131,7 @@ has nothing to say.
   issues, session records and transcripts are never a place work waits.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/)
   (`type(scope): description`), and commitlint enforces it.
-- A push to `main` deploys to GitHub Pages. The site is pre-release and
-  says so on the front page and in the README.
+- A push to `main` deploys to GitHub Pages.
 - Every commit message, PR body and issue comment an agent writes ends
   with the two attribution lines below, with the model you are running in
   `Assisted-by` and no `Signed-off-by`. A review puts them after its
