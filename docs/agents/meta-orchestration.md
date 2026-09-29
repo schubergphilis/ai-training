@@ -284,6 +284,11 @@ after a restart, on the maintainer's no to a harness merge, and when the
 exclusivity check refuses a resumed run, since a later
 `/wave --resume <Name>` continues it.
 
+A picker that exits non-zero stops the loop too, before any claim. The
+dispatcher quotes the picker's `next-wave:` error line, such as a failed
+`gh issue view` for a mistyped `--only` number or `Blocked by #N` target,
+and leaves the run open for a resume once that is fixed.
+
 ## Standing approval
 
 The maintainer gives standing approval, up front, for a green wave pull
