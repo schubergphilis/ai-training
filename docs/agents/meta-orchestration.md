@@ -444,8 +444,15 @@ wave is never merged in the session that built it:
 
 A harness run starts only when no other `dispatcher-run` issue is open,
 and while it is open, `/wave` refuses to start any other run and names
-the harness run. The check reads each open run's `kind` from
-`mise run run-name` and leaves out the run being resumed, so the
-restarted session's own `/wave --resume <Name>` passes. The
+the harness run. The check is `mise run run-name -- --exclusive <kind>`
+for a new run and `mise run run-name -- --resume <Name>` for a resumed
+one (`scripts/run_name.py`, with tests). It reads each open run's `kind`
+from its issue title and leaves out the run being resumed, so the
+restarted session's own `/wave --resume <Name>` passes. It exits 3 when
+it refuses, so a checklist can run the refusals as commands. A new run
+runs it again after `gh issue create`, with `--check <n>`, and then counts
+only the runs with a lower issue number: of two new runs that both passed
+the first check, the one with the higher number closes its issue with a
+comment that names the other run. The
 `harness-review` reminder at preflight stays, since a harness run is
 where the issues a review files get done.

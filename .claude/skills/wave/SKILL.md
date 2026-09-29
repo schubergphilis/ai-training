@@ -156,10 +156,14 @@ printed.
    none, add one line to that message: `The last harness review was <date> (#<n>). Run /harness-review when there is time.` The line is only a
    reminder, and the run goes on (`docs/agents/harness-review.md`).
 
-   Then apply the harness exclusivity check to that list. The run you
-   resume with `--resume <Name>` doesn't count as another run, and its
-   kind is the one `run-name` prints for it. A new run's kind is its
-   `--kind`. Stop, with the message given, when:
+   Then run the harness exclusivity check,
+   `mise run run-name -- --exclusive <kind>` for a new run with its
+   `--kind`, or `mise run run-name -- --resume <Name>` for a resumed run.
+   The run you resume doesn't count as another run, and its kind is the
+   one its issue title gives. When the check refuses the run, the script
+   exits 3 and prints the message on stderr and as `refusal` in its JSON.
+   Stop with that message. Exit 0 with `"refusal": null` means the run may
+   start. The script (`scripts/run_name.py`) refuses when:
 
    - this run is a harness run and any other run is open:
      `A harness run starts only when no other run is open. Open: Run <Name> (#<n>), ...`
@@ -211,13 +215,21 @@ printed.
       path, and use that exact path in the later steps, since each Bash
       call gets a new `$$` and a new time.
    2. `gh issue create --title "Run: <next> (<kind>)" --label dispatcher-run --body-file <that path>`,
-      then run `mise run run-name -- --check <number>`.
-   3. When its `takenBy` isn't null, an older open run got the same name
+      then run `mise run run-name -- --check <number> --exclusive <kind>`.
+      This runs the name check and the exclusivity check of step 1 again,
+      since another run may have opened its issue after your step 1.
+      Now only the open runs with a lower issue number count, so of two
+      new runs the one with the higher number is the later one.
+   3. When it exits 3, the exclusivity check refuses your run: close your
+      issue with a comment that quotes the `refusal` and names the other
+      run (`gh issue close <number> --comment ...`), and stop as step 1
+      does. The earlier run's own check passes, so one of the two goes on.
+   4. When its `takenBy` isn't null, an older open run got the same name
       first: close your issue with a comment saying so, and go back to
       step 2 with the name `run-name` prints now and the same file. Never
       write to `.scratch/run-<name>.md` for a name that failed the check,
       because it is the other run's file.
-   4. When `takenBy` is null, the name is yours. Rename the file, and
+   5. When `takenBy` is null, the name is yours. Rename the file, and
       add the `Run: #<number>` line with the new issue's number right
       after the `## Arguments` heading as you do:
       `awk -v r='Run: #<number>' '{print} $0=="## Arguments"{print r}' <that path> > .scratch/run-<name>.md && rm <that path>`.

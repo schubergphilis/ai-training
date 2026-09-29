@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Names for dispatcher runs (`mise run run-name [-- --check N]`, #353).
+"""Names for dispatcher runs, and the harness exclusivity check (#353, #527).
+
+`mise run run-name [-- [--check N] [--exclusive KIND] [--resume NAME]]`.
 
 A run is a GitHub issue with the `dispatcher-run` label, titled
 `Run: <Name> (<kind>)`, for example `Run: Capybara (lessons)`. Runs are
@@ -19,12 +21,29 @@ With `--check N`, for the run issue #N this dispatcher just opened, it
 also prints `takenBy`: the older open run with the same name, or null. The
 dispatcher that loses closes its issue and takes the next name.
 
+With `--exclusive KIND` or `--resume NAME`, it also prints `refusal`: the
+message of the harness exclusivity check (.claude/skills/wave/SKILL.md,
+"Starting a run", step 1), or null when the run may start. A harness run
+starts only when no other run is open, and no other run starts while a
+harness run is open. The runs the check counts are the other open runs:
+
+- before a new run opens its issue, `--exclusive KIND` counts every open
+  run;
+- for a resumed run, `--resume NAME` leaves that run out, and its kind is
+  the one its title gives (a KIND given with it must match);
+- after a new run opened issue #N, `--check N --exclusive KIND` counts
+  only the open runs with a lower issue number. When two new runs race,
+  the issue number decides which is later: the higher number refuses and
+  closes its issue, and the lower one passes, so one of them goes on.
+
 The functions are pure over the file's text and the run issues that
 `main` fetches with `gh`, so tests/test_run_name.py can feed them planted
 runs, and a hook can import them.
 
-Exit codes: 0 on success, 1 when `gh` fails or the names file or the
-issue is wrong, and 2 for a usage error.
+Exit codes: 0 on success, 1 when `gh` fails or the names file, the
+issue or the resumed run is wrong, 2 for a usage error, and 3 when the
+exclusivity check refuses the run. On 3 the JSON is still printed on
+stdout, and the refusal is also printed on stderr.
 """
 
 import json
@@ -32,6 +51,7 @@ import re
 import subprocess
 import sys
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypedDict, cast
 
@@ -43,7 +63,11 @@ NAMES_FILE = (
     Path(__file__).resolve().parent.parent / ".claude" / "skills" / "wave" / "run-names.txt"
 )
 FIELDS = "number,title,state,createdAt"
-USAGE = "usage: mise run run-name [-- --check <issue>]"
+USAGE = "usage: mise run run-name [-- [--check <issue>] [--exclusive <kind>] [--resume <Name>]]"
+HARNESS = "harness"
+"""The kind of a harness run."""
+REFUSED = 3
+"""The exit code when the harness exclusivity check refuses the run."""
 
 type Gh = Callable[[Sequence[str]], object]
 """Runs gh with the arguments and returns its parsed JSON output."""
@@ -53,9 +77,16 @@ type Gh = Callable[[Sequence[str]], object]
 # trailing newline, and the JavaScript `^...$` they replace did not.
 RUN_TITLE = re.compile(r"Run: ([A-Z][a-z]+) \(([a-z]+)\)")
 NAME = re.compile(r"[A-Z][a-z]+")
+KIND = re.compile(r"[a-z]+")
 ISSUE_NUMBER = re.compile(r"[1-9][0-9]*")
 LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 LIST_NAMES = ("first", "second")
+OPTION_VALUES = {
+    "--check": "an issue number",
+    "--exclusive": "a run kind",
+    "--resume": "a run name",
+}
+"""The options, each with what its value is, for the usage errors."""
 
 
 class RunIssue(TypedDict):
@@ -83,6 +114,15 @@ class RunNameError(Exception):
 
 class UsageError(Exception):
     """The command line is wrong."""
+
+
+@dataclass(frozen=True)
+class Args:
+    """The command line: each option's value, or None when it isn't given."""
+
+    check: int | None = None
+    exclusive: str | None = None
+    resume: str | None = None
 
 
 def parse_run_names(text: str) -> list[list[str]]:
@@ -228,29 +268,108 @@ def with_issue(issues: Sequence[RunIssue], issue: RunIssue) -> list[RunIssue]:
     return [*issues, issue]
 
 
-def parse_args(argv: Sequence[str]) -> int | None:
-    """The issue number of `--check N` (a leading `#` is fine), or None without arguments.
+def parse_args(argv: Sequence[str]) -> Args:
+    """The options of the command line, in any order, each at most once.
 
-    Raises UsageError for anything else.
+    `--check N` takes an issue number (a leading `#` is fine),
+    `--exclusive KIND` a lowercase kind and `--resume NAME` a run name.
+    `--check` and `--resume` don't go together, since a resumed run opens
+    no issue. Raises UsageError for anything else.
     """
-    if len(argv) == 0:
-        return None
-    if argv[0] != "--check" or len(argv) > 2:
-        raise UsageError(f"run-name: unknown arguments {' '.join(argv)}")
-    if len(argv) < 2:
-        # The message the JavaScript version printed for a missing value.
-        raise UsageError("run-name: --check needs an issue number, got undefined")
-    raw = argv[1]
-    number = raw.removeprefix("#")
-    if not ISSUE_NUMBER.fullmatch(number):
-        raise UsageError(f"run-name: --check needs an issue number, got {json.dumps(raw)}")
-    return int(number)
+    values: dict[str, str] = {}
+    i = 0
+    while i < len(argv):
+        option = argv[i]
+        if option not in OPTION_VALUES or option in values:
+            raise UsageError(f"run-name: unknown arguments {' '.join(argv)}")
+        if i + 1 >= len(argv):
+            # "got undefined" is the message the JavaScript version printed.
+            raise UsageError(f"run-name: {option} needs {OPTION_VALUES[option]}, got undefined")
+        values[option] = argv[i + 1]
+        i += 2
+    check = None
+    if "--check" in values:
+        raw = values["--check"]
+        number = raw.removeprefix("#")
+        if not ISSUE_NUMBER.fullmatch(number):
+            raise UsageError(f"run-name: --check needs an issue number, got {json.dumps(raw)}")
+        check = int(number)
+    kind = values.get("--exclusive")
+    if kind is not None and not KIND.fullmatch(kind):
+        raise UsageError(f"run-name: --exclusive needs a run kind, got {json.dumps(kind)}")
+    resume = values.get("--resume")
+    if resume is not None and not NAME.fullmatch(resume):
+        raise UsageError(f"run-name: --resume needs a run name, got {json.dumps(resume)}")
+    if check is not None and resume is not None:
+        raise UsageError("run-name: --check and --resume don't go together")
+    return Args(check=check, exclusive=kind, resume=resume)
 
 
-def report(
-    issues: Sequence[RunIssue], sequence: Sequence[str], check: int | None
-) -> dict[str, object]:
-    """The JSON report: the open runs by number, the next name and, with --check, takenBy."""
+def exclusivity_refusal(kind: str, others: Sequence[Run]) -> str | None:
+    """The refusal of the harness exclusivity check, or None when the run may start.
+
+    `kind` is the kind of this run, and `others` are the other open runs
+    the check counts (see `counted_runs`). The messages are the ones in
+    .claude/skills/wave/SKILL.md, "Starting a run", step 1.
+    """
+    ordered = sorted(others, key=lambda run: run["number"])
+    if kind == HARNESS and ordered:
+        listed = ", ".join(f"Run {run['name']} (#{run['number']})" for run in ordered)
+        return f"A harness run starts only when no other run is open. Open: {listed}"
+    harness = next((run for run in ordered if run["kind"] == HARNESS), None)
+    if harness is not None:
+        return (
+            f"Run {harness['name']} (#{harness['number']}) is a harness run. "
+            "No other run starts while it is open."
+        )
+    return None
+
+
+def counted_runs(runs: Sequence[Run], args: Args) -> tuple[str, list[Run]]:
+    """This run's kind and the other open runs the exclusivity check counts.
+
+    With `--resume NAME` the kind is that run's, and the run is left out.
+    With `--check N` only the open runs with an issue number below N
+    count, because the issue number orders two new runs. Otherwise every
+    open run counts. Raises RunNameError when the resumed run isn't open,
+    when a KIND given doesn't match the kind of the resumed or checked run,
+    or when there is no kind at all.
+    """
+    open_runs = [run for run in runs if run["open"]]
+    mine: Run | None = None
+    if args.resume is not None:
+        mine = next((run for run in open_runs if run["name"] == args.resume), None)
+        if mine is None:
+            raise RunNameError(f"run-name: no open run is named {args.resume}")
+    elif args.check is not None:
+        mine = next((run for run in runs if run["number"] == args.check), None)
+        if mine is None:
+            raise RunNameError(f"run-name: issue #{args.check} is not a run issue")
+    kind = args.exclusive
+    if mine is not None:
+        if kind is not None and kind != mine["kind"]:
+            raise RunNameError(
+                f"run-name: --exclusive {kind}, but run {mine['name']} "
+                f"(#{mine['number']}) is a {mine['kind']} run"
+            )
+        kind = mine["kind"]
+    if kind is None:
+        raise RunNameError("run-name: the exclusivity check needs --exclusive or --resume")
+    if mine is None:
+        return kind, open_runs
+    others = [run for run in open_runs if run["number"] != mine["number"]]
+    if args.check is not None:
+        others = [run for run in others if run["number"] < args.check]
+    return kind, others
+
+
+def report(issues: Sequence[RunIssue], sequence: Sequence[str], args: Args) -> dict[str, object]:
+    """The JSON report: the open runs by number and the next name.
+
+    With --check it adds takenBy, and with --exclusive or --resume it adds
+    refusal.
+    """
+    check = args.check
     runs = [run for issue in issues if (run := run_of(issue)) is not None]
     result: dict[str, object] = {
         "open": sorted((run for run in runs if run["open"]), key=lambda run: run["number"]),
@@ -258,6 +377,9 @@ def report(
     }
     if check is not None:
         result["takenBy"] = name_taken_by(runs, check)
+    if args.exclusive is not None or args.resume is not None:
+        kind, others = counted_runs(runs, args)
+        result["refusal"] = exclusivity_refusal(kind, others)
     return result
 
 
@@ -315,19 +437,23 @@ def main(
 ) -> int:
     """Print the report for the command line `argv` and return the exit code."""
     try:
-        check = parse_args(argv)
+        args = parse_args(argv)
     except UsageError as e:
         print(e, file=sys.stderr)
         print(USAGE, file=sys.stderr)
         return 2
     try:
-        issues = fetch_issues(check, gh)
+        issues = fetch_issues(args.check, gh)
         sequence = run_name_sequence(names_file.read_text(encoding="utf-8"))
-        result = report(issues, sequence, check)
+        result = report(issues, sequence, args)
     except (RunNameError, OSError) as e:
         print(e, file=sys.stderr)
         return 1
     sys.stdout.write(format_report(result))
+    refusal = result.get("refusal")
+    if isinstance(refusal, str):
+        print(refusal, file=sys.stderr)
+        return REFUSED
     return 0
 
 

@@ -259,9 +259,20 @@ def test_taken_by_raises_for_an_issue_that_is_not_a_run() -> None:
 
 
 def test_parse_args_takes_no_arguments_or_check_with_an_issue_number() -> None:
-    assert run_name.parse_args([]) is None
-    assert run_name.parse_args(["--check", "#360"]) == 360
-    assert run_name.parse_args(["--check", "360"]) == 360
+    assert run_name.parse_args([]) == run_name.Args()
+    assert run_name.parse_args(["--check", "#360"]) == run_name.Args(check=360)
+    assert run_name.parse_args(["--check", "360"]) == run_name.Args(check=360)
+
+
+def test_parse_args_takes_exclusive_and_resume_in_any_order() -> None:
+    assert run_name.parse_args(["--exclusive", "code"]) == run_name.Args(exclusive="code")
+    assert run_name.parse_args(["--resume", "Seal"]) == run_name.Args(resume="Seal")
+    assert run_name.parse_args(["--resume", "Seal", "--exclusive", "harness"]) == run_name.Args(
+        exclusive="harness", resume="Seal"
+    )
+    assert run_name.parse_args(["--exclusive", "code", "--check", "#600"]) == run_name.Args(
+        check=600, exclusive="code"
+    )
 
 
 @pytest.mark.parametrize(
@@ -271,8 +282,17 @@ def test_parse_args_takes_no_arguments_or_check_with_an_issue_number() -> None:
         (["--check", "x"], 'run-name: --check needs an issue number, got "x"'),
         (["--check", "0"], 'run-name: --check needs an issue number, got "0"'),
         (["--check", "513\n"], 'run-name: --check needs an issue number, got "513\\n"'),
-        (["--resume", "Capybara"], "run-name: unknown arguments --resume Capybara"),
+        (["--resume", "Capybara", "x"], "run-name: unknown arguments --resume Capybara x"),
         (["--check", "1", "2"], "run-name: unknown arguments --check 1 2"),
+        (["--check", "1", "--check", "2"], "run-name: unknown arguments --check 1 --check 2"),
+        (["--exclusive"], "run-name: --exclusive needs a run kind, got undefined"),
+        (["--exclusive", "Code"], 'run-name: --exclusive needs a run kind, got "Code"'),
+        (["--resume"], "run-name: --resume needs a run name, got undefined"),
+        (["--resume", "seal"], 'run-name: --resume needs a run name, got "seal"'),
+        (
+            ["--check", "600", "--resume", "Seal"],
+            "run-name: --check and --resume don't go together",
+        ),
     ],
 )
 def test_parse_args_rejects_anything_else(argv: list[str], message: str) -> None:
@@ -316,7 +336,7 @@ def test_report_lists_open_runs_by_number_and_skips_other_titles() -> None:
         issue(11, "Run: Badger (lessons)", "2026-09-25T09:00:00Z", state="CLOSED"),
         issue(13, "Not a run", "2026-09-25T11:00:00Z"),
     ]
-    result = run_name.report(issues, SEQUENCE, None)
+    result = run_name.report(issues, SEQUENCE, run_name.Args())
     assert list(result) == ["open", "next"]
     assert result["next"] == "Dingo"
     open_runs = cast("list[Run]", result["open"])
@@ -325,7 +345,9 @@ def test_report_lists_open_runs_by_number_and_skips_other_titles() -> None:
 
 def test_format_report_matches_the_javascript_json_format() -> None:
     result = run_name.report(
-        [issue(513, "Run: Ocelot (harness)", "2026-09-26T08:53:16Z")], SEQUENCE, 513
+        [issue(513, "Run: Ocelot (harness)", "2026-09-26T08:53:16Z")],
+        SEQUENCE,
+        run_name.Args(check=513),
     )
     assert run_name.format_report(result) == (
         "{\n"
@@ -428,3 +450,177 @@ def test_gh_json_raises_run_name_error_on_output_that_is_not_json(
     monkeypatch.setattr(subprocess, "run", fake_run)
     with pytest.raises(run_name.RunNameError, match="failed"):
         run_name.gh_json(["issue", "list"])
+
+
+# The harness exclusivity check
+
+# The two refusals exactly as .claude/skills/wave/SKILL.md, "Starting a run",
+# step 1, gives them, with the placeholders filled in.
+HARNESS_FIRST = "A harness run starts only when no other run is open. Open: "
+HARNESS_OPEN = "Run {name} (#{number}) is a harness run. No other run starts while it is open."
+SKILL_TEXT = (
+    pathlib.Path(__file__).resolve().parent.parent / ".claude" / "skills" / "wave" / "SKILL.md"
+).read_text(encoding="utf-8")
+
+
+def open_run(number: int, name: str, kind: str, is_open: bool = True) -> Run:
+    return {
+        "number": number,
+        "name": name,
+        "kind": kind,
+        "open": is_open,
+        "createdAt": f"2026-09-27T{number % 24:02d}:00:00Z",
+    }
+
+
+SEAL = open_run(586, "Seal", "harness")
+OTTER = open_run(580, "Otter", "code")
+PUMA = open_run(590, "Puma", "lessons")
+
+
+def refusal(runs: Sequence[Run], args: run_name.Args) -> str | None:
+    kind, others = run_name.counted_runs(runs, args)
+    return run_name.exclusivity_refusal(kind, others)
+
+
+def test_skill_md_gives_the_two_refusals_the_script_prints() -> None:
+    assert f"`{HARNESS_FIRST}Run <Name> (#<n>), ...`" in SKILL_TEXT
+    assert "`" + HARNESS_OPEN.format(name="<Name>", number="<n>") + "`" in SKILL_TEXT
+
+
+def test_a_new_harness_run_is_refused_while_other_runs_are_open() -> None:
+    assert refusal([PUMA, OTTER], run_name.Args(exclusive="harness")) == (
+        HARNESS_FIRST + "Run Otter (#580), Run Puma (#590)"
+    )
+
+
+def test_a_new_run_of_another_kind_is_refused_while_a_harness_run_is_open() -> None:
+    assert refusal([OTTER, SEAL], run_name.Args(exclusive="code")) == HARNESS_OPEN.format(
+        name="Seal", number=586
+    )
+
+
+def test_a_resume_of_the_harness_run_passes_when_no_other_run_is_open() -> None:
+    assert refusal([SEAL], run_name.Args(resume="Seal")) is None
+    assert refusal([SEAL], run_name.Args(exclusive="harness", resume="Seal")) is None
+
+
+def test_a_resume_of_the_harness_run_is_refused_while_another_run_is_open() -> None:
+    assert refusal([SEAL, OTTER], run_name.Args(resume="Seal")) == (
+        HARNESS_FIRST + "Run Otter (#580)"
+    )
+
+
+def test_a_resume_of_another_run_is_refused_while_a_harness_run_is_open() -> None:
+    assert refusal([OTTER, SEAL], run_name.Args(resume="Otter")) == HARNESS_OPEN.format(
+        name="Seal", number=586
+    )
+
+
+def test_every_run_passes_when_no_run_is_open() -> None:
+    assert refusal([], run_name.Args(exclusive="harness")) is None
+    assert refusal([], run_name.Args(exclusive="code")) is None
+
+
+def test_closed_runs_do_not_count() -> None:
+    closed = open_run(500, "Ocelot", "harness", is_open=False)
+    assert refusal([closed], run_name.Args(exclusive="code")) is None
+    assert refusal([closed, OTTER], run_name.Args(exclusive="lessons")) is None
+
+
+def test_runs_of_other_kinds_share_the_repo_without_a_refusal() -> None:
+    assert refusal([OTTER, PUMA], run_name.Args(exclusive="code")) is None
+
+
+def test_after_the_create_only_older_runs_count_so_the_higher_number_refuses() -> None:
+    # Two new runs race: Seal (#586, harness) and Puma (#590, lessons) both
+    # passed step 1 and opened their issues. The issue number orders them.
+    both = [SEAL, PUMA]
+    assert refusal(both, run_name.Args(check=586, exclusive="harness")) is None
+    assert refusal(both, run_name.Args(check=590, exclusive="lessons")) == HARNESS_OPEN.format(
+        name="Seal", number=586
+    )
+    # The same race the other way round: the harness run has the higher number.
+    otter_first = [OTTER, SEAL]
+    assert refusal(otter_first, run_name.Args(check=580, exclusive="code")) is None
+    assert refusal(otter_first, run_name.Args(check=586, exclusive="harness")) == (
+        HARNESS_FIRST + "Run Otter (#580)"
+    )
+
+
+def test_after_the_create_the_kind_comes_from_the_issue_title() -> None:
+    assert refusal([OTTER, PUMA], run_name.Args(check=590)) is None
+
+
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        (run_name.Args(resume="Tapir"), "run-name: no open run is named Tapir"),
+        (
+            run_name.Args(resume="Ocelot"),
+            "run-name: no open run is named Ocelot",
+        ),
+        (
+            run_name.Args(exclusive="code", resume="Seal"),
+            "run-name: --exclusive code, but run Seal (#586) is a harness run",
+        ),
+        (
+            run_name.Args(check=586, exclusive="code"),
+            "run-name: --exclusive code, but run Seal (#586) is a harness run",
+        ),
+        (run_name.Args(check=999, exclusive="code"), "run-name: issue #999 is not a run issue"),
+        (run_name.Args(), "run-name: the exclusivity check needs --exclusive or --resume"),
+    ],
+)
+def test_counted_runs_raises_for_a_wrong_run_or_kind(args: run_name.Args, message: str) -> None:
+    closed = open_run(500, "Ocelot", "harness", is_open=False)
+    with pytest.raises(run_name.RunNameError) as caught:
+        run_name.counted_runs([closed, SEAL], args)
+    assert str(caught.value) == message
+
+
+SEAL_ISSUE = issue(586, "Run: Seal (harness)", "2026-09-27T20:41:05Z")
+OTTER_ISSUE = issue(580, "Run: Otter (code)", "2026-09-27T20:00:00Z")
+
+
+def test_main_exits_3_and_prints_the_refusal_when_the_check_refuses(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert run_name.main(["--exclusive", "code"], gh=fake_gh([SEAL_ISSUE])) == run_name.REFUSED
+    assert run_name.REFUSED == 3
+    captured = capsys.readouterr()
+    message = HARNESS_OPEN.format(name="Seal", number=586)
+    assert json.loads(captured.out)["refusal"] == message
+    assert captured.err == message + "\n"
+
+
+def test_main_exits_0_with_a_null_refusal_when_the_run_may_start(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert (
+        run_name.main(["--exclusive", "harness", "--resume", "Seal"], gh=fake_gh([SEAL_ISSUE])) == 0
+    )
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["refusal"] is None
+    assert captured.err == ""
+
+
+def test_main_check_and_exclusive_print_takenby_and_the_refusal(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = run_name.main(
+        ["--check", "586", "--exclusive", "harness"], gh=fake_gh([OTTER_ISSUE], SEAL_ISSUE)
+    )
+    assert code == run_name.REFUSED
+    out = json.loads(capsys.readouterr().out)
+    assert out["takenBy"] is None
+    assert out["refusal"] == HARNESS_FIRST + "Run Otter (#580)"
+
+
+def test_main_exits_1_for_a_resumed_run_that_is_not_open(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert run_name.main(["--resume", "Tapir"], gh=fake_gh([SEAL_ISSUE])) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == "run-name: no open run is named Tapir\n"

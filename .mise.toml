@@ -194,9 +194,12 @@ run = "uv run --locked python scripts/harness_metrics.py"
 # Names for dispatcher runs (#353): the open `dispatcher-run` issues and the
 # name the next run takes, from .claude/skills/wave/run-names.txt, as JSON.
 # `-- --check N` also says whether an older open run holds the name of run
-# issue #N. The rules are in scripts/run_name.py. Network (gh).
+# issue #N. `-- --exclusive <kind>` or `-- --resume <Name>` adds the harness
+# exclusivity check and exits 3 when it refuses the run (combine
+# `--exclusive` with `--check N` after the run issue is created). The rules
+# are in scripts/run_name.py. Network (gh).
 [tasks.run-name]
-description = "Open dispatcher runs and the next run name, as JSON: mise run run-name [-- --check <issue>]"
+description = "Open dispatcher runs and the next run name, as JSON: mise run run-name [-- [--check <issue>] [--exclusive <kind>] [--resume <Name>]]"
 run = "uv run --locked python scripts/run_name.py"
 
 # Branch cleanup, for human maintainers only: no agent runs this task,
