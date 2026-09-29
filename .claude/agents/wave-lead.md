@@ -204,9 +204,13 @@ stopped before it could report. Don't restart the wave:
    the comment kinds apart by their text, because every agent posts as the
    same accounts:
    a `Verdict:` line, an `Unfinished:` first line, a line starting
-   `re-checked by lead`, and any other comment after a verdict counts as a
-   builder reply. A trusted comment whose `Branch:` line names a pushed
-   `feat/<other issue>-*` branch is a pointer: the tool lists that branch
+   `re-checked by lead`, a claim, and any other comment after a verdict
+   counts as a builder reply. A claim is the dispatcher's comment whose
+   first line is `Claimed by run <Name>, wave <k>` (a parenthetical after
+   it is allowed) and that has no `Branch:` line. It applies to no branch,
+   so it is no reply and doesn't finish an `Unfinished:` branch. A trusted
+   comment whose `Branch:` line names a pushed `feat/<other issue>-*`
+   branch is a pointer: the tool lists that branch
    under this issue too, with a `pointer` field that names the issue that
    owns it, and takes its verdict and `next` from that issue's comments.
    Act on such a branch once, even when both issues list it. When its
