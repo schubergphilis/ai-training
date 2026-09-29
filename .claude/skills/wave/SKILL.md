@@ -299,6 +299,28 @@ printed.
    row is valid and proceeds. When the table is empty after that,
    stop, and report what the picker listed as blocked, skipped, waiting and
    not picked.
+   When `mise run next-wave` exits non-zero, it prints no table, so skip
+   the nits row and stop with "the picker exits non-zero". Quote the
+   picker's own line, the last one on stderr that starts with `next-wave:`
+   (mise adds a `[next-wave] ERROR task failed` line after it, which says
+   nothing more). Nothing is claimed yet, so the run stays open for a
+   resume: the fix is in the run issue or in an issue body, and a new run
+   would lose the `Remaining --only` list and the `Parked` section. Name
+   the fix with the quote:
+   - `next-wave: gh issue view failed: Command failed: gh issue view <n> ...`,
+     after `gh`'s own error (for a number that doesn't exist,
+     `GraphQL: Could not resolve to an issue or pull request with the number of <n>.`):
+     when `<n>` is in `Remaining --only`, it is an `--only` number for the
+     maintainer to remove from that section. Otherwise it is the target of
+     a `Blocked by #<n>` line to fix in the issue whose body has it.
+   - `next-wave: gh issue list failed: ...`: `gh` can't reach GitHub or
+     isn't logged in, or the list reaches the `-L` limit.
+   - `next-wave: bun scripts/lesson-plan.mjs failed: ...`: the lesson plan
+     of this checkout doesn't read, so `mise run setup` or `main` needs a fix.
+   - A line that names an argument, such as
+     `next-wave: --size needs a positive integer, got "x"` (exit 2): the
+     run's `## Arguments` hold a value the picker refuses.
+   - A Python traceback: a picker bug, to file as a `code` issue.
 5. **Claim.** For each issue of the wave, assign it
    (`gh issue edit <n> --add-assignee @me`, and the picker skips assigned
    issues) and comment `Claimed by run <Name>, wave <k>`. Then read each
@@ -501,6 +523,7 @@ continues the run later:
 - a failed step of "Resuming after a restart", such as the wrong checkout;
 - the maintainer's no to the merge in that section's step 5;
 - the exclusivity check refusing a resumed run ("Starting a run", step 1).
+- the picker exiting non-zero ("One tick of the loop", step 4).
 
 Under `--no-filing`, before the final report, file what the leads wrote.
 For each follow-ups comment on the run issue, check every entry once
@@ -526,6 +549,8 @@ Stop, and say which one it was, when:
   `origin/main`;
 - the picker returns an empty wave and there is no nits row (report what
   is blocked, waiting and not picked);
+- the picker exits non-zero (quote its `next-wave:` line and name the
+  fix, step 4 of the loop);
 - under `--only`, the `Remaining --only` list is empty;
 - the lead reports `open` or `failed`;
 - a harness wave is awaiting restart (the lead's `open` report on a
