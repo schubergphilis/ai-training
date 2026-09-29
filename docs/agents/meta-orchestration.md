@@ -228,7 +228,9 @@ One tick:
    changes code, which is every branch of a code wave. A nits issue is left
    out because it arrives as the nits row. An issue with more than one
    kind label is listed under Skipped as `has more than one kind label`
-   in every kind of wave, until someone relabels it.
+   in every kind of wave, until someone relabels it. A code or harness
+   wave leaves out an issue a plan file claims too, as a content wave
+   does, since lesson work runs only in a lessons wave (#526).
    The picker reads the tree of the checkout it runs in, which is why the
    pull comes first.
    The dispatcher then decides on the nits row: the one open
@@ -388,12 +390,12 @@ by it. Each issue has exactly one kind label (`issue-tracker.md`,
 
 - `lessons`: the planned lessons, from their plan files.
 - `content`: the `content` issues that no plan file claims.
-- `code`: the `code` issues, `bug` issues first. Each builder gets the
+- `code`: the `code` issues that no plan file claims, `bug` issues first. Each builder gets the
   code collision notes and each branch a `code-reviewer`, and the
   standing approval applies as for any wave. A code run can be open next
   to a lessons or content run, and "Files the other run touches" under
   "Concurrent runs" keeps the two apart.
-- `harness`: the `harness` issues, 4 per wave by default, since every
+- `harness`: the `harness` issues that no plan file claims, 4 per wave by default, since every
   issue adds items to the one checklist the maintainer works through by
   hand. It builds and reviews like a code run and merges only after a
   restart, as the next section describes.

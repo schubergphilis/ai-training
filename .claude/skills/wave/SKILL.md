@@ -30,8 +30,8 @@ flags themselves keep them.
   `--size` to the picker only when the run's arguments give a size.
 - `--kind`: `lessons` (planned lessons, the default), `content` (ready
   `content` issues outside the lesson plans), `code` (ready `code`
-  issues, `bug` issues first, then ascending number) or `harness` (ready
-  `harness` issues by ascending number, built and reviewed as code, and
+  issues outside the lesson plans, `bug` issues first, then ascending number) or `harness` (ready
+  `harness` issues outside the lesson plans by ascending number, built and reviewed as code, and
   merged only after a restart, see "Harness runs"). Passed to the picker.
   Check the kind before anything else. For any other value, stop with
   `--kind is lessons, content, code or harness, got "<value>"`, the

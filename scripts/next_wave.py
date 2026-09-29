@@ -62,22 +62,24 @@ the rule that the kind labels are exclusive (docs/agents/issue-tracker.md),
 so every kind lists it under Skipped with the reason
 `has more than one kind label`, and it waits until someone relabels it.
 A nits issue (title starting `Nits` or `Cosmetic nits`) is left out, since
-the dispatcher adds those to a wave as the nits row.
+the dispatcher adds those to a wave as the nits row. Every issue kind
+leaves out a planned lesson's issue (#526), with the reason
+`a planned lesson (use --kind lessons)` under `--only`, since only a
+lessons wave applies the `assumes` rule the build enforces.
 
 A `code` wave (#494) picks the ready, unassigned issues with the `code`
-label, with the same dependency lines and the same nits rule. The issues
-with the `bug` label come first, then the rest, each part in ascending
-issue number, which is the order run Emu (#362) chose by hand. The kind
-labels are exclusive (docs/agents/issue-tracker.md), so the `code` label
-alone selects them. It prints as a content wave does, with the kind in
+label that no plan file claims, with the same dependency lines and the
+same nits rule. The issues with the `bug` label come first, then the
+rest, each part in ascending issue number, which is the order run Emu
+(#362) chose by hand. It prints as a content wave does, with the kind in
 the heading.
 
 A `harness` wave (#365) picks the ready, unassigned issues with the
-`harness` label in ascending issue number, with the same dependency lines
-and the same nits rule, and prints as a code wave does. Its default size
-is 4, since every issue in it adds items to the one `After the restart`
-checklist the maintainer works through by hand. The other kinds default
-to 6.
+`harness` label that no plan file claims, in ascending issue number, with
+the same dependency lines and the same nits rule, and prints as a code
+wave does. Its default size is 4, since every issue in it adds items to
+the one `After the restart` checklist the maintainer works through by
+hand. The other kinds default to 6.
 
 `only` narrows every kind to a set of issue numbers. Everything else is
 reported as skipped with the reason `not in --only`, and every listed
@@ -701,24 +703,21 @@ def pick_issue_wave(
 ) -> ContentWave:
     """Pick the next wave of issues with the label `kind`.
 
-    Ready, unassigned issues with the kind's label, in `issue_order`, and
-    for content only the ones that no plan file names as its `issue`. A
-    nits issue is left out. An issue with more than one kind label is
-    skipped, ahead of the planned and nits rules. The first `size` are the wave and the rest
-    wait. An assigned issue, or one outside `only`, is skipped with the
-    reason. One that its dependency lines hold is blocked.
+    Ready, unassigned issues with the kind's label that no plan file
+    names as its `issue`, in `issue_order`. A nits issue is left out. An
+    issue with more than one kind label is skipped, ahead of the planned
+    and nits rules. The first `size` are the wave and the rest wait. An
+    assigned issue, or one outside `only`, is skipped with the reason. One
+    that its dependency lines hold is blocked.
     """
     day = today if today is not None else today_utc()
     ready = {i["number"]: i for i in ready_issues}
     is_open = open_checker(ready, lookup)
     only_list = list(only) if only is not None else None
     only_set = set(only_list) if only_list is not None else None
-    # A planned lesson's issue is a lessons-wave issue, and only content leaves it out.
-    planned = (
-        {lesson["issue"] for lesson in lessons if lesson["issue"] is not None}
-        if kind == "content"
-        else set[int]()
-    )
+    # A planned lesson's issue is a lessons-wave issue, so every issue kind
+    # leaves it out (#526). Only a lessons wave applies its `assumes` rule.
+    planned = {lesson["issue"] for lesson in lessons if lesson["issue"] is not None}
     skipped: list[SkippedEntry] = []
     blocked: list[ContentBlockedEntry] = []
     candidates: list[ContentEntry] = []

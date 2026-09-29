@@ -719,7 +719,7 @@ def test_code_puts_bugs_first_then_ascending_numbers_and_leaves_out_other_kinds(
         issue(5, [], ["content"]),
         issue(6, [], ["harness", "bug"]),
         issue(7),
-        # A planned lesson's issue with the code label is a code issue too.
+        # A planned lesson's issue is left out, even with the code label (#526).
         issue(10, [], ["code"]),
     ]
     r = pick_wave(plan_lessons(), ready, kind="code", size=6)
@@ -730,7 +730,6 @@ def test_code_puts_bugs_first_then_ascending_numbers_and_leaves_out_other_kinds(
         "wave": [
             {"issue": 8, "title": "Lesson #8", "labels": ["bug", "code"]},
             {"issue": 35, "title": "Lesson #35", "labels": ["code", "bug"]},
-            {"issue": 10, "title": "Lesson #10", "labels": ["code"]},
             {"issue": 12, "title": "Lesson #12", "labels": ["code"]},
             {"issue": 40, "title": "Lesson #40", "labels": ["code", "ready-for-agent"]},
         ],
@@ -859,6 +858,26 @@ def test_harness_blocks_on_the_dependency_lines_and_names_the_kind_under_only() 
         {"issue": 999, "reason": "no such open issue"},
     ]
     assert format_wave(r).startswith("## Wave (1 of 4, harness)\n")
+
+
+# A planned lesson's issue in a code or harness wave (#526)
+
+
+@pytest.mark.parametrize("kind", ["code", "harness"])
+def test_a_code_or_harness_wave_leaves_out_a_planned_lessons_issue(kind: nw.IssueKind) -> None:
+    # Issues 10 and 20 are planned as lessons a/1 and a/2.
+    ready = [issue(10, [], [kind, "bug"]), issue(20, [], [kind]), issue(90, [], [kind])]
+    lookup = Lookups({20: state(labels=["ready-for-agent", kind])})
+    r = nw.pick_issue_wave(kind, plan_lessons(), ready)
+    assert [w["issue"] for w in r["wave"]] == [90]
+    assert r["skipped"] == []
+    # Issue 20 is outside the fetched set here, so the picker looks it up.
+    o = nw.pick_issue_wave(kind, plan_lessons(), [ready[0], ready[2]], lookup, only=[10, 20, 90])
+    assert [w["issue"] for w in o["wave"]] == [90]
+    assert o["notPicked"] == [
+        {"issue": 10, "reason": "a planned lesson (use --kind lessons)"},
+        {"issue": 20, "reason": "a planned lesson (use --kind lessons)"},
+    ]
 
 
 # An issue with more than one kind label (#522)
