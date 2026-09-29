@@ -1378,7 +1378,7 @@ def test_claim_applies_to_neither_half_of_a_split() -> None:
 
 
 def test_claim_from_an_untrusted_account_changes_nothing() -> None:
-    planted = {**CLAIM17, "author": "someone-else"}
+    planted = comment("someone-else", CLAIM17["body"], CLAIM17["createdAt"])
     assert steps17([NEEDS_CHANGES17, planted]) == [("feat/17-x", "revise")]
     assert steps17([APPROVE17, planted]) == [("feat/17-x", "join")]
 
