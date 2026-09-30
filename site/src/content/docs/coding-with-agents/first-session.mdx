@@ -22,14 +22,29 @@ tutor can give you hints on this lesson inside your own agent.
 The fixture is a to-do list command in about seventy lines of Python. It
 lives in the course repository under
 `site/examples/coding-with-agents/first-session/fixture-repo/`. Copy that
-directory out of the course repository, for example into your home
-directory, and work in the copy. The course repository has
-instruction files for agents of its own, and an agent started inside it
-can read those in place of the fixture's. Make the copy a git repository
-with one commit, so that git can show you what changed and put it back.
+directory out of the course repository into your home directory, and work
+in the copy. The course repository has instruction files for agents of its
+own, and an agent started inside it can read those in place of the
+fixture's. Make the copy a git repository with one commit, so that git can
+show you what changed and put it back.
+
+The program needs Python 3.9 or newer and nothing else. On a Mac, the
+`python3` that comes with the system is enough, and so is its `git`. On a
+fresh Mac the first `git` or `python3` command may open a dialog from Apple
+offering to install its developer tools for the terminal (the Xcode Command
+Line Tools). Accept it, wait for the install to finish, and then run the git
+commands below again from the start.
+
+These commands fetch the course repository into your home directory, copy
+the fixture out of it and make the copy a repository. If you already have a
+clone of the course, skip the `git clone` line and use your clone's path in
+the `cp` line.
 
 ```sh
-cd fixture-repo
+cd ~
+git clone https://github.com/schubergphilis/ai-training.git
+cp -R ai-training/site/examples/coding-with-agents/first-session/fixture-repo ~/fixture-repo
+cd ~/fixture-repo
 git init -q
 git add .
 git commit -qm "fixture as shipped"
@@ -44,12 +59,6 @@ tests; `todos.json`, a committed list of three items; `README.md`; and
 `AGENTS.md`, four lines of instructions for the agent. Run the program
 before you run the agent. You want to know
 what "working" looks like before someone else changes it.
-
-The program needs Python 3.9 or newer and nothing else. On a Mac, the
-`python3` that comes with the system is enough. On a fresh Mac the first
-`python3` command may open a dialog from Apple offering to install its
-developer tools for the terminal (the Xcode Command Line Tools). Accept it,
-wait for the install to finish, and run the command again.
 
 <Predict id="run-list" title="Show the list"
   answer={`1. [ ] Buy milk
@@ -82,8 +91,8 @@ you. The mode that asks before each edit is called Manual there, and
 `claude --permission-mode default` starts a session in it. In a session
 you have already started, Shift+Tab switches from auto mode to Manual,
 and in the VS Code extension the mode indicator at the bottom of the
-prompt box does the same (@Claude Code permission modes). The section on permission modes later in
-this lesson explains the other choices.
+prompt box does the same (@Claude Code permission modes). The section on
+permission modes later in this lesson explains the other choices.
 
 Your first message isn't a task. It is a question, and its purpose is to
 check that the agent is looking at the same code you are.
