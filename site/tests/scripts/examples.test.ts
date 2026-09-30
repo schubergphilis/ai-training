@@ -15,6 +15,7 @@ import {
 	predictTags,
 	pythonVersion,
 	runFixture,
+	stripCommentsAndDocstrings,
 	textFenceLines,
 	UNRUN_EXEMPT,
 	unrunFixtures,
@@ -482,10 +483,10 @@ describe('unrunFixtures below the lesson directory (#468)', () => {
 
 describe('namesPath', () => {
 	const names: [string, string, string][] = [
-		['"nightly"', 'nightly', 'directory in double quotes'],
-		["'nightly/'", 'nightly', 'directory with a trailing slash'],
-		['"nightly/importer.py"', 'nightly/importer.py', 'whole file path'],
-		['"release-kit/scripts"', 'release-kit/scripts', 'whole nested directory path'],
+		['SRC = "nightly"\n', 'nightly', 'directory in double quotes'],
+		["SRC = 'nightly/'\n", 'nightly', 'directory with a trailing slash'],
+		['run("nightly/importer.py")\n', 'nightly/importer.py', 'whole file path'],
+		['SRC = "release-kit/scripts"\n', 'release-kit/scripts', 'whole nested directory path'],
 		['import nightly.importer\n', 'nightly', 'import of a module in the package'],
 		['import nightly.importer\n', 'nightly/importer.py', 'dotted import of the file'],
 		['from pkg.sub import tool\n', 'pkg/sub', 'from-import of the package'],
@@ -497,17 +498,96 @@ describe('namesPath', () => {
 	const misses: [string, string, string][] = [
 		['# see nightly/\n', 'nightly', 'a comment'],
 		['"""Copies nightly to a scratch dir."""\n', 'nightly', 'a docstring'],
-		['"nightly_old"', 'nightly', 'a longer name'],
-		['"my-nightly"', 'nightly', 'a name that ends with it'],
+		['SRC = "nightly_old"\n', 'nightly', 'a longer name'],
+		['SRC = "my-nightly"\n', 'nightly', 'a name that ends with it'],
 		['print("$ ls nightly")\n', 'nightly', 'a longer string'],
 		['import nightly_old\n', 'nightly', 'an import of a longer module'],
-		['"importer.py"', 'nightly/importer.py', 'the bare file name'],
-		['"scripts"', 'release-kit/scripts', 'the last segment of a nested directory'],
+		['run("importer.py")\n', 'nightly/importer.py', 'the bare file name'],
+		['SRC = "scripts"\n', 'release-kit/scripts', 'the last segment of a nested directory'],
 		['import importer\n', 'nightly/importer.py', 'an import of the bare stem'],
 		['from importer import run\n', 'nightly/importer.py', 'a from-import of the bare stem'],
 	];
 	it.each(misses)('%j does not name %j (%s)', (src, rel) => {
 		expect(namesPath(src, rel)).toBe(false);
+	});
+});
+
+describe('stripCommentsAndDocstrings (#557)', () => {
+	const cases: [string, string, string][] = [
+		['x = 1  # copies "nightly" later\n', 'x = 1  \n', 'a trailing comment'],
+		['# Runs "agent.py".\nprint(1)\n', '\nprint(1)\n', 'a comment line'],
+		['"""Runs "agent.py"."""\nprint(1)\n', '\nprint(1)\n', 'a module docstring'],
+		[
+			'#!/usr/bin/env python3\n\n"""Runs\n"agent.py"."""\n',
+			'\n\n\n\n',
+			'a module docstring after a shebang, keeping its newlines',
+		],
+		[
+			'def f():\n    """Runs \'agent.py\'."""\n    return 1\n',
+			'def f():\n    \n    return 1\n',
+			'a function docstring',
+		],
+		['class A:\n    r"""Copies "nightly"."""\n', 'class A:\n    \n', 'a class docstring with a prefix'],
+		[
+			'async def f(\n    a,\n):\n    """x"""\n',
+			'async def f(\n    a,\n):\n    \n',
+			'a docstring after a signature on several lines',
+		],
+		['print("# not a comment")\n', 'print("# not a comment")\n', 'a # inside a string'],
+		['x = 1\n"agent.py"\n', 'x = 1\n"agent.py"\n', 'a string that is not the first statement'],
+		['if ok:\n    "agent.py"\n', 'if ok:\n    "agent.py"\n', 'a string first in an if body'],
+		[
+			'def f():\n    run(\n        "agent.py",\n    )\n',
+			'def f():\n    run(\n        "agent.py",\n    )\n',
+			'a string inside brackets',
+		],
+		['"""{}""".format("agent.py")\n', '"""{}""".format("agent.py")\n', 'a first string with more code on its line'],
+		['s = "a \\" # b"  # c\n', 's = "a \\" # b"  \n', 'an escaped quote inside a string'],
+	];
+	it.each(cases)('%j becomes %j (%s)', (src, want) => {
+		expect(stripCommentsAndDocstrings(src)).toBe(want);
+	});
+	it('makes usesModule ignore a quoted name in a comment or a docstring', () => {
+		expect(usesModule('# copies "agent.py" later\n', 'agent')).toBe(false);
+		expect(usesModule('"""Runs "agent.py"."""\n', 'agent')).toBe(false);
+		expect(usesModule('def f():\n    """Runs \'agent.py\'."""\n', 'agent')).toBe(false);
+		expect(usesModule('run("agent.py")  # "other.py"\n', 'agent')).toBe(true);
+	});
+	it('makes namesPath ignore a quoted name in a comment or a docstring', () => {
+		expect(namesPath('# copies "nightly" later\n', 'nightly')).toBe(false);
+		expect(namesPath('"""Runs "nightly/importer.py"."""\n', 'nightly/importer.py')).toBe(false);
+		expect(namesPath('class A:\n    """Reads \'nightly/\'."""\n', 'nightly')).toBe(false);
+		expect(namesPath('SRC = "nightly"  # "other"\n', 'nightly')).toBe(true);
+	});
+
+	const dirs: string[] = [];
+	afterAll(() => {
+		for (const d of dirs) rmSync(d, { recursive: true, force: true });
+	});
+	/** One lesson with `run.py` (run by a Predict) holding `src`, `agent.py` and `nightly/importer.py`. */
+	const check = (src: string) => {
+		const dir = mkdtempSync(join(tmpdir(), 'unrun-strip-'));
+		dirs.push(dir);
+		const lesson = join(dir, 'area', 'lesson');
+		mkdirSync(join(lesson, 'nightly'), { recursive: true });
+		writeFileSync(join(lesson, 'run.py'), src);
+		writeFileSync(join(lesson, 'agent.py'), 'print("agent")\n');
+		writeFileSync(join(lesson, 'nightly', 'importer.py'), 'print("deep")\n');
+		return unrunFixtures(dir, new Set(['area/lesson/run.py']), new Map());
+	};
+	const both = [
+		expect.stringMatching(/^examples\/area\/lesson\/agent\.py: no <Predict/),
+		expect.stringMatching(/^examples\/area\/lesson\/nightly\/importer\.py: no <Predict/),
+	];
+	it('reports a lesson-level and a deep file quoted only in a comment', () => {
+		expect(check('# runs "agent.py" and copies "nightly" later\nprint(1)\n')).toEqual(both);
+	});
+	it('reports a lesson-level and a deep file quoted only in a docstring', () => {
+		expect(check('"""Runs "agent.py" and "nightly/importer.py"."""\nprint(1)\n')).toEqual(both);
+		expect(check('def main():\n    """Runs \'agent.py\' and \'nightly\'."""\n')).toEqual(both);
+	});
+	it('still passes both files when code names them', () => {
+		expect(check('"""Runs the agent."""\nrun("agent.py")  # and "nightly"\nSRC = "nightly"\n')).toEqual([]);
 	});
 });
 
