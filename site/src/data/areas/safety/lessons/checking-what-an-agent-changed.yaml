@@ -32,7 +32,8 @@ notes: >-
   carries no Predict run, because safety is a foundations area. The fixture is CI proof only: it
   is in proofs, so mise run examples fails when it prints a line no text fence on the page shows
   (#311). It doesn't print the request, because the page quotes it wrapped over two lines. The folder, files,
-  session and summary are invented, and the page holds no person names. The CS50x course page is
-  cited for the AI helper and Liu 2024b (section 3.4, Figure 3) for the endorsed forum answers, in
-  our own words. The Academy course is linked and its Discernment framing paraphrased, with no
+  session and summary are invented, and the page holds no person names. The CS50x course page and
+  Liu 2024b are cited for the AI helper, and Liu 2024b (section 3.4, Figure 3) for the endorsed
+  forum answers, in our own words. The recap line about the summary is the lesson's own advice
+  and carries no citation. The Academy course is linked and its Discernment framing paraphrased, with no
   text copied.
