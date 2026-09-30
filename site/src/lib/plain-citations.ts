@@ -66,10 +66,13 @@ export function setAsideCode(src: string): CodeAside {
 	// or its opening backtick precedes a `}`, and the backticks it leaves pair with the next span's. No lesson
 	// has such a span (write the brace in a fenced block instead), and `scripts/lib/bundles.mjs` checks only
 	// fenced blocks, so a rewrite inside one would pass. Extend the rule before writing one.
+	// A backtick after a backslash opens no span, as in CommonMark ("Backslash escapes"), so an escaped backtick
+	// (a backslash and a backtick) in a template-literal attribute stays in the text for the MDX parser to
+	// unescape. A span may still close on a backtick after a backslash, since a backslash in a code span is literal.
 	// The body's edges are not backticks, and its middle may hold one, so ``a ` b`` is one span.
 	const edge = '(?:[^`\\n]|\\n(?![ \\t]*\\n))';
 	const middle = '(?:[^\\n]|\\n(?![ \\t]*\\n))';
-	const span = new RegExp(`(?<!\\{)(\`+)(?!\\})(${edge}|${edge}${middle}*?${edge})(?<!\\{)\\1(?!\`)(?!\\})`, 'g');
+	const span = new RegExp(`(?<![\\\\{])(\`+)(?!\\})(${edge}|${edge}${middle}*?${edge})(?<!\\{)\\1(?!\`)(?!\\})`, 'g');
 	const text = out.join('\n').replace(span, (m) => keep(m));
 	return {
 		text,

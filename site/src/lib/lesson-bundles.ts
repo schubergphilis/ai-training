@@ -215,10 +215,12 @@ function renderTag(
 		const label = attrs.has('objective') ? 'Checkpoint' : 'Example';
 		const title = str('title') ?? str('id') ?? name;
 		const heading = withHeading(`#### ${label}: ${title}`);
+		// An example's output is on the page and in no checkpoint export entry, so the bundle `prose` and the
+		// alternate both show it (spec S08 "Format").
+		if (label === 'Example') return `${heading}\n\n${exampleOutput(where, attrs, aside)}`;
 		if (!alternate) return heading;
 		// The alternate adds what the page shows next to the stem (spec S12 "Rendering a lesson body").
-		const extra =
-			label === 'Example' ? exampleOutput(where, attrs, aside) : checkpointOptions(where, name, attrs, aside);
+		const extra = checkpointOptions(where, name, attrs, aside);
 		return extra ? `${heading}\n\n${extra}` : heading;
 	}
 	switch (name) {

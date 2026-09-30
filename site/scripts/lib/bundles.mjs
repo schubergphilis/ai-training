@@ -12,6 +12,11 @@
  *   not in the bundle's `prose` byte for byte. The prose pass in
  *   `src/lib/lesson-bundles.ts` sets code aside so its rewrites skip it, and
  *   this is the check that it did;
+ * - an ungraded example of the page (a `<Predict>` without `objective`, spec
+ *   S03 "Examples") has no `Output:` line in `prose` followed by a `text`
+ *   fenced block that holds its `answer`, trimmed, as the MDX tree reads it
+ *   (`exampleAnswers`). The page shows that output, and no other bundle field
+ *   holds it;
  * - a `(@` is in `prose`, a behavior's `claim`, `why` or `example`
  *   (`objectives[].behaviors[]`) or a checkpoint `stem` outside a fenced block or an inline code span,
  *   since the build renders each citation in them as its source (S08 "Lesson
@@ -45,6 +50,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 import { BUNDLE_VERSION } from '../../src/lib/bundle-version.ts';
+import { attrsOf, jsxElements, parseMdx, phaseProp, propValue } from '../../src/lib/checkpoint-tags.ts';
 import { courseLessonIds, readAreaTree } from './area-tree.mjs';
 import { lessonPages, walk } from './data.mjs';
 
@@ -129,6 +135,48 @@ export function citationsOutsideCode(prose) {
 	return outside.split('\n').flatMap((line, i) => (line.includes('(@') ? [(lines[i] ?? '').trim()] : []));
 }
 
+/**
+ * The `answer` of each ungraded example in the lesson source `src`, in source
+ * order, as `{ id, answer }`: every `<Predict>` without an `objective` prop and
+ * not a hidden `review` alternate, read from the MDX tree the page build parses,
+ * so the answer is the text the page shows. A parse error or an `answer` that
+ * is not a string throws, with `where` in the message.
+ */
+export function exampleAnswers(src, where) {
+	let tree;
+	try {
+		tree = parseMdx(src);
+	} catch (e) {
+		throw new Error(`${where}: ${e.message}`);
+	}
+	const out = [];
+	for (const node of jsxElements(tree)) {
+		if (node.name !== 'Predict') continue;
+		const attrs = attrsOf(node, where);
+		if (attrs.has('objective') || phaseProp(where, attrs) === 'review') continue;
+		const id = propValue(attrs, 'id');
+		const answer = propValue(attrs, 'answer');
+		if (typeof answer !== 'string') throw new Error(`${where} #${id}: answer of an example <Predict> must be a string`);
+		out.push({ id: typeof id === 'string' ? id : '?', answer });
+	}
+	return out;
+}
+
+/**
+ * Whether `prose` holds `answer` as an example output: an `Output:` line, a
+ * blank line, and a `text` fenced block (any fence length) whose body is the
+ * answer, trimmed.
+ */
+export function hasExampleOutput(prose, answer) {
+	const body = answer.trim();
+	return fencedBlocks(prose).some((block) => {
+		const lines = block.split('\n');
+		if (lines.length < 3 || !/^(`{3,}|~{3,})text$/.test(lines[0] ?? '')) return false;
+		if (lines.slice(1, -1).join('\n') !== body) return false;
+		return prose.includes(`Output:\n\n${block}`);
+	});
+}
+
 /** `<area>/<lesson>` for every `.json` under `bundlesDir`. */
 export function bundleIds(bundlesDir) {
 	const out = new Set();
@@ -185,6 +233,10 @@ export function checkBundle(id, file, src) {
 				const first = block.split('\n')[0];
 				errors.push(`${id}: the fenced block starting ${JSON.stringify(first)} is not in prose unchanged`);
 			}
+		}
+		for (const { id: example, answer } of exampleAnswers(src, id)) {
+			if (!hasExampleOutput(bundle.prose, answer))
+				errors.push(`${id}: the output of example #${example} is not in prose after an Output: line`);
 		}
 		for (const line of citationsOutsideCode(bundle.prose)) {
 			errors.push(`${id}: prose keeps a raw citation token outside code: ${JSON.stringify(line)}`);
