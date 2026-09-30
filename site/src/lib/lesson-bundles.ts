@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { splitCitations } from '../../plugins/citation-syntax.mjs';
 import { BUNDLE_VERSION } from './bundle-version';
 import { buildCheckpointExport, type CheckpointItem } from './checkpoint-items';
 import { KIND_OF_TAG } from './checkpoint-rules';
@@ -14,7 +15,7 @@ import {
 } from './checkpoint-tags';
 import type { BibliographyEntry } from './citations';
 import { getLessons, type Lesson } from './lessons';
-import { type CodeAside, plainCitations, resolveCitations, setAsideCode } from './plain-citations';
+import { type CodeAside, citationText, plainCitations, resolveCitations, setAsideCode } from './plain-citations';
 import { absoluteUrl } from './url';
 
 /**
@@ -102,6 +103,88 @@ function fenced(text: string, lang = 'text'): string {
 const CHECKPOINT_TAGS = new Set(Object.keys(KIND_OF_TAG));
 
 /**
+ * The flag that turns the bundle `prose` renderer into the lesson body of a
+ * Markdown alternate (spec S12 "Rendering a lesson body"). Absent, `proseOf`
+ * renders the bundle `prose` of S08 "Format" unchanged.
+ */
+export interface AlternateOptions {
+	/** The absolute URL of the HTML page, which an `#<id>` link is resolved against. */
+	pageUrl: string;
+	/**
+	 * Markdown for a component by name, in place of the default rendering. A course page renders its
+	 * `CoursePlan` this way, and a page with another generated component can do the same.
+	 */
+	components?: Record<string, (attrs: Map<string, CheckpointAttr>) => string>;
+}
+
+/** One list item, its continuation lines indented so they stay in the item. */
+function listItem(text: string): string {
+	return `- ${text.trim().replace(/\n/g, '\n  ')}`;
+}
+
+function list(items: string[]): string {
+	return items.map(listItem).join('\n');
+}
+
+/** A prop that must be an array, read for the alternate. `where` names the lesson and the tag in the error. */
+function arrayProp(where: string, name: string, attrs: Map<string, CheckpointAttr>, prop: string): unknown[] {
+	const v = propValue(attrs, prop);
+	if (!Array.isArray(v)) throw new Error(`${where}: ${prop} of <${name}> must be an array`);
+	return v;
+}
+
+/** The text of an option object (`{ text: '...' }`) or of a plain string item. */
+function textOf(where: string, name: string, item: unknown): string {
+	const text = typeof item === 'string' ? item : (item as { text?: unknown } | null)?.text;
+	if (typeof text !== 'string') throw new Error(`${where}: an item of <${name}> has no text`);
+	return text;
+}
+
+/**
+ * What the page shows of a checkpoint besides its stem, as Markdown: the option texts, the lists of a
+ * `Match` or a `Sort`, the steps of an `Order` sorted as the checkpoint export sorts them, or the broken
+ * text of a `Repair`. A `Predict` checkpoint shows nothing more. The hint, each option's `why` and the
+ * answer are never read here (spec S12 "Rendering a lesson body").
+ */
+function checkpointOptions(where: string, name: string, attrs: Map<string, CheckpointAttr>, aside: CodeAside): string {
+	const texts = (prop: string) => arrayProp(where, name, attrs, prop).map((i) => textOf(where, name, i));
+	switch (name) {
+		case 'Choice':
+		case 'Scenario':
+			return list(texts('options'));
+		case 'MultiChoice': {
+			const options = arrayProp(where, name, attrs, 'options');
+			const correct = options.filter((o) => (o as { correct?: unknown } | null)?.correct === true).length;
+			return `Select exactly ${correct}.\n\n${list(texts('options'))}`;
+		}
+		case 'Match':
+			return `Statements:\n\n${list(
+				arrayProp(where, name, attrs, 'rows')
+					.map((r) => (r as { statement?: unknown }).statement)
+					.map((t) => textOf(where, name, t)),
+			)}\n\nOptions:\n\n${list(texts('options'))}`;
+		case 'Order':
+			return list(texts('steps').sort((a, b) => a.localeCompare(b)));
+		case 'Sort':
+			return `Buckets:\n\n${list(texts('buckets'))}\n\nItems:\n\n${list(texts('items'))}`;
+		case 'Repair': {
+			const broken = propValue(attrs, 'broken');
+			if (typeof broken !== 'string') throw new Error(`${where}: broken of <Repair> must be a string`);
+			return aside.keep(fenced(aside.restore(broken)));
+		}
+		default:
+			return '';
+	}
+}
+
+/** The output an ungraded example shows under its children: `Output:` and the `answer` in a `text` fence. */
+function exampleOutput(where: string, attrs: Map<string, CheckpointAttr>, aside: CodeAside): string {
+	const answer = propValue(attrs, 'answer');
+	if (typeof answer !== 'string') throw new Error(`${where}: answer of an example <Predict> must be a string`);
+	return `Output:\n\n${aside.keep(fenced(aside.restore(answer)))}`;
+}
+
+/**
  * One component, as plain Markdown. `children` is already rendered, with code set aside. A `Prompt` or
  * `Response` body is restored and fenced here, and the fenced block is set aside again, so the link pass
  * that follows leaves a code span inside it alone. `where` names the lesson in error messages, which have the
@@ -113,6 +196,7 @@ function renderTag(
 	attrs: Map<string, CheckpointAttr>,
 	children: string,
 	aside: CodeAside,
+	alternate: AlternateOptions | undefined,
 ): string {
 	const str = (n: string) => {
 		const v = propValue(attrs, n);
@@ -129,7 +213,12 @@ function renderTag(
 		// A <Predict> without an objective is a worked example, not a checkpoint (S03 "Examples").
 		const label = attrs.has('objective') ? 'Checkpoint' : 'Example';
 		const title = str('title') ?? str('id') ?? name;
-		return withHeading(`#### ${label}: ${title}`);
+		const heading = withHeading(`#### ${label}: ${title}`);
+		if (!alternate) return heading;
+		// The alternate adds what the page shows next to the stem (spec S12 "Rendering a lesson body").
+		const extra =
+			label === 'Example' ? exampleOutput(where, attrs, aside) : checkpointOptions(where, name, attrs, aside);
+		return extra ? `${heading}\n\n${extra}` : heading;
 	}
 	switch (name) {
 		case 'Pitfall':
@@ -156,6 +245,8 @@ function renderTag(
 			return withHeading('## Recap');
 		case 'Habit':
 			// The habit text under its own heading, so the tutor can name it when one is due (S07 "Tutor mode").
+			// The alternate mirrors the page, which shows no habit id (spec S12 "Rendering a lesson body").
+			if (alternate) return withHeading('#### Habit');
 			return withHeading(`#### Habit: ${str('id') ?? ''}`.trimEnd());
 		default:
 			// Any other component, a widget included, is its children. A self-closing widget leaves nothing.
@@ -198,6 +289,7 @@ function renderComponents(
 	components: JsxElement[],
 	aside: CodeAside,
 	where: string,
+	alternate: AlternateOptions | undefined,
 ): string {
 	let out = '';
 	let pos = from;
@@ -210,10 +302,11 @@ function renderComponents(
 		const last = node.children.at(-1);
 		if (first && last) {
 			const range = { from: spanOf(first, where).start, to: spanOf(last, where).end };
-			children = renderComponents(src, range.from, range.to, componentsUnder(node), aside, where);
+			children = renderComponents(src, range.from, range.to, componentsUnder(node), aside, where, alternate);
 		}
 		// A component is a block of its own, so blank lines set it off from its neighbors.
-		const rendered = renderTag(where, name, attrs, children, aside);
+		const rendered =
+			alternate?.components?.[name]?.(attrs) ?? renderTag(where, name, attrs, children, aside, alternate);
 		out += src.slice(pos, start) + (rendered ? `\n\n${rendered}\n\n` : '');
 		pos = end;
 	}
@@ -244,6 +337,57 @@ function withoutImportBlock(body: string): string {
 	return lines.slice(i).join('\n');
 }
 
+/** Every `#<id>` link in Markdown and raw HTML, resolved against `pageUrl`, so it works outside the page. */
+function absolutizeFragments(md: string, pageUrl: string): string {
+	return md
+		.replace(/(!?\[[^\]]*\]\()(#[^)\s]*)/g, (_, pre: string, frag: string) => pre + pageUrl + frag)
+		.replace(/((?:href|src)=")(#[^"]*)/g, (_, pre: string, frag: string) => pre + pageUrl + frag);
+}
+
+/** A rendered lesson body and the citation keys it holds, in order of first citation in the rendered text. */
+export interface RenderedBody {
+	markdown: string;
+	cited: string[];
+}
+
+/**
+ * The one lesson body renderer. Without `alternate` it is the bundle `prose`;
+ * with it, the lesson body of a Markdown alternate, which differs in the
+ * ways spec S12 "Rendering a lesson body" lists.
+ */
+export function renderLessonBody(
+	body: string,
+	site: string,
+	where: string,
+	bibliography: Record<string, BibliographyEntry>,
+	alternate?: AlternateOptions,
+): RenderedBody {
+	const aside = setAsideCode(withoutImportBlock(body));
+	const text = resolveCitations(aside.text, bibliography, aside, where);
+	const tree = parseAside(text, where);
+	const components = renderComponents(text, 0, text.length, componentsUnder(tree), aside, where, alternate);
+	// Runs of blank lines are collapsed before the code comes back, so a double blank line inside a fence stays.
+	let rendered = absolutizeLinks(components, site);
+	if (alternate) rendered = absolutizeFragments(rendered, alternate.pageUrl);
+	const markdown = `${aside.restore(rendered.replace(/\n{3,}/g, '\n\n')).trim()}\n`;
+	return { markdown, cited: citedKeys(aside.text, markdown, bibliography) };
+}
+
+/**
+ * The keys of the `(@key)` tokens outside code in `text`, kept when their
+ * rendered form is in `markdown` and ordered by where it first is there. A
+ * token in a left-out part, such as a hidden `review` alternate, is dropped,
+ * because the reader never sees it.
+ */
+function citedKeys(text: string, markdown: string, bibliography: Record<string, BibliographyEntry>): string[] {
+	const keys = [...new Set(splitCitations(text).flatMap((p) => (p.type === 'citation' ? [p.key] : [])))];
+	return keys
+		.map((key) => ({ key, at: markdown.indexOf(citationText(bibliography[key] as BibliographyEntry)) }))
+		.filter((k) => k.at >= 0)
+		.sort((a, b) => a.at - b.at)
+		.map((k) => k.key);
+}
+
 /**
  * The lesson body as Markdown for a reader without the components: the
  * import block dropped, components rendered to plain text (a `Pitfall`
@@ -251,6 +395,8 @@ function withoutImportBlock(body: string): string {
  * links absolute, and each `(@key)` citation rendered by `citationText` from
  * `bibliography`. Fenced blocks and inline code are copied unchanged, the
  * citations in them included. `where` names the lesson in error messages.
+ * This is the bundle `prose` (spec S08 "Format"): `renderLessonBody` without
+ * the alternate flag.
  */
 export function proseOf(
 	body: string,
@@ -258,13 +404,7 @@ export function proseOf(
 	where = 'lesson',
 	bibliography: Record<string, BibliographyEntry> = {},
 ): string {
-	const aside = setAsideCode(withoutImportBlock(body));
-	const text = resolveCitations(aside.text, bibliography, aside, where);
-	const tree = parseAside(text, where);
-	const components = renderComponents(text, 0, text.length, componentsUnder(tree), aside, where);
-	// Runs of blank lines are collapsed before the code comes back, so a double blank line inside a fence stays.
-	const rendered = absolutizeLinks(components, site).replace(/\n{3,}/g, '\n\n');
-	return `${aside.restore(rendered).trim()}\n`;
+	return renderLessonBody(body, site, where, bibliography).markdown;
 }
 
 /**

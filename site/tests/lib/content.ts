@@ -11,6 +11,7 @@ export interface DocFixture {
 	body?: string;
 	data: {
 		title: string;
+		description?: string;
 		mode?: 'tutorial' | 'explanation';
 		assumes?: { objective: string; lesson: string; section: string }[];
 		covers?: string;
