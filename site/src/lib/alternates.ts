@@ -43,7 +43,11 @@ export function coursePlanMarkdown(course: CoursePlan, site: string): string {
  * pages"), inside the anatomy of S12 "Anatomy". `components` renders a generated component by name.
  */
 export async function renderPageAlternate(
-	page: { id: string; body?: string | undefined; data: { title: string; description?: string | undefined } },
+	page: {
+		id: string;
+		body?: string | undefined;
+		data: { title?: string | undefined; description?: string | undefined };
+	},
 	path: string,
 	site: string,
 	components?: AlternateOptions['components'],
@@ -56,7 +60,7 @@ export async function renderPageAlternate(
 	});
 	return renderAlternate(
 		{
-			title: page.data.title,
+			title: page.data.title ?? '',
 			description: page.data.description ?? '',
 			path,
 			body: markdown,
