@@ -30,6 +30,11 @@ that only ever holds one short report per wave.
 | Builder    | `builder`                          | one per issue  | its own worktree and branch             | as in `orchestration.md`       |
 | Reviewer   | `lesson-reviewer`, `code-reviewer` | one per branch | its own worktree                        | as in `orchestration.md`       |
 
+A dispatcher resumed after the restart of a harness wave runs in the wave
+worktree, on the branch `wave/<name>-<k>`, until the maintainer starts a
+new session in the main checkout after the merge ("Harness runs", steps 5
+and 6, and `.claude/skills/wave/SKILL.md`, "Resuming after a restart").
+
 The four agents are defined in `.claude/agents/`, all on Opus 5.5: the
 lead at `high` effort with a 400-turn limit, the builder and the reviewers
 at `medium` with 200 and 80. The dispatcher spawns `wave-lead` by name,
