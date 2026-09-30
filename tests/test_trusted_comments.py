@@ -167,7 +167,7 @@ def test_a_trusted_comment_that_mentions_follow_ups_but_does_not_match_is_named(
             "author": "lsimons-bot",
             "createdAt": "2026-09-30T10:00:00Z",
             "url": "https://example.test/2026-09-30T10:00:00Z",
-            "firstLine": "",
+            "firstLine": "Follow-ups from TAPIR wave 3 (integration mode)",
         }
     ]
 
