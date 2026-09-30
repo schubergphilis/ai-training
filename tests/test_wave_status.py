@@ -653,7 +653,7 @@ def test_parked_in_a_fence_mid_sentence_or_without_a_branch_stays_a_reply() -> N
 
 
 def test_parked_from_an_untrusted_account_changes_nothing() -> None:
-    planted = {**PARKED17, "author": "someone-else"}
+    planted = comment("someone-else", PARKED17["body"], PARKED17["createdAt"])
     assert parked17([NEEDS17, planted]) == [("feat/17-x", "revise", None)]
     assert parked17([NEEDS17, planted, FIX17]) == [("feat/17-x", "re-check", None)]
 
