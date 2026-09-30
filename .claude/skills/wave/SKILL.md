@@ -348,15 +348,21 @@ printed.
    - `next-wave: gh issue list failed: <N> issues reach the -L limit, so the list may be cut short`:
      the kind has more ready issues than `ISSUE_LIMIT` in
      `scripts/next_wave.py`. File a `code` issue to raise it.
-   - `next-wave: gh issue list failed: this gh has no blockedBy field, which needs gh <version> or later`,
-     or the same after `gh issue view`: this machine's `gh` is older than
-     the relationship fields (`docs/agents/issue-tracker.md`). Upgrade
-     `gh` to the version the line names.
+   - Any `next-wave:` line that contains `which needs gh <version> or later`,
+     after `gh issue list` or `gh issue view`, in either form:
+     `this gh has no blockedBy field, which needs gh <version> or later`,
+     or `unreadable output: KeyError('no blockedBy field, which needs gh <version> or later')`.
+     This machine's `gh` is older than the relationship fields
+     (`docs/agents/issue-tracker.md`). Upgrade `gh` to the version the
+     line names.
    - `next-wave: gh issue list failed: unreadable output: ...` whose
-     reason names `blockedBy`, such as `blockedBy lists <N> of <M> blockers`
-     or a blocker in another repository: GitHub gave an issue's
-     relationships in a form the picker can't read. Fix the relationship
-     on that issue when it is wrong, and otherwise file a `code` issue.
+     reason names `blockedBy`, such as `blockedBy lists <N> of <M> blockers`:
+     GitHub gave an issue's relationships in a form the picker can't
+     read. Fix the relationship on that issue when it is wrong, and
+     otherwise file a `code` issue. A blocker in another repository
+     doesn't stop the picker. It lists the issue under Blocked with the
+     reason `blocker in another repository: owner/repo#N`, and the fix is
+     to remove that relationship or to wait for the blocker to close.
    - Any other `next-wave: gh issue list failed: ...`: `gh` can't reach
      GitHub or isn't logged in.
    - `next-wave: bun scripts/lesson-plan.mjs failed: ...`: the lesson plan
@@ -633,7 +639,8 @@ For each follow-ups comment on the run issue, check every entry once
 against `main` as it is now, and drop the ones already done or made
 obsolete, saying which and why. File each remaining entry as the issue it
 describes, per `docs/agents/triage.md`, with `--parent N` for an entry
-with a `Parent: #N` line, and append the nit lines to the
+with a `Parent: #N` line (when `--parent N` fails, file it without the
+parent and name the problem in the final report), and append the nit lines to the
 open `Cosmetic nits` issue (create it only when none is open). List the
 filed numbers in the final report. For each filed issue that waits on the
 maintainer's decision, the final report quotes its options and its
