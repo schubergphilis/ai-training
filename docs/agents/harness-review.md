@@ -39,8 +39,10 @@ repository, so it may run while a dispatcher run is open.
   `../ai-training-improvements/<date>/`, with the data next to it. It is
   kept on this machine, because transcripts hold private material.
 - **Issue.** Each review opens one issue, `Harness review <date>`, with
-  the label `harness-review`, the summary numbers and links to the issues
-  filed from it. It closes once the maintainer has chosen what to file.
+  the label `harness-review` and the summary numbers. Each issue filed
+  from it is its sub-issue (`gh issue create --parent <review issue>`,
+  `triage.md`, "Where an issue came from"), so the review issue lists
+  them. It closes once the maintainer has chosen what to file.
 
 ## Baseline, 2026-09-24
 
