@@ -34,7 +34,7 @@ notes: >-
   The wrong plan step the learner corrects is a change to render.py that hides done items, which
   makes the symptom go away and leaves the bug. Plan mode facts (Shift+Tab, /plan,
   --permission-mode plan, reads and explores but edits nothing until the plan is approved, the
-  three approve options, Ctrl+G) come from code.claude.com/docs/en/permission-modes, and the
+  approve and keep-planning options, Ctrl+G) come from code.claude.com/docs/en/permission-modes, and the
   explore, plan, code rhythm and the "if you could describe the diff in one sentence, skip the
   plan" advice from code.claude.com/docs/en/best-practices. Both must be re-checked by review-by.
   DLAI-6 was inspiration only and isn't cited on the page, so it stays on the topic and is left
