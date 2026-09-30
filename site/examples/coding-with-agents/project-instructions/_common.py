@@ -95,7 +95,18 @@ def _replace(repo: str, name: str, before: str, after: str) -> None:
 def git(repo: str, *args: str) -> str:
     """Runs one git command in the copy, with a fixed identity and no user config."""
     result = subprocess.run(
-        ["git", "-c", "commit.gpgsign=false", "-c", "core.quotepath=false", *args],
+        # maintenance.auto=false: a commit starts no detached `git maintenance`
+        # run, which could still hold a lock when the temporary directory is removed.
+        [
+            "git",
+            "-c",
+            "commit.gpgsign=false",
+            "-c",
+            "maintenance.auto=false",
+            "-c",
+            "core.quotepath=false",
+            *args,
+        ],
         cwd=repo,
         env=dict(GIT_ENV_BASE, HOME=os.path.dirname(repo)),
         capture_output=True,
