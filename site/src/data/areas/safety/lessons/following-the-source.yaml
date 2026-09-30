@@ -21,7 +21,7 @@ exercise:
     The fixture's text cites a real report with an invented finding. Open the report (the lesson
     links it), write down in one sentence each what the report says and what the text says it says,
     and mark the gap.
-sources: [AI Index 2025, CS50x, Academy ai-fluency-framework-foundations]
+sources: [AI Index 2025, CS50x, Liu 2024b, Academy ai-fluency-framework-foundations]
 issue: 122
 minutes: 15
 proofs: [safety/following-the-source/resolve_citations.py]
@@ -35,5 +35,6 @@ notes: >-
   recorded for it (78% of organizations reported using AI in 2024, up from 55%) was read from its
   public page on 2026-09-24. The productivity finding the paragraph attributes to it is invented,
   and the page says so. The Nordholm Institute and its survey are invented, and a web search found
-  neither. CS50 is cited for the endorsed-answers idea only, in our own words. The Academy course
+  neither. CS50x is cited for the course, and Liu 2024b (section 3.4) for how staff can endorse, amend or
+  delete the AI helper's forum answers, in our own words. The Academy course
   is linked and its Discernment framing paraphrased, with no text copied.
