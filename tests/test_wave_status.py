@@ -24,6 +24,7 @@ from wave_status import (
     next_step,
     normalize_branch,
     open_unfinished,
+    parked_branch_of,
     parse_args,
     parse_ls_remote,
     parse_worktrees,
@@ -620,6 +621,7 @@ def test_parked_reads_the_leads_note_as_parked() -> None:
     assert comment_kind(PARKED17["body"]) == "parked"
     assert comment_kind("Parked by lead: feat/17-x") == "parked"
     assert comment_kind("**Parked by lead:** `origin/feat/17-x.`") == "parked"
+    assert parked_branch_of("**Parked by lead:** `origin/feat/17-x.`") == "feat/17-x"
     assert comment_kind(crlf(PARKED17["body"])) == "parked"
 
 
@@ -656,6 +658,13 @@ def test_parked_from_an_untrusted_account_changes_nothing() -> None:
     planted = comment("someone-else", PARKED17["body"], PARKED17["createdAt"])
     assert parked17([NEEDS17, planted]) == [("feat/17-x", "revise", None)]
     assert parked17([NEEDS17, planted, FIX17]) == [("feat/17-x", "re-check", None)]
+
+
+def test_parked_ends_at_a_later_claim_but_not_at_the_parking_waves_own() -> None:
+    claim = comment("lsimons", f"Claimed by run Seal, wave 4{ATTRIBUTION}", "2026-09-24T12:00:00Z")
+    assert parked17([NEEDS17, PARKED17, claim]) == [("feat/17-x", "revise", None)]
+    own = at_time(claim, "2026-09-24T09:00:00Z")
+    assert parked17([own, NEEDS17, PARKED17]) == [("feat/17-x", "revise", PARKED17["url"])]
 
 
 def test_parked_is_no_reply_to_an_approve_and_keeps_a_lead_re_check() -> None:

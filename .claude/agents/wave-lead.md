@@ -105,7 +105,8 @@ commit that you read yourself.
 
 A branch gets at most two revision rounds. After the second
 `Verdict: needs changes`, leave the branch out of the wave and report it
-on the `Left out` line with the reason. Post a comment on its issue whose
+on the `Left out` line with the reason. Post a comment on the issue that
+owns the branch, where its reviews and its `Unfinished:` list are, whose
 first line is `Parked by lead: <branch>`, with the reason on the lines
 after it. `mise run wave-status` reads that first line as a parked note,
 which is no builder reply, so a resumed lead doesn't send the unchanged
@@ -242,7 +243,8 @@ stopped before it could report. Don't restart the wave:
    is no reply, doesn't clear a lead re-check and doesn't finish an
    `Unfinished:` branch. The branch its first line names gets a `parked`
    field with the note's url until a later verdict, reply or
-   `Unfinished:` comment applies to it. A claim is the dispatcher's comment whose
+   `Unfinished:` comment applies to it, or a later claim picks the issue
+   again for a new wave. A claim is the dispatcher's comment whose
    first line is `Claimed by run <Name>, wave <k>`, or
    `Claim released by run <Name>, wave <k>` when a run ended before the
    wave merged (a parenthetical after it is allowed), and that has
@@ -271,7 +273,8 @@ stopped before it could report. Don't restart the wave:
    replied, so the reviewer checks again) or `review` (pushed but
    unreviewed). The two halves of a split issue can have different steps,
    so one half can wait in `revise` while the other joins. A branch with
-   a `parked` field was left out of the wave at the revision limit. Its
+   a `parked` field was left out of this wave at the revision limit, and
+   no later claim has picked it up. Its
    `next` is usually `revise`, the revision a later wave owes, or `build`
    when it was parked with an open `Unfinished:` list. Spawn nothing for
    it, and report it on the `Left out` line with the note's link.

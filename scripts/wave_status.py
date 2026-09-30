@@ -68,8 +68,9 @@ doesn't clear a lead re-check and doesn't finish an `Unfinished:` branch.
 The branch keeps its step, and the one its first line names, when that
 is a pushed branch of the issue, gets a `parked` field with the note's
 url until a later verdict, builder reply or `Unfinished:` comment applies
-to it. `Parked by lead:` with no branch after it, in a fence or in the
-middle of a sentence stays a reply, so a variant errs toward more work.
+to it, or a later claim picks the issue again for a new wave.
+`Parked by lead:` with no branch after it, in a fence or in the middle of
+a sentence stays a reply, so a variant errs toward more work.
 
 A lead that puts one issue's commits on another issue's branch posts a
 pointer comment on the first issue with a `Branch:` line for that branch
@@ -502,7 +503,9 @@ def parked_note(
 
     None too when a later trusted comment applies to the branch (a verdict,
     a builder reply or an `Unfinished:` comment), since the branch then
-    moved on. A lead re-check, a claim and another parked note don't. A
+    moved on, and when a later claim or release follows it, since a new
+    wave then owns the issue and owes the revision. A lead re-check and
+    another parked note don't. A
     parked note applies only to the branch its first line names, so on a
     split issue the other half never reads as parked.
     """
@@ -512,7 +515,9 @@ def parked_note(
         if kind == "parked":
             if parked_branch_of(c["body"]) == branch:
                 found = {"url": c["url"]}
-        elif kind != "lead-re-check" and applies_to(c["body"], branch, branches):
+        elif kind == "claim" or (
+            kind != "lead-re-check" and applies_to(c["body"], branch, branches)
+        ):
             found = None
     return found
 
