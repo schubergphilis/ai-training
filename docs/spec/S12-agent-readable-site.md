@@ -156,20 +156,17 @@ A lesson body renders by the rules of the bundle's `prose` field (S08
 "Format"). One renderer produces both, and it takes a flag for the
 alternate. With the flag off, the bundle `prose` stays as S08 defines it.
 With the flag on, the renderer differs from the bundle `prose` in exactly
-these five ways:
+these four ways:
 
 - Each checkpoint's options follow its stem, in the form of the table
   below.
-- An ungraded example's output follows its children. The bundle `prose`
-  leaves that output out today, and no other bundle field holds it, which
-  is a known gap in the bundle.
 - An `#<id>` link becomes the page's absolute URL plus `#<id>`. The bundle
   leaves it as written.
 - A `## References` section follows the body.
 - A habit heading is `#### Habit` without the id, because the page shows
   no id.
 
-The table gives the full rendering, with those five differences in it.
+The table gives the full rendering, with those four differences in it.
 
 | Source element                             | In the alternate                                                                                                                                                               |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -195,7 +192,7 @@ The table gives the full rendering, with those five differences in it.
 | `Exercise`                                 | `## Exercise`, then its text, then `Stretch:` and the stretch goal when it has one.                                                                                            |
 | `Recap`                                    | `## Recap`, then its takeaways.                                                                                                                                                |
 | `Habit`                                    | `#### Habit`, then its text.                                                                                                                                                   |
-| Widget, or any other component             | A widget is left out, and other components render their children. Widgets today are self-closing, which the bundle `prose` drops too, so this isn't a sixth difference.        |
+| Widget, or any other component             | A widget is left out, and other components render their children. Widgets today are self-closing, which the bundle `prose` drops too, so this isn't a fifth difference.        |
 | Page frame and injected blocks             | Left out: the sidebar, the "On this page" menu, the footer, the review line, the tutor block and the route-ahead cards. The page line and the license line replace the footer. |
 
 A checkpoint's hint, the `why` of each option, and the `answer` are never

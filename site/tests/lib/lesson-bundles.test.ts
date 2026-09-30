@@ -115,6 +115,12 @@ describe('proseOf', () => {
 				'',
 				'Run this.',
 				'',
+				'Output:',
+				'',
+				'```text',
+				'2',
+				'```',
+				'',
 				'## Exercise',
 				'',
 				'Do the thing.',
@@ -128,6 +134,12 @@ describe('proseOf', () => {
 				`<a href="${ROOT}/guides/">raw</a>`,
 				'',
 			].join('\n'),
+		);
+	});
+	it('renders an example output with escaped backticks as the page shows it', () => {
+		const src = '<Predict id="e" title="E" answer={`Use \\`unittest\\`. Run \\`python3\\`.`}>\nRun it.\n</Predict>\n';
+		expect(proseOf(src, site)).toBe(
+			'#### Example: E\n\nRun it.\n\nOutput:\n\n```text\nUse `unittest`. Run `python3`.\n```\n',
 		);
 	});
 	it('fences Prompt and Response with a fence longer than any inside, and keeps the illustrative caption', () => {
@@ -233,6 +245,9 @@ describe('proseOf', () => {
 			'<div class="x">\n\n#### Pitfall: In\n\nText.\n\n</div>\n',
 		);
 		expect(proseOf('<Pitfall title={`Tick`}>\nT.\n</Pitfall>\n', site)).toBe('#### Pitfall: Tick\n\nT.\n');
+		expect(() => proseOf('<Predict id="p" title="P">\nS.\n</Predict>\n', site, 'a/b')).toThrow(
+			'a/b: answer of an example <Predict> must be a string',
+		);
 		expect(() => proseOf('<Pitfall title={1}>\nT.\n</Pitfall>\n', site, 'a/b')).toThrow(
 			/^a\/b: title of <Pitfall> must be a string, got number/,
 		);

@@ -3,7 +3,8 @@
  * Lesson bundle check (`mise run bundles`, after `site-build`): the built
  * dist/data/lessons/<area>/<lesson>.json files must be one per lesson page,
  * carry every field spec S08 "Format" names, and hold every fenced code block
- * of their page unchanged, with no raw `(@key)` token outside code in their
+ * of their page unchanged and the output of each ungraded example of the page
+ * after an `Output:` line, with no raw `(@key)` token outside code in their
  * prose, behaviors or checkpoint stems, nor in the stems of
  * dist/data/checkpoints.json. The logic and the list of what it rejects are in
  * scripts/lib/bundles.mjs, which tests/scripts/bundles-export.test.ts covers.

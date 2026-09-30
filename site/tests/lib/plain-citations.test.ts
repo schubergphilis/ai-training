@@ -36,6 +36,15 @@ describe('setAsideCode', () => {
 		const tag = '<Repair broken={`# a\n\nb`}\n  model={`# c\n\nd`}>\nWhy?\n</Repair>';
 		expect(setAsideCode(tag).text).toBe(tag);
 	});
+	it('opens no span on an escaped backtick, so a template literal keeps its escapes for the MDX parser', () => {
+		const tag = '<Predict id="p" answer={`Run \\`x\\` and \\`y\\`.`}>\nA `<Tag>` span.\n</Predict>';
+		const { text, restore } = setAsideCode(tag);
+		expect(text).toContain('answer={`Run \\`x\\` and \\`y\\`.`}');
+		expect(text).not.toContain('<Tag>');
+		expect(restore(text)).toBe(tag);
+		const { text: closed } = setAsideCode('A path `C:\\` here.');
+		expect(closed).toMatch(/^A path \uE000\d+\uE001 here\.$/);
+	});
 	it('a documented limit: a span whose whole body is one brace is no span, and its backticks pair with the next', () => {
 		// The template-literal rule above rejects `{` and `}` as a body. No lesson has one, and the comment in
 		// `setAsideCode` says so. This test pins the behavior so that a change to the rule shows up here.

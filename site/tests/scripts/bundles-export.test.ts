@@ -11,7 +11,9 @@ import {
 	checkExportCitations,
 	citationsOutsideCode,
 	dataTreeSources,
+	exampleAnswers,
 	fencedBlocks,
+	hasExampleOutput,
 	isLessonUrl,
 	publishedDataPaths,
 	withoutNotes,
@@ -173,6 +175,45 @@ describe('checkBundles', () => {
 			'a/x: objectives[0] (a/c/o1) behaviors[1].example keeps a raw citation token outside code: "Runs (@AEC-02)."',
 			'a/x: checkpoints[0] (k1) stem keeps a raw citation token outside code: "runs in (@Claude Code subagents)?"',
 		]);
+	});
+	it('reports an ungraded example whose output is not in the prose, and skips a graded or hidden Predict', () => {
+		const page = [
+			'<Predict id="ex" title="Shown" run="y.py" answer={`one\n  two`}>',
+			'Run this.',
+			'</Predict>',
+			'',
+			'<Predict id="graded" objective="a/c/o" title="G" answer="7">',
+			'Guess.',
+			'</Predict>',
+			'',
+			'<Predict id="hidden" phase="review" title="H" answer="8">',
+			'Again.',
+			'</Predict>',
+			'',
+		].join('\n');
+		const files = { 'content/a/x.mdx': page };
+		const shown = '#### Example: Shown\n\nRun this.\n\nOutput:\n\n```text\none\ntwo\n```\n';
+		expect(check(tree({ 'a/x': bundle({ prose: shown }) }, files)).errors).toEqual([]);
+		const missing = 'a/x: the output of example #ex is not in prose after an Output: line';
+		expect(check(tree({ 'a/x': bundle({ prose: '#### Example: Shown\n\nRun this.\n' }) }, files)).errors).toEqual([
+			missing,
+		]);
+		expect(check(tree({ 'a/x': bundle({ prose: shown.replace('two', 'three') }) }, files)).errors).toEqual([missing]);
+		expect(check(tree({ 'a/x': bundle({ prose: shown.replace('Output:\n\n', '') }) }, files)).errors).toEqual([
+			missing,
+		]);
+		expect(check(tree({ 'a/x': bundle({ prose: shown.replace('```text', '```py') }) }, files)).errors).toEqual([
+			missing,
+		]);
+	});
+	it('reads example answers from the MDX tree and accepts a longer fence', () => {
+		expect(exampleAnswers('<Predict id="e" answer="1">\nx\n</Predict>\n', 'a/x')).toEqual([{ id: 'e', answer: '1' }]);
+		expect(() => exampleAnswers('<Predict id="e" answer={1}>\nx\n</Predict>\n', 'a/x')).toThrow(
+			'a/x #e: answer of an example <Predict> must be a string',
+		);
+		expect(() => exampleAnswers('<Predict id="e">\nno end\n', 'a/x')).toThrow(/^a\/x: /);
+		expect(hasExampleOutput('Output:\n\n````text\n```\nx\n```\n````\n', '```\nx\n```\n')).toBe(true);
+		expect(hasExampleOutput('```text\nx\n```\n', 'x')).toBe(false);
 	});
 	it('checks one bundle file against its page source', () => {
 		const root = tree();
