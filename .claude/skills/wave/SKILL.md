@@ -125,7 +125,7 @@ tool here runs zsh). Set `run` and `f` to the run's number and file:
 
 ```bash
 run=<run>; f=.scratch/run-<name>.md
-args() { tr -d '\r' | awk '/^## /{p=($0=="## Arguments")} p' | grep -v '^[[:space:]]*$'; }
+args() { tr -d '\r' | awk '/^## /{p=/^## Arguments$/} p' | grep -v '^[[:space:]]*$'; }
 a=$(args < "$f"); b=$(gh issue view "$run" --json body -q .body | args)
 ra=$(printf '%s\n' "$a" | grep '^Run:'); rb=$(printf '%s\n' "$b" | grep '^Run:')
 a=$(printf '%s\n' "$a" | grep -v '^Run:'); b=$(printf '%s\n' "$b" | grep -v '^Run:')
@@ -209,7 +209,7 @@ printed.
 
    ```bash
    mkdir -p .scratch && gh issue view <run> --json body -q .body |
-     awk -v r='Run: #<run>' '{sub(/\r$/, "")} /^## /{p=($0=="## Arguments")} p && /^Run:/{next} {print} $0=="## Arguments"{print r}' > .scratch/run-<name>.md
+     awk -v r='Run: #<run>' '{sub(/\r$/, "")} /^## /{p=/^## Arguments$/} p && /^Run:/{next} {print} /^## Arguments$/{print r}' > .scratch/run-<name>.md
    ```
 
    The `awk` drops any `Run:` line the issue's section already holds and
@@ -254,7 +254,7 @@ printed.
    5. When `takenBy` is null, the name is yours. Rename the file, and
       add the `Run: #<number>` line with the new issue's number right
       after the `## Arguments` heading as you do:
-      `awk -v r='Run: #<number>' '{print} $0=="## Arguments"{print r}' <that path> > .scratch/run-<name>.md && rm <that path>`.
+      `awk -v r='Run: #<number>' '{print} /^## Arguments$/{print r}' <that path> > .scratch/run-<name>.md && rm <that path>`.
       Post the file at once with the check in "Before each body edit",
       so the issue holds the line too, and edit only that file from
       here on.
