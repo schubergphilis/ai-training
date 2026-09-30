@@ -10,11 +10,10 @@ spans three files, which is the size of change where a few minutes of
 planning save more than they cost.
 
 The vendor of Claude Code teaches this rhythm for its own tool: read the
-code, make a plan, and only then change the code
-(@Claude Code best practices). Its short course walks through the same
-loop (@Academy claude-code-101). Where this
-lesson names a Claude Code key or flag, it says so, and the source is
-checked on the date at the end of the lesson. Other coding agents have a
+code, make a plan, and only then edit (@Claude Code best practices).
+Its short course walks through the same loop (@Academy claude-code-101).
+Where this lesson names a Claude Code key or flag, it says so, and the
+source is checked on the date at the end of the lesson. Other coding agents have a
 read-only mode under another name, and the rhythm is the same.
 
 ## The fixture
@@ -152,9 +151,9 @@ every user who has a done item they haven't cleared yet.
 <Choice id="when-to-plan" objective="coding-with-agents/ships-with-agent/runs-a-session"
   concepts={['plan-mode']}
   context="Plan mode puts a coding agent in a read-only mode: it reads and explores and proposes steps, and it edits nothing until the plan is approved. A plan costs a few minutes at the start of a task."
-  title="Which task gets a plan?" hint="For which task could you not write the diff yourself in one sentence?"
+  title="Which task gets a plan?" hint="For which task can you not state the whole change in one short sentence?"
   options={[
-    { text: 'Bump the version string in `pyproject.toml` from 1.4.0 to 1.4.1 for a release.', why: 'You could write this diff in one sentence. A plan costs more than the change.' },
+    { text: 'Bump the version string in `pyproject.toml` from 1.4.0 to 1.4.1 for a release.', why: 'You can state the whole change in one short sentence. A plan costs more than the change.' },
     { text: 'A command gives the wrong result, and the code that could cause it is spread over three modules.', correct: true },
     { text: 'Add one log line where an exception is caught.', why: 'You already know where the line goes and what it says. Plan mode adds a round trip and finds nothing you did not know.' },
     { text: 'Rename one variable in one function.', why: 'The change is bounded to a place you can already point at. Let the agent do it and read the diff.' },
@@ -391,7 +390,7 @@ sentence that says what "fixed" means.
 <Sort id="plan-or-go" phase="review" objective="coding-with-agents/ships-with-agent/runs-a-session"
   concepts={['plan-mode']}
   context="Plan mode puts a coding agent in a read-only mode: it reads, explores and proposes steps, and it edits nothing until the plan is approved. The lesson uses it for a change you can't place in one file."
-  title="Plan first, or go?" hint="Could you write the diff in one sentence before the agent starts?"
+  title="Plan first, or go?" hint="Can you state the whole change in one short sentence before the agent starts?"
   buckets={['Start in plan mode', 'Skip the plan']}
   items={[
     { text: 'A wrong total whose cause could be in any of three modules', bucket: 0 },
@@ -471,7 +470,7 @@ correct or drop any step that doesn't follow from the cause it names, then
 approve it and let the agent write the failing test and fix `store.py`.
 Run `python3 -m unittest -q` yourself at the red step and at the green
 step, and read `git diff` at the end. Plan on ten minutes. This is the
-rhythm you use on any change too big to describe in one sentence.
+rhythm you use on any change you can't state in one short sentence.
 
 A good result: the plan named `store.remove_done` as the cause, the test
 failed before the fix and passed after it, and the diff touches
