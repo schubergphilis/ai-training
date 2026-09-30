@@ -213,9 +213,9 @@ overrides a managed permission rule (@Claude Code permissions).
   context="Claude Code reads its settings from five levels, and a key with one value takes the highest level that sets it."
   title="A setting that seems ignored" hint="Which levels are higher than the user file?"
   options={[
-    { text: 'Restart the agent, because it reads the user file only once a day.', why: 'The file is read when a session starts. The value is set, and something higher wins.' },
+    { text: 'Restart the agent, because it reads the user file only when a session starts.', why: 'Each new session reads the file already, and those sessions still start in `default`. Something higher wins.' },
     { text: 'Look for the same key in the project\'s local and committed files.', correct: true },
-    { text: 'Write the key twice in the user file, so that it counts for more.', why: 'A second copy in the same file changes nothing. The winner is decided by level.' },
+    { text: 'Set the key in the project\'s committed file, so it is above your user file.', why: 'The project\'s local file is above the committed one, and a value there still wins. Your team also gets a mode you chose for yourself.' },
     { text: 'Delete the user file, because it is broken, and start a new one.', why: 'The file works in other projects. This project has a layer above it.' },
   ]}>
 

@@ -307,7 +307,7 @@ load the review skill. What do you change?
 
 </Scenario>
 
-<Pitfall title="The description that fires on everything">
+<Pitfall title="The description that matches everything">
 A team writes a skill for updating the changelog and describes it as "Use
 when working on the notes package". For a week every session in the
 package loads it, whatever the task, and the agent starts adding a
@@ -323,7 +323,7 @@ In a fresh copy of the fixture package, with your `SKILL.md` in place
 and the one that ships with the fixture deleted, start your coding agent
 in the package directory and ask it to cut release 0.4.0. Run the skill
 by typing `/release 0.4.0` if your agent supports that, or ask in
-plain words and watch whether the description fires. The skill changes
+plain words and watch whether the skill loads. The skill changes
 files: it edits `notes.py` and `CHANGELOG.md` and makes a commit and a
 tag. Run it only in the copy, and never in the course repository.
 If the copy isn't a git repository, run `git init` and commit the

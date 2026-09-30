@@ -243,7 +243,7 @@ Place each task in the mode you would start it in.
   title="What does each mode do?" hint="Which actions go through without a prompt in each mode?"
   options={['default', 'acceptEdits', 'plan', 'bypassPermissions']}
   rows={[
-    { statement: 'Prompts before every edit and every command', option: 0, why: 'Which mode asks about everything?' },
+    { statement: 'Prompts before every edit and every command apart from reads', option: 0, why: 'Which mode asks about everything but reads?' },
     { statement: 'Approves edits inside the working directory and still prompts for other commands', option: 1, why: 'Which mode lets edits through and not commands?' },
     { statement: 'Blocks edits until you approve a plan', option: 2, why: 'Which mode is for reading and proposing?' },
     { statement: 'Skips the permission prompts, except for your own ask rules', option: 3, why: 'Which mode is meant for an isolated container?' },
@@ -301,7 +301,7 @@ would the answer be different, and what's in them that makes it so?
 
 <Recap>
 1. A permission mode is a preset for what the agent may do without asking.
-   In Claude Code, `default` prompts for every edit and command,
+   In Claude Code, `default` prompts for every edit and every command apart from reads,
    `acceptEdits` approves edits inside the working directory and still
    prompts for other commands, `plan` blocks edits, and
    `bypassPermissions` skips the permission prompts apart from your own

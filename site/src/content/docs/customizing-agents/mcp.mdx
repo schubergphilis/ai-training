@@ -366,7 +366,7 @@ made.
     { text: 'Yes, because a runaway agent hits the limit after 100 calls and stops there.', why: 'A hundred bad edits a minute is a lot of damage before any limit applies.' },
     { text: 'Yes, as long as version history is on, because every edit can then be undone.', why: 'Version history makes recovery possible. It doesn\'t stop the edits.' },
     { text: 'No. It protects the platform, and a write cap or a confirmation protects the pages.', correct: true },
-    { text: 'No, because a rate limit only counts reads and never counts writes.', why: 'A rate limit counts every call. The question is what it is set to protect.' },
+    { text: 'No, because an agent that hits the limit retries, and the retries get through.', why: 'Retries count against the same limit. The question is what the limit is set to protect.' },
   ]}>
 
 Does the server's rate limit protect the wiki's pages from a runaway

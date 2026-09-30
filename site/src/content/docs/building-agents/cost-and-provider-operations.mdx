@@ -198,7 +198,7 @@ input-tokens-per-minute rate limit for most Claude models
   options={[
     { text: 'Every call writes the prefix to the cache again, so the prefix costs more than it did without caching.', correct: true },
     { text: 'Only the first call of each run writes the prefix, and later calls in the run read it back.', why: 'The later calls in the run have a different time in their prompt too. Which call has a prefix that matches one already in the cache?' },
-    { text: 'The fake provider still reads the prefix from the cache, because it looks the prefix up by model id.', why: 'Look at what a hit needs: the whole prefix, text included, must match exactly.' },
+    { text: 'The fake provider still reads the prefix from the cache, because it looks the prefix up by model ID.', why: 'Look at what a hit needs: the whole prefix, text included, must match exactly.' },
     { text: 'The calls fail, because a cached prefix must not change between calls of one run.', why: 'A prefix that does not match is a miss. The provider writes the new prefix and the call goes ahead.' },
   ]}>
 
@@ -318,7 +318,7 @@ already spent, and can report the problem to a person.
 
 ## Pinning the model
 
-Each Claude model id names one fixed version of the model. From the 4.6
+Each Claude model ID names one fixed version of the model. From the 4.6
 generation on, an id such as `claude-sonnet-4-6` is itself that version,
 and an updated model ships under a new id. Earlier models also have
 aliases on the Claude API: `claude-sonnet-4-5` points to the newest dated
@@ -362,7 +362,7 @@ configuration, because it always gives them the newest model. On a date
 the provider chose, the alias moves. The agent's answers get longer, it
 makes an extra call on some tasks, and the cost per run jumps, with
 nothing in the team's own history to explain it. Rule: pin an exact
-model id, and treat a new model as a change like a new prompt. It passes
+model ID, and treat a new model as a change like a new prompt. It passes
 the evaluation suite first, then goes to a small share of the traffic,
 and reaches everyone only when its numbers hold.
 </Pitfall>
@@ -450,7 +450,7 @@ change lowers that task's cost the most?
 4. Retry rate limits, overload and timeouts with a wait, and use
    `retry-after` when the provider sends it. Report every other error to
    the caller (@Claude docs errors) (@Claude docs rate-limits).
-5. Pin an exact model id, and roll out a new model like any other change.
+5. Pin an exact model ID, and roll out a new model like any other change.
    An alias moves on the provider's date, and a pinned id retires on a
    date you are told about in advance (@Claude docs model-ids-and-versions)
    (@Claude docs model-deprecations).
