@@ -156,7 +156,8 @@ matched. A fixture may still back a claim as CI proof, as long as the page
 never shows or names it. List it in the lesson file's `proofs`
 (`proofs: [<area>/<lesson>/<name>.py]`, spec S03 "Examples"), and make it
 print only what the page shows in `text` fences: `mise run examples` fails
-on a non-blank line of its output that no `text` fence on the page holds.
+on a non-blank line of its output that no `text` fence on the page holds,
+and on a token of a graded Predict's `answer` that the output doesn't print.
 A code span such as `` `python3` `` and a `text`
 fence pass, so prose may quote a command when the point is to recognize
 it.

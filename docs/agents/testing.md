@@ -55,7 +55,10 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   lists no `proofs`, #311). A `foundations` page can't carry a
   `run=`, so its lesson file lists the fixtures behind it in `proofs`, and
   `mise run examples` fails when one prints a non-blank line that no `text`
-  fence on the page shows (spec S03 "Examples", #497).
+  fence on the page shows (spec S03 "Examples", #497). It also fails when a
+  token of a graded Predict's `answer` on that page is missing from the
+  proofs' combined output, and names the page, the Predict and the token
+  (#570).
 - **Fixtures without a Predict.** `mise run examples` also fails on an
   entry script that no page names in a `run=` and no lesson file lists
   in `proofs`, because CI would never

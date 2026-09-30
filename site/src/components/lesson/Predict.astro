@@ -15,8 +15,9 @@
  *
  * A graded block with `answer` and no `run` says its output was checked by
  * hand, unless the lesson file lists `proofs` (#311). A foundations page may
- * not carry `run`, and `mise run examples` checks its `text` fences against
- * those fixtures, so the notice would be false there. The block then shows
+ * not carry `run`, and `mise run examples` checks its `text` fences and the
+ * tokens of this `answer` against those fixtures (#570), so the notice would
+ * be false there. The block then shows
  * no notice, because a foundations page never points at the program behind
  * it (spec S03 "Foundations audience").
  */
