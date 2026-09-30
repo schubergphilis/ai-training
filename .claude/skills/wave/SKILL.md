@@ -70,7 +70,7 @@ below first:
 - `## Arguments`: the arguments of the run, as given, and the line
   `Run: #<n>` with the run issue's own number, right after the heading.
   The new-run path adds it once the issue has its number ("Starting a
-  run" step 3.4), and the resume path adds it when it writes the file
+  run" step 3.5), and the resume path adds it when it writes the file
   from an issue that doesn't hold it yet.
 - `## Remaining --only`: the whitelist numbers not yet handled (only with
   `--only`).
@@ -135,7 +135,7 @@ from the file or the issue, when it holds only the heading, and when
 `gh issue view` failed, which leaves the issue's side empty. The `file:`
 line and the diff show which one it was. A `Run:` line that
 names another run means that another run's session wrote this file, for
-example through step 3.4 under a name it didn't get. A missing `Run:`
+example through step 3.5 under a name it didn't get. A missing `Run:`
 line means that the file was written by older skill text or without the
 `awk` of "Starting a run" step 3. Two sessions that resume the same run
 both write `Run: #<run>`, so this check passes for both of them and
@@ -224,6 +224,8 @@ printed.
       issue with a comment that quotes the `refusal` and names the other
       run (`gh issue close <number> --comment ...`), and stop as step 1
       does. The earlier run's own check passes, so one of the two goes on.
+      That close comment is the stop comment of "When the run ends", and
+      nothing else of that section applies to a run that never started.
    4. When its `takenBy` isn't null, an older open run got the same name
       first: close your issue with a comment saying so, and go back to
       step 2 with the name `run-name` prints now and the same file. Never
