@@ -63,6 +63,11 @@ nobody pushes fails a scheduled run. No advisory is ever ignored.
 - Pin GitHub Actions to full-length commit SHAs. `zizmor` enforces it.
 - Every `.mise.toml` tool is exact-pinned and invisible to dependabot.
   Refresh with `mise up` and read the diff.
+- Every platform entry in `mise.lock` has a `checksum`, and
+  `tests/test_mise_lock.py` fails on one without it. zizmor publishes no
+  musl Linux binary, so `mise lock` writes its `linux-arm64-musl`,
+  `linux-x64-musl` and `linux-x64-musl-baseline` entries with only
+  `provenance`. Delete those entries after a `mise lock` run.
 - CI pins the mise version and its checksum on every `mise-action` step.
   `docs/agents/mise-refresh.md` is the procedure for moving that pin, and
   `mise run mise-refresh <version>` does its download, verify and hash steps.
