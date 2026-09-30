@@ -59,7 +59,7 @@ is printed only when it has an entry, and in JSON it is the last key, so
 a wave without dependency lines prints as it did before them. An issue
 with more than one of the `content`, `code` and `harness` labels breaks
 the rule that the kind labels are exclusive (docs/agents/issue-tracker.md),
-so every kind lists it under Skipped with the reason
+so a content, code or harness wave lists it under Skipped with the reason
 `has more than one kind label`, and it waits until someone relabels it.
 A nits issue (title starting `Nits` or `Cosmetic nits`) is left out, since
 the dispatcher adds those to a wave as the nits row. Every issue kind

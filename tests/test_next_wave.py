@@ -944,6 +944,14 @@ def test_the_kind_label_skip_comes_after_only_and_names_the_reason_under_not_pic
     assert o["skipped"] == [{"issue": 80, "reason": NOT_IN_ONLY}]
 
 
+def test_a_looked_up_planned_issue_with_two_kind_labels_names_the_kind_label_reason() -> None:
+    # Issue 10 is planned as lesson a/1 and is outside the fetched set, so the
+    # picker looks it up. The label error wins over the planned-lesson reason.
+    lookup = Lookups({10: state(labels=["ready-for-agent", "content", "code"])})
+    r = code_wave(plan_lessons(), [], lookup, only=[10])
+    assert r["notPicked"] == [{"issue": 10, "reason": MANY_KINDS}]
+
+
 # formatWave
 
 
