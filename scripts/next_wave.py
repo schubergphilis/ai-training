@@ -25,10 +25,11 @@ Every kind reads an issue's dependencies (docs/agents/triage.md,
 lines of the body. An issue is blocked by the union of its open
 `blockedBy` issues and its `Blocked by #N` lines that name an open issue,
 each number once (#579). An open blocker in another repository holds
-the issue as unreadable, named `owner/repo#N`, since a `#N` here always
-means an issue of this repository. The `blockedBy` field needs gh 2.94.0 or later,
-and on an older gh the picker stops with a `next-wave:` line that names
-that version, since without the field every issue would look unblocked.
+the issue too, and is listed apart as `owner/repo#N` in `foreignBlockers`,
+since a `#N` here always means an issue of this repository. The
+`blockedBy` field needs gh 2.94.0 or later, and on an older gh the
+picker stops with a `next-wave:` line that names that version, since
+without the field every issue would look unblocked.
 A `Blocked by #N` line blocks the issue while #N is
 open, an issue or a pull request. A `Not before YYYY-MM-DD` line blocks it
 while the date is after today, read in UTC, so on that date it is free. A
@@ -220,10 +221,12 @@ class Dependencies(TypedDict):
     # The open issues its `blocked by` relationship or a `Blocked by` line
     # names, each once: the relationship's first, then the lines' in body order.
     blockedByIssues: list[int]
+    # The open blockers of its `blocked by` relationship in another
+    # repository, as `owner/repo#N`.
+    foreignBlockers: list[str]
     # The latest `Not before` date when it is after today, as YYYY-MM-DD.
     notBefore: str | None
-    # The dependency lines the picker can't read, trimmed, and the open
-    # blockers in another repository.
+    # The dependency lines the picker can't read, trimmed.
     unreadable: list[str]
 
 
@@ -251,8 +254,9 @@ class BlockedEntry(TypedDict):
     # The assumed objectives no live lesson serves. Empty when only the
     # issue's dependencies hold it back.
     blockedBy: list[Blocker]
-    # The three dependency fields, each present only when it holds something.
+    # The four dependency fields, each present only when it holds something.
     blockedByIssues: NotRequired[list[int]]
+    foreignBlockers: NotRequired[list[str]]
     notBefore: NotRequired[str]
     unreadable: NotRequired[list[str]]
 
@@ -298,6 +302,7 @@ class ContentBlockedEntry(TypedDict):
     issue: int
     title: str
     blockedByIssues: NotRequired[list[int]]
+    foreignBlockers: NotRequired[list[str]]
     notBefore: NotRequired[str]
     unreadable: NotRequired[list[str]]
 
@@ -399,9 +404,9 @@ def dependencies(
     `native` is the open issues of this repository in its `blocked by`
     relationship, and each one holds it. `foreign` is the open ones in
     another repository (`owner/repo#N`). A `#N` in the output always means
-    an issue here, so each of those holds the issue as unreadable, as
-    `Blocked by owner/repo#N (another repository)`, and plays no part in
-    matching the lines' numbers. A `Blocked by #N` line holds it while #N is open. The
+    an issue here, so each of those holds the issue under
+    `foreignBlockers` and plays no part in matching the lines' numbers. A
+    `Blocked by #N` line holds it while #N is open. The
     native blockers come first, then the lines' blockers in body order,
     and a number that the relationship and a line both name, or two lines,
     counts once. A `Not before` line
@@ -410,7 +415,6 @@ def dependencies(
     too, since the picker can't tell what it asks for.
     """
     blocked_by, not_before, unreadable = dependency_lines(body)
-    unreadable += [f"Blocked by {x} (another repository)" for x in foreign]
     lines_open = [n for n in dict.fromkeys(blocked_by) if n in native or is_open(n)]
     open_blockers = list(dict.fromkeys([*native, *lines_open]))
     dates: list[date] = []
@@ -423,19 +427,22 @@ def dependencies(
     latest = max(dates, default=None)
     return {
         "blockedByIssues": open_blockers,
+        "foreignBlockers": list(foreign),
         "notBefore": latest.isoformat() if latest is not None and latest > today else None,
         "unreadable": unreadable,
     }
 
 
 def held(d: Dependencies) -> bool:
-    return bool(d["blockedByIssues"] or d["notBefore"] or d["unreadable"])
+    return bool(d["blockedByIssues"] or d["foreignBlockers"] or d["notBefore"] or d["unreadable"])
 
 
 def add_dependency_fields(entry: BlockedEntry | ContentBlockedEntry, d: Dependencies) -> None:
     """Add the dependency fields to a blocked entry, each only when it holds something."""
     if d["blockedByIssues"]:
         entry["blockedByIssues"] = d["blockedByIssues"]
+    if d["foreignBlockers"]:
+        entry["foreignBlockers"] = d["foreignBlockers"]
     if d["notBefore"] is not None:
         entry["notBefore"] = d["notBefore"]
     if d["unreadable"]:
@@ -447,6 +454,8 @@ def dependency_reasons(entry: BlockedEntry | ContentBlockedEntry) -> list[str]:
     reasons: list[str] = []
     if "blockedByIssues" in entry:
         reasons.append(f"blocked by {', '.join(f'#{n}' for n in entry['blockedByIssues'])}")
+    if "foreignBlockers" in entry:
+        reasons.append(f"blocker in another repository: {', '.join(entry['foreignBlockers'])}")
     if "notBefore" in entry:
         reasons.append(f"not before {entry['notBefore']}")
     if "unreadable" in entry:
@@ -599,9 +608,8 @@ def pick_lessons_wave(
 
     # A lesson that a blocker issue, a `Not before` or an unreadable line also holds
     # stays blocked when the serving lesson is written, so it counts for no one.
-    freeable = [
-        b for b in blocked if not ("blockedByIssues" in b or "notBefore" in b or "unreadable" in b)
-    ]
+    dependency_keys = ("blockedByIssues", "foreignBlockers", "notBefore", "unreadable")
+    freeable = [b for b in blocked if not any(k in b for k in dependency_keys)]
     for candidates in per_area.values():
         for c in candidates:
             serves = set(candidate_serves[c["id"]])
