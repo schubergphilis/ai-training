@@ -630,10 +630,15 @@ maintainer's decision, the final report quotes its options and its
 recommendation (`triage.md`, "What a maintainer decision needs").
 Nothing is left in a record for the maintainer to reconcile by hand.
 
-Then, on every stop that ends the run, comment on the run issue, with
-the first line `Run ended: <stop condition>` and, under `--no-filing`,
-the filed numbers. Then release the claims (below), and close the run
-issue (`gh issue close <run>`). Your final report repeats the run's
+Then, on every stop that ends the run, comment on the run issue with
+`gh issue comment <run>`, with the first line
+`Run ended: <stop condition>` and, under `--no-filing`, the filed
+numbers. Then release the claims (below), and close the run issue with
+`gh issue close <run>` when `gh issue view <run> --json state -q .state`
+prints `OPEN`. A merged pull request's closing keyword can have closed it
+already ("The run issue after a merge"), and `gh issue close --comment`
+on a closed issue posts no comment, so the comment comes first and on its
+own. Your final report repeats the run's
 pending collision notes for the maintainer to read, lists the released
 issues, and names each open pull request whose issues stay claimed.
 
