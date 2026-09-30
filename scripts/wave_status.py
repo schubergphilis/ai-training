@@ -67,7 +67,9 @@ release comments, each with its author and time (#605). Only comments by
 an account in TRUSTED_VERDICT_AUTHORS count here too, because the
 dispatcher files what a follow-ups comment lists and drops an issue from
 its wave for another run's claim. A claim or release is what `is_claim`
-reads as one.
+reads as one. A trusted comment that contains `Follow-ups from` with
+another first line is listed under `unmatchedFollowUps`, so the
+dispatcher names it instead of dropping it without a word.
 
 A lead that puts one issue's commits on another issue's branch posts a
 pointer comment on the first issue with a `Branch:` line for that branch
@@ -149,13 +151,17 @@ CLAIM_LINE = re.compile(
 
 # The first line of a wave lead's follow-ups comment on the run issue under
 # `--no-filing`, `Follow-ups from OCELOT wave 3` (.claude/skills/wave/SKILL.md,
-# "Filing"), optionally as a Markdown heading or in bold. Group 1 is the
-# run's name in capitals, group 2 the wave. Case-sensitive, as the lead writes it.
+# "Filing"), optionally with a trailing colon, as a Markdown heading, or in
+# bold with the colon inside (`**Follow-ups from OCELOT wave 3:**`). Group 1
+# or 3 is the run's name in capitals, group 2 or 4 the wave. Case-sensitive,
+# as the lead writes it.
+_FOLLOW_UPS = "Follow-ups from ([A-Z]+) wave ([1-9][0-9]*):?"
 FOLLOW_UPS_LINE = re.compile(
-    rf"{_S}*(?:#{{1,6}}{_S}+)?(?:\*\*)?"
-    + rf"Follow-ups from ([A-Z]+) wave ([1-9][0-9]*)(?:\*\*)?{_S}*\Z",
+    rf"{_S}*(?:#{{1,6}}{_S}+)?(?:\*\*{_FOLLOW_UPS}\*\*|{_FOLLOW_UPS}){_S}*\Z",
     _FLAGS,
 )
+# Text that marks a comment as meant to be a follow-ups comment, anywhere in it.
+FOLLOW_UPS_MENTION = "Follow-ups from"
 
 # The attribution lines at the end of every agent comment.
 ATTRIBUTION_LINE = re.compile(rf"{_S}*(Co-Authored-By|Assisted-by):", _FLAGS | re.IGNORECASE)
@@ -247,6 +253,13 @@ class FollowUps(TypedDict):
     body: str
 
 
+class UnmatchedFollowUps(TypedDict):
+    author: str
+    createdAt: str
+    url: str
+    firstLine: str
+
+
 class Claim(TypedDict):
     kind: Literal["claim", "release"]
     run: str
@@ -260,6 +273,7 @@ class Claim(TypedDict):
 class TrustedComments(TypedDict):
     issue: int
     followUps: list[FollowUps]
+    unmatchedFollowUps: list[UnmatchedFollowUps]
     claims: list[Claim]
 
 
@@ -678,12 +692,16 @@ def wave_status(
 def follow_ups_of(body: str) -> tuple[str, int] | None:
     """The run's name and the wave a follow-ups comment's first line names, or None.
 
-    The first line is `Follow-ups from <NAME> wave <k>`, bare, as a Markdown
-    heading or in bold. The `## <title>` sections after it are the issues the
-    lead would have filed.
+    The first line is `Follow-ups from <NAME> wave <k>`, with an optional
+    trailing colon, bare, as a Markdown heading or in bold. The `## <title>`
+    sections after it are the issues the lead would have filed.
     """
     match = FOLLOW_UPS_LINE.match(lines_of(body)[0])
-    return (match.group(1), int(match.group(2))) if match else None
+    if match is None:
+        return None
+    name = match.group(1) or match.group(3)
+    wave = match.group(2) or match.group(4)
+    return name, int(wave)
 
 
 def claim_of(body: str) -> tuple[Literal["claim", "release"], str, int] | None:
@@ -710,9 +728,13 @@ def trusted_comments(
     outsider's `Claimed by run ...` comment drops no issue from a wave
     (#605). A claim's `releasedBy` is the url of the first later release
     by the same run for the same wave, or None while the claim holds. A
-    release's `releasedBy` is always None.
+    release's `releasedBy` is always None. A trusted comment that contains
+    `Follow-ups from` but whose first line doesn't match is listed in
+    `unmatchedFollowUps` with its first line, so a lead's follow-ups comment
+    with another first line is named and never dropped without a word.
     """
     follow_ups: list[FollowUps] = []
+    unmatched: list[UnmatchedFollowUps] = []
     claims: list[Claim] = []
     for c in trusted_in_order(comments, trusted):
         heading = follow_ups_of(c["body"])
@@ -728,6 +750,15 @@ def trusted_comments(
                 }
             )
             continue
+        if FOLLOW_UPS_MENTION in c["body"]:
+            unmatched.append(
+                {
+                    "author": c["author"],
+                    "createdAt": c["createdAt"],
+                    "url": c["url"],
+                    "firstLine": lines_of(c["body"])[0],
+                }
+            )
         claim = claim_of(c["body"])
         if claim is None:
             continue
@@ -751,7 +782,12 @@ def trusted_comments(
             "releasedBy": None,
         }
         claims.append(entry)
-    return {"issue": issue, "followUps": follow_ups, "claims": claims}
+    return {
+        "issue": issue,
+        "followUps": follow_ups,
+        "unmatchedFollowUps": unmatched,
+        "claims": claims,
+    }
 
 
 def trusted_report(comments_by_issue: Mapping[int, Sequence[IssueComment]]) -> TrustedReport:

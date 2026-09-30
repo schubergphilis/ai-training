@@ -166,7 +166,7 @@ open ("Harness runs"). One set of rules covers one run or several:
   when another open run's claim comment is older, it drops the issue from
   the wave and says so. It reads the claims through
   `mise run wave-status -- --claims-and-follow-ups`, which lists only the
-  comments by `lsimons` or `lsimons-bot`, so another account's claim
+  comments by the accounts in `TRUSTED_VERDICT_AUTHORS`, so another account's claim
   comment drops nothing (#605). The maintainer starts runs by hand minutes apart,
   so the check after the claim catches the rare race.
 - **The shared template.** While another run issue is open, a run doesn't

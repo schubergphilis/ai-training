@@ -32,10 +32,18 @@ def comment(body: str, author: str = "lsimons", at: str = "2026-09-30T10:00:00Z"
         "# Follow-ups from TAPIR wave 3",
         "**Follow-ups from TAPIR wave 3**",
         "Follow-ups from TAPIR wave 3  ",
+        "Follow-ups from TAPIR wave 3:",
+        "## Follow-ups from TAPIR wave 3:",
+        "**Follow-ups from TAPIR wave 3:**",
     ],
 )
 def test_follow_ups_of_reads_the_first_line(first_line: str) -> None:
     assert follow_ups_of(f"{first_line}\n\n## A title\n\nBody") == ("TAPIR", 3)
+
+
+def test_follow_ups_of_reads_a_first_line_posted_with_crlf_line_endings() -> None:
+    assert follow_ups_of("Follow-ups from TAPIR wave 3\r\n\r\n## A title\r\n") == ("TAPIR", 3)
+    assert follow_ups_of("Follow-ups from TAPIR wave 3:\r\nBody") == ("TAPIR", 3)
 
 
 @pytest.mark.parametrize(
@@ -46,6 +54,11 @@ def test_follow_ups_of_reads_the_first_line(first_line: str) -> None:
         "Follow-ups from Tapir wave 3",
         "Follow-ups from TAPIR wave 0",
         "Follow-ups from TAPIR wave 3 and more",
+        "Follow-ups from TAPIR wave 3 (integration mode)",
+        "\nFollow-ups from TAPIR wave 3",
+        "Follow-ups from TAPIR wave 3::",
+        "**Follow-ups from TAPIR wave 3**:",
+        "**Follow-ups from TAPIR wave 3:",
         "```\nFollow-ups from TAPIR wave 3\n```",
     ],
 )
@@ -133,7 +146,35 @@ def test_a_release_before_the_claim_releases_nothing() -> None:
 
 def test_other_trusted_comments_are_left_out() -> None:
     comments = [comment("Verdict: approve\nBranch: feat/605-x"), comment("Run ended: done")]
-    assert trusted_comments(605, comments) == {"issue": 605, "followUps": [], "claims": []}
+    assert trusted_comments(605, comments) == {
+        "issue": 605,
+        "followUps": [],
+        "unmatchedFollowUps": [],
+        "claims": [],
+    }
+
+
+def test_a_trusted_comment_that_mentions_follow_ups_but_does_not_match_is_named() -> None:
+    body = "\nFollow-ups from TAPIR wave 3 (integration mode)\n\n## Fix the thing"
+    comments = [
+        comment(body, author="lsimons-bot", at="2026-09-30T10:00:00Z"),
+        comment(FOLLOW_UPS, at="2026-09-30T11:00:00Z"),
+    ]
+    report = trusted_comments(604, comments)
+    assert [f["url"] for f in report["followUps"]] == ["https://example.test/2026-09-30T11:00:00Z"]
+    assert report["unmatchedFollowUps"] == [
+        {
+            "author": "lsimons-bot",
+            "createdAt": "2026-09-30T10:00:00Z",
+            "url": "https://example.test/2026-09-30T10:00:00Z",
+            "firstLine": "",
+        }
+    ]
+
+
+def test_an_untrusted_comment_that_mentions_follow_ups_is_not_named() -> None:
+    comments = [comment("Follow-ups from TAPIR wave 3 (mine)", author="outsider")]
+    assert trusted_comments(604, comments)["unmatchedFollowUps"] == []
 
 
 class FakeCommands:
