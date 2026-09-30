@@ -8,6 +8,9 @@
  * points at an alternate that doesn't exist, and no alternate is left without
  * the page that announces it. Each hint must start with `root`, Astro's
  * `site` plus the base path (`SITE_ROOT` in `site-address.mjs`).
+ * The pages S12 "Which pages get one" gives no alternate (the front page, the
+ * topic and competency maps, the progress, reference and settings pages, and
+ * the review pages) must carry no hint and have no alternate.
  * `scripts/check-bundles.mjs` runs this; tests import it.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -15,6 +18,16 @@ import { dirname, join, relative, sep } from 'node:path';
 import { walk } from './data.mjs';
 
 const LINK = /<link\b[^>]*>/gi;
+
+/**
+ * The pages S12 "Which pages get one" lists as having no alternate, as page
+ * directories under dist (`''` is the front page), and whether `dir` is one.
+ * A review page is `<area>/review/`, one per course.
+ * @param {string} dir
+ */
+export function hasNoAlternate(dir) {
+	return ['', 'map', 'competencies', 'progress', 'reference', 'settings'].includes(dir) || /^[^/]+\/review$/.test(dir);
+}
 
 /** An attribute of one `<link>` tag's source, or undefined. Astro writes attributes in double quotes. */
 function attr(tag, name) {
@@ -49,6 +62,11 @@ export function checkAlternateHints(distDir, root) {
 		const rel = relative(distDir, file);
 		const hints = alternateHints(readFileSync(file, 'utf8'));
 		if (hints.length === 0) continue;
+		const pageDir = dirname(rel) === '.' ? '' : dirname(rel).split(sep).join('/');
+		if (hasNoAlternate(pageDir)) {
+			errors.push(`${rel}: a page that spec S12 gives no Markdown alternate has an alternate hint`);
+			continue;
+		}
 		if (hints.length > 1) errors.push(`${rel}: ${hints.length} Markdown alternate hints, expected one`);
 		const href = hints[0] ?? '';
 		// The page's own directory, as a URL path: `safety/agent-risk/index.html` is `/safety/agent-risk/`.
@@ -78,7 +96,10 @@ export function checkAlternateHints(distDir, root) {
 			errors.push(`${relative(distDir, target)}: a Markdown alternate starts with its H1 title`);
 	}
 	for (const file of files.filter((p) => p.endsWith(`${sep}index.md`))) {
-		if (!hinted.has(file))
+		const dir = dirname(relative(distDir, file));
+		if (hasNoAlternate(dir === '.' ? '' : dir.split(sep).join('/')))
+			errors.push(`${relative(distDir, file)}: a page that spec S12 gives no Markdown alternate has one`);
+		else if (!hinted.has(file))
 			errors.push(`${relative(distDir, file)}: a Markdown alternate whose page has no head hint for it`);
 	}
 	return { errors, hints: hinted.size };

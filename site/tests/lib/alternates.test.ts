@@ -17,16 +17,26 @@ async function alternateOf(path: string): Promise<string> {
 }
 
 describe('alternateSources', () => {
-	it('lists each course page with a page and each live lesson, and no other page', async () => {
-		expect((await alternateSources()).map((s) => s.path)).toEqual([
-			'/safety/',
-			'/concepts/how-models-work/',
-			'/safety/agent-risk/',
-			'/safety/deeper/',
-		]);
-		expect(await alternatePaths()).toEqual(
-			new Set(['/safety/', '/concepts/how-models-work/', '/safety/agent-risk/', '/safety/deeper/']),
-		);
+	const paths = [
+		'/safety/',
+		'/concepts/how-models-work/',
+		'/safety/agent-risk/',
+		'/safety/deeper/',
+		'/contributing/',
+		'/guides/tutor/',
+		'/glossary/',
+		'/topics/concepts/models/',
+		'/topics/safety/risk/',
+		'/topics/safety/injection/',
+		'/topics/safety/depth/',
+		'/topics/safety/governance/',
+		'/competencies/concepts/explains-models/',
+		'/competencies/safety/judges-output/',
+		'/competencies/safety/spots-injection/',
+	];
+	it('lists the course pages, live lessons, guides, contributing, glossary, topic and competency pages, and no other page', async () => {
+		expect((await alternateSources()).map((s) => s.path)).toEqual(paths);
+		expect(await alternatePaths()).toEqual(new Set(paths));
 	});
 });
 
@@ -118,5 +128,91 @@ describe('a course page alternate', () => {
 			site,
 		);
 		expect(withDescription).toBe(`- [A](${ROOT}/x/a/): Does a.\n- B (planned)`);
+	});
+});
+
+describe('a guide and the contributing page alternate', () => {
+	it('has the title, the page Markdown with the lesson link rules, and its References', async () => {
+		const md = await alternateOf('/guides/tutor/');
+		expect(
+			md.startsWith(`# How to study with the tutor\n\n> Install the tutor.\n\nPage: ${ROOT}/guides/tutor/\n`),
+		).toBe(true);
+		expect(md).toContain(
+			`The tutor reads [a lesson](${ROOT}/safety/agent-risk/) (How agents think, Agent Engineer Course). See [Install](${ROOT}/guides/tutor/#install).`,
+		);
+		expect(md).toContain('## Install\n\n```sh\necho (@AEC-02)\n```\n');
+		expect(md.endsWith('## References\n\n- How agents think, Agent Engineer Course, https://example.com/aec\n')).toBe(
+			true,
+		);
+		expect(md).not.toMatch(/<script|not-content|<[A-Z]/);
+	});
+	it('renders the contributing page the same way', async () => {
+		const md = await alternateOf('/contributing/');
+		expect(md).toContain(`# Contributing\n\n> Building the site.\n\nPage: ${ROOT}/contributing/\n`);
+		expect(md).toContain(`Read [the guide](${ROOT}/guides/tutor/).`);
+		expect(md).not.toContain('## References');
+	});
+});
+
+describe('a glossary alternate', () => {
+	it('has its prose and one heading per concept by name, each with its definition and topic page', async () => {
+		const md = await alternateOf('/glossary/');
+		expect(md).toContain('# Glossary\n\n> Every concept.\n');
+		expect(md).toContain('Generated from the topic definitions.');
+		expect(md).toContain(
+			[
+				'## Context window (context-window)',
+				'',
+				'What the model can see.',
+				'',
+				`Topic: [Models](${ROOT}/topics/concepts/models/)`,
+				'',
+				'## Risk (risk)',
+				'',
+				'What can go wrong.',
+				'',
+				`Topic: [Risk](${ROOT}/topics/safety/risk/)`,
+				'',
+				'## Token (token)',
+			].join('\n'),
+		);
+		expect(md).not.toMatch(/<script|<dl|<Glossary|import /);
+	});
+});
+
+describe('a topic page alternate', () => {
+	it('has the sections the page shows, from the data tree, and no Your reference', async () => {
+		const md = await alternateOf('/topics/safety/depth/');
+		expect(md).toContain('# Depth\n\n> d\n');
+		expect(md).toContain('*Safety* · topic `safety/depth`');
+		for (const h of ['## Concepts', '## Links', '## Lessons', '## Sources']) expect(md).toContain(`${h}\n`);
+		expect(md).toContain(`## Lessons\n\n- [Deeper](${ROOT}/safety/deeper/) (tutorial)\n`);
+		expect(md).not.toMatch(/Your reference|<script|not-content/);
+	});
+});
+
+describe('a competency page alternate', () => {
+	it('has the course, the topics, each objective with its behaviors, and the References', async () => {
+		const md = await alternateOf('/competencies/safety/judges-output/');
+		expect(md).toContain('# Judges agent output\n\n> Competency safety/judges-output\n');
+		expect(md).toContain(`**Taught in:** the [Safety](${ROOT}/safety/) course`);
+		expect(md).toContain(`**Draws on:** [Risk](${ROOT}/topics/safety/risk/)`);
+		expect(md).toContain('## Learning objectives\n\n### Checks before trusting (base)\n');
+		expect(md).toContain(
+			'| Reads the diff before `git push` (How agents think, Agent Engineer Course). | A wrong line ships otherwise (Taste, Brilliant). | Runs the tests once more (How agents think, Agent Engineer Course). |',
+		);
+		expect(
+			md.endsWith(
+				'## References\n\n- How agents think, Agent Engineer Course, https://example.com/aec\n- Taste, Brilliant\n',
+			),
+		).toBe(true);
+		expect(md).not.toMatch(/<script|not-content|<table/);
+	});
+	it('has the alignment rows that name one of its objectives', async () => {
+		const md = await alternateOf('/competencies/concepts/explains-models/');
+		expect(md).toContain('## Alignment\n\n| Framework | Code | Asks | Objectives here |');
+		expect(md).toContain('| AI Fluency 4D | Discernment | Judge the output | o1 |');
+		expect(md).toContain(`Served by: [How a language model works](${ROOT}/concepts/how-models-work/)`);
+		expect(md).not.toContain('## References');
 	});
 });

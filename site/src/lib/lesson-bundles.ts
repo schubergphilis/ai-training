@@ -324,7 +324,7 @@ function parseAside(text: string, where: string): MdxNode {
 }
 
 /** Every root-relative link and image in Markdown and raw HTML, made absolute. Links with a scheme, `#` and `mailto:` are left alone. */
-function absolutizeLinks(md: string, site: string): string {
+export function absolutizeLinks(md: string, site: string): string {
 	return md
 		.replace(/(!?\[[^\]]*\]\()(\/(?!\/)[^)\s]*)/g, (_, pre: string, path: string) => pre + absoluteUrl(path, site))
 		.replace(/((?:href|src)=")(\/(?!\/)[^"]*)/g, (_, pre: string, path: string) => pre + absoluteUrl(path, site));

@@ -1,17 +1,11 @@
 ---
 /** Generated from every topic's concept definitions (spec S02 "Stable URLs": /glossary/#<concept>). */
 import { getCollection } from 'astro:content';
+import { glossaryEntries } from '@lib/reference-alternates';
 import { href } from '@lib/url';
 
-const topics = (await getCollection('topics')).map((t) => t.data);
-const entries = topics
-	.flatMap((t) => t.concepts.map((c) => ({ ...c, topic: t })))
-	.sort((a, b) => a.name.localeCompare(b.name));
-const seen = new Set<string>();
-for (const e of entries) {
-	if (seen.has(e.id)) throw new Error(`Duplicate concept id ${e.id} (in ${e.topic.id})`);
-	seen.add(e.id);
-}
+// The same list and order as the glossary's Markdown alternate (spec S12).
+const entries = glossaryEntries((await getCollection('topics')).map((t) => t.data));
 ---
 
 <dl class="glossary">

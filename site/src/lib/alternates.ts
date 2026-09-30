@@ -5,6 +5,13 @@ import { type CoursePlan, getCourse, isLive, type PlanEntry } from './courses';
 import { type AlternateOptions, renderLessonBody } from './lesson-bundles';
 import { getLessons } from './lessons';
 import { pageUrlOf, renderAlternate } from './markdown-alternate';
+import {
+	alignmentRowsOf,
+	competencyAlternate,
+	glossaryMarkdown,
+	type TopicData,
+	topicAlternate,
+} from './reference-alternates';
 
 /**
  * Which pages have a Markdown alternate, and how each one renders (spec S12
@@ -97,9 +104,120 @@ async function courseSources(): Promise<AlternateSource[]> {
 	});
 }
 
-/** Every page with an alternate, in a fixed order: the course pages in group order, then the lessons by id. */
+/** Every guide (`/guides/<slug>/`) and the contributing page: the page's Markdown with the lesson link rules. */
+async function plainPageSources(): Promise<AlternateSource[]> {
+	const docs = (await getCollection('docs'))
+		.filter((d) => d.id.startsWith('guides/') || d.id === 'contributing')
+		.sort((a, b) => a.id.localeCompare(b.id));
+	return docs.map((page) => {
+		const path = `/${page.id}/`;
+		return { path, render: (site: string) => renderPageAlternate(page, path, site) };
+	});
+}
+
+async function getTopics(): Promise<TopicData[]> {
+	return (await getCollection('topics')).map((t) => t.data);
+}
+
+/** The glossary: its own prose, with `<Glossary />` as one `##` heading per concept. */
+async function glossarySources(): Promise<AlternateSource[]> {
+	const page = (await getCollection('docs')).find((d) => d.id === 'glossary');
+	if (!page) return [];
+	const path = '/glossary/';
+	return [
+		{
+			path,
+			render: async (site: string) => {
+				const entries = glossaryMarkdown(await getTopics(), site);
+				return renderPageAlternate(page, path, site, { Glossary: () => entries });
+			},
+		},
+	];
+}
+
+/** Every topic page (`pages/topics/[...id].astro`), from the data the page reads. */
+async function topicSources(): Promise<AlternateSource[]> {
+	const topics = await getTopics();
+	return topics.map((topic) => ({
+		path: `/topics/${topic.id}/`,
+		render: async (site: string) => {
+			const [areas, lessons, competencies, bibliography] = await Promise.all([
+				getAreas(),
+				getLessons(),
+				getCollection('competencies'),
+				getBibliography(),
+			]);
+			return topicAlternate(
+				{
+					topic,
+					areaName: areas.find((a) => a.slug === topic.area)?.name ?? topic.area,
+					nameOf: (id) => topics.find((t) => t.id === id)?.name ?? id,
+					dependants: topics.filter((t) => t.links.prerequisites.includes(topic.id)),
+					competencies: competencies.map((c) => c.data).filter((c) => c.topics.includes(topic.id)),
+					lessons: lessons
+						.filter((l) => l.data.covers === topic.id)
+						.map((l) => ({ id: l.id, title: l.data.title ?? l.id, mode: l.data.mode })),
+					bibliography,
+				},
+				site,
+			);
+		},
+	}));
+}
+
+/** Every competency page (`pages/competencies/[...id].astro`), from the data the page reads. */
+async function competencySources(): Promise<AlternateSource[]> {
+	const competencies = (await getCollection('competencies')).map((c) => c.data);
+	return competencies.map((competency) => ({
+		path: `/competencies/${competency.id}/`,
+		render: async (site: string) => {
+			const [areas, topics, lessons, alignment, bibliography] = await Promise.all([
+				getAreas(),
+				getTopics(),
+				getLessons(),
+				getCollection('alignment'),
+				getBibliography(),
+			]);
+			const area = areas.find((a) => a.slug === competency.area);
+			if (!area) throw new Error(`competency ${competency.id}: area ${competency.area} is not an area`);
+			const own = new Set(competency.objectives.map((o) => o.id));
+			return competencyAlternate(
+				{
+					id: competency.id,
+					statement: competency.statement,
+					area: { slug: area.slug, name: area.name },
+					topics: competency.topics.map((id) => ({ id, name: topics.find((t) => t.id === id)?.name ?? id })),
+					objectives: competency.objectives.map((o) => ({
+						...o,
+						servedBy: lessons
+							.filter((l) => (l.data.serves ?? []).includes(o.id))
+							.map((l) => ({ id: l.id, title: l.data.title ?? l.id })),
+					})),
+					alignment: alignmentRowsOf(
+						alignment.map((f) => f.data),
+						own,
+					),
+					bibliography,
+				},
+				site,
+			);
+		},
+	}));
+}
+
+/**
+ * Every page with an alternate, in a fixed order: the course pages in group order, the lessons by id, the
+ * guides and the contributing page by id, the glossary, then the topic and competency pages.
+ */
 export async function alternateSources(): Promise<AlternateSource[]> {
-	return [...(await courseSources()), ...(await lessonSources())];
+	return [
+		...(await courseSources()),
+		...(await lessonSources()),
+		...(await plainPageSources()),
+		...(await glossarySources()),
+		...(await topicSources()),
+		...(await competencySources()),
+	];
 }
 
 /** The paths of the pages with an alternate, for the head hint. */
