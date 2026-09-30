@@ -23,7 +23,7 @@ exercise:
 sources:
   - AEC-10
   - Academy introduction-to-claude-cowork
-  - Claude support get-started-with-Cowork
+  - Claude support get-started-with-claude-cowork
 issue: 132
 minutes: 15
 proofs: [safety/tracing-a-planted-instruction/planted_line.py]
