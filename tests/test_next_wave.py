@@ -75,6 +75,7 @@ def issue(
     labels: Sequence[str] = (),
     body: str = "",
     blocked_by: Sequence[int] = (),
+    foreign: Sequence[str] = (),
 ) -> ReadyIssue:
     return {
         "number": number,
@@ -83,6 +84,7 @@ def issue(
         "labels": list(labels),
         "body": body,
         "blockedBy": list(blocked_by),
+        "foreignBlockedBy": list(foreign),
     }
 
 
@@ -95,6 +97,7 @@ def state(
         "assignees": [],
         "pullRequest": pull_request,
         "blockedBy": [],
+        "foreignBlockedBy": [],
     }
 
 
@@ -619,6 +622,7 @@ def titled(number: int, title: str, labels: Sequence[str] = ("content",)) -> Rea
         "labels": list(labels),
         "body": "",
         "blockedBy": [],
+        "foreignBlockedBy": [],
     }
 
 
@@ -1687,13 +1691,15 @@ def test_dependencies_reports_an_unreadable_date_and_holds_the_issue(value: str)
 # lines together, each number once.
 
 
-def blocker_node(number: int, value: str = "OPEN") -> dict[str, object]:
+def blocker_node(
+    number: int, value: str = "OPEN", repo: str = "schubergphilis/ai-training"
+) -> dict[str, object]:
     return {
         "id": f"I_{number}",
         "number": number,
         "state": value,
         "title": f"Issue {number}",
-        "url": f"https://github.com/schubergphilis/ai-training/issues/{number}",
+        "url": f"https://github.com/{repo}/issues/{number}",
     }
 
 
@@ -1701,8 +1707,10 @@ def blocked_by_field(*nodes: dict[str, object]) -> dict[str, object]:
     return {"nodes": list(nodes), "totalCount": len(nodes)}
 
 
-def harness_issue(number: int, body: str = "", blocked_by: Sequence[int] = ()) -> ReadyIssue:
-    return issue(number, labels=["harness"], body=body, blocked_by=blocked_by)
+def harness_issue(
+    number: int, body: str = "", blocked_by: Sequence[int] = (), foreign: Sequence[str] = ()
+) -> ReadyIssue:
+    return issue(number, labels=["harness"], body=body, blocked_by=blocked_by, foreign=foreign)
 
 
 def test_native_only_blocks_the_issue_without_a_lookup() -> None:
@@ -1739,6 +1747,54 @@ def test_native_and_a_line_naming_different_issues_list_both_native_first() -> N
     assert "- #30 Lesson #30: blocked by #40, #41\n" in format_wave(r)
 
 
+def test_a_closed_native_blocker_and_a_line_for_it_still_look_the_line_up() -> None:
+    # gh gives #40 CLOSED, so `native_blockers` leaves it out, and the line
+    # is checked by a lookup, never trusted from the relationship.
+    raw: dict[str, object] = {"blockedBy": blocked_by_field(blocker_node(40, "CLOSED"))}
+    local, foreign = nw.native_blockers(raw)
+    assert (local, foreign) == ([], [])
+    lookup = Lookups({40: state("CLOSED")})
+    ready = [harness_issue(30, body="Blocked by #40", blocked_by=local)]
+    r = harness_wave([], ready, lookup, today=TODAY)
+    assert lookup.asked == [40]
+    assert [w["issue"] for w in r["wave"]] == [30]
+    assert r["blocked"] == []
+
+
+def test_parse_splits_an_open_blocker_in_another_repository_by_its_url() -> None:
+    raw: dict[str, object] = {
+        "blockedBy": blocked_by_field(
+            blocker_node(40),
+            blocker_node(42, repo="other/repo"),
+            blocker_node(43, "CLOSED", repo="other/repo"),
+            blocker_node(44, repo="SchubergPhilis/AI-Training"),
+        )
+    }
+    assert nw.native_blockers(raw) == ([40, 44], ["other/repo#42"])
+
+
+def test_an_open_blocker_in_another_repository_alone_holds_the_issue_as_unreadable() -> None:
+    lookup = Lookups({})
+    ready = [harness_issue(30, foreign=["other/repo#42"])]
+    r = harness_wave([], ready, lookup, only=[30], today=TODAY)
+    assert r["wave"] == []
+    unreadable = "Blocked by other/repo#42 (another repository)"
+    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "unreadable": [unreadable]}]
+    assert r["notPicked"] == [{"issue": 30, "reason": f"unreadable dependency line `{unreadable}`"}]
+    assert lookup.asked == []
+
+
+def test_a_blocker_in_another_repository_does_not_answer_for_a_local_line() -> None:
+    # Open other/repo#42 and a `Blocked by #42` line for a closed #42 here:
+    # the line is looked up, and only the foreign blocker holds the issue.
+    lookup = Lookups({42: state("CLOSED")})
+    ready = [harness_issue(30, body="Blocked by #42", foreign=["other/repo#42"])]
+    r = harness_wave([], ready, lookup, today=TODAY)
+    assert lookup.asked == [42]
+    unreadable = "Blocked by other/repo#42 (another repository)"
+    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "unreadable": [unreadable]}]
+
+
 def test_native_blocks_a_lesson_too() -> None:
     lessons = plan([{"dir": "a", "course": ["a/1"], "lessons": [{"id": "a/1", "issue": 30}]}])
     r = lessons_wave(lessons, [issue(30, blocked_by=[40])], Lookups({}), today=TODAY)
@@ -1759,13 +1815,16 @@ def test_parse_issues_keeps_only_the_open_native_blockers() -> None:
             ),
         }
     ]
-    assert nw.parse_issues(json.dumps(raw))[0]["blockedBy"] == [41]
+    parsed = nw.parse_issues(json.dumps(raw))[0]
+    assert (parsed["blockedBy"], parsed["foreignBlockedBy"]) == ([41], [])
 
 
 def test_parse_issue_state_reads_the_open_native_blockers() -> None:
     raw = json.loads(view_json())
     raw["blockedBy"] = blocked_by_field(blocker_node(40), blocker_node(41, "CLOSED"))
-    assert nw.parse_issue_state(json.dumps(raw))["blockedBy"] == [40]
+    raw["blockedBy"]["nodes"].append(blocker_node(42, repo="other/repo"))
+    parsed = nw.parse_issue_state(json.dumps(raw))
+    assert (parsed["blockedBy"], parsed["foreignBlockedBy"]) == ([40], ["other/repo#42"])
 
 
 @pytest.mark.parametrize(
@@ -1777,6 +1836,10 @@ def test_parse_issue_state_reads_the_open_native_blockers() -> None:
         ({"nodes": [], "totalCount": 1}, "blockedBy lists 0 of 1 blockers"),
         ({"nodes": [7], "totalCount": 1}, "blockedBy node 7"),
         ({"nodes": [{"number": 7}], "totalCount": 1}, "blockedBy node {'number': 7}"),
+        (
+            {"nodes": [{"number": 7, "state": "OPEN", "url": "x"}], "totalCount": 1},
+            "'url': 'x'",
+        ),
     ],
 )
 def test_native_blockers_rejects_a_field_it_cannot_read(field: object, message: str) -> None:
