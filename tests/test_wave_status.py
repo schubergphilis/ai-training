@@ -1393,3 +1393,27 @@ def test_claim_in_a_fence_or_mid_sentence_stays_a_reply() -> None:
     for c in (fenced, mid):
         assert steps17([NEEDS_CHANGES17, c]) == [("feat/17-x", "re-check")]
         assert steps17([APPROVE17, c]) == [("feat/17-x", "lead-re-check")]
+
+
+def test_claim_with_a_fix_sentence_after_it_is_a_reply() -> None:
+    body = f"Claimed by run Seal, wave 3\n\nFixed in abc.{ATTRIBUTION}"
+    assert comment_kind(body) == "reply"
+    assert steps17([APPROVE17, comment("lsimons", body, "2026-09-24T13:00:00Z")]) == [
+        ("feat/17-x", "lead-re-check")
+    ]
+
+
+def test_claim_with_an_unfinished_line_after_it_is_a_reply() -> None:
+    body = f"Claimed by run Seal, wave 3\nUnfinished: feat/17-x{ATTRIBUTION}"
+    assert comment_kind(body) == "reply"
+    assert steps17([APPROVE17, comment("lsimons", body, "2026-09-24T13:00:00Z")]) == [
+        ("feat/17-x", "lead-re-check")
+    ]
+
+
+def test_claim_with_text_after_its_parenthetical_is_a_reply() -> None:
+    body = f"Claimed by run Seal, wave 3 (#586), fixed the bug (abc123){ATTRIBUTION}"
+    assert comment_kind(body) == "reply"
+    assert steps17([APPROVE17, comment("lsimons", body, "2026-09-24T13:00:00Z")]) == [
+        ("feat/17-x", "lead-re-check")
+    ]
