@@ -22,7 +22,10 @@ one stash (`refs/stash`). You coordinate and never write lesson content
 yourself. Don't ask questions. Make the call, state it in the pull request
 body, and put anything that needs the maintainer on your report's
 maintainer line. An issue you file for a maintainer decision holds what
-`docs/agents/triage.md`, "What a maintainer decision needs", lists.
+`docs/agents/triage.md`, "What a maintainer decision needs", lists. A
+follow-up you file from the review of issue N is its sub-issue
+(`gh issue create ... --parent N`), and a blocker is a relationship
+(`triage.md`, "Where an issue came from" and "Dependencies").
 
 ## The roles you spawn
 

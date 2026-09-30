@@ -163,8 +163,11 @@ these rules win.
 - Skip the merge, local `main` and worktree removal steps ("Rules").
 - Watch CI only when you opened a pull request.
 - Leave the issue open and assigned.
-- Follow the filing rule in your prompt. A `/wave --no-filing` run lists
-  follow-ups in the final text and files none.
+- Follow the filing rule in your prompt. A follow-up you file from the
+  review of your issue gets `--parent <issue>`, and a blocker is set as a
+  relationship (`docs/agents/triage.md`, "Where an issue came from" and
+  "Dependencies"). A `/wave --no-filing` run lists follow-ups in the
+  final text, each with the issue it came from, and files none.
 - When `mise run fast` fails on a file your change doesn't touch, run it
   on `origin/main` in a `git worktree add --detach` checkout under
   `../ai-training-wt/` with its own `mise run setup`, and remove that

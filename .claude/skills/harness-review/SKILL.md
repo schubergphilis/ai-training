@@ -105,5 +105,7 @@ styled like the site: the palette and the fonts from
    `harness-review`, with the summary numbers and the comparison. It
    doesn't quote transcripts or name local paths.
 2. Ask the maintainer which recommendations to file. File each one they
-   pick per `docs/agents/triage.md`, and link it from the review issue.
+   pick per `docs/agents/triage.md`, as a sub-issue of the review issue
+   (`gh issue create ... --parent <review issue>`), so the review issue
+   lists it.
 3. Close the review issue once the maintainer has chosen.

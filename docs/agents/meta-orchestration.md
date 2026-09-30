@@ -92,8 +92,8 @@ default mode every wave files follow-up issues, and some of those are
 and never reach the empty wave that ends the loop. With `--no-filing`
 nobody files an issue while the run goes, so the queue only shrinks and
 the loop ends. The follow-up rule is otherwise the same in both modes:
-each lead writes the issue it would have filed, title, body and labels,
-in one comment on the run issue, and when the run ends the dispatcher
+each lead writes the issue it would have filed, title, body, labels and
+parent, in one comment on the run issue, and when the run ends the dispatcher
 checks each entry once against `main` and files the ones that still hold.
 The overnight run of 2026-09-24 left 24 follow-ups in a record instead,
 and 6 of them were obsolete by the evening. Nothing waits in a record for
@@ -230,9 +230,11 @@ One tick:
    wave (`--kind harness`) is the ready, unassigned `harness` issues by
    ascending number, 4 by default. For every kind
    the picker asks GitHub only for the open `ready-for-agent` issues, plus
-   the kind's label for the other three kinds, and it blocks an issue whose body has a `Blocked by #N` line
-   for an open #N or a `Not before` line with a later date (`triage.md`,
-   "Dependency lines"). The lead adds a code review for a branch whose diff
+   the kind's label for the other three kinds, and it blocks an issue
+   with an open native `blockedBy` issue, a `Blocked by #N` body line for
+   an open #N or a `Not before` line with a later date (`triage.md`,
+   "Dependencies").
+   It counts a number that is both a native blocker and a line once. The lead adds a code review for a branch whose diff
    changes code, which is every branch of a code wave. A nits issue is left
    out because it arrives as the nits row. An issue with more than one
    kind label is listed under Skipped as `has more than one kind label`
@@ -275,7 +277,9 @@ One tick:
    every nit the lead left open on a merged branch, and every improvement
    deferred during the session becomes a GitHub issue before the next wave
    starts, filed and triaged as `triage.md` describes and linked from the
-   session record. The wave lead files the ones it has the context for and
+   session record. A follow-up from the review of issue N is filed as a
+   sub-issue of N (`gh issue create ... --parent N`, `triage.md`, "Where
+   an issue came from"). The wave lead files the ones it has the context for and
    lists their numbers on the report's `Filed` line. The dispatcher files
    the rest. There is one open nits issue at a time, titled
    `Cosmetic nits`: a lead appends a line per open nit to its body and

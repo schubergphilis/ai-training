@@ -10,7 +10,18 @@ gh issue view <number>
 gh issue create --title "..." --body "..." --label needs-triage
 gh issue comment <number> --body "..."
 gh issue edit <number> --add-label ready-for-agent --remove-label needs-triage
+gh issue create --title "..." --body-file <file> --label harness --parent <n> --blocked-by <m>
+gh issue edit <number> --add-blocked-by <m>     # or --remove-blocked-by, --add-blocking, --remove-blocking
+gh issue edit <number> --parent <n>             # or --remove-parent, --add-sub-issue, --remove-sub-issue
+gh issue view <number> --json blockedBy,blocking,parent,subIssues,closedByPullRequestsReferences
+gh pr view <number> --json closingIssuesReferences
 ```
+
+The relationship flags and fields need gh 2.94.0 or later, the release
+that added sub-issues and relationships to `gh issue`
+([release notes](https://github.com/cli/cli/releases/tag/v2.94.0)). `gh`
+isn't pinned in `.mise.toml`, so check `gh --version` when a flag is
+unknown.
 
 ## Labels
 
@@ -52,6 +63,41 @@ and closes it when the run stops (`docs/agents/meta-orchestration.md`).
 `Harness review <date>` (`docs/agents/harness-review.md`). These two
 kinds of issue are never triaged, picked or claimed, and they are the
 only open issues without `content`, `code` or `harness`.
+
+## Relationships
+
+GitHub records three kinds of link between issues and pull requests, and
+new issues use them instead of body text. `triage.md` has the rules and
+the checks behind them.
+
+- **Blocked by and blocking**, for order only: the issue can't start
+  before the other is done (`triage.md`, "Dependencies"). The picker also
+  reads `Blocked by #N` body lines, which stay the form for a pull request
+  blocker and sit next to `Not before YYYY-MM-DD` lines.
+- **Parent and sub-issue**, for where an issue came from: a split, a
+  kept entry of a list issue, an issue filed from a `Harness review <date>`
+  issue, or a follow-up from the review of an issue (`triage.md`, "Where
+  an issue came from").
+- **Issue and pull request**, through `Closes #N` in the pull request
+  body. GitHub then lists the pull request under the issue's Development
+  section and closes the issue when the pull request merges into `main`
+  ([Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)).
+  A script reads the link as `closedByPullRequestsReferences` on the issue
+  or `closingIssuesReferences` on the pull request, before it parses text.
+
+A pull request can't be linked to an issue without closing it. GitHub's
+page on linking says, for linked pull requests in general, that merging
+one into the default branch closes its linked issue. The page then lists
+the ways to link: a keyword in the body, the Development section of the
+pull request's sidebar, and the Development section of the issue's
+sidebar. A branch made for an issue with `gh issue develop` or the
+issue's "Create a branch" is linked too, and a pull request from that
+branch becomes a linked pull request
+([Creating a branch to work on an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-a-branch-for-an-issue)).
+Only a linked pull request closes an issue, so to name an issue without
+closing it, write `#N` with no closing keyword (`close`, `fix`,
+`resolve` and their forms) before it. GitHub shows it as a reference
+([Autolinked references and URLs](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls)).
 
 ## Triage flow
 

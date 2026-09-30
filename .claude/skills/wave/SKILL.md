@@ -605,7 +605,10 @@ Default (no `--no-filing`):
 > labeled with exactly one of `code`, `content` or `harness`, plus
 > `ready-for-agent` when every decision is made, or `ready-for-human` when
 > one is the maintainer's) for every follow-up a review named. A `ready-for-human` body holds what
-> `triage.md`, "What a maintainer decision needs", lists. Fix cheap nits
+> `triage.md`, "What a maintainer decision needs", lists. File a
+> follow-up from the review of issue N with `--parent N`, and set a
+> blocker as a relationship (`triage.md`, "Where an issue came from" and
+> "Dependencies"). Fix cheap nits
 > in the branch. Every cosmetic nit you leave open on a merged branch
 > becomes one line, naming the file and the change, appended to the body
 > of the one open issue titled `Cosmetic nits`
@@ -625,7 +628,8 @@ Under `--no-filing`:
 > or a builder reported, write the issue you would have filed, as a
 > `## <title>` heading with the body and labels under it (exactly one of
 > `code`, `content` or `harness`, plus `ready-for-agent` or
-> `ready-for-human`), in ONE comment
+> `ready-for-human`, and a `Parent: #N` line when the review of issue N
+> named it), in ONE comment
 > on the run issue #<run>, headed `Follow-ups from <NAME> wave <k>`. The
 > body of one that needs the maintainer's decision holds what
 > `triage.md`, "What a maintainer decision needs", lists.
@@ -651,7 +655,8 @@ Under `--no-filing`, before the final report, file what the leads wrote.
 For each follow-ups comment on the run issue, check every entry once
 against `main` as it is now, and drop the ones already done or made
 obsolete, saying which and why. File each remaining entry as the issue it
-describes, per `docs/agents/triage.md`, and append the nit lines to the
+describes, per `docs/agents/triage.md`, with `--parent N` for an entry
+with a `Parent: #N` line, and append the nit lines to the
 open `Cosmetic nits` issue (create it only when none is open). List the
 filed numbers in the final report. For each filed issue that waits on the
 maintainer's decision, the final report quotes its options and its

@@ -16,7 +16,7 @@ leave an issue "for later" without saying what later means.
    triage comments are often already there and only the label was missed.
    Check the state of every issue a body or comment names as a blocker.
    When a `ready-for-agent` issue states a blocker or a start date in
-   free text, add the dependency line for it (below).
+   free text, record it as "Dependencies" (below) says.
 
 2. **One issue at a time, with the maintainer.** For each issue, say in a
    few sentences what it is and where it came from, then give one
@@ -40,7 +40,7 @@ leave an issue "for later" without saying what later means.
 | Outcome                    | When                                                                | What the comment holds                                                                                                                         |
 | -------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ready-for-agent`          | Every decision the work needs is made, with the answer written down | The decisions, the files to touch, and a "done when" an agent can check                                                                        |
-| `ready-for-agent`, blocked | Fully specified, waits on another issue or an open pull request     | `blocked by #N (PR #M)` and the instruction to confirm the merge before starting                                                               |
+| `ready-for-agent`, blocked | Fully specified, waits on another issue or an open pull request     | `blocked by #N (PR #M)`, the blocker set as "Dependencies" says, and the instruction to confirm the merge before starting                      |
 | `ready-for-human`          | The next step is something only the maintainer can do               | The one action, stated so the maintainer can do it without rereading the issue. A decision holds what "What a maintainer decision needs" lists |
 | Closed                     | Not worth doing, superseded, or split into children                 | The reason, or the list of child issues and the entries that were dropped, each with why                                                       |
 
@@ -57,12 +57,16 @@ no new information.
 An issue that holds a list of deferred surfaces, proposals or ideas is not
 a task. Walk its entries one by one. For each entry, recommend keep or drop
 with a one-line reason. A kept entry becomes its own issue with concrete
-build steps and file pointers. A dropped entry is named in the closing
-comment with the reason, so the next agent doesn't re-propose it. Then
-close the parent. No tracking issue, no tracking label, no parking lot.
+build steps and file pointers, created as a sub-issue of the list issue
+(`gh issue create --parent <list>`). A dropped entry is named in the
+closing comment with the reason, so the next agent doesn't re-propose it.
+Then close the parent. No tracking issue, no tracking label, no parking
+lot. The sub-issue link records where each child came from, and the
+parent still closes.
 
 The same applies to an umbrella issue whose work has already been split:
-close it, list the children.
+close it, list the children, and make each child a sub-issue of it
+(`gh issue edit <umbrella> --add-sub-issue <child>`).
 
 ## What a ready-for-agent issue contains
 
@@ -77,17 +81,55 @@ body and its decision comment together hold:
 - Which tests or checks prove it: the e2e flow to extend, the build check
   to add, the `mise run ci` gate.
 - What is out of scope, when a reader could reasonably assume otherwise.
-- Its blocker, if any, as a dependency line (below), and the issue it
-  was split from.
+- Its blocker, if any, set as "Dependencies" (below) says.
+- Where it came from, as a parent link: the issue it was split from, the
+  `Harness review <date>` issue it was filed from, or the issue whose
+  review named it as a follow-up ("Where an issue came from", below). The
+  link replaces the "split from" sentence older bodies have.
 
 Stale paths in an old body (`docs/src/` where the code is under `site/src/`)
 get corrected in the triage comment rather than left for the builder to
 discover.
 
-## Dependency lines
+## Dependencies
 
-The wave picker (`mise run next-wave`, `scripts/next_wave.py`) reads two
-line forms in an issue body, for every kind of wave:
+Blocked-by and blocking are for order only: one issue can't start before
+another is done. A follow-up doesn't block the issue it came from, and a
+child doesn't block its parent.
+
+The wave picker (`mise run next-wave`, `scripts/next_wave.py`) treats an
+issue as blocked by the union of its open native `blockedBy` issues and
+its `Blocked by #N` lines, and counts a number that is in both once. This
+applies to every kind of wave. Both forms count, and new issues use the
+relationship.
+
+### Relationships
+
+Set a blocker between two issues as GitHub's "blocked by" relationship
+([Creating issue dependencies](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-issue-dependencies)):
+
+```bash
+gh issue create --title "..." --body-file <file> --blocked-by 123
+gh issue edit 456 --add-blocked-by 123
+gh issue edit 456 --remove-blocked-by 123
+```
+
+The flags need gh 2.94.0 or later (`issue-tracker.md`).
+
+A pull request can't be the target. Checked on 2026-09-30 with a scratch
+issue (#624): `gh issue edit 624 --add-blocked-by 622`, where #622 is a
+pull request, failed with `Could not resolve to an Issue with the number of 622`. The REST call
+`POST /repos/schubergphilis/ai-training/issues/624/dependencies/blocked_by`
+with the issue id of #622 returned HTTP 422,
+`Target issue may only be an issue`. GitHub's page on dependencies
+speaks of issues only. So a pull request blocker stays a
+`Blocked by #N` line (below).
+
+### Dependency lines
+
+The body lines are the supported alternative to the relationship. Use
+them for a pull request blocker and for a start date, which the
+relationship can't hold. The picker reads two line forms in an issue body:
 
 ```text
 Blocked by #123
@@ -96,7 +138,7 @@ Not before 2026-10-01
 
 - `Blocked by #N` blocks the issue while #N is open. One line names one
   issue, so an issue with two blockers has two lines. An open pull request
-  blocks too.
+  blocks too, and this line is the only form for a pull request blocker.
 - `Not before YYYY-MM-DD` blocks the issue until that date, read in UTC.
   On the date itself the issue is free. With two lines the later date
   counts.
@@ -118,6 +160,27 @@ Not before 2026-10-01
   shows up at the next pick.
 - When a blocker closes, the line can stay. Remove it when you edit the
   body anyway.
+
+## Where an issue came from
+
+An issue filed from another issue is its sub-issue
+([Adding sub-issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-sub-issues)).
+Set the parent when you create it, with `gh issue create --parent <N>`,
+or later with `gh issue edit <child> --parent <N>`:
+
+- A child split from an issue, or an entry kept from a list issue, has
+  the original issue as its parent.
+- An issue filed from a `Harness review <date>` issue has the review
+  issue as its parent (`harness-review.md`).
+- A follow-up filed from the review of issue N has N as its parent. A
+  follow-up that no one issue's review named, such as one from a wave
+  report's maintainer line, has no parent.
+
+GitHub gives an issue one parent: the REST call that adds a sub-issue
+has a `replace_parent` option to move one that already has a parent
+([REST API endpoints for sub-issues](https://docs.github.com/en/rest/issues/sub-issues)).
+When two issues could be the parent, use the one whose work or review
+named it. The parent link is a record, and the picker doesn't read it.
 
 ## What stays with the maintainer
 
