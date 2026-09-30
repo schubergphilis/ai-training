@@ -287,7 +287,9 @@ exclusivity check refuses a resumed run, since a later
 A picker that exits non-zero stops the loop too, before any claim. The
 dispatcher quotes the picker's `next-wave:` error line, such as a failed
 `gh issue view` for a mistyped `--only` number or `Blocked by #N` target,
-and leaves the run open for a resume once that is fixed.
+and leaves the run open for a resume once that is fixed. It comments
+the quoted line and the fix on the run issue, so a later reader of the
+issue sees why the run stopped.
 
 ## Standing approval
 
