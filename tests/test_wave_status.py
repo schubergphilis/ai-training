@@ -663,6 +663,12 @@ def test_parked_from_an_untrusted_account_changes_nothing() -> None:
 def test_parked_ends_at_a_later_claim_but_not_at_the_parking_waves_own() -> None:
     claim = comment("lsimons", f"Claimed by run Seal, wave 4{ATTRIBUTION}", "2026-09-24T12:00:00Z")
     assert parked17([NEEDS17, PARKED17, claim]) == [("feat/17-x", "revise", None)]
+    release = comment(
+        "lsimons",
+        f"Claim released by run Seal, wave 3 (the run ended){ATTRIBUTION}",
+        "2026-09-24T12:00:00Z",
+    )
+    assert parked17([NEEDS17, PARKED17, release]) == [("feat/17-x", "revise", None)]
     own = at_time(claim, "2026-09-24T09:00:00Z")
     assert parked17([own, NEEDS17, PARKED17]) == [("feat/17-x", "revise", PARKED17["url"])]
 
