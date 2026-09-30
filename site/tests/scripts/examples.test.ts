@@ -712,8 +712,17 @@ describe('proofs of a foundations page (#497)', () => {
 			const honor = '<Predict id="h" objective="a/b/c" title="T" hint="H" concepts={[\'x\']} />\n';
 			expect(checkProofAnswers('p.mdx', honor + predict('zzz', ' run="a/b/p.py"'), OUT, 'current')).toEqual([]);
 		});
-		it('fails a page that does not parse', () => {
-			expect(checkProofAnswers('p.mdx', '<Predict id="a" {...x} />\n', OUT, 'current')).toHaveLength(1);
+		it('keeps a leading sign, so 3 does not match -3, and still cuts leading brackets and quotes', () => {
+			expect(checkProofAnswers('p.mdx', predict('3'), 'delta: -3', 'current')).toEqual([
+				'p.mdx #p1: answer token "3" is in no output of the lesson file\'s proofs [current]',
+			]);
+			expect(checkProofAnswers('p.mdx', predict('-3 ok'), 'delta: (-3) "ok"', 'current')).toEqual([]);
+			expect(checkProofAnswers('p.mdx', predict('...'), 'wait ...', 'current')).toEqual([]);
+		});
+		it('returns nothing for a Predict prop checkSource already reports, so it is not repeated per interpreter', () => {
+			const src = '<Predict id="a" {...x} />\n';
+			expect(checkProofAnswers('p.mdx', src, OUT, 'current')).toEqual([]);
+			expect(checkSource('p.mdx', src, () => ({ status: 0, stdout: '', stderr: '' })).failures).toHaveLength(1);
 		});
 		it('checks the combined output of every proof, on each interpreter where all proofs ran', () => {
 			const src = `${PAGE}\n${predict('111 2')}`;
