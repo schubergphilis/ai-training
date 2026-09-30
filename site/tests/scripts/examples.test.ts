@@ -544,6 +544,11 @@ describe('stripCommentsAndDocstrings (#557)', () => {
 		['"""{}""".format("agent.py")\n', '"""{}""".format("agent.py")\n', 'a first string with more code on its line'],
 		['s = "a \\" # b"  # c\n', 's = "a \\" # b"  \n', 'an escaped quote inside a string'],
 		['"""Runs "agent.py"."""\r\nprint(1)\r\n', '\r\nprint(1)\r\n', 'a docstring with CRLF line ends'],
+		[
+			'def f(a) \\\r\n        -> int:\r\n    """x"""\r\n',
+			'def f(a) \\\r\n        -> int:\r\n    \r\n',
+			'a docstring after a continuation with CRLF',
+		],
 		['@cache\ndef f():\n    "Runs \'agent.py\'."\n', '@cache\ndef f():\n    \n', 'a docstring after a decorator'],
 		["X = '''# \"agent.py\"'''\n", "X = '''# \"agent.py\"'''\n", 'a triple-quoted assignment holding a #'],
 		[
