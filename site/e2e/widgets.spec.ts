@@ -130,3 +130,25 @@ test('the claim checker prints the report the page shows for the first summary',
 	expect((await checker.locator('.cc-lines').innerText()).trim()).toBe((await fence.innerText()).trim());
 	await expect(checker.locator('.cc-missing')).toHaveCount(4);
 });
+
+test('the line comparer prints the report the page shows after each sample, and compares pasted code', async ({
+	page,
+}) => {
+	await page.goto('safety/saying-ai-helped/');
+	const widgets = page.locator('.line-compare');
+	await expect(widgets).toHaveCount(2);
+	for (let i = 0; i < 2; i++) {
+		const widget = widgets.nth(i);
+		await expect(widget.locator('.lc-lines')).toBeHidden();
+		await widget.getByRole('button', { name: 'Compare' }).click();
+		const fence = widget.locator('xpath=following::pre[contains(., "lines also appear in")][1]');
+		expect((await widget.locator('.lc-lines').innerText()).trim()).toBe((await fence.innerText()).trim());
+	}
+	const first = widgets.first();
+	await first.locator('textarea').fill('words = text.split()\nprint(words)');
+	await expect(first.locator('.lc-lines')).toBeHidden();
+	await first.getByRole('button', { name: 'Compare' }).click();
+	await expect(first.locator('.lc-lines')).toHaveText(
+		'1 of 2 lines also appear in truncate.py\nlines not in truncate.py:\n  print(words)',
+	);
+});

@@ -1,0 +1,133 @@
+---
+/**
+ * LineCompare: the learner pastes code, or keeps the code the text box
+ * starts with, presses Compare, and reads how many of its non-blank lines
+ * are also a line of a source file, and the lines that are not. These are
+ * the lines `compare.py` in `site/examples/safety/saying-ai-helped/` prints
+ * for the same two files. Teaches and never grades (spec S03 "Widgets"),
+ * and writes nothing to the progress record. The rules are
+ * `scripts/line-compare-logic.ts`, and `scripts/line-compare.ts` binds each
+ * instance.
+ *
+ * `candidate` names a file in a `sample/` directory under `site/examples/`
+ * that fills the text box, and `source` the file in a `sources/` directory
+ * it is compared with, so the page shows what the proof fixtures compare.
+ * `showSource={false}` leaves the source text out for a second instance on
+ * a page that already shows it.
+ */
+import { exampleFile } from '@lib/example-files';
+
+interface Props {
+	candidate?: string;
+	source: string;
+	showSource?: boolean;
+}
+
+const { candidate, source, showSource = true } = Astro.props;
+
+const text = candidate === undefined ? '' : exampleFile(candidate, 'LineCompare');
+const file = { name: source.slice(source.lastIndexOf('/') + 1), text: exampleFile(source, 'LineCompare') };
+---
+
+<div class="not-content line-compare" data-line-compare data-source={JSON.stringify(file)}>
+	{
+		showSource && (
+			<figure class="lc-source">
+				<figcaption>{file.name}</figcaption>
+				<pre tabindex="0">{file.text.replace(/\n$/, '')}</pre>
+			</figure>
+		)
+	}
+	<label class="lc-label">
+		<span>Paste the code to compare with {file.name}</span>
+		<textarea class="lc-input" rows="8" spellcheck="false" autocomplete="off">{text}</textarea>
+	</label>
+	<button type="button" class="lc-check">Compare</button>
+	<div class="lc-report" aria-live="polite">
+		<pre class="lc-lines" tabindex="0" hidden></pre>
+	</div>
+</div>
+
+<style>
+	.line-compare {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: var(--at-radius-lg);
+		background: var(--at-surface);
+		font-size: var(--sl-text-sm);
+	}
+
+	.lc-source {
+		margin: 0;
+	}
+
+	.lc-source figcaption {
+		font-family: var(--sl-font-mono);
+		font-weight: 600;
+	}
+
+	.lc-source pre,
+	.lc-lines {
+		margin: 0;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: var(--at-radius-sm);
+		background: var(--sl-color-bg);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	.lc-label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.lc-input {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: var(--at-radius-sm);
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+		resize: vertical;
+	}
+
+	.lc-input:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 1px;
+	}
+
+	.lc-check {
+		align-self: flex-start;
+		padding: 0.35rem 0.85rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: var(--at-radius-pill);
+		background: transparent;
+		color: var(--sl-color-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.lc-check:hover,
+	.lc-check:focus-visible {
+		background: var(--sl-color-bg-accent);
+		color: var(--sl-color-text-invert);
+	}
+</style>
+
+<script>
+	import { mountLineCompares } from '@scripts/line-compare';
+
+	mountLineCompares(document);
+</script>

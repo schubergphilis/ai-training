@@ -130,7 +130,6 @@ export const FOUNDATIONS_GROUP = 'foundations';
  */
 export const FOUNDATIONS_EXEMPT = new Map([
 	['safety/bias-in-patterns', 284], // #284: went live after #238 was written
-	['safety/saying-ai-helped', 284], // #284
 ]);
 
 /**

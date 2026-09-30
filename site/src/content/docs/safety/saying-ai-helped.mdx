@@ -1,4 +1,5 @@
-import { Choice, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Match } from '@components/lesson';
+import { Choice, Scenario, Sort, Pitfall, Exercise, Recap, Match } from '@components/lesson';
+import LineCompare from '@components/widgets/LineCompare.astro';
 
 A supplier contract was translated from Dutch by an AI tool this month, and
 you read the English against the original before it went to legal. An email
@@ -8,14 +9,12 @@ needs a line saying that AI helped? The
 [first lesson](/safety/responsible-use/) of this course gave the test: say
 so when the reader would judge the work differently knowing it. In this
 lesson we write that line for the contract and for the function, one part
-at a time. A script then shows what the function was copied from, and the
-last section looks up the disclosure rule of the place a piece of work goes
-to.
+at a time. A comparer on the page then shows what the function was copied
+from, and the last section looks up the disclosure rule of the place a
+piece of work goes to.
 
-You need a terminal and `python3` for the middle section. The scripts are
-in the course repository under `site/examples/safety/saying-ai-helped/`.
-Copy that directory and change into it. The library in the fixture, and its
-author, are invented.
+The comparer runs in your browser and sends your text nowhere. The library
+in the example, and its author, are invented.
 
 ## Which of these needs a line?
 
@@ -123,10 +122,9 @@ Which line do you put at the top of the status summary?
 
 The function in the pull request is the second artifact. You asked an
 assistant for "a function that shortens a text to a number of words and
-adds three dots when it cut something", and it returned this. It is in the
-fixture as `generated.py`.
+adds three dots when it cut something", and it returned this.
 
-```python
+```text
 def shorten(text, limit, marker="..."):
     """Cut text after `limit` words and add the marker if anything was cut."""
     words = text.split()
@@ -139,49 +137,42 @@ def shorten(text, limit, marker="..."):
     return kept + marker
 ```
 
-The comments are more polished than the request, and they explain choices
-you didn't ask for. The first lesson called that the sign to search for a
-phrase. Searching for the comment about the comma finds
-`library/truncate.py` in the fixture, a file from a small open-source
-library.
+You don't need to read it as code. The first line names the function, the
+line in triple quotes under it is a short description, and the lines
+starting with `#` are comments for a human reader. The comments are more polished than
+the request, and they explain choices you didn't ask for. The first lesson
+called that the sign to search for a phrase. Searching for the comment
+about the comma finds `truncate.py`, a file from a small open-source
+library. The comparer below shows that file at the top, with the
+function the assistant returned in the text box. When you press Compare,
+it takes each non-blank line in the box, ignores the spaces around it, and
+checks whether the library file has the same line. It prints how many
+lines it found and then lists the lines that are only in the box.
 
-```python
-# truncate.py, from the Hazeldine text helpers
-# Copyright (c) 2021 M. Hazeldine
-# MIT License. This line stands in for the full permission notice in LICENSE.
+<LineCompare candidate="safety/saying-ai-helped/sample/generated.py"
+  source="safety/saying-ai-helped/sources/truncate.py" />
 
-
-def truncate_words(text, limit, marker="..."):
-    """Cut text after `limit` words and add the marker if anything was cut."""
-    words = text.split()
-    if len(words) <= limit:
-        return text
-    # Keep whole words only; never cut one in half
-    kept = " ".join(words[:limit])
-    # Drop trailing punctuation so the marker does not follow a comma
-    kept = kept.rstrip(",;:")
-    return kept + marker
-```
-
-`compare.py` puts a number on the resemblance. It reads the non-blank lines
-of `generated.py`, strips the spaces around each, and counts how many are
-also a line of `library/truncate.py`. It prints the count, and then the
-lines it found only in `generated.py`.
-
-<Predict id="how-much-was-copied" objective="safety/handles-data-safely/respects-licenses"
+<Choice id="how-much-was-copied" objective="safety/handles-data-safely/respects-licenses"
   concepts={['licensing-and-attribution']}
-  context="An assistant returned a ten-line Python function, shorten, with a docstring and two comments. A search finds a library function, truncate_words, whose body is the same line for line, under a different function name and with a three-line license header above it. A script counts the non-blank lines of the generated file that also appear, once stripped of surrounding spaces, in the library file, prints that count as N of M lines, and then lists the lines found only in the generated file, each indented by two spaces."
-  title="How many lines match?" hint="Compare the two listings line by line. Which line of the generated function has no twin in the library file?"
-  answer={`9 of 10 lines of generated.py also appear in library/truncate.py
-  only in generated.py:
-    def shorten(text, limit, marker="..."):`} run="safety/saying-ai-helped/compare.py">
-Before you run it, write down what the script prints.
+  context="An assistant returned a ten-line function, shorten, with a one-line description and two comments. A search finds a library function, truncate_words, whose body is the same line for line, under a different function name and with a three-line license header above it. A comparer counts how many of the ten lines of the generated function are also a line of the library file, ignoring the spaces around each line."
+  title="How many lines match?" hint="Go through the two listings line by line. Which line of the generated function has no twin in the library file?"
+  options={[
+    { text: '10 of 10. The two functions are the same.', why: 'Look at the first line of each. The generated function is called shorten, and the library function is called truncate_words.' },
+    { text: '9 of 10. Only the line with the function name differs.', correct: true },
+    { text: '8 of 10. The function name and the description under it differ.', why: 'Compare the description lines in quotes. They are the same, word for word.' },
+    { text: '6 of 10. The code matches apart from the function name, and the description and the two comments are the assistant\'s own words.', why: 'The two comments and the description are in the library file too. The search found the file through one of those comments.' },
+  ]}>
+Before you press Compare, how many of the ten lines of the generated
+function does the comparer find in the library file?
+</Choice>
 
-```sh
-python3 compare.py
+For the generated function, the comparer prints this:
+
+```text
+9 of 10 lines also appear in truncate.py
+lines not in truncate.py:
+  def shorten(text, limit, marker="..."):
 ```
-
-</Predict>
 
 Nine of ten lines. The one difference is the function name. This is what
 the [first lesson](/safety/responsible-use/) meant by output that
@@ -189,7 +180,7 @@ reproduces a source. The likeliest explanation is that the model saw this
 file, or a copy of it, in training and gave it back nearly whole. The license of the original travels with
 the copy. The header says MIT, and the MIT license lets anyone use the
 code on one condition, that the copyright line and the full permission
-notice stay with every copy. The one-line header in the fixture stands in
+notice stay with every copy. The one-line header in the example stands in
 for that notice, and a real library ships the full text in its `LICENSE`
 file. So the function may go into the pull request with the copyright line
 and the license text above it, and a line in the description that says
@@ -200,39 +191,29 @@ else.
 Under a different license the answer changes. A copyleft license (one
 that requires a program using the code to be shared under the same
 license) is a condition your proprietary product can't meet by adding a
-notice, and there the copy has to go. The fixture holds one replacement,
-`rewritten.py`, written from the one-sentence requirement with the library
-file closed.
+notice, and there the copy has to go. The text box below holds one
+replacement, written from the one-sentence requirement with the library
+file closed. Press Compare to check it against the same library file.
+You can also paste code of your own into either box.
 
-```python
-def shorten(text, limit, marker="..."):
-    """Return at most limit words, with a marker when words were dropped."""
-    words = text.split()
-    if len(words) <= limit:
-        return text
-    return " ".join(words[:limit]).rstrip(",;:") + marker
+<LineCompare candidate="safety/saying-ai-helped/sample/rewritten.py"
+  source="safety/saying-ai-helped/sources/truncate.py" showSource={false} />
+
+For the rewrite, the comparer prints this:
+
+```text
+3 of 6 lines also appear in truncate.py
+lines not in truncate.py:
+  def shorten(text, limit, marker="..."):
+  """Return at most limit words, with a marker when words were dropped."""
+  return " ".join(words[:limit]).rstrip(",;:") + marker
 ```
-
-<Predict id="compare-the-rewrite" title="Compare the rewrite"
-  answer={`3 of 6 lines of rewritten.py also appear in library/truncate.py
-  only in rewritten.py:
-    def shorten(text, limit, marker="..."):
-    """Return at most limit words, with a marker when words were dropped."""
-    return " ".join(words[:limit]).rstrip(",;:") + marker`} run="safety/saying-ai-helped/compare_rewrite.py">
-Run the comparison on the rewrite, and compare what you see with the output
-below.
-
-```sh
-python3 compare.py rewritten.py
-```
-
-</Predict>
 
 Three lines still match, and each of them is a line any solution would
 have, because every version has to split the text and compare the count. A
-shared line is a sign to look at the whole. The whole here has a docstring
-and a structure of its own, and the library's comments are gone. That
-difference is what a reviewer looks for.
+shared line is a sign to look at the whole. The whole here has a
+description and a structure of its own, and the library's comments are
+gone. That difference is what a reviewer looks for.
 
 <Scenario id="the-copyleft-match" objective="safety/handles-data-safely/respects-licenses"
   concepts={['licensing-and-attribution']}
