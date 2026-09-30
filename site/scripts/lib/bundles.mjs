@@ -33,8 +33,9 @@
  * with no published file, a published file with no source, and a file whose
  * text differs, with the first line that differs. `checkDataIndex` checks
  * `dist/data/index.json` (S12 "Index") against the same list: each data file
- * listed once, each URL ending in the path of a built file, and a lesson
- * `live` exactly when its bundle was built. The source-to-path table is
+ * listed once, each URL ending in the path of a built file, each `page`
+ * ending in its id and built, and a lesson `live` exactly when its bundle
+ * was built, with a null `page` and `bundle` when it is planned. The source-to-path table is
  * written out here on purpose, not imported from `src/lib/data-files.ts`, so
  * a mistake in the route is not repeated in its check.
  */
