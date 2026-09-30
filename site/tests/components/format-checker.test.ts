@@ -45,7 +45,7 @@ describe('FormatChecker', () => {
 	it('fails the build on a sample that is not there and on an empty list', async () => {
 		await expect(
 			container.renderToString(FormatChecker, { props: { sample: 'concepts/structured-output/sample/none.txt' } }),
-		).rejects.toThrow('FormatChecker: no sample concepts/structured-output/sample/none.txt');
+		).rejects.toThrow('FormatChecker: no file concepts/structured-output/sample/none.txt');
 		await expect(container.renderToString(FormatChecker, { props: { fields: [] } })).rejects.toThrow(
 			'FormatChecker: fields is empty',
 		);

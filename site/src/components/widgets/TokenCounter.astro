@@ -12,26 +12,15 @@
  * `concepts/context-window/sample/notes.txt`) that fills the text box, so
  * the page shows the file its proof fixture counts.
  */
+import { exampleFile } from '@lib/example-files';
+
 interface Props {
 	sample?: string;
 }
 
 const { sample } = Astro.props;
 
-const SAMPLE_ROOT = '../../../examples/';
-const samples = import.meta.glob<string>('../../../examples/**/sample/*', {
-	query: '?raw',
-	import: 'default',
-	eager: true,
-});
-
-let text = '';
-if (sample !== undefined) {
-	const found = samples[SAMPLE_ROOT + sample];
-	if (found === undefined)
-		throw new Error(`TokenCounter: no sample ${sample} (a file in a sample/ directory under site/examples/)`);
-	text = found;
-}
+const text = sample === undefined ? '' : exampleFile(sample, 'TokenCounter');
 ---
 
 <div class="not-content token-counter" data-token-counter>

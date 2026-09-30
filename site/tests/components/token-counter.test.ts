@@ -39,6 +39,6 @@ describe('TokenCounter', () => {
 	it('fails the build on a sample that is not there', async () => {
 		await expect(
 			container.renderToString(TokenCounter, { props: { sample: 'concepts/context-window/sample/none.txt' } }),
-		).rejects.toThrow('TokenCounter: no sample concepts/context-window/sample/none.txt');
+		).rejects.toThrow('TokenCounter: no file concepts/context-window/sample/none.txt');
 	});
 });
