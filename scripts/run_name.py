@@ -30,13 +30,21 @@ harness run is open. The runs the check counts are the other open runs:
 - before a new run opens its issue, `--exclusive KIND` counts every open
   run;
 - for a resumed run, `--resume NAME` leaves that run out, and its kind is
-  the one its title gives (a KIND given with it must match);
+  the one its title gives (a KIND given with it must match). When no open
+  run has the name, the newest closed run with it is resumed when a pull
+  request or a commit closed it and it has no trusted stop comment: a
+  wave merge closed that run issue before the dispatcher could reopen it
+  (#627). The JSON then gives its number and what closed it as `reopen`,
+  which is null for an open run;
 - after a new run opened issue #N, `--check N --exclusive KIND` counts
   only the open runs with a lower issue number. When two new runs race,
   the issue number decides which is later: the higher number refuses and
   closes its issue, and the lower one passes, so one of them goes on.
   The runs are read from the newest issues as well as from the label
   listing, which can lag by a few seconds (`fetch_issues`, #616).
+
+A closed run counts for no other run's check, so only the resume of a
+closed run checks the rule for it.
 
 The functions are pure over the file's text and the run issues that
 `main` fetches with `gh`, so tests/test_run_name.py can feed them planted
@@ -57,6 +65,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, TypedDict, cast
 
+from wave_status import TRUSTED_VERDICT_AUTHORS
+
 REPO = "schubergphilis/ai-training"
 RUN_LABEL = "dispatcher-run"
 """The label on every run issue."""
@@ -70,6 +80,11 @@ HARNESS = "harness"
 """The kind of a harness run."""
 REFUSED = 3
 """The exit code when the harness exclusivity check refuses the run."""
+STOP_COMMENTS = ("Run ended:", "Stop condition:")
+"""How a stop comment starts. `Run ended:` is the first line SKILL.md "When the
+run ends" gives it. The runs that ended before 2026-09-30 (549bd15f) mostly
+started it with `Stop condition:`, and Ocelot (#513), which PR #520 closed,
+is one of them."""
 RECENT_LIMIT = 50
 """How many of the newest issues `--check` reads without the search index (#616)."""
 RECENT_QUERY = """
@@ -82,6 +97,22 @@ query($owner: String!, $repo: String!, $limit: Int!) {
 }
 """
 """The newest issues of the repository, with their labels, from the issues connection."""
+CLOSER_QUERY = """
+query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    issue(number: $number) {
+      timelineItems(itemTypes: [CLOSED_EVENT], last: 1) {
+        nodes {
+          ... on ClosedEvent {
+            closer { __typename ... on PullRequest { number } ... on Commit { abbreviatedOid } }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+"""What closed an issue last: a pull request or a commit with a closing keyword, or null."""
 
 type Gh = Callable[[Sequence[str]], object]
 """Runs gh with the arguments and returns its parsed JSON output."""
@@ -132,6 +163,19 @@ class RecentIssue(TypedDict):
     state: Literal["OPEN", "CLOSED"]
     createdAt: str
     labels: Labels
+
+
+class Author(TypedDict):
+    """The author of a comment, as `gh --json comments` prints it."""
+
+    login: str
+
+
+class Comment(TypedDict):
+    """A comment, as `gh issue view --json comments` prints it."""
+
+    author: Author
+    body: str
 
 
 class Run(TypedDict):
@@ -330,6 +374,37 @@ def with_recent(
     return [i for i in issues if i["number"] not in covered] + fresh
 
 
+def newest_closed_run(runs: Sequence[Run], name: str) -> Run | None:
+    """For `--resume NAME` when no open run has the name: the newest closed run with it.
+
+    None when an open run has the name, or when no run has it. Only the
+    newest closed run counts: a name is used again only after the run
+    that held it has closed, so an older closed run with the name is an
+    earlier run, and the runs from before 2026-09-25 closed without a stop
+    comment (#627).
+    """
+    if any(run["open"] and run["name"] == name for run in runs):
+        return None
+    return newest_run([run for run in runs if not run["open"] and run["name"] == name])
+
+
+def has_stop_comment(comments: Sequence[Comment]) -> bool:
+    """True when one of the comments is the run's stop comment.
+
+    The stop comment is the one .claude/skills/wave/SKILL.md, "When the
+    run ends", posts: its body starts with `Run ended:`, or with the older
+    `Stop condition:` (STOP_COMMENTS). Only a comment by
+    an account in TRUSTED_VERDICT_AUTHORS counts, since anyone can comment
+    on a public issue. Every comment is read, since a later comment can
+    follow the stop comment.
+    """
+    return any(
+        comment["author"]["login"] in TRUSTED_VERDICT_AUTHORS
+        and comment["body"].startswith(STOP_COMMENTS)
+        for comment in comments
+    )
+
+
 def parse_args(argv: Sequence[str]) -> Args:
     """The options of the command line, in any order, each at most once.
 
@@ -387,10 +462,16 @@ def exclusivity_refusal(kind: str, others: Sequence[Run]) -> str | None:
     return None
 
 
-def counted_runs(runs: Sequence[Run], args: Args) -> tuple[str, list[Run]]:
+def counted_runs(
+    runs: Sequence[Run], args: Args, reopen: Run | None = None
+) -> tuple[str, list[Run]]:
     """This run's kind and the other open runs the exclusivity check counts.
 
     With `--resume NAME` the kind is that run's, and the run is left out.
+    The resumed run is the open run with the name, or `reopen`, the closed
+    run `resumable_run` found. A closed run counts for no other run's check,
+    so its own check here is the one that keeps the harness rule when it
+    comes back.
     With `--check N` only the open runs with an issue number below N
     count, because the issue number orders two new runs. Otherwise every
     open run counts. Raises RunNameError when the resumed run isn't open,
@@ -401,6 +482,8 @@ def counted_runs(runs: Sequence[Run], args: Args) -> tuple[str, list[Run]]:
     mine: Run | None = None
     if args.resume is not None:
         mine = next((run for run in open_runs if run["name"] == args.resume), None)
+        if mine is None and reopen is not None and reopen["name"] == args.resume:
+            mine = reopen
         if mine is None:
             raise RunNameError(f"run-name: no open run is named {args.resume}")
     elif args.check is not None:
@@ -425,11 +508,18 @@ def counted_runs(runs: Sequence[Run], args: Args) -> tuple[str, list[Run]]:
     return kind, others
 
 
-def report(issues: Sequence[RunIssue], sequence: Sequence[str], args: Args) -> dict[str, object]:
+def report(
+    issues: Sequence[RunIssue],
+    sequence: Sequence[str],
+    args: Args,
+    reopen: tuple[Run, str] | None = None,
+) -> dict[str, object]:
     """The JSON report: the open runs by number and the next name.
 
     With --check it adds takenBy, and with --exclusive or --resume it adds
-    refusal.
+    refusal. With --resume it also adds reopen: the number of the closed
+    run issue to reopen and what closed it (`reopen`, from
+    `resumable_run`), or null when the resumed run is open.
     """
     check = args.check
     runs = [run for issue in issues if (run := run_of(issue)) is not None]
@@ -440,8 +530,12 @@ def report(issues: Sequence[RunIssue], sequence: Sequence[str], args: Args) -> d
     if check is not None:
         result["takenBy"] = name_taken_by(runs, check)
     if args.exclusive is not None or args.resume is not None:
-        kind, others = counted_runs(runs, args)
+        kind, others = counted_runs(runs, args, None if reopen is None else reopen[0])
         result["refusal"] = exclusivity_refusal(kind, others)
+    if args.resume is not None:
+        result["reopen"] = (
+            None if reopen is None else {"number": reopen[0]["number"], "closedBy": reopen[1]}
+        )
     return result
 
 
@@ -537,6 +631,77 @@ def fetch_issues(check: int | None, gh: Gh) -> list[RunIssue]:
     return with_issue(merged, own)
 
 
+def closer_of(answer: object) -> str | None:
+    """What CLOSER_QUERY says closed the issue: `PR #<n>`, `commit <sha>`, or None.
+
+    None when the issue was closed by hand, by `gh issue close` or by
+    anything else that isn't a closing keyword. Raises RunNameError when
+    the answer isn't the one CLOSER_QUERY asks for.
+    """
+    try:
+        issue = cast("dict[str, Any]", answer)["data"]["repository"]["issue"]
+        nodes = cast("list[dict[str, Any]]", issue["timelineItems"]["nodes"])
+    except (KeyError, TypeError) as e:
+        raise RunNameError(f"run-name: gh api graphql gave no close event: {e}") from e
+    closer = cast("dict[str, Any] | None", nodes[-1].get("closer")) if nodes else None
+    if closer is None:
+        return None
+    if closer.get("__typename") == "PullRequest":
+        return f"PR #{closer['number']}"
+    if closer.get("__typename") == "Commit":
+        return f"commit {closer['abbreviatedOid']}"
+    return None
+
+
+def resumable_run(issues: Sequence[RunIssue], name: str | None, gh: Gh) -> tuple[Run, str] | None:
+    """For `--resume NAME`: the closed run to reopen and what closed it, or None.
+
+    None without `--resume`, when an open run has the name, and when no
+    run has it (`counted_runs` then says that no open run has the name).
+    Otherwise the run is `newest_closed_run`, and it is resumable when a
+    pull request or a commit closed its issue last (a wave merge, before
+    the dispatcher could reopen it: SKILL.md, "The run issue after a
+    merge") and no comment on it is a stop comment. That costs two more gh
+    calls, only on this path. Raises RunNameError when the run isn't
+    resumable, because it ended.
+    """
+    if name is None:
+        return None
+    runs = [run for issue in issues if (run := run_of(issue)) is not None]
+    closed = newest_closed_run(runs, name)
+    if closed is None:
+        return None
+    number = closed["number"]
+    owner, repo = REPO.split("/")
+    closer = closer_of(
+        gh(
+            [
+                "api",
+                "graphql",
+                "-f",
+                f"query={CLOSER_QUERY}",
+                "-F",
+                f"owner={owner}",
+                "-F",
+                f"repo={repo}",
+                "-F",
+                f"number={number}",
+            ]
+        )
+    )
+    ended = f"run-name: no open run is named {name}, and run {name} (#{number}) has ended"
+    if closer is None:
+        raise RunNameError(f"{ended}: no merge closed its issue")
+    answer = gh(["issue", "view", str(number), "-R", REPO, "--json", "comments"])
+    try:
+        comments = cast("list[Comment]", cast("dict[str, Any]", answer)["comments"])
+    except (KeyError, TypeError) as e:
+        raise RunNameError(f"run-name: gh issue view gave no comments: {e}") from e
+    if has_stop_comment(comments):
+        raise RunNameError(f"{ended}: it has a stop comment")
+    return closed, closer
+
+
 def main(
     argv: Sequence[str],
     gh: Gh = gh_json,
@@ -551,8 +716,9 @@ def main(
         return 2
     try:
         issues = fetch_issues(args.check, gh)
+        reopen = resumable_run(issues, args.resume, gh)
         sequence = run_name_sequence(names_file.read_text(encoding="utf-8"))
-        result = report(issues, sequence, args)
+        result = report(issues, sequence, args, reopen)
     except (RunNameError, OSError) as e:
         print(e, file=sys.stderr)
         return 1

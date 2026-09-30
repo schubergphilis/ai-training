@@ -322,17 +322,27 @@ def fake_gh(
     listed: list[RunIssue],
     viewed: RunIssue | None = None,
     recent: list[run_name.RecentIssue] | None = None,
+    comments: dict[int, list[run_name.Comment]] | None = None,
+    closers: dict[int, dict[str, object] | None] | None = None,
 ) -> run_name.Gh:
-    """A gh with a label listing, one viewed issue and the newest issues."""
+    """A gh with a label listing, one viewed issue, the newest issues, comments and closers."""
 
     def gh(args: Sequence[str]) -> object:
         if args[:2] == ["issue", "list"]:
             assert run_name.RUN_LABEL in args
             return listed
+        number = next((a.removeprefix("number=") for a in args if a.startswith("number=")), None)
+        if args[:2] == ["api", "graphql"] and number is not None:
+            assert closers is not None
+            assert f"query={run_name.CLOSER_QUERY}" in args
+            return closed_by(closers[int(number)])
         if args[:2] == ["api", "graphql"]:
             assert f"limit={run_name.RECENT_LIMIT}" in args
             return {"data": {"repository": {"issues": {"nodes": recent or []}}}}
         assert args[:2] == ["issue", "view"]
+        if args[-1] == "comments":
+            assert comments is not None
+            return {"comments": comments[int(args[2])]}
         return viewed
 
     return gh
@@ -725,3 +735,149 @@ def test_check_makes_two_gh_calls_when_the_newest_issues_hold_it() -> None:
 def test_fetch_recent_raises_when_the_answer_holds_no_issues(answer: object) -> None:
     with pytest.raises(run_name.RunNameError, match="gh api graphql gave no issues"):
         run_name.fetch_recent(lambda _: answer)
+
+
+# Resuming a run whose issue a wave merge closed (#627)
+
+TAPIR_CLOSED = issue(604, "Run: Tapir (harness)", "2026-09-30T08:00:00Z", state="CLOSED")
+TAPIR_OLD = issue(300, "Run: Tapir (code)", "2026-09-01T08:00:00Z", state="CLOSED")
+
+
+PR_620: dict[str, object] = {"__typename": "PullRequest", "number": 620}
+
+
+def closed_by(closer: dict[str, object] | None) -> object:
+    """The CLOSER_QUERY answer for an issue that `closer` closed last."""
+    nodes = [{"closer": closer}]
+    return {"data": {"repository": {"issue": {"timelineItems": {"nodes": nodes}}}}}
+
+
+def comment(login: str, body: str) -> run_name.Comment:
+    return {"author": {"login": login}, "body": body}
+
+
+STOPPED = comment("lsimons-bot", "Run ended: queue empty\n\nCo-Authored-By: ...")
+
+
+def test_has_stop_comment_reads_only_trusted_run_ended_comments() -> None:
+    assert run_name.has_stop_comment([STOPPED])
+    assert run_name.has_stop_comment([comment("lsimons", "Run ended: stop"), comment("x", "hi")])
+    assert not run_name.has_stop_comment([comment("someone", "Run ended: stop")])
+    assert not run_name.has_stop_comment([comment("lsimons-bot", "Wave 2: Run ended: no")])
+    assert not run_name.has_stop_comment([])
+    assert run_name.has_stop_comment([comment("lsimons", "Stop condition: queue empty")])
+
+
+def test_closer_of_names_the_pull_request_or_commit_that_closed_the_issue() -> None:
+    assert run_name.closer_of(closed_by(PR_620)) == "PR #620"
+    commit: dict[str, object] = {"__typename": "Commit", "abbreviatedOid": "de3a424"}
+    assert run_name.closer_of(closed_by(commit)) == "commit de3a424"
+    assert run_name.closer_of(closed_by(None)) is None
+    assert run_name.closer_of(closed_by({"__typename": "ProjectV2"})) is None
+    empty: dict[str, object] = {"data": {"repository": {"issue": {"timelineItems": {"nodes": []}}}}}
+    assert run_name.closer_of(empty) is None
+
+
+@pytest.mark.parametrize("answer", [{}, {"data": {"repository": {"issue": None}}}, []])
+def test_closer_of_raises_when_the_answer_holds_no_close_event(answer: object) -> None:
+    with pytest.raises(run_name.RunNameError, match="gh api graphql gave no close event"):
+        run_name.closer_of(answer)
+
+
+def test_the_trusted_accounts_are_the_verdict_authors_of_wave_status() -> None:
+    import wave_status
+
+    assert run_name.TRUSTED_VERDICT_AUTHORS is wave_status.TRUSTED_VERDICT_AUTHORS
+
+
+def test_newest_closed_run_takes_the_newest_and_only_when_no_open_run_has_the_name() -> None:
+    runs = [
+        run(300, "Tapir", False, "2026-09-01T08:00:00Z"),
+        run(604, "Tapir", False, "2026-09-30T08:00:00Z"),
+        run(605, "Seal", True, "2026-09-30T09:00:00Z"),
+    ]
+    newest = run_name.newest_closed_run(runs, "Tapir")
+    assert newest is not None
+    assert newest["number"] == 604
+    assert run_name.newest_closed_run([*runs, run(700, "Tapir", True, "")], "Tapir") is None
+    assert run_name.newest_closed_run(runs, "Seal") is None
+    assert run_name.newest_closed_run(runs, "Urial") is None
+
+
+def test_resume_of_a_closed_run_without_a_stop_comment_prints_reopen(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    gh = fake_gh(
+        [TAPIR_OLD, TAPIR_CLOSED],
+        comments={604: [comment("x", "Run ended: fake")]},
+        closers={604: PR_620},
+    )
+    assert run_name.main(["--resume", "Tapir"], gh=gh) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["reopen"] == {"number": 604, "closedBy": "PR #620"}
+    assert out["refusal"] is None
+    assert out["open"] == []
+
+
+def test_resume_of_a_closed_run_with_a_stop_comment_exits_1(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # The older Tapir has no stop comment, but only the newest one counts.
+    gh = fake_gh(
+        [TAPIR_OLD, TAPIR_CLOSED],
+        comments={604: [STOPPED], 300: []},
+        closers={604: PR_620, 300: PR_620},
+    )
+    assert run_name.main(["--resume", "Tapir"], gh=gh) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == (
+        "run-name: no open run is named Tapir, and run Tapir (#604) has ended: "
+        "it has a stop comment\n"
+    )
+
+
+def test_resume_of_a_run_closed_by_hand_exits_1_without_reading_comments(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    gh = fake_gh([TAPIR_CLOSED], closers={604: None})
+    assert run_name.main(["--resume", "Tapir"], gh=gh) == 1
+    assert capsys.readouterr().err == (
+        "run-name: no open run is named Tapir, and run Tapir (#604) has ended: "
+        "no merge closed its issue\n"
+    )
+
+
+def test_resume_of_a_closed_run_is_refused_while_another_run_is_open(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    gh = fake_gh([OTTER_ISSUE, TAPIR_CLOSED], comments={604: []}, closers={604: PR_620})
+    assert run_name.main(["--resume", "Tapir"], gh=gh) == run_name.REFUSED
+    out = json.loads(capsys.readouterr().out)
+    assert out["refusal"] == HARNESS_FIRST + "Run Otter (#580)"
+    assert out["reopen"] == {"number": 604, "closedBy": "PR #620"}
+
+
+def test_a_closed_resumable_run_does_not_count_for_a_new_run(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert run_name.main(["--exclusive", "code"], gh=fake_gh([TAPIR_CLOSED])) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["refusal"] is None
+    assert "reopen" not in out
+
+
+def test_resume_of_an_open_run_prints_a_null_reopen_and_reads_no_comments(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert run_name.main(["--resume", "Seal"], gh=fake_gh([TAPIR_CLOSED, SEAL_ISSUE])) == 0
+    assert json.loads(capsys.readouterr().out)["reopen"] is None
+
+
+@pytest.mark.parametrize("answer", [{}, [], {"data": 1}])
+def test_resumable_run_raises_when_the_answer_holds_no_comments(answer: object) -> None:
+    def gh(args: Sequence[str]) -> object:
+        return closed_by(PR_620) if args[:2] == ["api", "graphql"] else answer
+
+    with pytest.raises(run_name.RunNameError, match="gh issue view gave no comments"):
+        run_name.resumable_run([TAPIR_CLOSED], "Tapir", gh)

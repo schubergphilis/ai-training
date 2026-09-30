@@ -175,7 +175,11 @@ printed.
    `mise run run-name -- --exclusive <kind>` for a new run with its
    `--kind`, or `mise run run-name -- --resume <Name>` for a resumed run.
    The run you resume doesn't count as another run, and its kind is the
-   one its issue title gives. When the check refuses the run, the script
+   one its issue title gives. When no open run has the name, `--resume`
+   looks at the newest closed run with it, which a merge may have closed
+   (step 3), and runs the check for that run. A closed run counts for no
+   other run's check, so a run that comes back this way passes the check
+   before it is reopened. When the check refuses the run, the script
    exits 3 and prints the message on stderr and as `refusal` in its JSON.
    Stop with that message. Exit 0 with `"refusal": null` means the run may
    start. On any other exit code, stop and show its stderr. The script (`scripts/run_name.py`) refuses when:
@@ -207,8 +211,28 @@ printed.
    commits are someone's work that isn't pushed yet. Then `git pull --rebase` is a
    fast-forward from here on.
 
-3. **Resume or open.** With `--resume <Name>`, find the open run issue
-   with that name among them, and stop when there is none. Its body gives
+3. **Resume or open.** With `--resume <Name>`, the run issue is the open
+   run with that name, or the closed one in the `reopen` of the step 1
+   JSON. `reopen` is null for an open run. When it isn't null, no open
+   run has the name, and `reopen.number` is the newest run issue with it,
+   which `reopen.closedBy` (`PR #<n>` or `commit <sha>`) closed with a
+   closing keyword before the session that merged could reopen it ("The
+   run issue after a merge"). The script gives it only when no comment on
+   it by `lsimons` or `lsimons-bot` is a stop comment, one that starts
+   with `Run ended:` ("When the run ends") or `Stop condition:` (the first
+   line most runs before 2026-09-30 used). For a run closed by hand, or
+   one with a stop comment, it exits 1 and says the run has ended, and
+   step 1 stops. Reopen the issue with the comment "The run issue after a
+   merge" gives, with the PR of `closedBy` as `PR #<n>`, followed by the
+   attribution lines:
+   `gh issue reopen <run> --comment "GitHub closed this run issue when PR #<n> merged, because the PR's text names it after a closing keyword. The dispatcher reopens it and closes it itself when the run ends."`.
+   For `commit <sha>`, write `when commit <sha> reached main, because its message names it` in place of
+   `when PR #<n> merged, because the PR's text names it`. When the
+   session stops after the reopen, the issue is open again, and the next
+   `/wave --resume <Name>` goes on with it as with any open run, with no
+   second comment. When it stops before, the next resume reopens it. The
+   session-title hook names only an open run, so give the `/rename` line
+   below. Then go on with the run issue as for an open run. Its body gives
    the arguments, and its `In flight` line, if any, is the wave to resume
    (step 3 of the loop). When the run issue has a comment by `lsimons` or
    `lsimons-bot` whose body starts with `Run ended:`, the session that
@@ -290,7 +314,7 @@ printed.
    harness isn't Claude Code, or when the name this run finally took
    differs from the `next` of your first `run-name` call in step 1 (a
    concurrent run opened its issue in between, or the name check above
-   made you take a later name):
+   made you take a later name), and when you reopened a resumed run above:
 
    ```text
    /rename wave <name> <kind> <yyyy-mm-dd>
@@ -545,7 +569,9 @@ reopen the run issue with a comment that says why, before you decide
 whether a stop condition holds:
 `gh issue reopen <run> --comment "GitHub closed this run issue when PR #<n> merged, because the PR's text names it after a closing keyword. The dispatcher reopens it and closes it itself when the run ends."`,
 followed by the attribution lines. "When the run ends" then closes it
-with its own comment when the run ends.
+with its own comment when the run ends. When the session stops between
+the merge and this check, `/wave --resume <Name>` finds the closed run
+issue and reopens it with the same comment ("Starting a run", step 3).
 
 ## Harness runs
 

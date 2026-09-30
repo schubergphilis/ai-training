@@ -123,7 +123,15 @@ a name an open run still holds. After Z the second list starts at A, and
 after its Z the first list comes back. A name never says which machine
 or session a run is on, and `/wave` never guesses it. A session
 continues its own run with `--resume <Name>` and otherwise starts a new
-one.
+one. A wave merge can close the run issue when the PR's text names it
+after a closing keyword, and the dispatcher reopens it right after the
+merge. When the session stops before that, `--resume <Name>` finds the
+newest closed run with the name, and `run-name` gives it as `reopen` when
+a pull request or a commit closed it and no trusted comment on it starts
+with `Run ended:` or the older `Stop condition:`. The dispatcher then
+reopens it, and the run goes on with its `## Waves` and
+`Remaining --only`. A run closed by hand, or with a stop comment, has
+ended, and the resume stops.
 
 The dispatcher session has the name `wave <name> <kind> <yyyy-mm-dd>`,
 in lowercase, with the date the run started, for example
@@ -515,6 +523,8 @@ the first check, the one with the higher number closes its issue with a
 comment that names the other run. This second check also reads the 50
 newest issues through GraphQL, since the `gh issue list` label listing
 goes through the search index and can miss an issue created a few
-seconds before (#616). The
+seconds before (#616). A closed run counts for no run's check, and a
+run whose issue a merge closed passes its own check with `--resume`
+before it is reopened ("Runs and run issues"). The
 `harness-review` reminder at preflight stays, since a harness run is
 where the issues a review files get done.
