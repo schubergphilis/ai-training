@@ -682,7 +682,18 @@ continues the run later:
 - the maintainer's no to the merge in that section's step 5;
 - a failed merge of a wave `awaiting approval` (step 8);
 - the exclusivity check refusing a resumed run ("Starting a run", step 1);
+- the preflight stopping a resumed run ("Starting a run", step 2);
+- the `--kind` check refusing the value on a resumed run ("Arguments");
 - the picker exiting non-zero ("One tick of the loop", step 4).
+
+The fix for the preflight stop is a `git pull` or a push, and for the
+`--kind` refusal a corrected command, so neither ends the run. Both come
+before step 3 resumes the run and write nothing, so the run issue, its
+claims and its `In flight` line stay as they were, and the next `/wave --resume <Name>` reads the
+run back from its issue as "Starting a run", step 3 says. On a new run,
+these two stops and the exclusivity refusal of step 1 come before step 3
+opens the run issue, so there is no run to end and this section doesn't
+apply.
 
 Under `--no-filing`, before the final report, file what the leads wrote.
 For each follow-ups comment on the run issue, check every entry once

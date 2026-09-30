@@ -305,8 +305,10 @@ the run issue, files the `--no-filing` follow-ups and closes it. It
 leaves the run open, with nothing filed, on `failed`, on "harness wave
 awaiting restart", on a failed step after a restart, on the maintainer's
 no to a harness merge, on a failed dispatcher merge of a wave
-`awaiting approval`, and when the exclusivity check refuses a resumed
-run, since a later `/wave --resume <Name>` continues it.
+`awaiting approval`, and when the exclusivity check, the preflight or
+the `--kind` check stops a resumed run, since a later
+`/wave --resume <Name>` continues it. On a new run those three stops
+come before the run issue exists, so there is no run to close.
 When it closes the run, it removes itself as assignee from each issue
 that a wave without a merge still claims, except the ones an open wave
 pull request closes, and comments on each with the review state of its
