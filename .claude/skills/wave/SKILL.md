@@ -280,7 +280,9 @@ printed.
    from the `In flight` issues (as the picker would print them, or one row
    per issue with its title), and the resuming form of `{{RESUME}}`
    (below). Then go to step 7.
-4. **Pick.** Run `mise run next-wave -- --kind <kind>`, add
+4. **Pick.** Under `--only`, when the `Remaining --only` list is empty,
+   stop with "the `Remaining --only` list is empty" before the picker runs.
+   Run `mise run next-wave -- --kind <kind>`, add
    `--size <size>` when the run's arguments give a size, and
    add `--only <remaining>` under `--only`, where `<remaining>` is the run
    issue's `Remaining --only` list. The picker also takes
@@ -332,7 +334,9 @@ printed.
      run's `## Arguments` hold a value the picker refuses.
    - No `next-wave:` line at all, when `require-setup` or `uv` failed
      before the picker ran: quote the last line on stderr. The fix is
-     `mise run setup` in this checkout.
+     `mise run setup` in this checkout. When `uv run --locked` refuses a
+     stale `uv.lock`, `mise run setup` fails too, and the fix belongs on
+     `main`.
    - A Python traceback, or a line whose reason starts with
      `unreadable output:`: a picker bug, to file as a `code` issue.
 5. **Claim.** For each issue of the wave, assign it
