@@ -269,13 +269,19 @@ printed.
    resume, skip steps 4 to 6: fill the template for that wave, the table
    from the `In flight` issues (as the picker would print them, or one row
    per issue with its title), and the resuming form of `{{RESUME}}`
-   (below). Then go to step 7. When the last line of `## Waves` is
+   (below). Before you fill `{{APPROVAL}}` for an `In flight` wave k,
+   change every `## Standing approval` line whose `<k>` is k+1 to k.
+   While wave k is in flight, such a line was recorded while its earlier
+   lead ran, whether that lead reported `failed` or never reported, and
+   the resume spawns a new lead (step 8, "Standing approval"). Then go to
+   step 7. When the last line of `## Waves` is
    `wave <k>: awaiting approval, PR #<n>`, a merge question is still
    open: skip steps 4 to 7 and ask it as step 8 says for `open` with the
    reason `approval withdrawn`, before any new wave. When
    `gh pr view <n> --json state` shows the pull request already merged,
-   replace the line with `wave <k>: merged, PR #<n>` and go on, and when
-   it shows it closed, stop as on any other `open`.
+   do what step 8 says after a merge on yes, without the merge itself,
+   and go to step 1. When it shows it closed, replace the line with
+   `wave <k>: open, PR #<n>` and stop as on any other `open`.
 4. **Pick.** Run `mise run next-wave -- --kind <kind>`, add
    `--size <size>` when the run's arguments give a size, and
    add `--only <remaining>` under `--only`, where `<remaining>` is the run
@@ -377,12 +383,14 @@ printed.
      wave already running keeps the approval it started with. When no
      lead runs, it is the wave of the `In flight` line, whose resume
      spawns a new lead, and otherwise one more than the last wave on
-     `## Waves`. When a lead reports `failed`, change the `<k>` of every
-     line you recorded while it ran to that lead's wave, since its resume
-     spawns a new lead. A withdrawal in the session and one in a comment
-     then apply from the same wave. Say in your next message which wave
-     the change applies from.
+     `## Waves`. When that wave is resumed, step 3 moves a line recorded
+     while its lead ran to that wave's number. A withdrawal in the session
+     and one in a comment then apply from the same wave. Say in your next
+     message which wave the change applies from.
    - Then act on the status.
+   - `merged` from a wave whose prompt said the approval is withdrawn:
+     the lead merged without the maintainer's yes. Chime, report that to
+     the maintainer, and stop.
    - `merged`: play `afplay /System/Library/Sounds/Glass.aiff` and go to
      step 1.
    - `open` with the reason `approval withdrawn` on the `For the maintainer`
@@ -391,12 +399,17 @@ printed.
      merge PR #<n>, with the PR's link. The run issue's line says
      `awaiting approval` while you wait, and a resume asks again (step 3).
      On yes, merge it with
-     `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`, wait for CI
-     on `main` with `gh run watch` on the newest run, and replace the
-     wave's line with `wave <k>: merged, PR #<n>`. Then treat the wave as
-     `merged` and go to step 1, and give the CI result in your next
-     message. On no, replace the line with `wave <k>: open, PR #<n>` and
-     stop as on any other `open`. An `open` with any other reason is the
+     `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`. When the
+     merge fails, keep the `awaiting approval` line, report the error to
+     the maintainer, and stop. After the merge, wait for CI on `main` with
+     `gh run watch` on the newest run, and replace the wave's line with
+     `wave <k>: merged, PR #<n>`. Under `--only`, remove the issues the
+     merged PR closes
+     (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number'`)
+     from `Remaining --only`, as "Resuming after a restart" step 6 does.
+     Then treat the wave as `merged` and go to step 1, and give the CI
+     result in your next message. On no, replace the line with
+     `wave <k>: open, PR #<n>` and stop as on any other `open`. An `open` with any other reason is the
      next bullet.
    - `open`: chime, report the lead's reason to the maintainer, and stop.
    - `open` on a harness wave: chime and stop with the stop condition
@@ -536,6 +549,7 @@ continues the run later:
 - "harness wave awaiting restart";
 - a failed step of "Resuming after a restart", such as the wrong checkout;
 - the maintainer's no to the merge in that section's step 5;
+- a failed merge of a wave `awaiting approval` (step 8);
 - the exclusivity check refusing a resumed run ("Starting a run", step 1).
 
 Under `--no-filing`, before the final report, file what the leads wrote.
@@ -565,6 +579,8 @@ Stop, and say which one it was, when:
 - under `--only`, the `Remaining --only` list is empty;
 - the lead reports `open` or `failed`, except an `open` with the reason
   `approval withdrawn` that the maintainer approves (step 8);
+- under a withdrawn approval, the lead reports `merged`, or your merge of
+  its pull request fails (step 8);
 - a harness wave is awaiting restart (the lead's `open` report on a
   harness wave, step 8);
 - the harness exclusivity check refuses the run ("Starting a run"
