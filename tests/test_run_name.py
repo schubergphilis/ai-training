@@ -318,11 +318,20 @@ def test_with_issue_keeps_the_list_as_it_is_when_the_issue_is_in_it() -> None:
 # report and main
 
 
-def fake_gh(listed: list[RunIssue], viewed: RunIssue | None = None) -> run_name.Gh:
+def fake_gh(
+    listed: list[RunIssue],
+    viewed: RunIssue | None = None,
+    recent: list[run_name.RecentIssue] | None = None,
+) -> run_name.Gh:
+    """A gh with a label listing, one viewed issue and the newest issues."""
+
     def gh(args: Sequence[str]) -> object:
         if args[:2] == ["issue", "list"]:
             assert run_name.RUN_LABEL in args
             return listed
+        if args[:2] == ["api", "graphql"]:
+            assert f"limit={run_name.RECENT_LIMIT}" in args
+            return {"data": {"repository": {"issues": {"nodes": recent or []}}}}
         assert args[:2] == ["issue", "view"]
         return viewed
 
@@ -624,3 +633,95 @@ def test_main_exits_1_for_a_resumed_run_that_is_not_open(
     captured = capsys.readouterr()
     assert captured.out == ""
     assert captured.err == "run-name: no open run is named Tapir\n"
+
+
+# The newest issues, read past the label listing (#616)
+
+
+def recent(number: int, title: str, created_at: str, *labels: str) -> run_name.RecentIssue:
+    return {
+        "number": number,
+        "title": title,
+        "state": "OPEN",
+        "createdAt": created_at,
+        "labels": {"nodes": [{"name": label} for label in labels]},
+    }
+
+
+SEAL_RECENT = recent(586, "Run: Seal (harness)", "2026-09-27T20:41:05Z", run_name.RUN_LABEL)
+PUMA_RECENT = recent(590, "Run: Puma (lessons)", "2026-09-27T20:41:07Z", run_name.RUN_LABEL)
+
+
+def test_check_sees_a_rival_the_label_listing_does_not_show_yet(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # Seal (#586, harness) opened two seconds before Puma (#590), and the
+    # label listing shows neither yet. The newest issues show both.
+    gh = fake_gh([OTTER_ISSUE], recent=[PUMA_RECENT, SEAL_RECENT])
+    code = run_name.main(["--check", "590", "--exclusive", "lessons"], gh=gh)
+    assert code == run_name.REFUSED
+    out = json.loads(capsys.readouterr().out)
+    assert out["refusal"] == HARNESS_OPEN.format(name="Seal", number=586)
+    assert [r["number"] for r in out["open"]] == [580, 586, 590]
+
+
+def test_check_of_a_harness_run_sees_a_rival_the_label_listing_does_not_show_yet(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    mine = recent(591, "Run: Quokka (harness)", "2026-09-27T20:41:09Z", run_name.RUN_LABEL)
+    gh = fake_gh([], recent=[mine, PUMA_RECENT])
+    code = run_name.main(["--check", "591", "--exclusive", "harness"], gh=gh)
+    assert code == run_name.REFUSED
+    assert json.loads(capsys.readouterr().out)["refusal"] == HARNESS_FIRST + "Run Puma (#590)"
+
+
+def test_with_recent_adds_run_issues_and_the_checked_issue_only() -> None:
+    other = recent(588, "Run: Rhea (code)", "2026-09-27T20:41:06Z", "harness")
+    mine = recent(590, "Run: Puma (lessons)", "2026-09-27T20:41:07Z")
+    merged = run_name.with_recent([OTTER_ISSUE], [mine, other, SEAL_RECENT], 590)
+    assert [i["number"] for i in merged] == [580, 590, 586]
+    assert "labels" not in merged[1]
+
+
+def test_with_recent_replaces_a_stale_listed_issue() -> None:
+    closed = {**SEAL_RECENT, "state": "CLOSED"}
+    merged = run_name.with_recent([SEAL_ISSUE], [cast("run_name.RecentIssue", closed)], 590)
+    assert merged == [{**SEAL_ISSUE, "state": "CLOSED"}]
+
+
+def test_check_views_the_issue_when_it_is_older_than_the_newest_issues(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    calls: list[Sequence[str]] = []
+    inner = fake_gh([], SEAL_ISSUE, recent=[PUMA_RECENT])
+
+    def gh(args: Sequence[str]) -> object:
+        calls.append(args)
+        return inner(args)
+
+    assert run_name.main(["--check", "586"], gh=gh) == 0
+    assert [list(c[:2]) for c in calls] == [
+        ["issue", "list"],
+        ["api", "graphql"],
+        ["issue", "view"],
+    ]
+    assert [r["number"] for r in json.loads(capsys.readouterr().out)["open"]] == [586, 590]
+
+
+def test_check_makes_two_gh_calls_when_the_newest_issues_hold_it() -> None:
+    calls: list[Sequence[str]] = []
+    inner = fake_gh([OTTER_ISSUE], recent=[PUMA_RECENT])
+
+    def gh(args: Sequence[str]) -> object:
+        calls.append(args)
+        return inner(args)
+
+    issues = run_name.fetch_issues(590, gh)
+    assert [i["number"] for i in issues] == [580, 590]
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("answer", [{}, {"data": None}, []])
+def test_fetch_recent_raises_when_the_answer_holds_no_issues(answer: object) -> None:
+    with pytest.raises(run_name.RunNameError, match="gh api graphql gave no issues"):
+        run_name.fetch_recent(lambda _: answer)
