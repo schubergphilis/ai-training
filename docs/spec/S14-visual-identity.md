@@ -5,7 +5,7 @@ between: the organization site it is a sub-site of, and the learning
 platform that deep links into its lessons. Say which parts of the look the
 open repository takes and which parts it leaves out.
 
-**Status:** Accepted - #599 builds it
+**Status:** Implemented (2026-09-30)
 
 ## Introduction
 
@@ -54,28 +54,46 @@ shared accent makes the three sites look related.
 ### Palette
 
 The site keeps Starlight's token model (`site/src/styles/custom.css`): an
-accent ramp, a gray ramp and black and white, per theme. The new values:
+accent ramp, a gray ramp and black and white, per theme. The values:
 
-| Token                    | Light     | Dark      | Role                       |
-| ------------------------ | --------- | --------- | -------------------------- |
-| `--sl-color-accent`      | `#1e80ed` | `#1e80ed` | Buttons, current page      |
-| `--sl-color-accent-high` | `#1469c8` | `#7fb8f5` | Link text                  |
-| `--sl-color-accent-low`  | `#e7f2fc` | `#0d2e52` | Tinted backgrounds         |
-| `--sl-color-white`       | `#1a1f36` | `#f8f9fb` | Headings                   |
-| `--sl-color-gray-2`      | `#2d3142` | `#ecedf2` | Body text                  |
-| `--sl-color-gray-3`      | `#5f6878` | `#b1b8c5` | Secondary text             |
-| `--sl-color-gray-5`      | `#e2e5eb` | `#353b4e` | Borders                    |
-| `--sl-color-gray-6`      | `#f0f2f5` | `#1d2230` | Sidebar and header surface |
-| `--sl-color-black`       | `#ffffff` | `#0f1218` | Page background            |
+| Token                    | Light     | Dark      | Role                                    |
+| ------------------------ | --------- | --------- | --------------------------------------- |
+| `--sl-color-accent`      | `#1e80ed` | `#1e80ed` | Borders, rings, progress fills, focus   |
+| `--sl-color-accent-high` | `#1469c8` | `#7fb8f5` | Link text, current page, filled buttons |
+| `--sl-color-accent-low`  | `#e7f2fc` | `#0d2e52` | Tinted backgrounds                      |
+| `--sl-color-white`       | `#1a1f36` | `#f8f9fb` | Headings                                |
+| `--sl-color-gray-2`      | `#2d3142` | `#ecedf2` | Body text                               |
+| `--sl-color-gray-3`      | `#5f6878` | `#b1b8c5` | Secondary text                          |
+| `--sl-color-gray-4`      | `#7f8898` | `#757d8c` | Control borders                         |
+| `--sl-color-gray-5`      | `#e2e5eb` | `#353b4e` | Borders                                 |
+| `--sl-color-gray-6`      | `#f0f2f5` | `#1d2230` | Code and hint backgrounds, dark sidebar |
+| `--sl-color-gray-7`      | `#f8f9fb` | -         | Light sidebar                           |
+| `--sl-color-black`       | `#ffffff` | `#0f1218` | Page background                         |
+
+The light header is white (`--sl-color-bg-nav`), and the content column
+has a white background so images with white backgrounds blend in.
 
 `#1e80ed` on white has a contrast ratio of 3.9:1. That's enough for a
-button or a large label (3:1) but below the 4.5:1 that body text needs, so
-links use `#1469c8` (5.4:1). In dark mode, `#7fb8f5` on `#0f1218` is 9.0:1.
+border or a ring (3:1) but below the 4.5:1 that text needs. Starlight's
+light theme puts the plain accent on text and on fills that hold text. The
+site points `--sl-color-text-accent` and `--sl-color-bg-accent` at
+`#1469c8` (5.4:1) in light mode. In dark mode, `#7fb8f5` on `#0f1218` is
+9.0:1. Text on an accent fill, such as the Check button, the due count and
+the widget buttons on hover, uses `--sl-color-bg-accent` and
+`--sl-color-text-invert` as a pair.
 
 The status colors in `site/src/styles/lesson.css` change from green to the
-learning platform's teal. The fill is `#36c5b0`. Teal text on white needs a
-darker tone to pass 4.5:1, so `--at-done-text` is `#1a7466` (5.6:1) in light
-mode and `#36c5b0` (8.7:1) in dark mode. The warning color is `#f5a623`.
+learning platform's teal, `#36c5b0`, and warnings change to amber,
+`#f5a623`. Dark mode uses both unchanged. On white, the teal is
+2.2:1 and the amber 2.0:1, so light mode uses darker tones:
+
+| Token              | Light     | Dark      | Role                           |
+| ------------------ | --------- | --------- | ------------------------------ |
+| `--at-done`        | `#239b89` | `#36c5b0` | Done fills, borders, and rings |
+| `--at-done-text`   | `#1a7466` | `#36c5b0` | Done text                      |
+| `--at-done-strong` | `#1a7466` | `#36c5b0` | A filled Done button           |
+| `--at-on-done`     | `#ffffff` | `#0f1218` | Text on a Done button          |
+| `--at-warn`        | `#9a5800` | `#f5a623` | Warning text and borders       |
 
 ### Type
 
@@ -92,15 +110,17 @@ telemetry.
 
 ### Shapes
 
-- Cards, checkpoint containers and widget panels get a 16px radius and a
-  1px border in `--sl-color-gray-5`, without a shadow.
-- A linked card gets a small shadow on hover and keeps its current
-  lift.
-- Badges (the due count, lesson meta such as time and level) and primary
-  buttons are pills.
-- Section labels in checkpoints and on the progress page may use the
-  platform's small uppercase label: 11px to 12px, weight 600, letter
-  spacing 0.08em, in secondary text color.
+The radius tokens in `custom.css` set the corners: `--at-radius-lg`
+(16px) for cards and panels, `--at-radius-md` (10px) for rows inside them,
+`--at-radius-sm` (6px) for inputs and code, and `--at-radius-pill` for
+buttons, badges, and progress tracks.
+
+- Cards, checkpoint containers, lesson blocks, and widget panels use the
+  16px radius and a 1px border in `--sl-color-gray-5`, without a shadow.
+- Starlight's link cards drop their resting shadow and get a small one on
+  hover. A linked card keeps its current lift.
+- Buttons, badges (Starlight's and the due count) and progress tracks are
+  fully rounded.
 
 ### Header and landing page
 
@@ -110,9 +130,9 @@ the new accent and pill buttons.
 
 ### How it's checked
 
-A browser test in `site/e2e/` loads one lesson page in each theme and
-asserts the computed contrast of body text, link text, and done text
-against the page background. That test fails a later palette change that
+`site/e2e/contrast.spec.ts` loads one lesson page in each theme,
+resolves the token pairs above, and asserts 4.5:1 for each text pair and
+3:1 for the done fill and the accent border. That test fails a later palette change that
 breaks readability.
 
 ## Implementation plan
@@ -137,9 +157,9 @@ in these commits:
 None. The maintainer took these decisions on 2026-09-30:
 
 1. `AGENTS.md` said "No company names". The repository is now under the
-   company's GitHub organization. The rule stays for lesson content, and
-   the organization name may appear in a link back to
-   `schubergphilis.github.io` in the header.
+   company's GitHub organization. The rule stays for lessons, course pages,
+   and examples. The organization's name appears only in URLs and in a
+   link back to `schubergphilis.github.io` in the header.
 2. The header is white, as in the learning platform.
 3. The font is Inter, as in the learning platform, because it is the font of
    the site that deep links to lessons and it reads well at body size.

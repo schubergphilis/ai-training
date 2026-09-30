@@ -51,8 +51,10 @@ The layout is what the tree shows. The parts that aren't obvious from it:
 
 **Content and licensing:**
 
-- This is a public, open-content project. No company names, internal URLs or
-  confidential material.
+- This is a public, open-content project. No internal URLs or confidential
+  material, and no company names in lessons, course pages, or examples. The
+  organization's name appears only in URLs and in the header link to
+  `schubergphilis.github.io` (spec S14).
 - Content is CC BY-SA 4.0 and code is Apache-2.0. Source material has its
   own terms: follow `writing-a-lesson.md` "Source licenses" and spec S02.
   Never copy text from Claude Academy, DeepLearning.AI or CS50.

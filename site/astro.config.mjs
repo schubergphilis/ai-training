@@ -191,7 +191,11 @@ export default defineConfig({
 					},
 				},
 			],
-			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/schubergphilis/ai-training' }],
+			social: [
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/schubergphilis/ai-training' },
+				// The organization site this is a sub-site of (spec S14).
+				{ icon: 'external', label: 'Schuberg Philis open source', href: 'https://schubergphilis.github.io/' },
+			],
 			editLink: { baseUrl: 'https://github.com/schubergphilis/ai-training/edit/main/site/' },
 			// Inter is self-hosted from its package, so a page load sends no request to a font service (spec S14).
 			customCss: ['@fontsource-variable/inter', './src/styles/custom.css', './src/styles/lesson.css'],
