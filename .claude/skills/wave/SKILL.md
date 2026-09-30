@@ -282,8 +282,8 @@ printed.
    picker's own line, the last one on stderr that starts with `next-wave:`
    (mise adds a `[next-wave] ERROR task failed` line after it, which says
    nothing more). Nothing is claimed yet, so the run stays open for a
-   resume: the fix is in the run issue or in an issue body, and a new run
-   would lose the `Remaining --only` list and the `Parked` section. Name
+   resume. The usual fix is an edit to the run issue or to an issue body,
+   and a new run would lose the `Remaining --only` list and the `Parked` section. Name
    the fix with the quote:
    - `next-wave: gh issue view failed: Command failed: gh issue view <n> ...`,
      after `gh`'s own error (for a number that doesn't exist,
@@ -500,7 +500,7 @@ continues the run later:
 - "harness wave awaiting restart";
 - a failed step of "Resuming after a restart", such as the wrong checkout;
 - the maintainer's no to the merge in that section's step 5;
-- the exclusivity check refusing a resumed run ("Starting a run", step 1).
+- the exclusivity check refusing a resumed run ("Starting a run", step 1);
 - the picker exiting non-zero ("One tick of the loop", step 4).
 
 Under `--no-filing`, before the final report, file what the leads wrote.
