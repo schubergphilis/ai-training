@@ -451,8 +451,9 @@ printed.
      message which wave the change applies from.
    - Then act on the status.
    - `merged` from a wave whose prompt said the approval is withdrawn:
-     the lead merged without the maintainer's yes. Chime, report that to
-     the maintainer, and stop.
+     the lead merged without the maintainer's yes. Chime, check the run
+     issue as "The run issue after a merge" says, report that to the
+     maintainer, and stop.
    - `merged`: play `afplay /System/Library/Sounds/Glass.aiff`, check the
      run issue as "The run issue after a merge" says, and go to step 1.
    - `open` with the reason `approval withdrawn` on the `For the maintainer`
@@ -460,7 +461,8 @@ printed.
      chime, and ask the maintainer one yes-or-no question, whether to
      merge PR #<n>, with the PR's link. The run issue's line says
      `awaiting approval` while you wait, and a resume asks again (step 3).
-     On yes, merge it with
+     On yes, first run the check before a merge in "The run issue after a
+     merge", then merge it with
      `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`. When the
      merge fails, keep the `awaiting approval` line, report the error to
      the maintainer, and stop. After the merge, wait for CI on `main` with
@@ -491,8 +493,16 @@ and with or without a colon
 ([Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)).
 A wave PR body that says "would have closed #<run>" closes the run issue
 when the wave merges, as PR #520 closed #513. The lead writes the body
-so that this doesn't happen (`wave-lead.md`, "Integration"). After every
-wave merge, check it anyway:
+so that this doesn't happen (`wave-lead.md`, "Integration").
+
+Before every wave merge, run
+`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number' | grep -qx <run>`.
+When it finds the run issue's number, edit the PR body so that no
+closing keyword names the run issue, and run the check again before the
+merge. This check can't see a closing keyword in a commit message, which
+GitHub reads only on the default branch after the merge.
+
+After every wave merge, check the run issue anyway:
 `gh issue view <run> --json state -q .state`. When it prints `CLOSED`,
 reopen the run issue with a comment that says why, before you decide
 whether a stop condition holds:
@@ -564,7 +574,8 @@ fails:
    maintainer.
 5. **Ask.** Ask the maintainer one yes-or-no question: whether to merge
    PR #<n>, with the results in one line. Merge only on the maintainer's
-   yes in this session, with
+   yes in this session. Run the check before a merge in "The run issue
+   after a merge" first, then merge with
    `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`. On a no, stop
    with "the maintainer declines the merge" and leave the run issue open
    as it is ("When the run ends").
@@ -573,10 +584,10 @@ fails:
    issues are the ones the merged PR closes, without the run issue's own
    number
    (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number | select(. != <run>)'`).
-   Then check the run issue as "The run issue after a merge" says.
-   Under `--only`, remove the merged issues from `Remaining --only`. The collision
-   notes were copied when the `open` report came. Close the run when a
-   stop condition holds (under `--only`, an empty `Remaining --only`), as
+   Then check the run issue as "The run issue after a merge" says. Under
+   `--only`, remove the merged issues from `Remaining --only`. The
+   collision notes were copied when the `open` report came. Close the
+   run when a stop condition holds (under `--only`, an empty `Remaining --only`), as
    "When the run ends" says. Then tell the
    maintainer to quit and start again in the main checkout, with the
    lines `/exit`, `cd /Users/lsimons/git/lsimons/ai-training`,
