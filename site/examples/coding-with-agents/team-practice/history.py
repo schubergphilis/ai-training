@@ -102,7 +102,18 @@ class Repo:
 
     def git(self, *args: str) -> str:
         result = subprocess.run(
-            ["git", "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", *args],
+            # maintenance.auto=false: a commit starts no detached `git maintenance`
+            # run, which could still hold a lock when the temporary directory is removed.
+            [
+                "git",
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "maintenance.auto=false",
+                "-c",
+                "core.hooksPath=/dev/null",
+                *args,
+            ],
             cwd=self.path,
             env=git_env(self.home, self.date),
             capture_output=True,

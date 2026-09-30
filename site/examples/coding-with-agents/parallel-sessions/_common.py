@@ -82,7 +82,9 @@ DOCS_FIX_SUBJECT = "docs: example for the half-kilo price"
 def git(cwd: str, *args: str) -> "subprocess.CompletedProcess[str]":
     """Runs one git command with the fixed identity and no user config."""
     return subprocess.run(
-        ["git", "-c", "commit.gpgsign=false", *args],
+        # maintenance.auto=false: a commit starts no detached `git maintenance`
+        # run, which could still hold a lock when the temporary directory is removed.
+        ["git", "-c", "commit.gpgsign=false", "-c", "maintenance.auto=false", *args],
         cwd=cwd,
         env=dict(GIT_ENV_BASE, HOME=os.path.dirname(cwd)),
         capture_output=True,

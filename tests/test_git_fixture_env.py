@@ -1,9 +1,10 @@
 """Git variables in the learner's shell don't change what the git fixtures print.
 
 Each of these fixtures runs git with an allow-list environment:
-`GIT_ENV_BASE` in the coding-with-agents fixtures' `_common.py`, and
-`git_env` in testing-a-skill's `clones.py`, in
-attribution-and-review-norms' `trailers.py` and in team-practice's
+`GIT_ENV_BASE` in the `_common.py` of most of them, `ENV_BASE` in
+tests-and-docs-that-hold's `_common.py`, and `git_env` in first-hook's
+`harness.py`, testing-a-skill's `clones.py`,
+attribution-and-review-norms' `trailers.py` and team-practice's
 `history.py`. Most of them build a fresh
 repository and run git in it. `trailers.py` runs `git interpret-trailers`
 in an empty directory and builds no repository. This runs every one of
@@ -20,11 +21,25 @@ The list is kept by hand, so that a new fixture that runs git without an
 allow-list environment fails here instead of being left out. A discovery
 test finds every directory under `site/examples/` with a `.py` file that
 runs git through `subprocess`, and fails when one is not in the list.
+
+By default some git commands, `git commit` and `git merge` among them,
+start `git maintenance run --auto` after their own work and detach it
+(https://git-scm.com/docs/git-config, "maintenance.auto" and
+"maintenance.autoDetach"). That run takes a lock in
+the object database (https://git-scm.com/docs/git-maintenance) and can
+still hold it when a fixture removes its temporary directory, so the
+cleanup fails (#472, #560). Every fixture's git helper passes
+`-c maintenance.auto=false`. A check runs each fixture with a `git` on
+PATH that writes git's trace2 event log, and fails when the log shows a
+`git maintenance` child. The fixtures in NOT_RUN build their repository
+with the same helpers as the fixtures that run.
 """
 
 import ast
+import json
 import os
 import pathlib
+import shutil
 import stat
 import subprocess
 import sys
@@ -41,6 +56,7 @@ GIT_FIXTURE_DIRS = [
     "coding-with-agents/reviewing-the-diff",
     "coding-with-agents/self-checking-loops",
     "coding-with-agents/team-practice",
+    "coding-with-agents/tests-and-docs-that-hold",
     "customizing-agents/first-hook",
     "customizing-agents/session-handoff",
     "customizing-agents/testing-a-skill",
@@ -149,13 +165,33 @@ def _is_subprocess_call(call: ast.Call, modules: set[str], functions: set[str]) 
     return isinstance(func, ast.Name) and func.id in functions
 
 
+def _subprocess_wrappers(tree: ast.Module, modules: set[str], functions: set[str]) -> set[str]:
+    """The names of the functions the file defines that call a `subprocess` function."""
+    return {
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef)
+        and any(
+            isinstance(inner, ast.Call) and _is_subprocess_call(inner, modules, functions)
+            for inner in ast.walk(node)
+        )
+    }
+
+
 def runs_git(source: str, filename: str = "<source>") -> bool:
-    """Whether Python source calls a `subprocess` function with a git command line."""
+    """Whether Python source runs a git command line through `subprocess`.
+
+    That is a `subprocess` call with a git command line, or a call to a
+    function the same file defines that calls `subprocess`, with the git
+    program as one of its positional arguments, such as
+    `run_command(copy, "git", "status")`.
+    """
     try:
         tree = ast.parse(source, filename=filename)
     except SyntaxError as error:
         raise ValueError(f"{filename} does not parse, so git discovery stops: {error}") from error
     modules, functions = _subprocess_callers(tree)
+    wrappers = _subprocess_wrappers(tree, modules, functions)
     assigned: dict[str, list[ast.expr]] = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign):
@@ -169,7 +205,13 @@ def runs_git(source: str, filename: str = "<source>") -> bool:
         ):
             assigned.setdefault(node.target.id, []).append(node.value)
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Call) or not _is_subprocess_call(node, modules, functions):
+        if not isinstance(node, ast.Call):
+            continue
+        if isinstance(node.func, ast.Name) and node.func.id in wrappers:
+            if any(_is_git_program(arg, assigned) for arg in node.args):
+                return True
+            continue
+        if not _is_subprocess_call(node, modules, functions):
             continue
         command = (
             node.args[0]
@@ -334,6 +376,8 @@ def test_a_file_that_does_not_parse_names_the_file(tmp_path: pathlib.Path) -> No
         'import subprocess\nsubprocess.getoutput("git status")\n',
         'import subprocess\nsubprocess.getstatusoutput("git status")\n',
         'import subprocess\nGIT = "git"\nCMD = [GIT]\nCMD = CMD + ["log"]\nsubprocess.run(CMD)\n',
+        "import subprocess\ndef run_command(cwd, *args):\n"
+        '    return subprocess.run(list(args), cwd=cwd)\nrun_command(".", "git", "status")\n',
     ],
     ids=[
         "list",
@@ -350,6 +394,7 @@ def test_a_file_that_does_not_parse_names_the_file(tmp_path: pathlib.Path) -> No
         "getoutput",
         "getstatusoutput",
         "reassigned-name",
+        "wrapper",
     ],
 )
 def test_the_discovery_finds_each_call_form(source: str) -> None:
@@ -366,8 +411,20 @@ def test_the_discovery_finds_each_call_form(source: str) -> None:
         'ALLOW = ["Bash(git status *)"]\n',
         'import other\nother.run(["git", "status"])\n',
         'import subprocess\nsubprocess.run(["gitk"])\n',
+        "import subprocess\ndef run_command(cwd, *args):\n"
+        '    return subprocess.run(list(args), cwd=cwd)\nrun_command(".", "python3", "-V")\n',
+        'def label(*args):\n    return " ".join(args)\nlabel("git", "status")\n',
     ],
-    ids=["docstring", "comment", "other-string", "rule-string", "other-module", "gitk"],
+    ids=[
+        "docstring",
+        "comment",
+        "other-string",
+        "rule-string",
+        "other-module",
+        "gitk",
+        "wrapper-other-program",
+        "not-a-wrapper",
+    ],
 )
 def test_the_discovery_ignores_text_that_does_not_run_git(source: str) -> None:
     assert not runs_git(source)
@@ -390,3 +447,109 @@ def test_git_variables_in_the_shell_do_not_change_the_output(
         f"stderr with the caller's environment:\n{clean.stderr}\n"
         f"stderr with the git variables:\n{hostile.stderr}"
     )
+
+
+def maintenance_children(trace_dir: pathlib.Path) -> tuple[int, list[list[str]]]:
+    """How many git processes a trace2 event directory logs, and every `git maintenance` child."""
+    starts = 0
+    children: list[list[str]] = []
+    for trace in sorted(trace_dir.iterdir()):
+        for line in trace.read_text(encoding="utf-8").splitlines():
+            event = json.loads(line)
+            argv = event.get("argv", [])
+            if event.get("event") == "start":
+                starts += 1
+            elif event.get("event") == "child_start" and "maintenance" in argv:
+                children.append(argv)
+    return starts, children
+
+
+def _traced_env(tmp_path: pathlib.Path) -> tuple[dict[str, str], pathlib.Path]:
+    """The caller's environment with a `git` first on PATH that logs trace2 events.
+
+    The fixtures pass the caller's PATH to git and drop every other
+    variable, so the wrapper sets GIT_TRACE2_EVENT itself. A directory as
+    the target gives each git process its own file
+    (https://git-scm.com/docs/api-trace2, "GIT_TRACE2_EVENT").
+    """
+    real_git = shutil.which("git")
+    assert real_git is not None
+    trace_dir = tmp_path / "trace2"
+    trace_dir.mkdir()
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    wrapper = bin_dir / "git"
+    wrapper.write_text(
+        f"#!/bin/sh\nGIT_TRACE2_EVENT='{trace_dir}' exec '{real_git}' \"$@\"\n",
+        encoding="utf-8",
+    )
+    wrapper.chmod(wrapper.stat().st_mode | stat.S_IEXEC)
+    path = os.pathsep.join([str(bin_dir), os.environ.get("PATH", "")])
+    return dict(os.environ, PATH=path), trace_dir
+
+
+PLANTED_COMMIT = """import os, subprocess, sys
+env = {{
+    "PATH": os.environ["PATH"],
+    "HOME": sys.argv[1] if len(sys.argv) > 1 else os.getcwd(),
+    "GIT_CONFIG_GLOBAL": os.devnull,
+    "GIT_CONFIG_SYSTEM": os.devnull,
+    "GIT_AUTHOR_NAME": "Learner",
+    "GIT_AUTHOR_EMAIL": "learner@example.com",
+    "GIT_COMMITTER_NAME": "Learner",
+    "GIT_COMMITTER_EMAIL": "learner@example.com",
+}}
+def git(*args):
+    subprocess.run(["git", "-c", "commit.gpgsign=false", {extra}*args], env=env, check=True)
+os.mkdir("repo")
+os.chdir("repo")
+with open("file.txt", "w") as handle:
+    handle.write("one\\n")
+git("init", "--quiet")
+git("add", ".")
+git("commit", "--quiet", "-m", "one")
+"""
+
+
+@pytest.mark.parametrize(
+    ("extra", "expected"),
+    [("", True), ('"-c", "maintenance.auto=false", ', False)],
+    ids=["without-the-setting", "with-the-setting"],
+)
+def test_the_trace_check_sees_a_commit_that_starts_maintenance(
+    tmp_path: pathlib.Path, extra: str, expected: bool
+) -> None:
+    fixture = tmp_path / "planted" / "commit.py"
+    fixture.parent.mkdir()
+    fixture.write_text(PLANTED_COMMIT.format(extra=extra), encoding="utf-8")
+    env, trace_dir = _traced_env(tmp_path)
+    result = _run(fixture, env)
+    assert result.returncode == 0, result.stderr
+    starts, children = maintenance_children(trace_dir)
+    assert starts >= 3
+    assert (children != []) is expected
+
+
+@pytest.mark.parametrize("directory", GIT_FIXTURE_DIRS)
+def test_no_git_fixture_starts_a_maintenance_run(directory: str, tmp_path: pathlib.Path) -> None:
+    """Each fixture of the directory runs with the traced git and logs no maintenance child.
+
+    Some fixtures run no git themselves, so the count of git processes is
+    checked over the directory: zero there means the traced `git` was
+    never used, and the check would pass without looking.
+    """
+    fixtures = [path for path in _fixtures() if path.parent == EXAMPLES / directory]
+    assert fixtures != []
+    total = 0
+    found: dict[str, list[list[str]]] = {}
+    for index, fixture in enumerate(fixtures):
+        run_dir = tmp_path / str(index)
+        run_dir.mkdir()
+        env, trace_dir = _traced_env(run_dir)
+        _run(fixture, env)
+        starts, children = maintenance_children(trace_dir)
+        total += starts
+        if children:
+            found[fixture.name] = children
+    assert total > 0, f"no fixture in {directory} ran git through the traced PATH"
+    assert found == {}, f"git maintenance children: {found}"

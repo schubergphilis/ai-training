@@ -11,7 +11,8 @@ git's trace2 event log names every child process a command starts, so the
 tests read it instead of racing the cleanup. The first test commits with
 git's defaults and sees the maintenance child, which shows that the log
 finds it. The second test runs the fixtures' own `start_repository` and sees
-none.
+none. `test_no_git_fixture_starts_a_maintenance_run` in
+`test_git_fixture_env.py` runs the same check over every git fixture (#560).
 """
 
 import importlib.util

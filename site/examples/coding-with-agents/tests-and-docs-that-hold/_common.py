@@ -102,4 +102,8 @@ def run_command(copy: str, *args: str, allowed: "tuple[int, ...]" = (0,)) -> str
 
 
 def git(copy: str, *args: str) -> str:
-    return run_command(copy, "git", "-c", "commit.gpgsign=false", *args)
+    # maintenance.auto=false: a commit starts no detached `git maintenance`
+    # run, which could still hold a lock when the temporary directory is removed.
+    return run_command(
+        copy, "git", "-c", "commit.gpgsign=false", "-c", "maintenance.auto=false", *args
+    )
