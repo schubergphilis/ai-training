@@ -275,7 +275,11 @@ function dataIndex(over: Record<string, unknown> = {}) {
  * data files, the bundle and page of `a/x`, the pages of the area, topic and
  * competency, the export and `index`. `dist` entries override or, with null, remove a built file.
  */
-function dataRoot(dist: Record<string, string | null> = {}, index: unknown = dataIndex()) {
+function dataRoot(
+	dist: Record<string, string | null> = {},
+	index: unknown = dataIndex(),
+	data: Record<string, string> = {},
+) {
 	const root = mkdtempSync(join(tmpdir(), 'data-files-'));
 	roots.push(root);
 	const built: Record<string, string | null> = {
@@ -287,7 +291,7 @@ function dataRoot(dist: Record<string, string | null> = {}, index: unknown = dat
 		...dist,
 	};
 	const all: Record<string, string> = {};
-	for (const [rel, text] of Object.entries(DATA_TREE)) all[`data/${rel}`] = text;
+	for (const [rel, text] of Object.entries({ ...DATA_TREE, ...data })) all[`data/${rel}`] = text;
 	for (const [rel, text] of Object.entries(built)) if (text !== null) all[`dist/data/${rel}`] = text;
 	for (const page of ['a', 'a/x', 'topics/a/t', 'competencies/a/c']) all[`dist/${page}/index.html`] = '<html></html>';
 	for (const [rel, text] of Object.entries(all)) {
@@ -297,7 +301,7 @@ function dataRoot(dist: Record<string, string | null> = {}, index: unknown = dat
 	return root;
 }
 const checkData = (root: string) => checkDataFiles(join(root, 'dist/data'), join(root, 'data'));
-const checkIndex = (root: string) => checkDataIndex(join(root, 'dist/data'), join(root, 'data'));
+const checkIndex = (root: string) => checkDataIndex(join(root, 'dist/data'), join(root, 'data'), `${ORIGIN}/`);
 
 describe('dataTreeSources', () => {
 	it('maps each published data-tree file to its source, without the bibliography or alignment', () => {
@@ -384,6 +388,16 @@ describe('checkDataFiles', () => {
 	});
 });
 
+type IndexArea = ReturnType<typeof dataIndex>['areas'][number];
+/** The fixture index with its one area passed to `edit` first. */
+function editedIndex(edit: (area: IndexArea) => void) {
+	const index = dataIndex();
+	const [area] = index.areas;
+	if (!area) throw new Error('fixture');
+	edit(area);
+	return index;
+}
+
 describe('checkDataIndex', () => {
 	it('passes on the index the build writes', () => {
 		expect(checkIndex(dataRoot())).toEqual([]);
@@ -402,34 +416,92 @@ describe('checkDataIndex', () => {
 				dataIndex({ version: 2, checkpoints: `${ORIGIN}/data/groups.json`, groups: `${ORIGIN}/data/nope.json` }),
 			),
 		);
-		expect(errors).toContain('index.json: version is 2, expected 1');
-		expect(errors).toContain(
-			`index.json: checkpoints is "${ORIGIN}/data/groups.json", expected /data/checkpoints.json`,
+		expect(errors).toEqual([
+			'index.json: version is 2, expected 1',
+			`index.json: groups is "${ORIGIN}/data/nope.json", not the URL of a built /data/ file`,
+			`index.json: checkpoints is "${ORIGIN}/data/groups.json", but its id says ${ORIGIN}/data/checkpoints.json`,
+			'index.json: data/nope.json is listed but is no data-tree file',
+			'index.json: data/groups.json is not listed',
+		]);
+	});
+	it('fails on a URL with another origin or without the base path', () => {
+		const errors = checkIndex(
+			dataRoot(
+				{},
+				editedIndex((area) => {
+					area.url = 'https://elsewhere.example/ai-training/data/areas/a.json';
+					area.page = 'https://s/a/';
+				}),
+			),
 		);
-		expect(errors).toContain(`index.json: groups is "${ORIGIN}/data/nope.json", not the URL of a built /data/ file`);
-		expect(errors).toContain('index.json: data/nope.json is listed but is no data-tree file');
+		expect(errors).toEqual([
+			`index.json: areas a url is "https://elsewhere.example/ai-training/data/areas/a.json", not a URL under the site root ${ORIGIN}/`,
+			`index.json: areas a page is "https://s/a/", not a URL under the site root ${ORIGIN}/`,
+			'index.json: data/areas/a.json is not listed',
+		]);
+	});
+	it('fails when an entry names the built file of another id', () => {
+		const errors = checkIndex(
+			dataRoot(
+				{},
+				editedIndex((area) => {
+					(area.topics[0] as { id: string }).id = 'a/c';
+				}),
+			),
+		);
+		expect(errors).toEqual([
+			`index.json: topic a/c url is "${ORIGIN}/data/topics/a/t.json", but its id says ${ORIGIN}/data/topics/a/c.json`,
+			`index.json: topic a/c page is "${ORIGIN}/topics/a/t/", expected the built page ${ORIGIN}/topics/a/c/`,
+		]);
+	});
+	it('fails on areas out of group order', () => {
+		const data = {
+			'groups.yaml': '- id: g\n  order: 1\n  areas: [a, b]\n',
+			'areas/b/area.yaml': 'id: b\nname: B\ngroup: g\n',
+		};
+		const index = dataIndex();
+		const b: IndexArea = {
+			id: 'b',
+			url: `${ORIGIN}/data/areas/b.json`,
+			page: `${ORIGIN}/b/`,
+			topics: [],
+			competencies: [],
+			courses: [],
+			lessons: [],
+		};
+		index.areas = [b, ...index.areas];
+		const errors = checkIndex(dataRoot({ 'areas/b.json': '{}\n' }, index, data));
+		expect(errors).toContain('index.json: areas are ["b","a"], expected group order ["a","b"]');
+	});
+	it('fails on lessons out of course order', () => {
+		const errors = checkIndex(
+			dataRoot(
+				{},
+				editedIndex((area) => {
+					area.lessons.reverse();
+				}),
+			),
+		);
+		expect(errors).toEqual(['index.json: area a lessons are ["a/y","a/x"], expected course order ["a/x","a/y"]']);
 	});
 	it('fails when a data file is not listed or is listed twice', () => {
-		const index = dataIndex();
-		const [area] = index.areas;
-		if (!area) throw new Error('fixture');
-		area.topics = [];
-		area.courses = [area.courses[0] as { id: string; url: string }, area.courses[0] as { id: string; url: string }];
-		const errors = checkIndex(dataRoot({}, index));
-		expect(errors).toEqual([
+		const index = editedIndex((area) => {
+			area.topics = [];
+			area.courses = [area.courses[0] as { id: string; url: string }, area.courses[0] as { id: string; url: string }];
+		});
+		expect(checkIndex(dataRoot({}, index))).toEqual([
 			'index.json: data/courses/a.json is listed twice',
 			'index.json: data/topics/a/t.json is not listed',
 		]);
 	});
-	it('fails on a page that was not built or does not end in its id', () => {
-		const index = dataIndex();
-		const [area] = index.areas;
-		if (!area) throw new Error('fixture');
-		area.page = `${ORIGIN}/b/`;
-		(area.topics[0] as { page: string }).page = 'not a url';
-		expect(checkIndex(dataRoot({}, index))).toEqual([
-			`index.json: areas a page is "${ORIGIN}/b/", expected the built page ending in /a/`,
-			'index.json: topic a/t page is "not a url", expected the built page ending in /topics/a/t/',
+	it('fails on a page that was not built or is not the page of its id', () => {
+		const index = editedIndex((area) => {
+			area.page = `${ORIGIN}/b/`;
+			(area.competencies[0] as { page: string }).page = `${ORIGIN}/competencies/a/c/extra/`;
+		});
+		expect(checkIndex(dataRoot({ 'lessons/a/x.json': '{}\n' }, index))).toEqual([
+			`index.json: areas a page is "${ORIGIN}/b/", expected the built page ${ORIGIN}/a/`,
+			`index.json: competency a/c page is "${ORIGIN}/competencies/a/c/extra/", expected the built page ${ORIGIN}/competencies/a/c/`,
 		]);
 	});
 	it('fails when live disagrees with the built bundle, or a planned lesson has a page or bundle', () => {
@@ -441,7 +513,7 @@ describe('checkDataIndex', () => {
 		x.bundle = `${ORIGIN}/data/lessons/a/other.json`;
 		y.page = `${ORIGIN}/a/y/`;
 		expect(checkIndex(dataRoot({}, index))).toEqual([
-			`index.json: lesson a/x bundle is "${ORIGIN}/data/lessons/a/other.json", expected /data/lessons/a/x.json`,
+			`index.json: lesson a/x bundle is "${ORIGIN}/data/lessons/a/other.json", not the URL of a built /data/ file`,
 			'index.json: planned lesson a/y has a page or bundle; both must be null',
 		]);
 		x.live = false;

@@ -20,6 +20,7 @@
 import { join } from 'node:path';
 import { checkBundles, checkDataFiles, checkDataIndex, checkExportCitations } from './lib/bundles.mjs';
 import { checkRenderedCitations } from './lib/rendered-citations.mjs';
+import { SITE_ROOT } from './lib/site-address.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
 const { errors, bundles } = checkBundles(
@@ -30,7 +31,7 @@ const { errors, bundles } = checkBundles(
 errors.push(...checkExportCitations(join(root, 'dist/data/checkpoints.json')));
 const data = checkDataFiles(join(root, 'dist/data'), join(root, 'src/data'));
 errors.push(...data.errors);
-errors.push(...checkDataIndex(join(root, 'dist/data'), join(root, 'src/data')));
+errors.push(...checkDataIndex(join(root, 'dist/data'), join(root, 'src/data'), SITE_ROOT));
 const rendered = checkRenderedCitations(join(root, 'dist'));
 errors.push(...rendered.errors);
 

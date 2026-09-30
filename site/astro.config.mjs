@@ -9,11 +9,13 @@ import { remarkCheckpoints } from './plugins/remark-checkpoints.mjs';
 import { remarkCitations } from './plugins/remark-citations.mjs';
 import { remarkTerms } from './plugins/remark-terms.mjs';
 import { allLessons, allTopics, courseLessonIds, readAreaTree } from './scripts/lib/area-tree.mjs';
+import { BASE, SITE } from './scripts/lib/site-address.mjs';
 
 // This is a *project* site: it deploys under a subpath of
 // https://schubergphilis.github.io (e.g.
 // https://schubergphilis.github.io/ai-training/), so it sets `base`.
-const base = '/ai-training';
+// Both are in scripts/lib/site-address.mjs, which `mise run bundles` reads too.
+const base = BASE;
 
 /**
  * Content links and image sources are written root-relative (`/guides/foo/`,
@@ -139,7 +141,7 @@ const bibliography = parseYaml(readFileSync(new URL('./src/data/bibliography.yam
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://schubergphilis.github.io',
+	site: SITE,
 	base,
 	markdown: {
 		// Checkpoint props first, read from the tree before any plugin rewrites
