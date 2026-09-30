@@ -105,7 +105,11 @@ commit that you read yourself.
 
 A branch gets at most two revision rounds. After the second
 `Verdict: needs changes`, leave the branch out of the wave and report it
-on the `Left out` line with the reason.
+on the `Left out` line with the reason. Post a comment on its issue whose
+first line is `Parked by lead: <branch>`, with the reason on the lines
+after it. `mise run wave-status` reads that first line as a parked note,
+which is no builder reply, so a resumed lead doesn't send the unchanged
+branch to a re-check.
 
 When an agent has finished its last task, stop it with `TaskStop` so it
 doesn't linger in the maintainer's agent list.
@@ -231,9 +235,14 @@ stopped before it could report. Don't restart the wave:
    the tool picks the step with more work and never `join`. The tool tells
    the comment kinds apart by their text, because every agent posts as the
    same accounts:
-   a `Verdict:` line, an `Unfinished:` first line, a line starting
+   a `Verdict:` line, an `Unfinished:` first line, a
+   `Parked by lead: <branch>` first line, a line starting
    `re-checked by lead`, a claim, and any other comment after a verdict
-   counts as a builder reply. A claim is the dispatcher's comment whose
+   counts as a builder reply. A parked note applies to no branch, so it
+   is no reply, doesn't clear a lead re-check and doesn't finish an
+   `Unfinished:` branch. The branch its first line names gets a `parked`
+   field with the note's url until a later verdict, reply or
+   `Unfinished:` comment applies to it. A claim is the dispatcher's comment whose
    first line is `Claimed by run <Name>, wave <k>`, or
    `Claim released by run <Name>, wave <k>` when a run ended before the
    wave merged (a parenthetical after it is allowed), and that has
@@ -261,7 +270,11 @@ stopped before it could report. Don't restart the wave:
    joins), `revise` (the revision is still owed), `re-check` (the builder
    replied, so the reviewer checks again) or `review` (pushed but
    unreviewed). The two halves of a split issue can have different steps,
-   so one half can wait in `revise` while the other joins.
+   so one half can wait in `revise` while the other joins. A branch with
+   a `parked` field was left out of the wave at the revision limit. Its
+   `next` is usually `revise`, the revision a later wave owes, or `build`
+   when it was parked with an open `Unfinished:` list. Spawn nothing for
+   it, and report it on the `Left out` line with the note's link.
 3. Rebuild the list of your wave's worktree paths from your prompt, as
    "Finishing" describes. Reuse a worktree from that list that is on the
    branch you need, and re-create

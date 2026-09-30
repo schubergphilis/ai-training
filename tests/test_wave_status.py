@@ -591,6 +591,108 @@ def test_fix_commit_builds_an_approved_branch_whose_fix_stopped_then_sends_it_to
     assert steps17([APPROVE17, left, finished, later]) == [("feat/17-x", "join")]
 
 
+# Parked notes (#615): the lead's `Parked by lead: <branch>` after the revision limit.
+
+NEEDS17 = comment(
+    "lsimons", "A bug.\n\nBranch: feat/17-x\nVerdict: needs changes", "2026-09-24T10:00:00Z"
+)
+PARKED17 = comment(
+    "lsimons",
+    "Parked by lead: feat/17-x\n\nTwo revision rounds, so it leaves the wave."
+    + f"\n\nBranch: feat/17-x{ATTRIBUTION}",
+    "2026-09-24T11:00:00Z",
+)
+FIX17 = comment("lsimons-bot", "Fixed in abc123.\n\nBranch: feat/17-x", "2026-09-24T12:00:00Z")
+
+
+def parked17(
+    comments: Sequence[IssueComment], heads: Sequence[str] = ("feat/17-x",)
+) -> list[tuple[str, str, str | None]]:
+    """Each branch of issue 17 with its next step and the url of its parked note."""
+    status = wave_status("wave/capybara-3", [17], heads, {17: comments}, [])
+    return [
+        (b["name"], b["next"], b["parked"]["url"] if "parked" in b else None)
+        for b in status["issues"][0]["branches"]
+    ]
+
+
+def test_parked_reads_the_leads_note_as_parked() -> None:
+    assert comment_kind(PARKED17["body"]) == "parked"
+    assert comment_kind("Parked by lead: feat/17-x") == "parked"
+    assert comment_kind("**Parked by lead:** `origin/feat/17-x.`") == "parked"
+    assert comment_kind(crlf(PARKED17["body"])) == "parked"
+
+
+def test_parked_after_needs_changes_is_revise_with_the_note() -> None:
+    assert parked17([NEEDS17, PARKED17]) == [("feat/17-x", "revise", PARKED17["url"])]
+    verdict = last_trusted_verdict([NEEDS17, PARKED17], "feat/17-x", ["feat/17-x"])
+    assert verdict is not None
+    assert verdict["commentsAfter"] == 0
+
+
+def test_parked_then_a_builder_reply_is_re_check_without_the_note() -> None:
+    assert parked17([NEEDS17, PARKED17, FIX17]) == [("feat/17-x", "re-check", None)]
+
+
+def test_parked_then_a_new_verdict_drops_the_note() -> None:
+    again = at_time(NEEDS17, "2026-09-24T13:00:00Z")
+    assert parked17([NEEDS17, PARKED17, FIX17, again]) == [("feat/17-x", "revise", None)]
+
+
+def test_parked_in_a_fence_mid_sentence_or_without_a_branch_stays_a_reply() -> None:
+    for body in [
+        "```\nParked by lead: feat/17-x\n```",
+        "The branch was Parked by lead: feat/17-x.",
+        "Fixed in abc.\n\nParked by lead: feat/17-x",
+        "Parked by lead:\n\nBranch: feat/17-x",
+        "Parked by lead feat/17-x",
+    ]:
+        assert comment_kind(body) == "reply", body
+        note = comment("lsimons", body, "2026-09-24T11:00:00Z")
+        assert parked17([NEEDS17, note]) == [("feat/17-x", "re-check", None)], body
+
+
+def test_parked_from_an_untrusted_account_changes_nothing() -> None:
+    planted = {**PARKED17, "author": "someone-else"}
+    assert parked17([NEEDS17, planted]) == [("feat/17-x", "revise", None)]
+    assert parked17([NEEDS17, planted, FIX17]) == [("feat/17-x", "re-check", None)]
+
+
+def test_parked_is_no_reply_to_an_approve_and_keeps_a_lead_re_check() -> None:
+    assert parked17([APPROVE17, PARKED17]) == [("feat/17-x", "join", PARKED17["url"])]
+    late = at_time(PARKED17, "2026-09-24T13:00:00Z")
+    assert parked17([APPROVE17, REPLY17, late])[0][1] == "lead-re-check"
+    assert parked17([APPROVE17, REPLY17, RE_CHECK17, late])[0][1] == "join"
+
+
+def test_parked_does_not_finish_an_unfinished_branch() -> None:
+    left = comment("lsimons", "Unfinished: feat/17-x\n- tests", "2026-09-24T10:30:00Z")
+    assert parked17([NEEDS17, left, PARKED17]) == [("feat/17-x", "build", PARKED17["url"])]
+
+
+def test_parked_on_a_split_names_one_half_and_is_no_reply_on_either() -> None:
+    heads = ["feat/17-x-1", "feat/17-x-2"]
+    needs = comment("lsimons", "Verdict: needs changes", "2026-09-24T10:00:00Z")
+    parked = comment(
+        "lsimons", "Parked by lead: feat/17-x-1\n\nBranch: feat/17-x-1", "2026-09-24T11:00:00Z"
+    )
+    assert parked17([needs, parked], heads) == [
+        ("feat/17-x-1", "revise", parked["url"]),
+        ("feat/17-x-2", "revise", None),
+    ]
+    fix2 = comment("lsimons", "Fixed.\n\nBranch: feat/17-x-2", "2026-09-24T12:00:00Z")
+    assert parked17([needs, parked, fix2], heads) == [
+        ("feat/17-x-1", "revise", parked["url"]),
+        ("feat/17-x-2", "re-check", None),
+    ]
+
+
+def test_parked_naming_no_pushed_branch_parks_none() -> None:
+    other = comment("lsimons", "Parked by lead: feat/17-y", "2026-09-24T11:00:00Z")
+    assert comment_kind(other["body"]) == "parked"
+    assert parked17([NEEDS17, other]) == [("feat/17-x", "revise", None)]
+
+
 # waveStatus with near-miss branch names
 
 APPROVE18 = comment("lsimons", "Branch: feat/18-x\nVerdict: approve", "2026-09-24T10:00:00Z")
