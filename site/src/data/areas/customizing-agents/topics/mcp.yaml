@@ -30,27 +30,20 @@ concepts:
     name: Transport
     definition: >-
       How client and server exchange messages. A local server usually runs as
-      a child process talking over standard input and output; a remote one
+      a child process talking over standard input and output. A remote one
       is reached over HTTP, often with streaming. The transport decides where
       the server's code runs and what credentials it holds, which makes it a
       security decision as much as a plumbing one.
   - id: mcp-primitives
     name: MCP primitives
     definition: >-
-      The features a server or a client can offer over the protocol. In
-      revision 2026-07-28 of the specification a server can offer three.
-      Tools are functions the model can call. Resources are data with a URI,
-      such as files or records, that the user or the model can use as
-      context. Prompts are message templates the user picks by name. A client
-      can offer elicitation, which lets a server ask the user for more
-      information while it handles a request. The same revision deprecates
-      two older client features, roots and sampling, which stay in the
-      specification until at least the first revision released on or after
-      2027-07-28. Roots tell a server which directories the client finds
-      relevant, and they are guidance the protocol doesn't enforce, so a
-      server can still read outside them. Sampling lets a server ask the
-      client's model for a completion. Most servers only offer tools, and
-      the others matter only when your client supports them.
+      The features a server or a client can offer. In revision 2026-07-28,
+      a server offers tools the model calls, resources with a URI that the
+      user or the model reads as context, and prompts the user picks by name.
+      A client can offer elicitation, so a server can ask the user for more
+      input. That revision deprecates roots and sampling. Roots name the
+      directories a client finds relevant, and the protocol doesn't enforce
+      them. Sampling lets a server ask the client's model for a completion.
   - id: mcp-vs-cli
     name: MCP vs CLI
     definition: >-
@@ -58,29 +51,31 @@ concepts:
       by running a command-line tool it already knows. A server gives typed
       tools, discoverability and a stable interface across agents. A CLI is
       already installed, costs no tool descriptions in context and is easy to
-      audit. Prefer the CLI when it exists and is good; add a server when
+      audit. Prefer the CLI when it exists and is good. Add a server when
       the interface needs shaping.
   - id: tool-cost
     name: Tool cost
     definition: >-
-      Every connected tool adds its description to the context on every
-      turn, and every call adds its result. A server with dozens of tools
-      can consume a large share of the window before the task starts, and
-      verbose results crowd out the conversation. Connect only the servers a
-      project needs, prefer servers with few well-described tools, and
-      watch result sizes.
+      Every connected tool adds to the context on every turn. Without tool
+      search that is its full description. With tool search, which Claude
+      Code uses by default, only the tool's name and its server's
+      instructions load until the model searches for the tool. Every call
+      adds its result, and verbose results crowd out the conversation.
+      Connect only the servers a project needs, prefer servers with few
+      well-described tools, and watch result sizes.
   - id: mcp-security
     name: MCP security
     definition: >-
-      Connecting a server extends the agent's blast radius to everything the
-      server can reach. Risks include servers from untrusted sources, tool
-      descriptions that carry injected instructions, tools that return
-      attacker-controlled content, and tools that can send data outward. Vet the source, run with least privilege,
-      approve risky tools per call and review what leaves. Connect a server
-      with your own identity, never with a shared service account, so it can
-      do only what you may do and its actions trace back to you.
+      Connecting a server lets the agent reach everything the server can
+      reach. Risks include servers from untrusted sources, tool descriptions
+      that carry injected instructions, tools that return attacker-controlled
+      content, and tools that can send data outward. Vet the source, run with
+      least privilege, approve risky tools per call and review what leaves.
+      Connect a server with your own identity, never with a shared service
+      account, so it can do only what you may do and its actions trace back
+      to you.
 links:
   prerequisites: [customizing-agents/instructions, concepts/what-is-an-agent]
   related: []
   specializations: []
-sources: [AEC-14, AEC-16, DLAI-9, Academy introduction-to-model-context-protocol, Academy model-context-protocol-advanced-topics, Academy claude-code-101, Invariant tool poisoning, MCP specification, MCP deprecated features]
+sources: [AEC-14, AEC-16, DLAI-9, Academy introduction-to-model-context-protocol, Academy model-context-protocol-advanced-topics, Academy claude-code-101, Invariant tool poisoning, MCP specification, MCP deprecated features, Claude Code mcp, Claude Code costs]
