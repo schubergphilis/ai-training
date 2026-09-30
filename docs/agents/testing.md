@@ -243,16 +243,23 @@ which throw with the selector when the markup and the script disagree.
 
 ## Timeouts
 
-`site/vitest.config.ts` doesn't set `testTimeout`. Every test gets Vitest's
-default of 5000 ms, and unit and component tests keep it: a test that
-needs longer is doing too much. The one case for a per-test timeout is a
-sweep over external processes, where the time goes to subprocesses the
-test can't make faster. No test takes one now. The sweep over every
-`<Predict run=...>` fixture runs in `mise run examples`, outside Vitest,
-and `site/tests/scripts/examples.test.ts` checks `site/scripts/lib/examples.mjs`
-against temporary fixture trees only (#330). A new sweep test passes its
-timeout in milliseconds as the third argument to `it()`, with a comment
-above it saying why, and the rest of its file keeps the default.
+`site/vitest.config.ts` doesn't set `testTimeout` or `hookTimeout`. Every
+test gets Vitest's default of 5000 ms and every hook 10000 ms, and unit and
+component tests keep them: a test that needs longer is doing too much. A
+test that starts a child process takes a per-test timeout of 30000 ms,
+because the child process gets slow when several builders share one
+machine (#555). The tests in `site/tests/scripts/examples.test.ts` that
+run Python on a temporary fixture tree take it, and so does the
+`afterAll` hook in `site/tests/scripts/data.test.ts`, whose deletion of
+the temporary trees took over 10 s under that load. The timeout is the
+last argument to `it()` or `afterAll()`, with a comment on the same line
+saying why, and the rest of the file keeps the default. A test that can
+call the code in-process does that instead: the `lesson-plan command` test
+in `site/tests/scripts/lesson-plan.test.ts` imports
+`site/scripts/lesson-plan.mjs` and doesn't start `bun`. The sweep over
+every `<Predict run=...>` fixture runs in `mise run examples`, outside
+Vitest, and `examples.test.ts` checks `site/scripts/lib/examples.mjs`
+against temporary fixture trees only (#330).
 
 An agent gives every build and Playwright run an explicit Bash timeout.
 In Heron wave 2, builders without one hit the 600-second stream watchdog.
