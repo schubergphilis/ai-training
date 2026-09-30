@@ -73,7 +73,9 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   or `import importer` doesn't count. A deep file that nothing names is
   reported like an entry script. The check doesn't look in `.venv`,
   `node_modules`, dot-directories or symlinked directories. A mention in
-  a docstring, a comment, a code span or a longer string doesn't count.
+  a `#` comment or a docstring doesn't count, even in quotes, because the
+  check removes both before it matches. A code span or a longer string
+  doesn't count either.
   Wire a new fixture to a `<Predict run=...>`, or on a `foundations` page,
   where `mise run data` rejects `run=`, list it in the lesson file's
   `proofs`. Add it to `UNRUN_EXEMPT` in `site/scripts/lib/examples.mjs`,

@@ -402,23 +402,95 @@ function subdirs(dir) {
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** A string literal's start: an optional prefix (`r`, `b`, `f`, `rb`) and its quotes. */
+const STRING_START = /^([rRbBuUfF]{0,2})('''|"""|'|")/;
+
+/**
+ * `src` (Python source) without its `#` comments and docstrings, so a
+ * quoted name in either doesn't count as a use (#557). A comment is a `#`
+ * outside a string literal, up to the end of its line. A docstring is a
+ * string literal that is the first statement of the module or of a `def`
+ * or `class` body and the only code on its line. The newlines inside a
+ * docstring stay, so the `^` anchors in `usesModule` and `namesPath` still
+ * match at the same lines.
+ *
+ * It is a scanner, not a parser. It keeps the text of a docstring on the
+ * same line as its `def` or `class` (`class A: """x"""`), a docstring made
+ * of two adjacent literals, and a docstring after a backslash line
+ * continuation. It also misreads an f-string whose field holds a quote of
+ * the same kind (`f"{d["k"]}"`, Python 3.12).
+ */
+export function stripCommentsAndDocstrings(src) {
+	let out = '';
+	let depth = 0;
+	let atStatement = true;
+	let logical = '';
+	let docstringAllowed = true;
+	let i = 0;
+	while (i < src.length) {
+		const ch = src[i];
+		if (ch === '#') {
+			while (i < src.length && src[i] !== '\n') i++;
+			continue;
+		}
+		const start = /\w/.test(src[i - 1] ?? '') ? null : STRING_START.exec(src.slice(i, i + 5));
+		if (start) {
+			const quote = start[2];
+			let j = i + start[0].length;
+			while (j < src.length) {
+				if (src[j] === '\\') j += 2;
+				else if (src.startsWith(quote, j)) {
+					j += quote.length;
+					break;
+				} else if (quote.length === 1 && src[j] === '\n') break;
+				else j++;
+			}
+			const literal = src.slice(i, j);
+			const lineEnd = src.indexOf('\n', j);
+			const restOfLine = src.slice(j, lineEnd === -1 ? src.length : lineEnd);
+			const docstring = atStatement && depth === 0 && docstringAllowed && /^[ \t]*(?:#.*)?$/.test(restOfLine);
+			out += docstring ? literal.replace(/[^\n]/g, '') : literal;
+			logical += '""';
+			atStatement = false;
+			i = j;
+			continue;
+		}
+		if (ch === '\n' && depth === 0 && !out.endsWith('\\')) {
+			const line = logical.trim();
+			if (line) docstringAllowed = /^(?:async[ \t]+)?(?:def|class)\b/.test(line) && line.endsWith(':');
+			logical = '';
+			atStatement = true;
+		} else if (!/\s/.test(ch)) {
+			if ('([{'.includes(ch)) depth++;
+			else if (')]}'.includes(ch)) depth = Math.max(0, depth - 1);
+			logical += ch;
+			atStatement = false;
+		} else logical += ' ';
+		out += ch;
+		i++;
+	}
+	return out;
+}
+
 /**
  * Whether `src` (another fixture's source) uses the module `stem`: it
  * imports it (`import stem`, `import a, stem`, `from stem import ...`) or
  * names its file in a quoted string literal (`"stem.py"` or `'stem.py'`),
  * which covers a fixture that runs it with `subprocess` or reads it as text.
- * A mention in a docstring, a comment, a code span or a longer string
- * (`"$ python3 stem.py"`) is not a use, so prose can't hide an unrun entry
- * script (#460 review).
+ * It matches after `stripCommentsAndDocstrings`, so a mention in a
+ * docstring or a comment is not a use, quoted or not (#557). Neither is a
+ * code span or a longer string (`"$ python3 stem.py"`), so prose can't
+ * hide an unrun entry script (#460 review).
  */
 export function usesModule(src, stem) {
 	const s = escapeRe(stem);
+	const code = stripCommentsAndDocstrings(src);
 	return (
-		new RegExp(`^[ \\t]*from[ \\t]+${s}[ \\t]+import\\b`, 'm').test(src) ||
+		new RegExp(`^[ \\t]*from[ \\t]+${s}[ \\t]+import\\b`, 'm').test(code) ||
 		new RegExp(`^[ \\t]*import[ \\t]+(?:[\\w.]+(?:[ \\t]+as[ \\t]+\\w+)?[ \\t]*,[ \\t]*)*${s}\\b(?!\\.)`, 'm').test(
-			src,
+			code,
 		) ||
-		new RegExp(`(["'])${s}\\.py\\1`).test(src)
+		new RegExp(`(["'])${s}\\.py\\1`).test(code)
 	);
 }
 
@@ -462,16 +534,18 @@ function deepPythonFiles(dir, prefix = '') {
  * path (`"scripts"` for `release-kit/scripts`) doesn't count, because a
  * lesson-level file of the same name would make it pass (#468 review).
  * `deepFileNamed` tries each containing directory as its own `rel`. The
- * matching is the one behind `usesModule`, so a mention in a docstring, a
- * comment or a longer string doesn't count.
+ * matching is the one behind `usesModule`, after the same
+ * `stripCommentsAndDocstrings`, so a mention in a docstring, a comment or a
+ * longer string doesn't count.
  */
 export function namesPath(src, rel) {
 	const isFile = rel.endsWith('.py');
-	if (new RegExp(`(["'])${escapeRe(rel)}/?\\1`).test(src)) return true;
+	const code = stripCommentsAndDocstrings(src);
+	if (new RegExp(`(["'])${escapeRe(rel)}/?\\1`).test(code)) return true;
 	const dotted = escapeRe((isFile ? rel.slice(0, -'.py'.length) : rel).replaceAll('/', '.'));
 	return (
-		new RegExp(`^[ \\t]*from[ \\t]+${dotted}(?:\\.[\\w.]+)?[ \\t]+import\\b`, 'm').test(src) ||
-		new RegExp(`^[ \\t]*import[ \\t]+(?:[\\w.]+(?:[ \\t]+as[ \\t]+\\w+)?[ \\t]*,[ \\t]*)*${dotted}\\b`, 'm').test(src)
+		new RegExp(`^[ \\t]*from[ \\t]+${dotted}(?:\\.[\\w.]+)?[ \\t]+import\\b`, 'm').test(code) ||
+		new RegExp(`^[ \\t]*import[ \\t]+(?:[\\w.]+(?:[ \\t]+as[ \\t]+\\w+)?[ \\t]*,[ \\t]*)*${dotted}\\b`, 'm').test(code)
 	);
 }
 
