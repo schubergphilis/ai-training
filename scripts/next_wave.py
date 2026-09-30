@@ -24,7 +24,9 @@ Every kind reads an issue's dependencies (docs/agents/triage.md,
 "Dependencies"): GitHub's `blocked by` relationship and the dependency
 lines of the body. An issue is blocked by the union of its open
 `blockedBy` issues and its `Blocked by #N` lines that name an open issue,
-each number once (#579). The `blockedBy` field needs gh 2.100.0 or later,
+each number once (#579). An open blocker in another repository holds
+the issue as unreadable, named `owner/repo#N`, since a `#N` here always
+means an issue of this repository. The `blockedBy` field needs gh 2.100.0 or later,
 and on an older gh the picker stops with a `next-wave:` line that names
 that version, since without the field every issue would look unblocked.
 A `Blocked by #N` line blocks the issue while #N is
@@ -188,9 +190,11 @@ class ReadyIssue(TypedDict):
     assignees: list[str]
     labels: list[str]
     body: str
-    # The open issues GitHub's `blocked by` relationship names, in the
-    # order gh gives them.
+    # The open issues of this repository that GitHub's `blocked by`
+    # relationship names, in the order gh gives them.
     blockedBy: list[int]
+    # The open ones in another repository, as `owner/repo#N`.
+    foreignBlockedBy: list[str]
 
 
 class IssueState(TypedDict):
@@ -205,6 +209,7 @@ class IssueState(TypedDict):
     # No pick reads it yet: it is there so the lookup and the list read the
     # same fields and need the same gh.
     blockedBy: list[int]
+    foreignBlockedBy: list[str]
 
 
 # Looks up one issue that is not in the fetched set. `main` passes one that
@@ -220,7 +225,8 @@ class Dependencies(TypedDict):
     blockedByIssues: list[int]
     # The latest `Not before` date when it is after today, as YYYY-MM-DD.
     notBefore: str | None
-    # The dependency lines the picker can't read, trimmed.
+    # The dependency lines the picker can't read, trimmed, and the open
+    # blockers in another repository.
     unreadable: list[str]
 
 
@@ -385,12 +391,20 @@ def read_date(value: str) -> date | None:
 
 
 def dependencies(
-    body: str, is_open: Callable[[int], bool], today: date, native: Sequence[int] = ()
+    body: str,
+    is_open: Callable[[int], bool],
+    today: date,
+    native: Sequence[int] = (),
+    foreign: Sequence[str] = (),
 ) -> Dependencies:
     """What an issue's dependencies hold the issue back by.
 
-    `native` is the open issues of its `blocked by` relationship, and each
-    one holds it. A `Blocked by #N` line holds it while #N is open. The
+    `native` is the open issues of this repository in its `blocked by`
+    relationship, and each one holds it. `foreign` is the open ones in
+    another repository (`owner/repo#N`). A `#N` in the output always means
+    an issue here, so each of those holds the issue as unreadable, as
+    `Blocked by owner/repo#N (another repository)`, and plays no part in
+    matching the lines' numbers. A `Blocked by #N` line holds it while #N is open. The
     native blockers come first, then the lines' blockers in body order,
     and a number that the relationship and a line both name, or two lines,
     counts once. A `Not before` line
@@ -399,6 +413,7 @@ def dependencies(
     too, since the picker can't tell what it asks for.
     """
     blocked_by, not_before, unreadable = dependency_lines(body)
+    unreadable += [f"Blocked by {x} (another repository)" for x in foreign]
     lines_open = [n for n in dict.fromkeys(blocked_by) if n in native or is_open(n)]
     open_blockers = list(dict.fromkeys([*native, *lines_open]))
     dates: list[date] = []
@@ -557,7 +572,9 @@ def pick_lessons_wave(
             for o in dict.fromkeys(lesson["assumes"])
             if o not in served_live
         ]
-        deps = dependencies(issue["body"], is_open, day, issue["blockedBy"])
+        deps = dependencies(
+            issue["body"], is_open, day, issue["blockedBy"], issue["foreignBlockedBy"]
+        )
         if blocked_by or held(deps):
             entry: BlockedEntry = {"issue": number, "id": lesson_id, "blockedBy": blocked_by}
             add_dependency_fields(entry, deps)
@@ -788,7 +805,7 @@ def pick_issue_wave(
             reason = f"issue is assigned to {', '.join(i['assignees'])}"
             skipped.append({"issue": i["number"], "reason": reason})
             continue
-        deps = dependencies(i["body"], is_open, day, i["blockedBy"])
+        deps = dependencies(i["body"], is_open, day, i["blockedBy"], i["foreignBlockedBy"])
         if held(deps):
             entry: ContentBlockedEntry = {"issue": i["number"], "title": i["title"]}
             add_dependency_fields(entry, deps)
@@ -1107,14 +1124,20 @@ def parse_lesson_plan(output: str) -> list[PlannedLesson]:
     return lessons
 
 
-def native_blockers(raw: dict[str, object]) -> list[int]:
-    """The open issues of one issue's `blockedBy` field, as gh 2.100.0 gives
-    it: `{"nodes": [{"number": N, "state": "OPEN", ...}], "totalCount": T}`.
+# The `url` of a `blockedBy` node: the repository, then the number.
+BLOCKER_URL = re.compile(r"https://github\.com/([^/]+/[^/]+)/(?:issues|pull)/([1-9][0-9]*)")
 
-    A missing field is an error that names the gh version, and so is a
-    list cut short (fewer nodes than `totalCount`), since a blocker left
-    out could be an open one. GitHub allows a blocker in another
-    repository, and the picker reads it by its number like the others.
+
+def native_blockers(raw: dict[str, object]) -> tuple[list[int], list[str]]:
+    """The open issues of one issue's `blockedBy` field, as gh 2.100.0 gives
+    it: `{"nodes": [{"number": N, "state": "OPEN", "url": U, ...}], "totalCount": T}`.
+
+    The numbers of the open ones in this repository (`REPO`), and the open
+    ones in another repository as `owner/repo#N`, told apart by the
+    repository in `url`. A node has no other field that names it. A
+    missing field is an error that names the gh version, and so is a list
+    cut short (fewer nodes than `totalCount`), since a blocker left out
+    could be an open one.
     """
     if "blockedBy" not in raw:
         raise KeyError(f"no blockedBy field, which needs gh {GH_MIN_VERSION} or later")
@@ -1130,17 +1153,25 @@ def native_blockers(raw: dict[str, object]) -> list[int]:
     if len(nodes) < total:
         raise ValueError(f"blockedBy lists {len(nodes)} of {total} blockers")
     numbers: list[int] = []
+    foreign: list[str] = []
     for node in nodes:
         if not isinstance(node, dict):
             raise TypeError(f"blockedBy node {node!r}")
         node = cast("dict[str, object]", node)
         number = node.get("number")
         state = node.get("state")
-        if not isinstance(number, int) or not isinstance(state, str):
+        url = node.get("url")
+        m = BLOCKER_URL.fullmatch(url) if isinstance(url, str) else None
+        if not isinstance(number, int) or not isinstance(state, str) or m is None:
             raise TypeError(f"blockedBy node {node!r}")
-        if state == "OPEN":
+        if state != "OPEN":
+            continue
+        # GitHub matches owner and repository names without regard to case.
+        if m.group(1).lower() == REPO.lower():
             numbers.append(number)
-    return numbers
+        else:
+            foreign.append(f"{m.group(1)}#{number}")
+    return numbers, foreign
 
 
 def parse_issues(output: str) -> list[ReadyIssue]:
@@ -1154,6 +1185,7 @@ def parse_issues(output: str) -> list[ReadyIssue]:
         body = raw["body"]
         if not isinstance(body, str):
             raise TypeError(f"issue #{raw['number']} has body {body!r}")
+        local, foreign = native_blockers(raw)
         issues.append(
             {
                 "number": cast("int", raw["number"]),
@@ -1161,7 +1193,8 @@ def parse_issues(output: str) -> list[ReadyIssue]:
                 "assignees": [a["login"] for a in assignees],
                 "labels": [label["name"] for label in labels],
                 "body": body,
-                "blockedBy": native_blockers(raw),
+                "blockedBy": local,
+                "foreignBlockedBy": foreign,
             }
         )
     return issues
@@ -1179,12 +1212,14 @@ def parse_issue_state(output: str) -> IssueState:
         raise TypeError(f"state {state!r}, url {url!r}")
     assignees = cast("list[dict[str, str]]", raw.get("assignees") or [])
     labels = cast("list[dict[str, str]]", raw.get("labels") or [])
+    local, foreign = native_blockers(raw)
     return {
         "state": state,
         "labels": [label["name"] for label in labels],
         "assignees": [a["login"] for a in assignees],
         "pullRequest": "/pull/" in url,
-        "blockedBy": native_blockers(raw),
+        "blockedBy": local,
+        "foreignBlockedBy": foreign,
     }
 
 
