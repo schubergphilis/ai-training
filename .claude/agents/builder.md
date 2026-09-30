@@ -49,6 +49,14 @@ Review finds these in almost every first pass. Check each one yourself.
   entry match the course order in the course file.
 - In code, every new check has a test that feeds it a violation and sees
   it fail.
+- When the issue changes a rule or renames a heading or an id, grep
+  `docs/`, `site/src/` and `docs/agents/tutor-eval.md` for the old wording
+  (#339, #471).
+- Every comment or doc sentence that describes code is checked claim by
+  claim with grep (#524 said "argv" for scripts that read none).
+- A nit held back for another run's open pull request is re-checked
+  right before the push, because that pull request can merge while you
+  work.
 
 ## Rules
 
@@ -115,6 +123,15 @@ Review finds these in almost every first pass. Check each one yourself.
   needs a change to `.claude/settings.json`, which agents may not edit,
   the reply has a `settings.json` heading with the exact change.
   Otherwise it says `settings.json: no change needed`.
+
+- In a `harness` change, test a hook change against zsh, the Bash tool's
+  shell (brace expansion, `$=X`, glob qualifiers). Every hook check that
+  can raise an exception catches it and exits 2, with a test, because
+  exit 1 doesn't block. Walk a new stop condition through every general
+  rule that acts on stops (the run close and the end-of-run filing), not
+  only the section that adds it. A skill change that adds a run-issue
+  state says how a resume reads it back and what happens when the session
+  dies in that state (#413 took two rounds).
 
 - When you say an item is already done on `main`, quote the line that
   shows it. When a gate's result and the list in the issue disagree, the

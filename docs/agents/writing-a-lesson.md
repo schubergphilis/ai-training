@@ -161,6 +161,9 @@ A code span such as `` `python3` `` and a `text`
 fence pass, so prose may quote a command when the point is to recognize
 it.
 
+A plan title that says the learner runs something breaks the same rule.
+Check each foundations plan title against it before writing the lesson.
+
 ## Checkpoints
 
 All checkpoints take `id` (stable slug, unique in the page; it becomes the
@@ -193,6 +196,23 @@ the context there. The review page shows it above the stem, and the export
 hint refers to something on the page: "the widget", "the table above",
 "the fixture", "the memo". Say what that thing is, without giving the
 answer.
+
+On the review page the `context` and the `hint` are all the learner has
+of the lesson. Between them they give every fact the options need, and
+none of the key's words (#519).
+
+A graded `Predict` is marked by exact match. Its answer, every literal
+string in it and its output format follow from the stem and its `context`
+alone, and the lesson page states the exact output format (#214, #439).
+An answer that needs numbers only the fixture prints makes the block an
+ungraded example (#167).
+
+A checkpoint's key holds under the vendor default of every setting its
+`context` leaves unset. In #18, `allowUnsandboxedCommands` defaults to
+true, which made one keyed option false and one distractor true.
+
+A builder that rewrites an option re-reads that option's `why` and
+feedback text in the same edit.
 
 ```mdx
 <Choice id="what-the-model-does" objective="concepts/explains-models/explains-generation"
@@ -633,6 +653,10 @@ content. In short:
 - The Schuberg Philis AI wiki supplied ideas only, rewritten, and none of
   its text.
 
+A bibliography `license` is read from the source's own license page or
+repository. In wave 16, builders marked CC-licensed sources as Proprietary
+by default.
+
 ## Rules that bite
 
 - **Voice.** The "Voice" list in `AGENTS.md` is the house's answer to
@@ -676,6 +700,54 @@ content. In short:
   default behavior. Drop what no page states. Quote a vendor limit (a
   context size, a file cap, a rate) only where two vendor pages agree, and
   record `sources-checked` and `review-by` in the plan file.
+
+- **What a source states.** A result or claim cited to a paper or a vendor
+  page names the sentence or table row that states it, and claims nothing
+  past it. In Gecko wave 3, five of six branches claimed more than the source states.
+  Restate a vendor sentence in your own words, then compare it with the
+  source page before the push. In Marmot wave 2, three of five branches
+  had a near-verbatim sentence from a Claude Code docs page.
+
+- **When Claude Code reads `AGENTS.md`.** A sentence about this states the
+  memory page's whole rule: only when there is no `CLAUDE.md`,
+  `.claude/CLAUDE.md` or `CLAUDE.local.md` in the start directory or any
+  directory above it.
+
+- **Fixture files.** A fixture may read only files that `git ls-files`
+  lists. `site/.gitignore` ignores `.env`, so commit a sample under
+  another name and copy it at run time. Never commit a value in the format of
+  a credential (`api_key = ...`), even a fake canary: write it into the scratch copy at
+  run time. GitGuardian flagged a fake key in Jackal wave 1 that gitleaks
+  passed, and it scans every commit of a pull request, so a later fix
+  doesn't clear it. Store a planted prompt injection encoded, and decode
+  it into the copy.
+
+- **Git in fixtures and on the page.** A fixture that reads a course
+  folder through git runs git from the course repository's top level,
+  because learners run `git init` inside course folders. Every shell block
+  on the page that changes a git repository starts with `cd` into the
+  learner's copy.
+
+- **Shell steps on the page.** A shell command shown on a page is run by
+  following the page's own steps (a fresh copy, macOS sort order), and its
+  output is compared with the page. A builder that changes what a fixture
+  step prints re-reads every place on the page that runs that step, the
+  Exercise and the stretch goal included. In an exercise, a step that
+  deletes an installed tool comes after the stretch goal that uses it
+  (#489).
+
+- **Exercises that give an agent reach.** An exercise that runs a
+  third-party agent skill or connects a real MCP server says what it can
+  change. A skill exercise tells the learner to ask for a report only or
+  to run it on a copy. An MCP exercise checks how the server takes its
+  allowed folders from the client's roots, and has the learner start the
+  agent inside the folder it may touch (#171).
+
+- **Agent sessions on planted facts.** An exercise that runs a real agent
+  session on planted facts says what auto-memory may save, and turns it
+  off with `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` when a saved note would
+  spoil the check. Shell steps that come while the session is open go in
+  a second terminal (#189, #192).
 
 - **Foundations audience.** In `concepts`, `safety` and `using-agents`,
   `mise run data` fails on a `<Predict run=`, an `sh`, `bash`, `shell`,

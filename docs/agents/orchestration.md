@@ -290,6 +290,11 @@ The cases that come up:
   a failed run: the reviewer doesn't run
   it again, says so in the review, and bases the verdict on a hand review
   of `review.diff`, never on the skill result.
+- The Bash sandbox allows writes only in the main checkout, so worktree
+  setup, commits, pushes and `gh` run with the sandbox disabled. It also
+  blocks `mise`, `prek` and `gh` for agents in worktrees. A lead runs the
+  `mise` checks and reads the issue comments for its reviewers (#589). A
+  failed `git worktree add` leaves its branch behind. Reuse that branch.
 - GitHub reports `mergeable: UNKNOWN` for about a minute after every merge.
   Wait and list again. A pull request in `CONFLICTING` state gets no
   `pull_request` CI run at all, so a builder that pushes into a conflict

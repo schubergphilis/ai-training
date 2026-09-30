@@ -194,6 +194,31 @@ Each of these came from a review finding in a wave.
   #310 review (LEMUR wave 1) found both gaps in
   `site/scripts/lib/rendered-citations.mjs`, which now has `BLOCKS` and
   `ATTRIBUTES` lists for them.
+- A parser for a vendor file format names the vendor page for each rule
+  it copies, such as how a repeated key merges.
+- A parser of GitHub comment text normalizes CRLF before it splits lines,
+  and follows CommonMark for fences: a backtick fence's info string holds
+  no backtick (Narwhal wave 1).
+- A port from JavaScript to Python uses `re.fullmatch` or `\Z` where the
+  JavaScript anchored `^...$`, because Python's `$` also matches before a
+  trailing newline (Ocelot wave 1).
+- A matcher that decides whether a file is named matches whole relative
+  paths, never a bare file name or a last path segment (#468).
+- When siblings are matched by a shared key (an objective), the test
+  covers two items that share one sibling.
+- In an `.astro` template, a link and the words next to it stay on one
+  source line. The compiler drops the newline at a tag's line edge, and
+  #70 shipped two words run together this way.
+- A script that toggles `hidden` on an element with a `display` rule
+  restates `[hidden] { display: none }` for it, as `.checkpoint [hidden]`
+  does.
+- A widget that takes pasted text says on the page that the text stays in
+  the browser.
+- A spec change written for a case that doesn't exist yet (a lesson
+  gaining a checkpoint) proves that case once with an uncommitted
+  temporary edit (Heron wave 2).
+- A script that a pre-push hook runs and that writes files writes them
+  atomically, and the hook sets `require_serial` (#454).
 
 ## Coverage
 
@@ -204,6 +229,10 @@ Do not lower the floor to get a change through: add the test, or move the
 logic into a module that can be tested. `.astro` files are not
 instrumented (their template half runs in the e2e suite), and
 `lesson-context.ts` is excluded because it only reads route locals.
+
+The logic of a new site command goes in `site/scripts/lib/`, and its entry
+script under `site/scripts/` only reads and prints, because the coverage
+include is `scripts/lib/**/*.mjs`.
 
 The `<script>` block of a component holds only the import of its module
 under `site/src/scripts/` and the call that starts it, so the logic is
@@ -224,6 +253,9 @@ and `site/tests/scripts/examples.test.ts` checks `site/scripts/lib/examples.mjs`
 against temporary fixture trees only (#330). A new sweep test passes its
 timeout in milliseconds as the third argument to `it()`, with a comment
 above it saying why, and the rest of its file keeps the default.
+
+An agent gives every build and Playwright run an explicit Bash timeout.
+In Heron wave 2, builders without one hit the 600-second stream watchdog.
 
 ## A second build needs a second worktree
 
@@ -287,6 +319,9 @@ issues (#344, #353). Install all three hook types once per clone with
 `prek install`. The `default_install_hook_types` line in `prek.toml` names
 them. `prek run --stage pre-push --from-ref origin/main` runs the push
 stage by hand.
+
+After the last edit under `site/`, run `mise run site-format` and then
+`mise run site-lint`, before the push.
 
 ## Lint notes
 
