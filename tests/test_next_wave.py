@@ -580,6 +580,53 @@ def test_without_a_lookup_a_number_outside_the_fetched_set_is_an_error() -> None
         lessons_wave(lessons, [issue(1)], only=[3])
 
 
+# The kind a lessons wave names for an --only number that is no planned lesson (#529)
+
+
+def one_lesson() -> list[PlannedLesson]:
+    return plan([{"dir": "a", "course": ["a/1"], "lessons": [{"id": "a/1", "issue": 1}]}])
+
+
+@pytest.mark.parametrize("kind", ["content", "code", "harness"])
+def test_a_fetched_issue_that_is_no_lesson_names_the_kind_of_its_label(kind: str) -> None:
+    ready = [issue(1), issue(2, labels=["ready-for-agent", kind])]
+    r = lessons_wave(one_lesson(), ready, only=[1, 2])
+    assert r["notPicked"] == [{"issue": 2, "reason": f"not a planned lesson (use --kind {kind})"}]
+
+
+@pytest.mark.parametrize("kind", ["content", "code", "harness"])
+def test_a_looked_up_issue_that_is_no_lesson_names_the_kind_of_its_label(kind: str) -> None:
+    lookup = Lookups({2: state(labels=[kind])})
+    r = lessons_wave(one_lesson(), [issue(1)], lookup, only=[1, 2])
+    assert r["notPicked"] == [{"issue": 2, "reason": f"not a planned lesson (use --kind {kind})"}]
+    assert lookup.asked == [2]
+
+
+def test_an_issue_without_a_kind_label_that_is_no_lesson_keeps_the_content_reason() -> None:
+    lookup = Lookups({3: state(labels=["bug"])})
+    ready = [issue(1), issue(2, labels=["ready-for-agent"])]
+    r = lessons_wave(one_lesson(), ready, lookup, only=[2, 3])
+    assert r["notPicked"] == [
+        {"issue": 2, "reason": "not a planned lesson (use --kind content)"},
+        {"issue": 3, "reason": "not a planned lesson (use --kind content)"},
+    ]
+
+
+def test_an_issue_with_two_kind_labels_that_is_no_lesson_names_no_kind() -> None:
+    ready = [issue(1), issue(2, labels=["code", "harness"])]
+    r = lessons_wave(one_lesson(), ready, only=[2])
+    assert r["notPicked"] == [
+        {"issue": 2, "reason": "not a planned lesson (has more than one kind label)"}
+    ]
+
+
+def test_a_fetched_issue_is_not_looked_up_for_its_kind() -> None:
+    lookup = Lookups({})
+    r = lessons_wave(one_lesson(), [issue(1), issue(2, labels=["code"])], lookup, only=[2])
+    assert r["notPicked"] == [{"issue": 2, "reason": "not a planned lesson (use --kind code)"}]
+    assert lookup.asked == []
+
+
 # pickWave with kind content
 
 

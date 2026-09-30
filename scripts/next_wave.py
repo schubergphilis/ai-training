@@ -66,6 +66,9 @@ the dispatcher adds those to a wave as the nits row. Every issue kind
 leaves out a planned lesson's issue (#526), with the reason
 `a planned lesson (use --kind lessons)` under `--only`, since only a
 lessons wave applies the `assumes` rule the build enforces.
+The other way round, a lessons wave gives an issue under `--only` that is
+no planned lesson the reason `not a planned lesson (use --kind K)`, where
+K is the issue's kind label, or `content` when it has none (#529).
 
 A `code` wave (#494) picks the ready, unassigned issues with the `code`
 label that no plan file claims, with the same dependency lines and the
@@ -589,11 +592,12 @@ def pick_lessons_wave(
         b = next((x for x in blocked if x["issue"] == n), None)
         s = next((x for x in skipped if x["issue"] == n), None)
         if lesson_id is None:
-            reason = (
-                "not a planned lesson (use --kind content)"
-                if n in ready or is_open_issue(lookup(n))
-                else "no such open issue"
-            )
+            state = None if n in ready else lookup(n)
+            if state is not None and not is_open_issue(state):
+                reason = "no such open issue"
+            else:
+                labels = ready[n]["labels"] if state is None else state["labels"]
+                reason = not_a_lesson_text(labels)
         elif lesson_id in live:
             reason = f"lesson {lesson_id} is live"
         elif b is not None:
@@ -616,6 +620,20 @@ def pick_lessons_wave(
         "waiting": waiting,
         "notPicked": not_picked,
     }
+
+
+def not_a_lesson_text(labels: Iterable[str]) -> str:
+    """Why a lessons wave leaves out an open issue that is no planned lesson (#529).
+
+    It names the wave kind of the issue's one kind label. An issue with no
+    kind label gets `--kind content`, and one with more than one gets
+    `MANY_KINDS`, since no single wave kind picks it.
+    """
+    kinds = sorted(KIND_LABELS.intersection(labels))
+    if len(kinds) > 1:
+        return f"not a planned lesson ({MANY_KINDS})"
+    kind = kinds[0] if kinds else "content"
+    return f"not a planned lesson (use --kind {kind})"
 
 
 def is_open_issue(state: IssueState) -> bool:
