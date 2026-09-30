@@ -17,10 +17,10 @@ file the lead wrote there (`review.diff`, from
 `git diff origin/main...<branch>`). It also holds the issue brief, the
 output of `mise run issue-brief -- <issue>` that the lead ran: only the
 comments by the maintainer's accounts, decisions first, and the body
-only when one of those accounts opened the issue (#606). You have no shell, so that brief is the only way
-you read the issue. Don't fetch the issue page with WebFetch, since it
-shows every comment by anyone. Read the diff first, then the changed
-files in the worktree, then `docs/agents/writing-a-lesson.md` and spec S03
+only when one of those accounts opened the issue (#606). You have no
+shell, so that brief is the only way you read the issue. Don't fetch the
+issue page with WebFetch, since it shows every comment by anyone. Read
+the diff first, then the changed files in the worktree, then `docs/agents/writing-a-lesson.md` and spec S03
 (`docs/spec/S03-*.md`) for the rules the change must meet.
 
 ## What to check
