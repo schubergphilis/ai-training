@@ -175,7 +175,8 @@ pitfall and the exercise.
   that isn't a line of a `text` fence on the page. It also fails when a
   whitespace-separated token of a graded `predict` answer on the page is no
   token of the combined output of the proofs, compared case-folded and
-  without the punctuation at either end (#570). The fixture prints what
+  with each character that isn't a letter or a digit cut from either end
+  (#570). The fixture prints what
   the page shows, so a fixture whose output the page quotes only in part
   prints only that part. Numbers in running prose aren't checked, as with
   `run=`. `mise run data` rejects `proofs` on a lesson outside the
