@@ -402,8 +402,8 @@ function subdirs(dir) {
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** A string literal's start: an optional prefix (`r`, `b`, `f`, `rb`) and its quotes. */
-const STRING_START = /^([rRbBuUfF]{0,2})('''|"""|'|")/;
+/** A string literal's start: an optional prefix (`r`, `b`, `f`, `t`, `rb`) and its quotes. */
+const STRING_START = /^([rRbBuUfFtT]{0,2})('''|"""|'|")/;
 
 /**
  * `src` (Python source) without its `#` comments and docstrings, so a
@@ -448,14 +448,14 @@ export function stripCommentsAndDocstrings(src) {
 			const literal = src.slice(i, j);
 			const lineEnd = src.indexOf('\n', j);
 			const restOfLine = src.slice(j, lineEnd === -1 ? src.length : lineEnd);
-			const docstring = atStatement && depth === 0 && docstringAllowed && /^[ \t]*(?:#.*)?$/.test(restOfLine);
+			const docstring = atStatement && depth === 0 && docstringAllowed && /^[ \t\r]*(?:#.*)?$/.test(restOfLine);
 			out += docstring ? literal.replace(/[^\n]/g, '') : literal;
 			logical += '""';
 			atStatement = false;
 			i = j;
 			continue;
 		}
-		if (ch === '\n' && depth === 0 && !out.endsWith('\\')) {
+		if (ch === '\n' && depth === 0 && !/\\\r?$/.test(out)) {
 			const line = logical.trim();
 			if (line) docstringAllowed = /^(?:async[ \t]+)?(?:def|class)\b/.test(line) && line.endsWith(':');
 			logical = '';

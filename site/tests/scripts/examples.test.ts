@@ -543,6 +543,14 @@ describe('stripCommentsAndDocstrings (#557)', () => {
 		],
 		['"""{}""".format("agent.py")\n', '"""{}""".format("agent.py")\n', 'a first string with more code on its line'],
 		['s = "a \\" # b"  # c\n', 's = "a \\" # b"  \n', 'an escaped quote inside a string'],
+		['"""Runs "agent.py"."""\r\nprint(1)\r\n', '\r\nprint(1)\r\n', 'a docstring with CRLF line ends'],
+		['@cache\ndef f():\n    "Runs \'agent.py\'."\n', '@cache\ndef f():\n    \n', 'a docstring after a decorator'],
+		["X = '''# \"agent.py\"'''\n", "X = '''# \"agent.py\"'''\n", 'a triple-quoted assignment holding a #'],
+		[
+			'MSG = t"""see (x\n"""\ndef f():\n    """x"""\n',
+			'MSG = t"""see (x\n"""\ndef f():\n    \n',
+			'a ( inside a t-string',
+		],
 	];
 	it.each(cases)('%j becomes %j (%s)', (src, want) => {
 		expect(stripCommentsAndDocstrings(src)).toBe(want);
@@ -552,6 +560,7 @@ describe('stripCommentsAndDocstrings (#557)', () => {
 		expect(usesModule('"""Runs "agent.py"."""\n', 'agent')).toBe(false);
 		expect(usesModule('def f():\n    """Runs \'agent.py\'."""\n', 'agent')).toBe(false);
 		expect(usesModule('run("agent.py")  # "other.py"\n', 'agent')).toBe(true);
+		expect(usesModule('print(t"#{n}", run("agent.py"))\n', 'agent')).toBe(true);
 	});
 	it('makes namesPath ignore a quoted name in a comment or a docstring', () => {
 		expect(namesPath('# copies "nightly" later\n', 'nightly')).toBe(false);
