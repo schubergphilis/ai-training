@@ -9,9 +9,10 @@ read the diff. The bug is in a fixture that ships with this course, and it
 spans three files, which is the size of change where a few minutes of
 planning save more than they cost.
 
-The vendor of Claude Code teaches this rhythm for its own tool, explore
-first, then plan, then code (@Claude Code best practices), and its short
-course walks through the same loop (@Academy claude-code-101). Where this
+The vendor of Claude Code teaches this rhythm for its own tool: read the
+code, make a plan, and only then change the code
+(@Claude Code best practices). Its short course walks through the same
+loop (@Academy claude-code-101). Where this
 lesson names a Claude Code key or flag, it says so, and the source is
 checked on the date at the end of the lesson. Other coding agents have a
 read-only mode under another name, and the rhythm is the same.
@@ -155,7 +156,7 @@ every user who has a done item they haven't cleared yet.
   options={[
     { text: 'Bump the version string in `pyproject.toml` from 1.4.0 to 1.4.1 for a release.', why: 'You could write this diff in one sentence. A plan costs more than the change.' },
     { text: 'A command gives the wrong result, and the code that could cause it is spread over three modules.', correct: true },
-    { text: 'Add one log line where an exception is caught.', why: 'The scope is clear and the fix is small. Plan mode adds a round trip and finds nothing you did not know.' },
+    { text: 'Add one log line where an exception is caught.', why: 'You already know where the line goes and what it says. Plan mode adds a round trip and finds nothing you did not know.' },
     { text: 'Rename one variable in one function.', why: 'The change is bounded to a place you can already point at. Let the agent do it and read the diff.' },
   ]}>
 Which of these do you start in plan mode?
@@ -168,8 +169,8 @@ it which step to drop and why, and ask for the plan again. In Claude Code
 the prompt under a finished plan offers to approve it, to approve it and
 review each edit, or to keep planning, and keep planning is the one you
 want here (@Claude Code permission modes). The same page names a shortcut,
-`Ctrl+G`, that opens the plan in your text editor so you can edit it
-directly. A sentence in the chat does the same job for a one-step fix.
+`Ctrl+G`, that loads the plan into your editor so you can change it
+there. A sentence in the chat does the same job for a one-step fix.
 
 <Prompt model="illustrative" recorded="illustrative">
 Drop step 3. You found the cause in `store.py`, and `render.py` is showing
@@ -480,7 +481,7 @@ have missed if the agent had gone straight to the diff?
 </Exercise>
 
 <Recap>
-1. For a change you can't place in one file, start the agent in plan mode: it reads and proposes, and it edits nothing until you approve (@Claude Code permission modes). If you could write the diff in one sentence, skip the plan (@Claude Code best practices).
+1. For a change you can't place in one file, start the agent in plan mode: it reads and proposes, and it edits nothing until you approve (@Claude Code permission modes). Skip the plan when the whole change fits in one short sentence (@Claude Code best practices).
 2. Read the plan against the cause it names, and correct or drop a step that doesn't follow while the correction costs a sentence.
 3. The failing test comes before the fix. It has to fail on the code as it is, or it isn't looking at the bug.
 4. The agent implements until the test passes. You run the check yourself, and you read the diff to see that it touched only what the plan said.
