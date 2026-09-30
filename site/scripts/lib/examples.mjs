@@ -20,7 +20,8 @@
  * audience"), so its lesson file lists the fixtures behind it in `proofs`
  * (S11 "Lesson file", #497). Each proof runs on the same interpreters, and
  * every non-blank line it prints must be a line of a `text` fence on the
- * page (`checkProofs`).
+ * page (`checkProofs`). Each token of a graded Predict's `answer` on that
+ * page must be a token of the proofs' output (`checkProofAnswers`, #570).
  *
  * `scripts/check-examples.mjs` is the command-line entry; tests import this.
  */
@@ -266,7 +267,9 @@ export function lessonProofs(contentDir, areasDir, file) {
  * with `run(name, interp)`, once per entry in `interps`, and fail when it
  * doesn't run, exits non-zero, or prints a non-blank line (trailing
  * whitespace trimmed) that is not a line of a `text` fence in `src`
- * (`textFenceLines`). The rule is in spec S03 "Examples". Returns
+ * (`textFenceLines`). On every interpreter where all proofs ran, it then
+ * checks the answers of the page's graded Predicts against their combined
+ * output (`checkProofAnswers`). The rule is in spec S03 "Examples". Returns
  * `{ checked, failures }`: how many runs happened and one message per
  * problem.
  */
@@ -280,15 +283,21 @@ export function checkProofs(file, src, proofs, run, interps = DEFAULT_INTERPRETE
 	} catch (e) {
 		return { checked, failures: [e.message] };
 	}
+	// The stdout of every proof, per interpreter label. An interpreter drops
+	// out when one of its runs fails, since that failure is reported already.
+	const outputs = new Map(interps.map((interp) => [interp.label, []]));
 	for (const name of proofs) {
 		const typeError = fixtureTypeError(name);
 		if (typeError) {
+			outputs.clear();
 			failures.push(`${file}: proof ${name}: ${typeError}`);
 			continue;
 		}
 		for (const interp of interps) {
 			const res = run(name, interp);
 			checked++;
+			if (res.status === 0 && !res.error) outputs.get(interp.label)?.push(res.stdout);
+			else outputs.delete(interp.label);
 			if (res.error) failures.push(`${file}: proof ${name} [${interp.label}] ${res.error}`);
 			else if (res.status !== 0)
 				failures.push(`${file}: proof ${name} [${interp.label}] exited ${res.status}\n${res.stderr}`);
@@ -304,7 +313,54 @@ export function checkProofs(file, src, proofs, run, interps = DEFAULT_INTERPRETE
 			}
 		}
 	}
+	for (const [label, stdouts] of outputs) failures.push(...checkProofAnswers(file, src, stdouts.join('\n'), label));
 	return { checked, failures };
+}
+
+/**
+ * One token of a Predict answer or of proof output, as `checkProofAnswers`
+ * compares it: case folded, as the page folds it when it grades
+ * (`normalizeAnswer` in `src/scripts/checkpoint-logic.ts`), and with the
+ * characters that are not a letter or a digit cut from both ends, so `3,`
+ * in `rows: 3, 5, 6` matches the answer `3`. A token of only such
+ * characters (`->`) stays whole.
+ */
+function answerToken(token) {
+	const folded = token.toLowerCase();
+	return folded.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '') || folded;
+}
+
+/**
+ * Check the graded Predicts of a page with `proofs` against the combined
+ * `output` of those proofs on the interpreter `label` (#570): each
+ * whitespace-separated token of every `<Predict answer=...>` without `run`
+ * must be a token of `output` (`answerToken`). A page with `proofs` is a
+ * foundations page, so its Predicts carry no `run`, and without this check
+ * a changed fixture could leave the graded answer stale while the `text`
+ * fences are updated. Returns one failure per missing token, naming the
+ * page, the Predict and the token. A page that does not parse fails in
+ * `textFenceLines` first.
+ */
+export function checkProofAnswers(file, src, output, label) {
+	let tags;
+	try {
+		tags = predictTags(src, file);
+	} catch (e) {
+		return [e.message];
+	}
+	const shown = new Set(output.split(/\s+/).filter(Boolean).map(answerToken));
+	const failures = [];
+	for (const { attrs } of tags) {
+		const answer = propValue(attrs, 'answer');
+		if (answer === undefined || propValue(attrs, 'run') !== undefined) continue;
+		const id = propValue(attrs, 'id') ?? '?';
+		for (const token of answer.split(/\s+/).filter(Boolean))
+			if (!shown.has(answerToken(token)))
+				failures.push(
+					`${file} #${id}: answer token ${JSON.stringify(token)} is in no output of the lesson file's proofs [${label}]`,
+				);
+	}
+	return failures;
 }
 
 /**

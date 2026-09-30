@@ -172,7 +172,10 @@ pitfall and the exercise.
   relative to `site/examples/`. `mise run examples` runs each one on the
   same interpreters as a `run=` fixture and fails when it exits non-zero,
   doesn't run, or prints a non-blank line (trailing whitespace trimmed)
-  that isn't a line of a `text` fence on the page. The fixture prints what
+  that isn't a line of a `text` fence on the page. It also fails when a
+  whitespace-separated token of a graded `predict` answer on the page is no
+  token of the combined output of the proofs, compared case-folded and
+  without the punctuation at either end (#570). The fixture prints what
   the page shows, so a fixture whose output the page quotes only in part
   prints only that part. Numbers in running prose aren't checked, as with
   `run=`. `mise run data` rejects `proofs` on a lesson outside the

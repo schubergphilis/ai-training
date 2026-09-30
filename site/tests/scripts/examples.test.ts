@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
 	checkExamples,
+	checkProofAnswers,
 	checkProofs,
 	checkSource,
 	FIXTURE_TIMEOUT_MS,
@@ -687,6 +688,62 @@ describe('proofs of a foundations page (#497)', () => {
 			throw new Error('ran');
 		};
 		expect(checkProofs('p.mdx', 'no fences\n', [], run, interps)).toEqual({ checked: 0, failures: [] });
+	});
+
+	describe('graded Predict answers against the proof output (#570)', () => {
+		const OUT = 'rows that cannot be undone: 3, 5, 6\nDATA LEAVES: yes\n  moved a -> b';
+		const predict = (answer: string, extra = '') =>
+			`<Predict id="p1" objective="a/b/c" title="T" hint="H" concepts={['x']} answer=${JSON.stringify(answer)}${extra} />\n`;
+
+		it('passes an answer whose every token the output shows, case folded and without edge punctuation', () => {
+			expect(checkProofAnswers('p.mdx', predict('3 5 6'), OUT, 'current')).toEqual([]);
+			expect(checkProofAnswers('p.mdx', predict('Data leaves: YES ->'), OUT, 'current')).toEqual([]);
+		});
+		it('fails each token the output does not show, naming the page, the Predict and the token', () => {
+			expect(checkProofAnswers('p.mdx', predict('3 5 7 no'), OUT, 'current')).toEqual([
+				'p.mdx #p1: answer token "7" is in no output of the lesson file\'s proofs [current]',
+				'p.mdx #p1: answer token "no" is in no output of the lesson file\'s proofs [current]',
+			]);
+		});
+		it('matches whole tokens only, so a token inside a longer word fails', () => {
+			expect(checkProofAnswers('p.mdx', predict('undo'), OUT, 'current')).toHaveLength(1);
+		});
+		it('skips an honor-system Predict and one with run, which checkSource checks', () => {
+			const honor = '<Predict id="h" objective="a/b/c" title="T" hint="H" concepts={[\'x\']} />\n';
+			expect(checkProofAnswers('p.mdx', honor + predict('zzz', ' run="a/b/p.py"'), OUT, 'current')).toEqual([]);
+		});
+		it('fails a page that does not parse', () => {
+			expect(checkProofAnswers('p.mdx', '<Predict id="a" {...x} />\n', OUT, 'current')).toHaveLength(1);
+		});
+		it('checks the combined output of every proof, on each interpreter where all proofs ran', () => {
+			const src = `${PAGE}\n${predict('111 2')}`;
+			const byName = (name: string) => ({
+				status: 0,
+				stdout: name.endsWith('one.py') ? 'short: 111 tokens' : 'in an aside: 2',
+				stderr: '',
+			});
+			expect(checkProofs('p.mdx', src, ['a/b/one.py', 'a/b/two.py'], byName, interps)).toEqual({
+				checked: 4,
+				failures: [],
+			});
+			const res = checkProofs('p.mdx', src, ['a/b/one.py'], byName, interps);
+			expect(res.failures).toEqual([
+				'p.mdx #p1: answer token "2" is in no output of the lesson file\'s proofs [current]',
+				'p.mdx #p1: answer token "2" is in no output of the lesson file\'s proofs [floor]',
+			]);
+		});
+		it('does not check answers on an interpreter where a proof failed, or after a proof of the wrong type', () => {
+			const src = `${PAGE}\n${predict('zzz')}`;
+			const failed = (_name: string, interp: { label: string }) =>
+				interp.label === 'floor'
+					? { status: 1, stdout: '', stderr: 'boom\n' }
+					: { status: 0, stdout: 'short: 111 tokens', stderr: '' };
+			expect(checkProofs('p.mdx', src, ['a/b/p.py'], failed, interps).failures).toEqual([
+				'p.mdx: proof a/b/p.py [floor] exited 1\nboom\n',
+				'p.mdx #p1: answer token "zzz" is in no output of the lesson file\'s proofs [current]',
+			]);
+			expect(checkProofs('p.mdx', src, ['a/b/p.sh'], prints(''), interps).failures).toHaveLength(1);
+		});
 	});
 
 	describe('through checkExamples', () => {
