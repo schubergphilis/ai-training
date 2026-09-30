@@ -17,6 +17,7 @@ delete (docs/agents/supply-chain.md).
 
 import tomllib
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -32,7 +33,8 @@ def platforms_without_checksum(lock_text: str) -> list[str]:
             for key, value in entry.items():
                 if not key.startswith("platforms."):
                     continue
-                if not isinstance(value, dict) or not value.get("checksum"):
+                table = cast("dict[str, object]", value) if isinstance(value, dict) else {}
+                if not table.get("checksum"):
                     platform = key.removeprefix("platforms.")
                     missing.append(f"{tool}@{entry.get('version')} {platform}")
     return missing
