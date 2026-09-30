@@ -190,23 +190,11 @@ export default defineConfig({
 						href: `${base}/apple-touch-icon.png`,
 					},
 				},
-				// Fonts: Merriweather = long-form/body, Merriweather Sans = on-screen/UI.
-				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
-				{
-					tag: 'link',
-					attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true },
-				},
-				{
-					tag: 'link',
-					attrs: {
-						rel: 'stylesheet',
-						href: 'https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Merriweather+Sans:wght@400;700&display=swap',
-					},
-				},
 			],
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/schubergphilis/ai-training' }],
 			editLink: { baseUrl: 'https://github.com/schubergphilis/ai-training/edit/main/site/' },
-			customCss: ['./src/styles/custom.css', './src/styles/lesson.css'],
+			// Inter is self-hosted from its package, so a page load sends no request to a font service (spec S14).
+			customCss: ['@fontsource-variable/inter', './src/styles/custom.css', './src/styles/lesson.css'],
 			sidebar: [
 				{ slug: 'progress', label: 'Your progress' },
 				{ slug: 'reference', label: 'Your reference' },

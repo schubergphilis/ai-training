@@ -40,18 +40,21 @@
 	--sl-color-bg-nav: #ffffff;
 }
 
-/* Fonts: Merriweather Sans for on-screen/UI (Starlight's global --sl-font, so
-   nav/header/sidebar/labels), Merriweather for long-form prose (the rendered
-   markdown body), and a system-first monospace stack for code. Font choice
-   doesn't vary by theme, so these live at :root. Webfonts loaded in
-   astro.config.mjs's `head`. */
+/* Fonts: Inter for all text, as in the learning platform (spec S14),
+   self-hosted from @fontsource-variable/inter (astro.config.mjs's
+   `customCss`). Headings at weight 600 with slightly tight letter spacing,
+   as the platform sets them. Code keeps a system-first monospace stack. Font
+   choice doesn't vary by theme, so these live at :root. */
 :root {
-	--sl-font: 'Merriweather Sans', sans-serif;
+	--sl-font: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		sans-serif;
 	--sl-font-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Menlo, Consolas,
 		monospace;
 }
-.sl-markdown-content {
-	font-family: 'Merriweather', Georgia, serif;
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
+h1#_top {
+	font-weight: 600;
+	letter-spacing: -0.01em;
 }
 
 /* The left sidebar gets the light grey the learning platform uses around
