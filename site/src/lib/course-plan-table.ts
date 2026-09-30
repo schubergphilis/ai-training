@@ -55,7 +55,7 @@ export function exerciseKinds(entry: Pick<PlanEntry, 'exercises'>): string {
 
 /** The GitHub issue URL of an entry, or undefined when it has none. */
 export function issueUrl(issue: number | undefined): string | undefined {
-	return issue === undefined ? undefined : `https://github.com/lsimons/ai-training/issues/${issue}`;
+	return issue === undefined ? undefined : `https://github.com/schubergphilis/ai-training/issues/${issue}`;
 }
 
 /** The Minutes cell: a number and whether it is the page's estimate or the plan's target. */

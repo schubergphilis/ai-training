@@ -60,17 +60,19 @@ describe('href', () => {
 	it('prefixes the deploy base and refuses relative paths', () => {
 		expect(href('/progress/')).toBe('/ai-training/progress/');
 		expect(() => href('progress/')).toThrow(/root-relative/);
-		expect(absoluteUrl('/guides/tutor/', 'https://lsimons.github.io')).toBe(
-			'https://lsimons.github.io/ai-training/guides/tutor/',
+		expect(absoluteUrl('/guides/tutor/', 'https://schubergphilis.github.io')).toBe(
+			'https://schubergphilis.github.io/ai-training/guides/tutor/',
 		);
-		expect(absoluteUrl('/ai-training/guides/', 'https://lsimons.github.io/')).toBe(
-			'https://lsimons.github.io/ai-training/guides/',
+		expect(absoluteUrl('/ai-training/guides/', 'https://schubergphilis.github.io/')).toBe(
+			'https://schubergphilis.github.io/ai-training/guides/',
 		);
-		expect(absoluteUrl('/ai-training', 'https://lsimons.github.io')).toBe('https://lsimons.github.io/ai-training');
-		expect(absoluteUrl('https://example.com/x', 'https://lsimons.github.io')).toBe('https://example.com/x');
-		expect(absoluteUrl('mailto:a@b.c', 'https://lsimons.github.io')).toBe('mailto:a@b.c');
-		expect(siteRoot('https://lsimons.github.io')).toBe('https://lsimons.github.io/ai-training');
-		expect(siteRoot('https://lsimons.github.io/')).toBe('https://lsimons.github.io/ai-training');
-		expect(() => absoluteUrl('guides/', 'https://lsimons.github.io')).toThrow(/root-relative/);
+		expect(absoluteUrl('/ai-training', 'https://schubergphilis.github.io')).toBe(
+			'https://schubergphilis.github.io/ai-training',
+		);
+		expect(absoluteUrl('https://example.com/x', 'https://schubergphilis.github.io')).toBe('https://example.com/x');
+		expect(absoluteUrl('mailto:a@b.c', 'https://schubergphilis.github.io')).toBe('mailto:a@b.c');
+		expect(siteRoot('https://schubergphilis.github.io')).toBe('https://schubergphilis.github.io/ai-training');
+		expect(siteRoot('https://schubergphilis.github.io/')).toBe('https://schubergphilis.github.io/ai-training');
+		expect(() => absoluteUrl('guides/', 'https://schubergphilis.github.io')).toThrow(/root-relative/);
 	});
 });

@@ -4,12 +4,13 @@
 # Root-relative internal links (/guides/getting-started/, /diagram.png) resolve
 # against the host of base_url. lychee drops the `/ai-training` path when it
 # joins an absolute link, so `/guides/foo/` becomes
-# `https://lsimons.github.io/guides/foo/`, which the lsimons.github.io
-# exclusion below catches. lychee never checks internal links.
+# `https://schubergphilis.github.io/guides/foo/`, which the
+# schubergphilis.github.io exclusion below catches. lychee never checks
+# internal links.
 # `starlight-links-validator`, wired into `site/astro.config.mjs`, is what
 # validates internal links, and it fails `mise run site-build` when one is
 # dead. lychee's job here is external URLs only.
-base_url = "https://lsimons.github.io/ai-training/"
+base_url = "https://schubergphilis.github.io/ai-training/"
 
 # lychee's default extensions plus yaml and yml: the bibliography under
 # site/src/data holds the source URLs (the `AEC-NN` deep links among them).
@@ -19,24 +20,21 @@ extensions = ["md", "mkd", "mdx", "mdown", "mdwn", "mkdn", "mkdown", "markdown",
 # so the pre-commit hook does not flake on external hosts.
 accept = ["100..=299", "403", "429"]
 
-# `include` wins over `exclude`. The other sites on lsimons.github.io are
-# ordinary external links and get checked. Add a site here when a lesson
-# starts citing it.
-include = [
-  '^https?://lsimons\.github\.io/agent-engineer-course/',
-]
+# `include` wins over `exclude`. The other sites on schubergphilis.github.io
+# are ordinary external links. Add one here when a lesson starts citing it.
+# The `AEC-NN` deep links are on lsimons.github.io, which isn't excluded.
 
-# - lsimons.github.io: this site's own deploy (the deploy workflow proves it,
-#   and checking it is a chicken-and-egg problem on the first deploy) and the
-#   root-relative internal links, which resolve to this host without the
-#   `/ai-training` prefix (see base_url above). The regex can't be narrowed
-#   to `/ai-training/` for that second reason, so `include` above carves
-#   out the sites that should be checked.
+# - schubergphilis.github.io: this site's own deploy (the deploy workflow
+#   proves it, and checking it is a chicken-and-egg problem on the first
+#   deploy) and the root-relative internal links, which resolve to this host
+#   without the `/ai-training` prefix (see base_url above). The regex can't
+#   be narrowed to `/ai-training/` for that second reason, so `include` is
+#   where a site on the same host that should be checked goes.
 # - localhost: dev-server URLs are not reachable in CI.
 # - linkedin: bot-protected, returns 403/999 to checkers.
 # - `[{}]` / `%7B`: JSX expressions in .mdx that lychee mis-parses as URLs.
 exclude = [
-  '^https?://lsimons\.github\.io/', # own deploy plus mis-resolved root-relative links; AEC is re-included above
+  '^https?://schubergphilis\.github\.io/', # own deploy plus mis-resolved root-relative links
   '^http://localhost',
   '^https://www\.linkedin\.com',
   '[{}]',

@@ -10,8 +10,9 @@ import { remarkCitations } from './plugins/remark-citations.mjs';
 import { remarkTerms } from './plugins/remark-terms.mjs';
 import { allLessons, allTopics, courseLessonIds, readAreaTree } from './scripts/lib/area-tree.mjs';
 
-// This is a *project* site: it deploys under a subpath of https://lsimons.github.io
-// (e.g. https://lsimons.github.io/ai-training/), so it sets `base`.
+// This is a *project* site: it deploys under a subpath of
+// https://schubergphilis.github.io (e.g.
+// https://schubergphilis.github.io/ai-training/), so it sets `base`.
 const base = '/ai-training';
 
 /**
@@ -138,7 +139,7 @@ const bibliography = parseYaml(readFileSync(new URL('./src/data/bibliography.yam
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://lsimons.github.io',
+	site: 'https://schubergphilis.github.io',
 	base,
 	markdown: {
 		// Checkpoint props first, read from the tree before any plugin rewrites
@@ -158,7 +159,7 @@ export default defineConfig({
 		starlight({
 			// Fails the build on a dead internal link. lychee cannot do this
 			// job here: root-relative links resolve against the published
-			// lsimons.github.io origin, which .lychee.toml excludes.
+			// schubergphilis.github.io origin, which .lychee.toml excludes.
 			//
 			// The glossary anchors (`/glossary/#<concept>`) are rendered by the
 			// Glossary component, so the validator, which only reads Markdown
@@ -203,8 +204,8 @@ export default defineConfig({
 					},
 				},
 			],
-			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/lsimons/ai-training' }],
-			editLink: { baseUrl: 'https://github.com/lsimons/ai-training/edit/main/site/' },
+			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/schubergphilis/ai-training' }],
+			editLink: { baseUrl: 'https://github.com/schubergphilis/ai-training/edit/main/site/' },
 			customCss: ['./src/styles/custom.css', './src/styles/lesson.css'],
 			sidebar: [
 				{ slug: 'progress', label: 'Your progress' },

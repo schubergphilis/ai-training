@@ -1,6 +1,6 @@
 # Issue tracker
 
-This project uses [GitHub Issues](https://github.com/lsimons/ai-training/issues).
+This project uses [GitHub Issues](https://github.com/schubergphilis/ai-training/issues).
 
 Use the `gh` CLI to read and write issues:
 

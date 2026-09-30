@@ -10,12 +10,12 @@
 import { href } from '@lib/url';
 
 interface Props {
-	/** The absolute URL of the lesson page, `https://lsimons.github.io/ai-training/<area>/<lesson>/`. */
+	/** The absolute URL of the lesson page, `https://schubergphilis.github.io/ai-training/<area>/<lesson>/`. */
 	lessonUrl: string;
 }
 
 const { lessonUrl } = Astro.props;
-const install = 'npx skills add lsimons/ai-training --skill ai-tutor -g';
+const install = 'npx skills add schubergphilis/ai-training --skill ai-tutor -g';
 const command = `/ai-tutor ${lessonUrl}`;
 const opencodeRequest = `Use the ai-tutor skill on ${lessonUrl}`;
 ---

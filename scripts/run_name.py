@@ -35,7 +35,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Literal, TypedDict, cast
 
-REPO = "lsimons/ai-training"
+REPO = "schubergphilis/ai-training"
 RUN_LABEL = "dispatcher-run"
 """The label on every run issue."""
 

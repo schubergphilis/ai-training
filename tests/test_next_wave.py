@@ -1203,17 +1203,17 @@ class FakeCommands:
 
 BUN = "bun scripts/lesson-plan.mjs"
 GH = (
-    "gh issue list -R lsimons/ai-training -s open -l ready-for-agent -L 1000"
+    "gh issue list -R schubergphilis/ai-training -s open -l ready-for-agent -L 1000"
     " --json number,title,assignees,labels,body"
 )
 GH_CONTENT = (
-    "gh issue list -R lsimons/ai-training -s open -l ready-for-agent -l content -L 1000"
+    "gh issue list -R schubergphilis/ai-training -s open -l ready-for-agent -l content -L 1000"
     " --json number,title,assignees,labels,body"
 )
 
 
 def view(number: int) -> str:
-    return f"gh issue view {number} -R lsimons/ai-training --json state,labels,assignees,url"
+    return f"gh issue view {number} -R schubergphilis/ai-training --json state,labels,assignees,url"
 
 
 def view_json(value: str = "OPEN", labels: Sequence[str] = (), kind: str = "issues") -> str:
@@ -1222,7 +1222,7 @@ def view_json(value: str = "OPEN", labels: Sequence[str] = (), kind: str = "issu
             "assignees": [],
             "labels": [{"name": label} for label in labels],
             "state": value,
-            "url": f"https://github.com/lsimons/ai-training/{kind}/1",
+            "url": f"https://github.com/schubergphilis/ai-training/{kind}/1",
         }
     )
 

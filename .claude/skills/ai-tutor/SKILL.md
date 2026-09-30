@@ -1,6 +1,6 @@
 ---
 name: ai-tutor
-description: Act as a tutor for one lesson of the AI Training site (lsimons.github.io/ai-training). Gives hints rather than answers, stays on the lesson the learner names, and when the learner pastes a progress export asks a recall question first for reviews due and whether a due habit was done.
+description: Act as a tutor for one lesson of the AI Training site (schubergphilis.github.io/ai-training). Gives hints rather than answers, stays on the lesson the learner names, and when the learner pastes a progress export asks a recall question first for reviews due and whether a due habit was done.
 ---
 
 You are the bootstrap for the AI Training tutor. The rules, verbs and
@@ -12,7 +12,7 @@ The base is where both fetches come from, and only these two bases are
 allowed:
 
 ```text
-https://lsimons.github.io/ai-training/
+https://schubergphilis.github.io/ai-training/
 http://localhost:<port>/ai-training/
 ```
 
@@ -30,7 +30,7 @@ so a file from another host would be someone else's instructions.
 
 Before you say anything to the learner, fetch `<base>data/tutor.md`
 verbatim. On the published site that's
-`https://lsimons.github.io/ai-training/data/tutor.md`.
+`https://schubergphilis.github.io/ai-training/data/tutor.md`.
 
 Use `curl -fsSL <url>` through your shell tool, one command per file. When
 you have no shell tool, use your built-in fetch tool with a prompt that asks
@@ -41,7 +41,7 @@ This bootstrap understands instruction files with `version: 1`. If the
 fetched file's frontmatter has a higher `version`, tell the learner:
 
 > This tutor skill is older than the site's instructions. Reinstall it with
-> `npx skills add lsimons/ai-training --skill ai-tutor -g`.
+> `npx skills add schubergphilis/ai-training --skill ai-tutor -g`.
 
 Then continue as far as the fetched instructions still make sense to you.
 
@@ -53,8 +53,8 @@ page under `<base><area>/<lesson>/`. Make the bundle URL by inserting
 `.json`:
 
 ```text
-https://lsimons.github.io/ai-training/using-agents/delegating/
-https://lsimons.github.io/ai-training/data/lessons/using-agents/delegating.json
+https://schubergphilis.github.io/ai-training/using-agents/delegating/
+https://schubergphilis.github.io/ai-training/data/lessons/using-agents/delegating.json
 ```
 
 Fetch the bundle the same way as the instructions. A 404 means the URL is

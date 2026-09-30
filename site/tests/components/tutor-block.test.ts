@@ -13,14 +13,14 @@ beforeAll(async () => {
 	container = await AstroContainer.create();
 });
 
-const lessonUrl = 'https://lsimons.github.io/ai-training/coding-with-agents/first-session/';
+const lessonUrl = 'https://schubergphilis.github.io/ai-training/coding-with-agents/first-session/';
 
 describe('TutorBlock', () => {
 	it('renders the install command and the /ai-tutor line for the lesson, each with a copy button', async () => {
 		const html = await container.renderToString(TutorBlock, { props: { lessonUrl } });
 		expect(html).toContain('data-tutor-block');
 		expect(html).toContain('class="route-card tutor-block not-content"');
-		expect(html).toContain('<code>npx skills add lsimons/ai-training --skill ai-tutor -g</code>');
+		expect(html).toContain('<code>npx skills add schubergphilis/ai-training --skill ai-tutor -g</code>');
 		expect(html).toContain(`<code>/ai-tutor ${lessonUrl}</code>`);
 		expect(html).toContain(`<code>Use the ai-tutor skill on ${lessonUrl}</code>`);
 		expect(html.match(/class="tutor-copy" data-copy="/g)).toHaveLength(2);

@@ -31,7 +31,7 @@ review-by: 2027-03-27
 notes: >-
   Sources: Brilliant SEC-3, Academy claude-code-in-action (paraphrased). The exercise installs one
   pinned tool, Bandit 1.8.6, into a virtual environment outside the course repository, under the S03
-  rule decided in https://github.com/lsimons/ai-training/issues/461. Bandit 1.8.6 declares Python
+  rule decided in https://github.com/schubergphilis/ai-training/issues/461. Bandit 1.8.6 declares Python
   >=3.9 on PyPI, and its classifiers list 3.9 to 3.13. Both pasted outputs were produced on
   2026-09-27 with Bandit 1.8.6 on Python 3.9.25 (mise), installed with `uv pip install --python
   <venv>/bin/python bandit==1.8.6` into a `python3.9 -m venv` environment, from a fresh copy of

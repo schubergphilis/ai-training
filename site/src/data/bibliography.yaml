@@ -1174,7 +1174,7 @@ AI Training orchestration:
   container: AI Training repository, docs/agents/orchestration.md
   author: The AI Training contributors
   license: CC BY-SA 4.0
-  url: https://github.com/lsimons/ai-training/blob/main/docs/agents/orchestration.md
+  url: https://github.com/schubergphilis/ai-training/blob/main/docs/agents/orchestration.md
 Git docs git-merge:
   type: reference
   title: git-merge
@@ -1188,14 +1188,14 @@ AI Training AGENTS:
   container: AI Training repository, AGENTS.md
   author: The AI Training contributors
   license: CC BY-SA 4.0
-  url: https://github.com/lsimons/ai-training/blob/cb658ad1859c1931f36b58fe8315e1883a927643/AGENTS.md
+  url: https://github.com/schubergphilis/ai-training/blob/cb658ad1859c1931f36b58fe8315e1883a927643/AGENTS.md
 AI Training writing-a-lesson:
   type: reference
   title: Writing a lesson
   container: AI Training repository, docs/agents/writing-a-lesson.md
   author: The AI Training contributors
   license: CC BY-SA 4.0
-  url: https://github.com/lsimons/ai-training/blob/cb658ad1859c1931f36b58fe8315e1883a927643/docs/agents/writing-a-lesson.md
+  url: https://github.com/schubergphilis/ai-training/blob/cb658ad1859c1931f36b58fe8315e1883a927643/docs/agents/writing-a-lesson.md
 Hardy 1988:
   type: paper
   title: "The Confused Deputy (or why capabilities might have been invented)"

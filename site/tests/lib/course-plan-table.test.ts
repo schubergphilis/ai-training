@@ -90,7 +90,7 @@ describe('exerciseKinds', () => {
 
 describe('issueUrl', () => {
 	it('builds the GitHub URL, or nothing without an issue', () => {
-		expect(issueUrl(42)).toBe('https://github.com/lsimons/ai-training/issues/42');
+		expect(issueUrl(42)).toBe('https://github.com/schubergphilis/ai-training/issues/42');
 		expect(issueUrl(undefined)).toBeUndefined();
 	});
 });

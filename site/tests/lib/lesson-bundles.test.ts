@@ -5,8 +5,8 @@ import { bibliography, competencies, docs, topics } from './content';
 
 vi.mock('astro:content', async () => (await import('./content')).mockContent());
 
-const site = 'https://lsimons.github.io';
-const ROOT = 'https://lsimons.github.io/ai-training';
+const site = 'https://schubergphilis.github.io';
+const ROOT = 'https://schubergphilis.github.io/ai-training';
 
 describe('lessonUrl', () => {
 	it('is the lesson page under site and base', () => {

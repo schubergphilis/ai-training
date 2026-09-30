@@ -64,7 +64,7 @@ import sys
 from collections.abc import Mapping, Sequence
 from typing import Literal, NoReturn, NotRequired, TypedDict, cast
 
-REPO = "lsimons/ai-training"
+REPO = "schubergphilis/ai-training"
 USAGE = "usage: mise run wave-status -- <wave-branch> <issue> [<issue> ...]"
 
 # The accounts whose `Verdict:` comments a lead acts on.

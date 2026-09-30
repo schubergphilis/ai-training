@@ -37,7 +37,7 @@ On 2026-09-27 the site publishes these machine-readable files:
 Starlight builds the sitemap when `site` is set in the Astro config
 (<https://starlight.astro.build/guides/customization/#enable-sitemap>).
 All paths in this spec are under the base path, so `/data/tutor.md` is
-`https://lsimons.github.io/ai-training/data/tutor.md`.
+`https://schubergphilis.github.io/ai-training/data/tutor.md`.
 
 The other pages are HTML inside the Starlight page frame: the sidebar,
 the "On this page" menu, the footer and the widget scripts. An agent that
@@ -87,11 +87,11 @@ What this spec takes from it is cited to that page in each section.
 Page URLs on this site end in `/`. The alternate is the page URL
 with `index.md` appended:
 
-| Page                                                              | Alternate                                                                 |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `https://lsimons.github.io/ai-training/safety/agent-risk/`        | `https://lsimons.github.io/ai-training/safety/agent-risk/index.md`        |
-| `https://lsimons.github.io/ai-training/safety/`                   | `https://lsimons.github.io/ai-training/safety/index.md`                   |
-| `https://lsimons.github.io/ai-training/topics/safety/agent-risk/` | `https://lsimons.github.io/ai-training/topics/safety/agent-risk/index.md` |
+| Page                                                                     | Alternate                                                                        |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `https://schubergphilis.github.io/ai-training/safety/agent-risk/`        | `https://schubergphilis.github.io/ai-training/safety/agent-risk/index.md`        |
+| `https://schubergphilis.github.io/ai-training/safety/`                   | `https://schubergphilis.github.io/ai-training/safety/index.md`                   |
+| `https://schubergphilis.github.io/ai-training/topics/safety/agent-risk/` | `https://schubergphilis.github.io/ai-training/topics/safety/agent-risk/index.md` |
 
 The proposal asks for a Markdown version of a page at the page's own URL
 with `.md` added, and says that a URL without a file name adds
@@ -112,7 +112,7 @@ agree.
 Each page with an alternate has, in its `<head>`:
 
 ```html
-<link rel="alternate" type="text/markdown" href="https://lsimons.github.io/ai-training/safety/agent-risk/index.md">
+<link rel="alternate" type="text/markdown" href="https://schubergphilis.github.io/ai-training/safety/agent-risk/index.md">
 ```
 
 The proposal recommends this link relation for a page's Markdown version
@@ -131,7 +131,7 @@ An alternate is UTF-8 Markdown with no frontmatter:
 
 > What changes once an AI can act instead of only answer. How to decide what it may reach and do on its own, and where a person must approve first.
 
-Page: https://lsimons.github.io/ai-training/safety/agent-risk/
+Page: https://schubergphilis.github.io/ai-training/safety/agent-risk/
 License: CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
 
 <the body>
@@ -219,7 +219,7 @@ file.
 ### Place
 
 The file is `/llms.txt` under the base path:
-`https://lsimons.github.io/ai-training/llms.txt`. The proposal lets an
+`https://schubergphilis.github.io/ai-training/llms.txt`. The proposal lets an
 `llms.txt` file sit at any path of a site, where it covers the pages
 under that path, and names a GitHub Pages project site as a case this
 allows (llmstxt.org, "Proposal" and "Existing standards"). So the file
@@ -228,7 +228,7 @@ at `/ai-training/llms.txt` covers the site.
 When `llms.txt` ships (#500), each page of the site gets in its `<head>`:
 
 ```html
-<link rel="describedby" href="https://lsimons.github.io/ai-training/llms.txt">
+<link rel="describedby" href="https://schubergphilis.github.io/ai-training/llms.txt">
 ```
 
 The proposal recommends `describedby` for the `llms.txt` file that covers
@@ -273,8 +273,8 @@ A worked excerpt, with the descriptions as the data tree has them on
 
 ## Safety
 
-- [Safety](https://lsimons.github.io/ai-training/safety/index.md): Using AI safely, and judging the risk of letting an agent act.
-- [What may go into an AI tool](https://lsimons.github.io/ai-training/safety/responsible-use/index.md): Where a prompt goes once you press enter, and which of the data you handle may follow it. How to try a new tool with dummy data, and when to say that AI helped.
+- [Safety](https://schubergphilis.github.io/ai-training/safety/index.md): Using AI safely, and judging the risk of letting an agent act.
+- [What may go into an AI tool](https://schubergphilis.github.io/ai-training/safety/responsible-use/index.md): Where a prompt goes once you press enter, and which of the data you handle may follow it. How to try a new tool with dummy data, and when to say that AI helped.
 ```
 
 ### `llms-full.txt`
@@ -388,15 +388,17 @@ crawlers included, and on 2026-09-26 that the site ships no `robots.txt`.
 - The Robots Exclusion Protocol puts the rules in a file named
   `/robots.txt` at the top-level path of a host (RFC 9309, section 2.3,
   <https://www.rfc-editor.org/rfc/rfc9309>). For this project site that is
-  `https://lsimons.github.io/robots.txt`, which this repository doesn't
-  serve. A `robots.txt` under `/ai-training/` isn't a place the protocol
-  names.
-- That URL returned 404 on 2026-09-26 and again on 2026-09-27. RFC 9309
+  `https://schubergphilis.github.io/robots.txt`, which this repository
+  doesn't serve. A `robots.txt` under `/ai-training/` isn't a place the
+  protocol names.
+- That URL returned 404 on 2026-09-30, after the move from
+  `lsimons.github.io`, whose `robots.txt` also returned 404 on 2026-09-26
+  and 2026-09-27. RFC 9309
   (section 2.3.1.3) says that when the file is unavailable, with a status
   in the 400 to 499 range, a crawler may access any resource on the host.
   So the 404 allows every crawler, which is the stance.
-- No `robots.txt` is added in this repository or in the `lsimons.github.io`
-  repository.
+- No `robots.txt` is added in this repository or in the
+  `schubergphilis.github.io` repository.
 - The license and the sitemap index link, which a `robots.txt` would
   otherwise carry, are in `llms.txt`.
 

@@ -340,8 +340,8 @@ describe('CoursePlan', () => {
 		expect(html).toContain(
 			'<a class="course-plan-objective" href="/ai-training/competencies/concepts/explains-models/#o1" title="o1">o1</a>',
 		);
-		expect(html).toContain('<a href="https://github.com/lsimons/ai-training/issues/42">#42</a>');
-		expect(html.match(/github\.com\/lsimons\/ai-training\/issues\//g)).toHaveLength(1);
+		expect(html).toContain('<a href="https://github.com/schubergphilis/ai-training/issues/42">#42</a>');
+		expect(html.match(/github\.com\/schubergphilis\/ai-training\/issues\//g)).toHaveLength(1);
 		expect(html).toContain('<td>Deeper</td>');
 	});
 	it("shows a live lesson's estimate from its page and a planned lesson's target, each labeled", async () => {

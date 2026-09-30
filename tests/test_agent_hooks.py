@@ -421,7 +421,7 @@ def test_commits_and_pushes_that_keep_the_hooks_pass(command: str) -> None:
 @pytest.mark.parametrize(
     "command",
     [
-        "gh repo delete lsimons/ai-training --yes",
+        "gh repo delete schubergphilis/ai-training --yes",
         "gh api -X DELETE repos/o/r/git/refs/heads/x",
         "gh api repos/o/r/issues/comments/1 -X DELETE",
         "gh api repos/o/r/issues/comments/1 -XDELETE",
@@ -919,7 +919,7 @@ def test_the_code_reviewer_may_not_run_the_security_commands(command: str) -> No
         "mise run vuln && git push",
         "echo $(mise run site-audit; rm -rf site)",
         "gh issue create --title x --body y",
-        "gh api -X POST repos/lsimons/ai-training/security-advisories",
+        "gh api -X POST repos/schubergphilis/ai-training/security-advisories",
         "zizmor .",
         "osv-scanner scan -L uv.lock",
         "GH_TOKEN=x mise run audit",

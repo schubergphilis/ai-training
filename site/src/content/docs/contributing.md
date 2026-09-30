@@ -5,7 +5,7 @@ description: Building the site and contributing to it.
 
 This site is built with [Astro Starlight](https://starlight.astro.build/) and
 published to GitHub Pages. Contributions are welcome - see
-[CONTRIBUTING.md](https://github.com/lsimons/ai-training/blob/main/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/schubergphilis/ai-training/blob/main/CONTRIBUTING.md)
 in the repository root.
 
 ## The site

@@ -95,7 +95,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Literal, NoReturn, NotRequired, TypedDict, cast
 
-REPO = "lsimons/ai-training"
+REPO = "schubergphilis/ai-training"
 SITE = Path(__file__).resolve().parent.parent / "site"
 
 # The skipped reason `--only` gives. `format_wave` groups these on one line.

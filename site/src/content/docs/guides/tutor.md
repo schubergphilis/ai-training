@@ -20,7 +20,7 @@ Install the skill into your user directory, so it is found from any folder
 you start the agent in:
 
 ```sh
-npx skills add lsimons/ai-training --skill ai-tutor -g
+npx skills add schubergphilis/ai-training --skill ai-tutor -g
 ```
 
 The `skills` command detects which agents you have and installs the skill
@@ -42,14 +42,14 @@ URL. Start your agent in any folder and give it the lesson.
 In Claude Code, the skill has a slash command:
 
 ```text
-/ai-tutor https://lsimons.github.io/ai-training/coding-with-agents/first-session/
+/ai-tutor https://schubergphilis.github.io/ai-training/coding-with-agents/first-session/
 ```
 
 opencode has no slash command per skill, so write a plain request that
 names the skill:
 
 ```text
-Use the ai-tutor skill on https://lsimons.github.io/ai-training/coding-with-agents/first-session/
+Use the ai-tutor skill on https://schubergphilis.github.io/ai-training/coding-with-agents/first-session/
 ```
 
 The tutor first fetches its instructions and the lesson from the site, one
@@ -139,5 +139,5 @@ than from the page. Check two things:
    tutor asks you for a lesson URL instead.
 
 If both are fine and it still fails, file an issue in the
-[issue tracker](https://github.com/lsimons/ai-training/issues) with the
+[issue tracker](https://github.com/schubergphilis/ai-training/issues) with the
 failed URL and the tutor's message.

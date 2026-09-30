@@ -72,7 +72,7 @@ test('the "Open in tutor" block is on a lesson page and not on a course page', a
 	const block = page.locator('[data-tutor-block]');
 	await expect(block).toHaveCount(1);
 	await expect(block.locator('pre code').nth(1)).toHaveText(
-		`/ai-tutor https://lsimons.github.io/ai-training/${lesson}/`,
+		`/ai-tutor https://schubergphilis.github.io/ai-training/${lesson}/`,
 	);
 	await page.goto('building-agents/');
 	await expect(page.locator('[data-tutor-block]')).toHaveCount(0);

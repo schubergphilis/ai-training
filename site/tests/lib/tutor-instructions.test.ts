@@ -115,8 +115,8 @@ describe('tutorBase', () => {
 
 	it.each([
 		['another host', 'https://example.com/ai-training/using-agents/delegating/'],
-		['a look-alike host', 'https://lsimons.github.io.example.com/ai-training/using-agents/delegating/'],
-		['credentials before another host', 'https://lsimons.github.io@example.com/ai-training/'],
+		['a look-alike host', 'https://schubergphilis.github.io.example.com/ai-training/using-agents/delegating/'],
+		['credentials before another host', 'https://schubergphilis.github.io@example.com/ai-training/'],
 		['the published host over http', `${ROOT.replace('https:', 'http:')}/using-agents/delegating/`],
 		['localhost over https', 'https://localhost:4321/ai-training/'],
 		['localhost without a port', 'http://localhost/ai-training/'],

@@ -118,7 +118,7 @@ has nothing to say.
 
 ## Process
 
-- Git remote is GitHub, `lsimons/ai-training`. Use `gh`.
+- Git remote is GitHub, `schubergphilis/ai-training`. Use `gh`.
 - Issues and labels: `docs/agents/issue-tracker.md`. Triage with the
   maintainer: `docs/agents/triage.md`.
 - Many builders and reviewers in parallel: `docs/agents/orchestration.md`.

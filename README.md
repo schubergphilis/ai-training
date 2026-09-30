@@ -4,14 +4,14 @@ An open training suite for getting started with AI: concepts, safety, using
 AI agents, AI-assisted software engineering, and customizing and building AI
 agents.
 
-Site: <https://lsimons.github.io/ai-training/>
+Site: <https://schubergphilis.github.io/ai-training/>
 
 The basic material (AI concepts, AI safety, using AI agents) is written for
 anyone doing knowledge work. The rest is written for software engineers. The
 site is static HTML with interactive lessons that keep your progress in your
 browser, and you can also study a lesson from a Claude Code or opencode
 session with Claude acting as a tutor. Install the ai-tutor skill with
-`npx skills add lsimons/ai-training --skill ai-tutor -g` and start it with
+`npx skills add schubergphilis/ai-training --skill ai-tutor -g` and start it with
 `/ai-tutor <lesson URL>`. The skill (`.claude/skills/ai-tutor/SKILL.md`,
 spec S08) fetches its rules and the lesson from the published site.
 
@@ -19,7 +19,7 @@ spec S08) fetches its rules and the lesson from the published site.
 site are written by people working with AI agents, and reviewed by people.
 
 The design is in [`docs/spec/`](./docs/spec/) and the open work is in the
-[issue tracker](https://github.com/lsimons/ai-training/issues).
+[issue tracker](https://github.com/schubergphilis/ai-training/issues).
 
 ## Origins
 
@@ -90,7 +90,7 @@ the target path.
 
 GitHub Pages serves the site with the source set to **GitHub Actions**. A
 push to `main` builds and deploys it to
-`https://lsimons.github.io/ai-training/`, and the `github-pages` environment
+`https://schubergphilis.github.io/ai-training/`, and the `github-pages` environment
 only accepts deployments from `main`.
 
 ## Contributing

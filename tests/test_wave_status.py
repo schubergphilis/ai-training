@@ -45,7 +45,7 @@ def comment(author: str, body: str, created_at: str) -> IssueComment:
         "author": author,
         "body": body,
         "createdAt": created_at,
-        "url": f"https://github.com/lsimons/ai-training/issues/1#{created_at}",
+        "url": f"https://github.com/schubergphilis/ai-training/issues/1#{created_at}",
     }
 
 
@@ -152,7 +152,7 @@ def test_last_trusted_verdict_takes_the_newest_in_any_input_order_and_counts_rep
         "verdict": "approve",
         "author": "lsimons",
         "createdAt": "2026-09-24T12:00:00Z",
-        "url": "https://github.com/lsimons/ai-training/issues/1#2026-09-24T12:00:00Z",
+        "url": "https://github.com/schubergphilis/ai-training/issues/1#2026-09-24T12:00:00Z",
         "commentsAfter": 1,
         "leadReCheck": None,
     }
@@ -224,7 +224,9 @@ def test_comment_kind_tells_the_kinds_apart_by_their_text() -> None:
     assert comment_kind("Findings.\n\nBranch: feat/1-x\nVerdict: approve") == "verdict"
     assert comment_kind("Unfinished: feat/1-x\n- docs") == "unfinished"
     assert (
-        comment_kind("re-checked by lead: https://github.com/lsimons/ai-training/commit/abc123")
+        comment_kind(
+            "re-checked by lead: https://github.com/schubergphilis/ai-training/commit/abc123"
+        )
         == "lead-re-check"
     )
     assert comment_kind("Re-checked by lead: abc123\n\nBranch: feat/1-x") == "lead-re-check"
@@ -279,7 +281,7 @@ def test_open_unfinished_keeps_a_trailing_one_open_with_what_is_left_and_no_attr
     expected: Unfinished = {
         "author": "lsimons",
         "createdAt": "2026-09-24T10:00:00Z",
-        "url": "https://github.com/lsimons/ai-training/issues/1#2026-09-24T10:00:00Z",
+        "url": "https://github.com/schubergphilis/ai-training/issues/1#2026-09-24T10:00:00Z",
         "left": "- the e2e spec\n- the docs",
     }
     assert open_unfinished([unfinished("feat/1-x", "2026-09-24T10:00:00Z")], "feat/1-x", ONE) == (
@@ -936,7 +938,7 @@ class FakeCommands:
 
 LS_REMOTE = "git ls-remote --heads origin"
 WORKTREES = "git worktree list --porcelain"
-GH12 = "gh issue view 12 -R lsimons/ai-training --json comments"
+GH12 = "gh issue view 12 -R schubergphilis/ai-training --json comments"
 
 
 class Captured:
@@ -1099,7 +1101,7 @@ def test_pointer_lists_the_other_issues_branch_with_its_verdict_and_next_step() 
         assert branch["verdict"] is not None and branch["verdict"]["url"] == review["url"]
         assert branch.get("pointer") == {
             "issue": 388,
-            "url": "https://github.com/lsimons/ai-training/issues/1#2026-09-24T10:00:00Z",
+            "url": "https://github.com/schubergphilis/ai-training/issues/1#2026-09-24T10:00:00Z",
         }
 
 
@@ -1201,7 +1203,7 @@ def test_main_fetches_the_comments_of_the_owner_issue_of_a_pointer(
             }
         )
 
-    gh388 = "gh issue view 388 -R lsimons/ai-training --json comments"
+    gh388 = "gh issue view 388 -R schubergphilis/ai-training --json comments"
     code, out = run_main(
         monkeypatch,
         capsys,
@@ -1280,7 +1282,7 @@ def test_main_exits_1_when_the_owner_issue_of_a_pointer_cannot_be_read(
             ]
         }
     )
-    gh388 = "gh issue view 388 -R lsimons/ai-training --json comments"
+    gh388 = "gh issue view 388 -R schubergphilis/ai-training --json comments"
     code, out = run_main(
         monkeypatch,
         capsys,

@@ -56,13 +56,13 @@ can open any lesson in a tutor session.
 
 ## Distribution
 
-| Rule            | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Source of truth | The skill directory `.claude/skills/ai-tutor/` in the GitHub repo `lsimons/ai-training`, on `main`.                                                                                                                                                                                                                                                                                                                                                                |
-| Install         | The `skills` CLI, which installs a skill from a GitHub repo into Claude Code or opencode: `npx skills add lsimons/ai-training --skill ai-tutor -g`. The `-g` flag installs to the learner's user directory, so the skill is found from any project rather than only from the folder the command ran in. `npx skills list -g` shows it afterwards. The exact command is printed by the lesson page block and the getting-started page, and both print the same one. |
-| Not offered     | A plugin marketplace entry, a `curl` one-liner, a manual copy of the file. One install path keeps the instructions on the page short and the support surface small.                                                                                                                                                                                                                                                                                                |
-| Precondition    | The repo is public, which it is as of the "ready to go public" release. The install command fails on a private repo, so the page never showed it before that.                                                                                                                                                                                                                                                                                                      |
-| Invocation      | `/ai-tutor <lesson URL>` in Claude Code. opencode has no per-skill slash command, so there the learner writes a plain request that names the skill: `Use the ai-tutor skill on <lesson URL>`. The skill's `description` field says what it does so either agent can also pick it up from a plain request.                                                                                                                                                          |
+| Rule            | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source of truth | The skill directory `.claude/skills/ai-tutor/` in the GitHub repo `schubergphilis/ai-training`, on `main`.                                                                                                                                                                                                                                                                                                                                                                |
+| Install         | The `skills` CLI, which installs a skill from a GitHub repo into Claude Code or opencode: `npx skills add schubergphilis/ai-training --skill ai-tutor -g`. The `-g` flag installs to the learner's user directory, so the skill is found from any project rather than only from the folder the command ran in. `npx skills list -g` shows it afterwards. The exact command is printed by the lesson page block and the getting-started page, and both print the same one. |
+| Not offered     | A plugin marketplace entry, a `curl` one-liner, a manual copy of the file. One install path keeps the instructions on the page short and the support surface small.                                                                                                                                                                                                                                                                                                       |
+| Precondition    | The repo is public, which it is as of the "ready to go public" release. The install command fails on a private repo, so the page never showed it before that.                                                                                                                                                                                                                                                                                                             |
+| Invocation      | `/ai-tutor <lesson URL>` in Claude Code. opencode has no per-skill slash command, so there the learner writes a plain request that names the skill: `Use the ai-tutor skill on <lesson URL>`. The skill's `description` field says what it does so either agent can also pick it up from a plain request.                                                                                                                                                                 |
 
 ## Bootstrap contract
 
@@ -121,15 +121,15 @@ it relies on the model following it.
 The build emits one Markdown file with a YAML frontmatter block at:
 
 ```text
-https://lsimons.github.io/ai-training/data/tutor.md
+https://schubergphilis.github.io/ai-training/data/tutor.md
 ```
 
-| Field (frontmatter) | Holds                                                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`           | Integer, starts at 1. Bumped when the bootstrap contract or the bundle format changes in a way an older bootstrap can't follow.                  |
-| `built`             | ISO date of the build that emitted the file.                                                                                                     |
-| `bundle_url`        | The bundle URL template, `https://lsimons.github.io/ai-training/data/lessons/{area}/{lesson}.json`, so the derivation rule ships with the rules. |
-| `site`              | The site's base URL without a trailing slash, for citations (`{site}/glossary/`).                                                                |
+| Field (frontmatter) | Holds                                                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`           | Integer, starts at 1. Bumped when the bootstrap contract or the bundle format changes in a way an older bootstrap can't follow.                         |
+| `built`             | ISO date of the build that emitted the file.                                                                                                            |
+| `bundle_url`        | The bundle URL template, `https://schubergphilis.github.io/ai-training/data/lessons/{area}/{lesson}.json`, so the derivation rule ships with the rules. |
+| `site`              | The site's base URL without a trailing slash, for citations (`{site}/glossary/`).                                                                       |
 
 | Section (body)     | Holds                                                                                                                                                                                                                  |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -156,17 +156,17 @@ so the two files can't disagree, and `built` is the UTC date of the build.
 One JSON file per lesson page, under the site's data path:
 
 ```text
-https://lsimons.github.io/ai-training/data/lessons/<area>/<lesson>.json
+https://schubergphilis.github.io/ai-training/data/lessons/<area>/<lesson>.json
 ```
 
 The learner pastes the lesson page URL. The bootstrap derives the bundle
 URL by inserting `data/lessons/` after the base path and replacing the
 trailing slash with `.json`:
 
-| Lesson page                                                      | Bundle                                                                            |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `https://lsimons.github.io/ai-training/using-agents/delegating/` | `https://lsimons.github.io/ai-training/data/lessons/using-agents/delegating.json` |
-| `https://lsimons.github.io/ai-training/safety/agent-risk/`       | `https://lsimons.github.io/ai-training/data/lessons/safety/agent-risk.json`       |
+| Lesson page                                                             | Bundle                                                                                   |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `https://schubergphilis.github.io/ai-training/using-agents/delegating/` | `https://schubergphilis.github.io/ai-training/data/lessons/using-agents/delegating.json` |
+| `https://schubergphilis.github.io/ai-training/safety/agent-risk/`       | `https://schubergphilis.github.io/ai-training/data/lessons/safety/agent-risk.json`       |
 
 Course pages (`<area>/index.mdx`), guides and reference pages have no
 bundle. A fetch of a bundle that doesn't exist is a 404, and the bootstrap
@@ -230,7 +230,7 @@ order:
 
 1. The install command, once, as a code line with a copy button.
 2. The paste-ready line for this lesson, as a code line with a copy button:
-   `/ai-tutor https://lsimons.github.io/ai-training/<area>/<lesson>/`. Under
+   `/ai-tutor https://schubergphilis.github.io/ai-training/<area>/<lesson>/`. Under
    it, one line for opencode: `In opencode, ask: Use the ai-tutor skill on <the same URL>`.
 3. One sentence: the tutor can't read the progress stored in this browser,
    so export it from the settings page and paste the file if a recall

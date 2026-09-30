@@ -347,7 +347,7 @@ coordinator.
 ## Session records
 
 The records of waves 1 to 5 are comments on the run issue
-[Badger (#359)](https://github.com/lsimons/ai-training/issues/359), and
+[Badger (#359)](https://github.com/schubergphilis/ai-training/issues/359), and
 they are the form a wave's session record follows: counts, what review
 caught, and what the builder prompt should have said. A wave under
 `/wave` puts its record in the body of its wave pull request.
