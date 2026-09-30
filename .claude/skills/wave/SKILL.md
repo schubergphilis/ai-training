@@ -453,8 +453,8 @@ printed.
    - `merged` from a wave whose prompt said the approval is withdrawn:
      the lead merged without the maintainer's yes. Chime, report that to
      the maintainer, and stop.
-   - `merged`: play `afplay /System/Library/Sounds/Glass.aiff` and go to
-     step 1.
+   - `merged`: play `afplay /System/Library/Sounds/Glass.aiff`, check the
+     run issue as "The run issue after a merge" says, and go to step 1.
    - `open` with the reason `approval withdrawn` on the `For the maintainer`
      line, from a wave whose prompt said the approval is withdrawn:
      chime, and ask the maintainer one yes-or-no question, whether to
@@ -465,9 +465,10 @@ printed.
      merge fails, keep the `awaiting approval` line, report the error to
      the maintainer, and stop. After the merge, wait for CI on `main` with
      `gh run watch` on the newest run, and replace the wave's line with
-     `wave <k>: merged, PR #<n>`. Under `--only`, remove the issues the
-     merged PR closes
-     (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number'`)
+     `wave <k>: merged, PR #<n>`, and check the run issue as "The run
+     issue after a merge" says. Under `--only`, remove the issues the
+     merged PR closes, without the run issue's own number
+     (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number | select(. != <run>)'`),
      from `Remaining --only`, as "Resuming after a restart" step 6 does.
      Then treat the wave as `merged` and go to step 1, and give the CI
      result in your next message. On no, replace the line with
@@ -480,6 +481,24 @@ printed.
    - `failed`: chime, report to the maintainer, and stop. The run issue is
      left open with its `In flight` line, so `/wave --resume <Name>`
      resumes the wave rather than restarting it.
+
+## The run issue after a merge
+
+GitHub closes every issue that a merged pull request's body or commit
+messages name after a closing keyword: `close`, `closes`, `closed`,
+`fix`, `fixes`, `fixed`, `resolve`, `resolves` or `resolved`, in any case
+and with or without a colon
+([Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)).
+A wave PR body that says "would have closed #<run>" closes the run issue
+when the wave merges, as PR #520 closed #513. The lead writes the body
+so that this doesn't happen (`wave-lead.md`, "Integration"). After every
+wave merge, check it anyway:
+`gh issue view <run> --json state -q .state`. When it prints `CLOSED`,
+reopen the run issue with a comment that says why, before you decide
+whether a stop condition holds:
+`gh issue reopen <run> --comment "GitHub closed this run issue when PR #<n> merged, because the PR's text names it after a closing keyword. The dispatcher reopens it and closes it itself when the run ends."`,
+followed by the attribution lines. "When the run ends" then closes it
+with its own comment when the run ends.
 
 ## Harness runs
 
@@ -551,9 +570,11 @@ fails:
    as it is ("When the run ends").
 6. **After the merge.** Replace the wave's line with
    `wave <k>: merged, PR #<n>`. There is no new report, so the merged
-   issues are the ones the merged PR closes
-   (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number'`).
-   Under `--only`, remove them from `Remaining --only`. The collision
+   issues are the ones the merged PR closes, without the run issue's own
+   number
+   (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number | select(. != <run>)'`).
+   Then check the run issue as "The run issue after a merge" says.
+   Under `--only`, remove the merged issues from `Remaining --only`. The collision
    notes were copied when the `open` report came. Close the run when a
    stop condition holds (under `--only`, an empty `Remaining --only`), as
    "When the run ends" says. Then tell the

@@ -125,9 +125,16 @@ builder.
 Run `mise run ci` on the wave branch. Push it and open ONE pull request
 against `main` with the review table (issue, branch, review comment link,
 re-check link), the session record the template asks for, the attribution
-lines and `Closes #N` for every merged issue. The run issue belongs to the
-dispatcher: you comment on it only for the follow-ups under `--no-filing`,
-and you never edit its body.
+lines and `Closes #N` for every merged issue. `Closes` lines name the
+wave's own issues only. On the merge, GitHub closes every issue that the
+body or a commit message names after a closing keyword, such as
+`closed #N` or `Fixes: #N`
+([Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)
+lists the nine), and PR #520 closed its run issue that way. So the body
+and your commit messages refer to the run issue as `run issue #<n>`, and
+a sentence that names it contains no form of close, fix or resolve.
+The run issue belongs to the dispatcher: you comment on it only for the
+follow-ups under `--no-filing`, and you never edit its body.
 
 ## Standing approval
 
@@ -171,7 +178,10 @@ in the wave worktree before the merge.
   `## After the restart` is one checklist, collected from the builders'
   lists in wave order, each item saying what to type and what to expect.
   It ends with the maintainer's merge decision and the items that can
-  run only after the merge. `## settings.json` holds each exact change
+  run only after the merge. An item that says what happens to the run
+  issue follows the run issue rule in "Integration": write "the
+  dispatcher ends the run" instead of a form of close next to its
+  number. `## settings.json` holds each exact change
   the builders gave, for the maintainer to apply, or
   `settings.json: no change needed`. Agents stay denied
   `Edit(./.claude/settings.json)`.
