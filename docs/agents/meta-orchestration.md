@@ -228,9 +228,9 @@ One tick:
    changes code, which is every branch of a code wave. A nits issue is left
    out because it arrives as the nits row. An issue with more than one
    kind label is listed under Skipped as `has more than one kind label`
-   in every kind of wave, until someone relabels it. A code or harness
-   wave leaves out an issue a plan file claims too, as a content wave
-   does, since lesson work runs only in a lessons wave (#526).
+   in a content, code or harness wave, until someone relabels it. A code
+   or harness wave leaves out an issue a plan file claims too, as a
+   content wave does, since lesson work runs only in a lessons wave (#526).
    The picker reads the tree of the checkout it runs in, which is why the
    pull comes first.
    The dispatcher then decides on the nits row: the one open
