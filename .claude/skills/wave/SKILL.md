@@ -348,6 +348,15 @@ printed.
    - `next-wave: gh issue list failed: <N> issues reach the -L limit, so the list may be cut short`:
      the kind has more ready issues than `ISSUE_LIMIT` in
      `scripts/next_wave.py`. File a `code` issue to raise it.
+   - `next-wave: gh issue list failed: this gh has no blockedBy field, which needs gh <version> or later`,
+     or the same after `gh issue view`: this machine's `gh` is older than
+     the relationship fields (`docs/agents/issue-tracker.md`). Upgrade
+     `gh` to the version the line names.
+   - `next-wave: gh issue list failed: unreadable output: ...` whose
+     reason names `blockedBy`, such as `blockedBy lists <N> of <M> blockers`
+     or a blocker in another repository: GitHub gave an issue's
+     relationships in a form the picker can't read. Fix the relationship
+     on that issue when it is wrong, and otherwise file a `code` issue.
    - Any other `next-wave: gh issue list failed: ...`: `gh` can't reach
      GitHub or isn't logged in.
    - `next-wave: bun scripts/lesson-plan.mjs failed: ...`: the lesson plan
@@ -361,7 +370,7 @@ printed.
      `mise run setup` in this checkout. When `uv run --locked` refuses a
      stale `uv.lock`, `mise run setup` fails too, and the fix belongs on
      `main`.
-   - A Python traceback, or a line whose reason starts with
+   - A Python traceback, or any other line whose reason starts with
      `unreadable output:`: a picker bug, to file as a `code` issue.
 5. **Claim.** For each issue of the wave, assign it
    (`gh issue edit <n> --add-assignee @me`, and the picker skips assigned
