@@ -21,7 +21,7 @@ exercise:
   brief: >-
     For one agent task you have seen or read about, list the effects to inspect afterwards (what
     changed and what was sent) and the one step that needs a pause first.
-sources: [CS50x, Academy ai-fluency-framework-foundations]
+sources: [CS50x, Liu 2024b, Academy ai-fluency-framework-foundations]
 issue: 128
 minutes: 15
 proofs: [safety/checking-what-an-agent-changed/replay.py]
@@ -32,6 +32,7 @@ notes: >-
   carries no Predict run, because safety is a foundations area. The fixture is CI proof only: it
   is in proofs, so mise run examples fails when it prints a line no text fence on the page shows
   (#311). It doesn't print the request, because the page quotes it wrapped over two lines. The folder, files,
-  session and summary are invented, and the page holds no person names. CS50 is cited for the
-  endorsed-answers idea only, in our own words. The Academy course is linked and its Discernment
-  framing paraphrased, with no text copied.
+  session and summary are invented, and the page holds no person names. The CS50x course page is
+  cited for the AI helper and Liu 2024b (section 3.4, Figure 3) for the endorsed forum answers, in
+  our own words. The Academy course is linked and its Discernment framing paraphrased, with no
+  text copied.
