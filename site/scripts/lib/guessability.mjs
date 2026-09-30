@@ -14,7 +14,10 @@
  * - `hedge`: a correct option has a hedge word from `HEDGES` (`usually`,
  *   `may`, `depends`, ...) and no wrong option has one.
  * - `echo`: a correct option shares a content word (four or more letters,
- *   not in `STOPWORDS`) with the stem and no wrong option does.
+ *   not in `STOPWORDS`) with the stem and no wrong option does. The stem
+ *   is the one the learner reads, so the caller passes it without its
+ *   citations (`stemOf` of `checkGuessability`): the export's stem spells
+ *   a citation out as its source, and the page shows a number there.
  * - `fixed-position`: within one lesson with `FIXED_POSITION_MIN_ITEMS` or
  *   more `choice`/`scenario` items, one index holds the correct option in
  *   more than `FIXED_POSITION_MAX_SHARE` of them (three quarters). Four
@@ -225,9 +228,11 @@ const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
 /**
  * The per-item cue names (`longest`, `hedge`, `echo`) an item trips.
- * `fixed-position` needs the whole lesson; see `fixedPositionLessons`.
+ * `stem` is the text `echo` compares the options with, the item's own
+ * `stem` unless the caller passes another. `fixed-position` needs the
+ * whole lesson; see `fixedPositionLessons`.
  */
-export function itemCues(item) {
+export function itemCues(item, stem = item?.stem ?? '') {
 	const split = splitOptions(item);
 	if (!split) return [];
 	const { correct, wrong } = split;
@@ -237,7 +242,7 @@ export function itemCues(item) {
 	if (correctLength > wrongLength * LONGEST_RATIO && correctLength - wrongLength >= LONGEST_MIN_GAP)
 		cues.push('longest');
 	if (correct.some(hasHedge) && !wrong.some(hasHedge)) cues.push('hedge');
-	const stemWords = contentWords(item.stem ?? '');
+	const stemWords = contentWords(stem);
 	const echoes = (o) => [...contentWords(o)].some((w) => stemWords.has(w));
 	if (stemWords.size > 0 && correct.some(echoes) && !wrong.some(echoes)) cues.push('echo');
 	return cues;
@@ -295,8 +300,13 @@ export function fixedPositionLessons(items, exempt = () => false) {
  * messages for items that trip a cue, for bad option data and for
  * exemptions that name a cue that does not trip or miss one that does, and
  * `exemptions` one line per `guessable` item with its cues and reason.
+ * `stemOf(item)` is the stem the `echo` cue reads, the item's own `stem`
+ * by default; checkpoints.mjs passes the page's stem without citations.
+ *
+ * @param {Array<Record<string, unknown>>} items
+ * @param {(item: Record<string, unknown>) => string} [stemOf]
  */
-export function checkGuessability(items) {
+export function checkGuessability(items, stemOf = (item) => (typeof item.stem === 'string' ? item.stem : '')) {
 	const errors = [];
 	const exemptions = [];
 	const positionAll = new Set(fixedPositionLessons(items).map((p) => p.lesson));
@@ -307,7 +317,7 @@ export function checkGuessability(items) {
 		for (const e of optionErrors(item)) errors.push(`${where}: ${e}`);
 		const guessable = item.guessable;
 		if (guessable === undefined || guessable === null) {
-			for (const cue of itemCues(item)) errors.push(`${where}: ${describe(cue)}`);
+			for (const cue of itemCues(item, stemOf(item))) errors.push(`${where}: ${describe(cue)}`);
 			continue;
 		}
 		if (typeof guessable !== 'string') {
@@ -322,7 +332,7 @@ export function checkGuessability(items) {
 			continue;
 		}
 		const inPositionRun = (item.kind === 'choice' || item.kind === 'scenario') && positionAll.has(item.lesson);
-		const tripped = [...itemCues(item), ...(inPositionRun ? ['fixed-position'] : [])];
+		const tripped = [...itemCues(item, stemOf(item)), ...(inPositionRun ? ['fixed-position'] : [])];
 		for (const cue of named)
 			if (!tripped.includes(cue)) errors.push(`${where}: guessable names ${cue}, which does not trip; remove it`);
 		for (const cue of tripped)
