@@ -30,8 +30,7 @@ TEST = os.path.join(HERE, "test_nights.py")
 # (a GIT_DIR pointing elsewhere, GIT_TEMPLATE_DIR, GIT_EXTERNAL_DIFF,
 # GIT_CONFIG_PARAMETERS) can reach it. HOME is set per copy, in `git` below,
 # so no user config is read either. The `_common.py` of reversible-changes,
-# reviewing-the-diff and project-instructions set the same keys. They don't
-# pass `-c maintenance.auto=false` yet, as `git` below does (#560).
+# reviewing-the-diff and project-instructions set the same keys.
 GIT_ENV_BASE = {
     "PATH": os.environ.get("PATH", ""),
     "LANG": "C",

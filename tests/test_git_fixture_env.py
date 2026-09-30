@@ -537,6 +537,8 @@ def test_no_git_fixture_starts_a_maintenance_run(directory: str, tmp_path: pathl
     Some fixtures run no git themselves, so the count of git processes is
     checked over the directory: zero there means the traced `git` was
     never used, and the check would pass without looking.
+    Each traced run must exit and print as an untraced run does, so a
+    fixture that stops before its commit can't pass the check.
     """
     fixtures = [path for path in _fixtures() if path.parent == EXAMPLES / directory]
     assert fixtures != []
@@ -546,7 +548,11 @@ def test_no_git_fixture_starts_a_maintenance_run(directory: str, tmp_path: pathl
         run_dir = tmp_path / str(index)
         run_dir.mkdir()
         env, trace_dir = _traced_env(run_dir)
-        _run(fixture, env)
+        traced = _run(fixture, env)
+        plain = _run(fixture, dict(os.environ))
+        assert (traced.returncode, traced.stdout) == (plain.returncode, plain.stdout), (
+            f"{fixture.name} with the traced git:\n{traced.stderr}"
+        )
         starts, children = maintenance_children(trace_dir)
         total += starts
         if children:
