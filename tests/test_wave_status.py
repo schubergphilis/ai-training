@@ -668,6 +668,10 @@ def test_parked_is_no_reply_to_an_approve_and_keeps_a_lead_re_check() -> None:
 def test_parked_does_not_finish_an_unfinished_branch() -> None:
     left = comment("lsimons", "Unfinished: feat/17-x\n- tests", "2026-09-24T10:30:00Z")
     assert parked17([NEEDS17, left, PARKED17]) == [("feat/17-x", "build", PARKED17["url"])]
+    later_left = at_time(left, "2026-09-24T12:00:00Z")
+    assert parked17([NEEDS17, PARKED17, later_left]) == [("feat/17-x", "build", None)]
+    re_check = comment("lsimons", "re-checked by lead: abc", "2026-09-24T12:00:00Z")
+    assert parked17([NEEDS17, PARKED17, re_check]) == [("feat/17-x", "revise", PARKED17["url"])]
 
 
 def test_parked_on_a_split_names_one_half_and_is_no_reply_on_either() -> None:
