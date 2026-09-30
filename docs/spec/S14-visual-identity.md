@@ -56,28 +56,28 @@ shared accent makes the three sites look related.
 The site keeps Starlight's token model (`site/src/styles/custom.css`): an
 accent ramp, a gray ramp and black and white, per theme. The values:
 
-| Token                    | Light     | Dark      | Role                                    |
-| ------------------------ | --------- | --------- | --------------------------------------- |
-| `--sl-color-accent`      | `#1e80ed` | `#1e80ed` | Borders, rings, progress fills, focus   |
-| `--sl-color-accent-high` | `#1469c8` | `#7fb8f5` | Link text, current page, filled buttons |
-| `--sl-color-accent-low`  | `#e7f2fc` | `#0d2e52` | Tinted backgrounds                      |
-| `--sl-color-white`       | `#1a1f36` | `#f8f9fb` | Headings                                |
-| `--sl-color-gray-2`      | `#2d3142` | `#ecedf2` | Body text                               |
-| `--sl-color-gray-3`      | `#5f6878` | `#b1b8c5` | Secondary text                          |
-| `--sl-color-gray-4`      | `#7f8898` | `#757d8c` | Control borders                         |
-| `--sl-color-gray-5`      | `#e2e5eb` | `#353b4e` | Borders                                 |
-| `--sl-color-gray-6`      | `#f0f2f5` | `#1d2230` | Code and hint backgrounds, dark sidebar |
-| `--sl-color-gray-7`      | `#f8f9fb` | -         | Light sidebar                           |
-| `--sl-color-black`       | `#ffffff` | `#0f1218` | Page background                         |
+| Token                    | Light     | Dark      | Role                                                |
+| ------------------------ | --------- | --------- | --------------------------------------------------- |
+| `--sl-color-accent`      | `#1e80ed` | `#1e80ed` | Borders, rings, progress fills, focus               |
+| `--sl-color-accent-high` | `#1469c8` | `#7fb8f5` | Link text, current page, filled buttons             |
+| `--sl-color-accent-low`  | `#e7f2fc` | `#0d2e52` | Tints, and the header of a prompt or response block |
+| `--sl-color-white`       | `#1a1f36` | `#f8f9fb` | Headings                                            |
+| `--sl-color-gray-2`      | `#2d3142` | `#ecedf2` | Body text                                           |
+| `--sl-color-gray-3`      | `#5f6878` | `#b1b8c5` | Secondary text                                      |
+| `--sl-color-gray-4`      | `#7f8898` | `#757d8c` | Control borders                                     |
+| `--sl-color-gray-5`      | `#e2e5eb` | `#353b4e` | Borders                                             |
+| `--sl-color-gray-6`      | `#f0f2f5` | `#1d2230` | Code and hint backgrounds, dark sidebar             |
+| `--sl-color-gray-7`      | `#f8f9fb` | -         | Light sidebar                                       |
+| `--sl-color-black`       | `#ffffff` | `#0f1218` | Page background                                     |
 
 Three more tokens in `custom.css` set the page and its surfaces, as in the
 learning platform:
 
-| Token          | Light     | Dark      | Role                                                    |
-| -------------- | --------- | --------- | ------------------------------------------------------- |
-| `--at-page`    | `#f0f2f5` | `#0f1218` | The page behind the content                             |
-| `--at-surface` | `#ffffff` | `#1d2230` | Checkpoints, lesson blocks, widgets, cards              |
-| `--at-inset`   | `#f0f2f5` | `#2a2f40` | A block inside a surface, such as a hint or code sample |
+| Token          | Light     | Dark      | Role                                                  |
+| -------------- | --------- | --------- | ----------------------------------------------------- |
+| `--at-page`    | `#f0f2f5` | `#0f1218` | The page behind the content                           |
+| `--at-surface` | `#ffffff` | `#1d2230` | Checkpoints, lesson blocks, widgets, cards            |
+| `--at-inset`   | `#f0f2f5` | `#2a2f40` | A hint or a code sample inside a checkpoint or widget |
 
 In light mode the header and both side menus are white. In dark mode
 both side menus are `#1d2230`. The theme toggle in the header uses the
@@ -127,8 +127,9 @@ buttons, badges, and progress tracks.
 
 - Cards, checkpoint containers, lesson blocks, and widget panels use the
   16px radius and a 1px border in `--sl-color-gray-5`, without a shadow.
-- Starlight's link cards drop their resting shadow and get a small one on
-  hover. A linked card keeps its current lift.
+- Starlight's link cards and the previous and next links at the foot of
+  a page are white in light mode, drop their resting shadow, and get a
+  small one on hover. A linked card keeps its current lift.
 - Buttons, badges (Starlight's and the due count) and progress tracks are
   fully rounded.
 

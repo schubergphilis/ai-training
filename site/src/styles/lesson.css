@@ -20,6 +20,11 @@
 	--at-warn: #9a5800;
 }
 
+/* Plain links in a `not-content` container (the tutor block, the progress
+   lists) get the site's link color instead of the browser's. A link with a
+   class of its own, such as a button, keeps its own rules. */
+:where(.not-content) a:not([class]) { color: var(--sl-color-text-accent); }
+
 /* ---- checkpoints ---- */
 .checkpoint {
 	border: 1px solid var(--sl-color-gray-5);
@@ -129,7 +134,7 @@
 .more-practice-note { color: var(--sl-color-gray-2); }
 .exercise-stretch { border-left: 3px solid var(--sl-color-gray-4); padding-left: 0.75rem; }
 .prompt-block, .response-block { margin: 1rem 0; border: 1px solid var(--sl-color-gray-5); border-radius: var(--at-radius-lg); overflow: hidden; background: var(--at-surface); }
-.prompt-block figcaption, .response-block figcaption { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.3rem 0.75rem; background: var(--at-inset); color: var(--sl-color-gray-2); }
+.prompt-block figcaption, .response-block figcaption { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.3rem 0.75rem; background: var(--sl-color-accent-low); color: var(--sl-color-gray-2); }
 .prompt-block[data-illustrative='true'] figcaption { color: var(--at-warn); }
 .prompt-body { padding: 0.25rem 0.75rem; }
 .prompt-body > :first-child { margin-top: 0.5rem; }
@@ -165,9 +170,12 @@
 /* skills check card (spec S04 "Skills check"): copies of checkpoint markup
    inside a route card, so the checkpoint rules above apply to the copies too. */
 .skills-check { border-left: 4px solid var(--sl-color-accent); }
-/* "Open in tutor" block (spec S08 "Lesson page block"): a command line with its copy button. */
+/* "Open in tutor" block (spec S08 "Lesson page block"): a link to the guide, then the command line with its copy button, on the page background. */
+.tutor-block { margin: 2rem 0 1rem; }
+.tutor-title { margin: 0; font-weight: 600; }
+.tutor-line code { font-family: var(--__sl-font-mono); font-size: 0.875rem; }
 .tutor-line { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; min-width: 0; }
-.tutor-line pre { flex: 1; min-width: 0; margin: 0; padding: 0.4rem 0.75rem; overflow-x: auto; }
+.tutor-line pre { flex: 1; min-width: 0; margin: 0; padding: 0.4rem 0.75rem; overflow-x: auto; background: var(--sl-color-bg-inline-code); border-radius: var(--at-radius-sm); }
 .tutor-copy { font-size: 0.85rem; padding: 0.1rem 0.5rem; border: 1px solid var(--sl-color-gray-4); border-radius: var(--at-radius-pill); background: var(--sl-color-bg); color: var(--sl-color-text); cursor: pointer; white-space: nowrap; }
 .skills-note { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--sl-color-gray-2); }
 .skills-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }

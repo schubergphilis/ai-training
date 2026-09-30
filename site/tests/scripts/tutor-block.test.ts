@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 /**
- * Mounts `tutor-block.ts` on a hand-written copy of the copy buttons
+ * Mounts `tutor-block.ts` on hand-written copy buttons like the ones
  * `lesson/TutorBlock.astro` renders, with a stub clipboard. The component
  * test renders the markup itself, and the e2e suite checks the block on a
  * built lesson page.
@@ -9,7 +9,7 @@ import { mountTutorBlock, RESTORE_MS } from '@scripts/tutor-block';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const markup = `
-<aside class="route-card tutor-block not-content" data-tutor-block>
+<aside class="tutor-block not-content" data-tutor-block>
 	<div class="tutor-line"><pre><code>npx skills add</code></pre>
 		<button type="button" class="tutor-copy" data-copy="npx skills add">Copy</button></div>
 	<div class="tutor-line"><pre><code>/ai-tutor https://example.org/l/</code></pre>

@@ -2,9 +2,9 @@
 /**
  * The "Open in tutor" block (spec S08 "Lesson page block"). The
  * MarkdownContent override renders it on every lesson page after the lesson
- * body. It shows the install command and the paste-ready `/ai-tutor` line for
- * this lesson, each with a copy button, says that the tutor can't read the
- * progress in this browser, and links the getting-started guide. The
+ * body, on the page background. It links the "Study with the tutor" guide,
+ * which has the install command and the rest of the detail, and shows the
+ * paste-ready `/ai-tutor` line for this lesson with a copy button. The
  * absolute lesson URL comes from the page, built with `absoluteUrl()`.
  */
 import { href } from '@lib/url';
@@ -15,31 +15,15 @@ interface Props {
 }
 
 const { lessonUrl } = Astro.props;
-const install = 'npx skills add schubergphilis/ai-training --skill ai-tutor -g';
 const command = `/ai-tutor ${lessonUrl}`;
-const opencodeRequest = `Use the ai-tutor skill on ${lessonUrl}`;
 ---
 
-<aside class="route-card tutor-block not-content" data-tutor-block>
-	<p class="route-title">Open in tutor</p>
-	<p>
-		Work through this lesson with a coding agent that gives hints instead of answers. Install the ai-tutor skill once
-		with the first line, then paste the <code>/ai-tutor</code> line into Claude Code.
-	</p>
-	<div class="tutor-line">
-		<pre><code>{install}</code></pre>
-		<button type="button" class="tutor-copy" data-copy={install} aria-label="Copy the install command">Copy</button>
-	</div>
+<aside class="tutor-block not-content" data-tutor-block>
+	<p class="tutor-title"><a href={href('/guides/tutor/')}>Study with the tutor</a></p>
 	<div class="tutor-line">
 		<pre><code>{command}</code></pre>
 		<button type="button" class="tutor-copy" data-copy={command} aria-label="Copy the /ai-tutor line">Copy</button>
 	</div>
-	<p class="route-where">In opencode, ask: <code>{opencodeRequest}</code></p>
-	<p>
-		The tutor can't read the progress stored in this browser. Export it on the <a href={href('/settings/')}>settings</a> page and paste
-		the file into the session if you want a recall question first.
-	</p>
-	<p><a href={href('/guides/tutor/')}>How the tutor works and how to install it</a></p>
 </aside>
 
 <script>

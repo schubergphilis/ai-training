@@ -143,6 +143,18 @@ header starlight-theme-select label:hover {
 	border-radius: var(--at-radius-pill);
 }
 
+/* The previous/next links at the foot of a page are cards too: a surface
+   with a border, a 16px radius and no resting shadow. */
+.pagination-links a {
+	background-color: var(--at-surface);
+	border-radius: var(--at-radius-lg);
+	box-shadow: none;
+}
+.pagination-links a:hover {
+	border-color: var(--sl-color-accent);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
 /* Make a whole card clickable (the card is wrapped in a `.card-link` anchor)
    with a subtle lift-and-highlight on hover - used on the splash landing page. */
 .card-link {

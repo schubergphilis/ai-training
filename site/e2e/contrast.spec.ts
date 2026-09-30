@@ -23,6 +23,8 @@ const ON_BOTH: Omit<Pair, 'bg'>[] = [
 const PAIRS: Pair[] = [
 	...ON_BOTH.flatMap((p) => GROUNDS.map((bg) => ({ ...p, what: `${p.what} on ${bg}`, bg }))),
 	{ what: 'body text in a hint or code sample', fg: '--sl-color-text', bg: '--at-inset', min: 4.5 },
+	{ what: 'prompt and response header text', fg: '--sl-color-gray-2', bg: '--sl-color-accent-low', min: 4.5 },
+	{ what: 'illustrative prompt header text', fg: '--at-warn', bg: '--sl-color-accent-low', min: 4.5 },
 	{ what: 'link text in the sidebar', fg: '--sl-color-text-accent', bg: '--sl-color-bg-sidebar', min: 4.5 },
 	{ what: 'text on an accent fill', fg: '--sl-color-text-invert', bg: '--sl-color-bg-accent', min: 4.5 },
 	{ what: 'text on a Done button', fg: '--at-on-done', bg: '--at-done-strong', min: 4.5 },

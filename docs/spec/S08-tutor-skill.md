@@ -56,13 +56,13 @@ can open any lesson in a tutor session.
 
 ## Distribution
 
-| Rule            | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source of truth | The skill directory `.claude/skills/ai-tutor/` in the GitHub repo `schubergphilis/ai-training`, on `main`.                                                                                                                                                                                                                                                                                                                                                                |
-| Install         | The `skills` CLI, which installs a skill from a GitHub repo into Claude Code or opencode: `npx skills add schubergphilis/ai-training --skill ai-tutor -g`. The `-g` flag installs to the learner's user directory, so the skill is found from any project rather than only from the folder the command ran in. `npx skills list -g` shows it afterwards. The exact command is printed by the lesson page block and the getting-started page, and both print the same one. |
-| Not offered     | A plugin marketplace entry, a `curl` one-liner, a manual copy of the file. One install path keeps the instructions on the page short and the support surface small.                                                                                                                                                                                                                                                                                                       |
-| Precondition    | The repo is public, which it is as of the "ready to go public" release. The install command fails on a private repo, so the page never showed it before that.                                                                                                                                                                                                                                                                                                             |
-| Invocation      | `/ai-tutor <lesson URL>` in Claude Code. opencode has no per-skill slash command, so there the learner writes a plain request that names the skill: `Use the ai-tutor skill on <lesson URL>`. The skill's `description` field says what it does so either agent can also pick it up from a plain request.                                                                                                                                                                 |
+| Rule            | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source of truth | The skill directory `.claude/skills/ai-tutor/` in the GitHub repo `schubergphilis/ai-training`, on `main`.                                                                                                                                                                                                                                                                                                                                                        |
+| Install         | The `skills` CLI, which installs a skill from a GitHub repo into Claude Code or opencode: `npx skills add schubergphilis/ai-training --skill ai-tutor -g`. The `-g` flag installs to the learner's user directory, so the skill is found from any project rather than only from the folder the command ran in. `npx skills list -g` shows it afterwards. The exact command is printed by the getting-started page, and the block on each lesson page links to it. |
+| Not offered     | A plugin marketplace entry, a `curl` one-liner, a manual copy of the file. One install path keeps the instructions on the page short and the support surface small.                                                                                                                                                                                                                                                                                               |
+| Precondition    | The repo is public, which it is as of the "ready to go public" release. The install command fails on a private repo, so the page never showed it before that.                                                                                                                                                                                                                                                                                                     |
+| Invocation      | `/ai-tutor <lesson URL>` in Claude Code. opencode has no per-skill slash command, so there the learner writes a plain request that names the skill: `Use the ai-tutor skill on <lesson URL>`. The skill's `description` field says what it does so either agent can also pick it up from a plain request.                                                                                                                                                         |
 
 ## Bootstrap contract
 
@@ -224,23 +224,20 @@ from the learner.
 
 ## Lesson page block
 
-Every lesson page ends with an "Open in tutor" block, after the recap and
-before the footer. It is a `not-content` container and contains, in this
-order:
+A lesson page ends with an "Open in tutor" block, which sits after the
+recap and before the footer. The block is a `not-content` container with
+no card around it, and it contains, in this order:
 
-1. The install command, once, as a code line with a copy button.
+1. A link to the getting-started page, with the text "Study with the
+   tutor". That page has the install command, the opencode request and
+   the note on exporting progress, so the block doesn't repeat them.
 2. The paste-ready line for this lesson, as a code line with a copy button:
-   `/ai-tutor https://schubergphilis.github.io/ai-training/<area>/<lesson>/`. Under
-   it, one line for opencode: `In opencode, ask: Use the ai-tutor skill on <the same URL>`.
-3. One sentence: the tutor can't read the progress stored in this browser,
-   so export it from the settings page and paste the file if a recall
-   question is wanted.
-4. A link to the getting-started page.
+   `/ai-tutor https://schubergphilis.github.io/ai-training/<area>/<lesson>/`.
 
 The block is the same component (`TutorBlock.astro`) on every lesson, and
 the MarkdownContent override passes it the lesson URL built from Astro's
-`site` and the base path. The code lines are the component's own markup
-with a small copy script, so the block needs no Markdown rendering. It
+`site` and the base path. The component writes the code line as its own
+markup with a small copy script, without Markdown rendering. It
 never shows on course pages, guides or reference pages.
 
 ## Getting-started page
