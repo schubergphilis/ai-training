@@ -71,7 +71,10 @@ close it, list the children, and make each child a sub-issue of it
 ## What a ready-for-agent issue contains
 
 The builder starts with no context and doesn't ask questions, so the issue
-body and its decision comment together hold:
+body and its decision comment together hold what follows. A builder reads
+an issue through `mise run issue-brief`, which withholds the body when an
+account other than the maintainer's opened the issue (#606). For such an
+issue, the `Decision` comment restates everything below on its own.
 
 - What exists today, with the file paths, so the builder reads before it
   writes.

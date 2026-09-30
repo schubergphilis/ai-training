@@ -33,16 +33,19 @@ since agents may not edit that file.
   commands and rejects everything else, and any redirect to a file but
   `/dev/null`. It allows `mise run` only for the check tasks in
   `REVIEW_TASKS` in `scripts/agent_hooks.py`, and for
-  `mise run issue-brief -- <issue>` with one issue number and nothing
-  else (#606). `fast` and `ci` aren't in that list, because their `lint`
-  step runs fixers. It rejects a `gh issue view` or `gh pr view` that
-  prints the comments: `--comments`, `-c` in a short-option cluster, a
-  `--json` list with `comments`, `reviews` or `latestReviews`, and any
-  word the shell decides (a `$` expansion, a substitution, `*`, `?` or
-  `[`), since a loop's `$f` can become `--comments`. The issue brief
-  prints only the trusted comments. It checks the command inside each `$(...)`, backtick pair and process substitution (`<(...)`,
-  `>(...)`, `=(...)`) as a command of its own, and drops the `\` before
-  `$`, `` ` `` and `\` in a backtick body first, as the shell does. It
+  `mise run issue-brief -- <issue>` with one issue number in digits and
+  nothing else (#606). `fast` and `ci` aren't in that list, because their
+  `lint` step runs fixers. It rejects a `gh issue view` or `gh pr view`
+  that prints the comments: `--comments`, `-c` in a short-option cluster
+  with or without a value (`-c=true`, `-wc=t`), a `--json` list with
+  `comments`, `reviews` or `latestReviews`, and any word the shell
+  decides (a `$` expansion, a substitution, or an unquoted `*`, `?` or
+  `[`), since a loop's `$f` can become `--comments`. A quoted filter
+  such as `-q '.labels[].name'` passes. The issue brief prints only the
+  trusted comments. It checks the command inside each `$(...)`, backtick
+  pair and process substitution (`<(...)`, `>(...)`, `=(...)`) as a
+  command of its own, and drops the `\` before `$`, `` ` `` and `\` in a
+  backtick body first, as the shell does. It
   rejects a command it can't read: an unclosed quote, `$((...))`, the zsh
   flags `${(e)X}` and `${~X}`, any other unquoted `(` or `)` (zsh glob
   qualifiers such as `*(e:...:)` run code), an unquoted brace expansion

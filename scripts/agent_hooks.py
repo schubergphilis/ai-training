@@ -874,9 +874,13 @@ REVIEW_TASKS = (
 
 # `mise run issue-brief -- <issue>` (scripts/issue_brief.py, #606) prints
 # one issue with only its trusted comments, and writes nothing. A reviewer
-# may run it with one issue number in digits, an optional `#` in front, and
-# nothing else, so no word can carry a flag, an expansion or a glob.
-ISSUE_BRIEF_ARGUMENT = re.compile(r"#?[1-9][0-9]*")
+# may run it with one issue number in digits and nothing else, so no word
+# can carry a flag, an expansion or a glob. A `#` in front is left out:
+# zsh reads an unquoted `#606` as the start of a comment outside an
+# interactive shell, and in one with INTERACTIVE_COMMENTS set
+# (https://zsh.sourceforge.io/Doc/Release/Options.html), so the task
+# would run without its argument.
+ISSUE_BRIEF_ARGUMENT = re.compile(r"[1-9][0-9]*")
 
 
 def is_issue_brief(words: Sequence[str]) -> bool:
@@ -888,11 +892,11 @@ def is_issue_brief(words: Sequence[str]) -> bool:
     )
 
 
-# A short-option cluster of `gh issue view` or `gh pr view`, such as `-c`
-# or `-cw`. `-c` is `--comments`
-# (https://cli.github.com/manual/gh_issue_view,
-# https://cli.github.com/manual/gh_pr_view).
-SHORT_OPTIONS = re.compile(r"-[A-Za-z]+")
+# A short-option cluster of `gh issue view` or `gh pr view`, such as `-c`,
+# `-cw` or `-wc=t`, with an optional `=value` after the letters. `-c` is
+# `--comments` (https://cli.github.com/manual/gh_issue_view,
+# https://cli.github.com/manual/gh_pr_view). Group 1 holds the letters.
+SHORT_OPTIONS = re.compile(r"-([A-Za-z]+)(=.*)?", re.DOTALL)
 
 # The `--json` fields that hold comment or review text anyone can write,
 # lower case. An issue has `comments`, and a pull request also has
@@ -909,15 +913,17 @@ def reads_comments(args: Sequence[str]) -> bool:
     `--json` field list with one of COMMENT_FIELDS in it. A `--jq` or
     `--template` reads only the fields `--json` asks for. A word whose
     text the shell decides (an expansion such as a loop's `$f`, a
-    substitution or a glob) counts as a comment read too, since it can
-    become `--comments`.
+    substitution or an unquoted glob, marked GLOB by mark_expansions)
+    counts as a comment read too, since it can become `--comments`. A
+    quoted `[`, such as in `-q '.labels[].name'`, is text and passes.
     """
     for i, arg in enumerate(args):
         if UNKNOWN_WORD & set(arg):
             return True
         if arg == "--comments" or arg.startswith("--comments="):
             return True
-        if SHORT_OPTIONS.fullmatch(arg) and "c" in arg:
+        short = SHORT_OPTIONS.fullmatch(arg)
+        if short and "c" in short.group(1):
             return True
         fields = None
         if arg == "--json" and i + 1 < len(args):
@@ -1052,8 +1058,11 @@ def writes_a_file(command: str) -> bool:
 EXPANSION = "\x00"
 
 
-def mark_expansions(command: str) -> str:
+def mark_expansions(command: str, globs: bool = False) -> str:
     """The command with the `$` of each shell expansion replaced by `EXPANSION`.
+
+    With `globs`, each unquoted `*`, `?` and `[` without a backslash before
+    it becomes `GLOB` too, since zsh expands it into file names.
 
     A `$` starts an expansion outside single quotes and without a backslash
     before it, when a name, a digit, `{`, `(`, a quote, a special parameter
@@ -1079,6 +1088,8 @@ def mark_expansions(command: str) -> str:
             quote = "'"
         elif char == "$" and re.match(r"[A-Za-z0-9_{('\"@*#?!$=~^+-]", command[i + 1 : i + 2]):
             char = EXPANSION
+        elif globs and not quote and char in "*?[":
+            char = GLOB
         out.append(char)
         i += 1
     return "".join(out)
@@ -1090,11 +1101,14 @@ SUBSTITUTION = "\x01"
 SUBSTITUTION_STARTS = ("$(", "<(", ">(", "=(")
 
 
-# The characters that make a word's text the shell's to decide: the
-# EXPANSION and SUBSTITUTION markers and the glob characters `*`, `?` and
-# `[` (https://zsh.sourceforge.io/Doc/Release/Expansion.html, "Filename
-# Generation"). reads_comments reads them.
-UNKNOWN_WORD = frozenset({EXPANSION, SUBSTITUTION, "*", "?", "["})
+# Stands for an unquoted glob character `*`, `?` or `[`
+# (https://zsh.sourceforge.io/Doc/Release/Expansion.html, "Filename
+# Generation") when mark_expansions marks globs.
+GLOB = "\x02"
+
+# The markers that make a word's text the shell's to decide.
+# reads_comments reads them.
+UNKNOWN_WORD = frozenset({EXPANSION, SUBSTITUTION, GLOB})
 BRACE_WORD_END = frozenset(" \t\n;|&<>()}")
 
 
@@ -1376,12 +1390,16 @@ def review_allows(words: Sequence[str], scope: ReviewScope = CODE_REVIEW) -> boo
     return any(tuple(words[: len(allowed)]) == allowed for allowed in REVIEW_COMMANDS)
 
 
-def review_segments(command: str) -> list[Segment]:
-    """The simple commands in a command's text, as the review checks read them."""
+def review_segments(command: str, globs: bool = False) -> list[Segment]:
+    """The simple commands in a command's text, as the review checks read them.
+
+    With `globs`, an unquoted glob character in a word is `GLOB`
+    (mark_expansions).
+    """
     # The splitter reads the `&` of `2>&1` as an operator, so drop the
     # redirects writes_a_file allows before splitting.
     harmless = re.sub(r"(\d*|&)>>?(&(\d+|-)|\s*/dev/null)", " ", command)
-    return split_segments(mark_expansions(harmless), ".", strict=True, keep_assignments=True)
+    return split_segments(mark_expansions(harmless, globs), ".", strict=True, keep_assignments=True)
 
 
 def changes_directory(command: str) -> bool:
@@ -1420,15 +1438,18 @@ def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
         reason = review_reason(body, scope)
         if reason:
             return reason
-    for segment in review_segments(outer):
+    # A separate pass with the globs marked, so the other checks read the
+    # words as before.
+    for segment in review_segments(outer, globs=True):
         if is_comment_read(segment.words):
             return (
                 f"`{' '.join(segment.words[:3])}` with `--comments`, `-c`, a `--json` "
                 "comments or reviews field, or a word the shell decides (a `$`, a "
-                "substitution, `*`, `?` or `[`) can print every comment by anyone. Read an "
-                "issue through `mise run issue-brief -- <issue>`, or the brief in your "
-                "prompt, which hold only the trusted comments (#606)."
+                "substitution, an unquoted `*`, `?` or `[`) can print every comment by "
+                "anyone. Read an issue through `mise run issue-brief -- <issue>`, or the "
+                "brief in your prompt, which hold only the trusted comments (#606)."
             )
+    for segment in review_segments(outer):
         if segment.role is not None or not review_allows(segment.words, scope):
             allowed = ", ".join(" ".join(c) for c in (*REVIEW_COMMANDS, *sorted(scope.exact)))
             task_list = ", ".join(scope.tasks)
