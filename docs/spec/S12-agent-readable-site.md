@@ -5,9 +5,9 @@ on a person's behalf: a Markdown alternate of each content page, an
 `llms.txt` index with an `llms-full.txt` companion, the data tree as JSON
 under `/data/`, and the stance on crawlers.
 
-**Status:** Accepted - build issues #499 (Markdown alternates) and #501
-(data tree as JSON) are merged, and #500 (`llms.txt`, `llms-full.txt`) is
-open.
+**Status:** Implemented (2026-10-01) - build issues #499 (Markdown
+alternates), #500 (`llms.txt`, `llms-full.txt`) and #501 (data tree as
+JSON) are merged.
 
 Each build issue updates the Status line and the index row when it
 merges.
@@ -299,6 +299,10 @@ fails when a live lesson isn't in `llms.txt` exactly once with its
 `description`, when a planned lesson is, or when `llms-full.txt` doesn't
 hold each course page and live lesson alternate exactly once in course
 order.
+
+After `site-build`, `mise run bundles` fails when a link in `llms.txt`
+points at no file in `dist`, or when a page lacks its `describedby`
+link.
 
 ## Data tree as JSON
 

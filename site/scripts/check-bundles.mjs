@@ -20,10 +20,15 @@
  * and that every alternate has a page that hints at it
  * (scripts/lib/alternate-hints.mjs, covered by
  * tests/scripts/alternate-hints.test.ts). This file only reports.
+ *
+ * It checks that every link in dist/llms.txt reaches a file in dist and that
+ * every page links to llms.txt (scripts/lib/llms-txt.mjs, covered by
+ * tests/scripts/llms-txt.test.ts).
  */
 import { join } from 'node:path';
 import { checkAlternateHints } from './lib/alternate-hints.mjs';
 import { checkBundles, checkDataFiles, checkDataIndex, checkExportCitations } from './lib/bundles.mjs';
+import { checkLlmsTxt } from './lib/llms-txt.mjs';
 import { checkRenderedCitations } from './lib/rendered-citations.mjs';
 import { SITE_ROOT } from './lib/site-address.mjs';
 
@@ -41,6 +46,8 @@ const rendered = checkRenderedCitations(join(root, 'dist'));
 errors.push(...rendered.errors);
 const alternates = checkAlternateHints(join(root, 'dist'), SITE_ROOT);
 errors.push(...alternates.errors);
+const llms = checkLlmsTxt(join(root, 'dist'), SITE_ROOT);
+errors.push(...llms.errors);
 
 if (errors.length) {
 	for (const e of errors) console.error(`bundles: ${e}`);
@@ -56,4 +63,7 @@ console.log(
 );
 console.log(
 	`bundles: ${alternates.hints} Markdown alternate${alternates.hints === 1 ? '' : 's'} under dist, each with its page's head hint`,
+);
+console.log(
+	`bundles: llms.txt under dist, its ${llms.links} site link${llms.links === 1 ? '' : 's'} each reaching a file`,
 );

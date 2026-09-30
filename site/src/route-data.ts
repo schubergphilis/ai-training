@@ -1,5 +1,6 @@
 import { defineRouteMiddleware } from '@astrojs/starlight/route-data';
 import { alternatePaths } from '@lib/alternates';
+import { describedByHeadLink } from '@lib/llms-txt';
 import { alternateHeadLink } from '@lib/markdown-alternate';
 
 /**
@@ -8,7 +9,8 @@ import { alternateHeadLink } from '@lib/markdown-alternate';
  * of spec S12 "Head hints", `<link rel="alternate" type="text/markdown">`,
  * to each page that `alternatePaths` (`@lib/alternates`) lists, and to no
  * other page. The same list drives the alternate route, so every hint
- * points at a file the build writes.
+ * points at a file the build writes. It also adds
+ * `<link rel="describedby">` to `llms.txt` to every page (S12 "Place").
  */
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -32,6 +34,7 @@ function pagesWithAlternate(): Promise<Set<string>> {
 export const onRequest = defineRouteMiddleware(async (context) => {
 	const site: string | undefined = import.meta.env.SITE;
 	if (!site) throw new Error('the Markdown alternate head hint needs `site` in astro.config.mjs for absolute URLs');
+	context.locals.starlightRoute.head.push(describedByHeadLink(new URL(site).origin));
 	const path = pagePathOf(context.url.pathname);
 	if (!(await pagesWithAlternate()).has(path)) return;
 	context.locals.starlightRoute.head.push(alternateHeadLink(path, new URL(site).origin));
