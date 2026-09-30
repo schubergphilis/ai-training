@@ -293,7 +293,9 @@ The cases that come up:
 - The Bash sandbox allows writes only in the main checkout, so worktree
   setup, commits, pushes and `gh` run with the sandbox disabled. It also
   blocks `mise`, `prek` and `gh` for agents in worktrees. A lead runs the
-  `mise` checks and reads the issue comments for its reviewers (#589). A
+  `mise` checks for its reviewers (#589), and passes each one the output
+  of `mise run issue-brief -- <issue>` in its prompt, which holds only
+  the issue's trusted comments (#606). A
   failed `git worktree add` leaves its branch behind. Reuse that branch.
 - GitHub reports `mergeable: UNKNOWN` for about a minute after every merge.
   Wait and list again. A pull request in `CONFLICTING` state gets no

@@ -872,6 +872,70 @@ REVIEW_TASKS = (
 )
 
 
+# `mise run issue-brief -- <issue>` (scripts/issue_brief.py, #606) prints
+# one issue with only its trusted comments, and writes nothing. A reviewer
+# may run it with one issue number in digits, an optional `#` in front, and
+# nothing else, so no word can carry a flag, an expansion or a glob.
+ISSUE_BRIEF_ARGUMENT = re.compile(r"#?[1-9][0-9]*")
+
+
+def is_issue_brief(words: Sequence[str]) -> bool:
+    """True for `mise run issue-brief -- <issue>` and nothing longer or shorter."""
+    return (
+        len(words) == 5
+        and list(words[:4]) == ["mise", "run", "issue-brief", "--"]
+        and ISSUE_BRIEF_ARGUMENT.fullmatch(words[4]) is not None
+    )
+
+
+# A short-option cluster of `gh issue view` or `gh pr view`, such as `-c`
+# or `-cw`. `-c` is `--comments`
+# (https://cli.github.com/manual/gh_issue_view,
+# https://cli.github.com/manual/gh_pr_view).
+SHORT_OPTIONS = re.compile(r"-[A-Za-z]+")
+
+# The `--json` fields that hold comment or review text anyone can write,
+# lower case. An issue has `comments`, and a pull request also has
+# `reviews` and `latestReviews` (`gh issue view --json`, `gh pr view --json`).
+COMMENT_FIELDS = frozenset({"comments", "reviews", "latestreviews"})
+
+
+def reads_comments(args: Sequence[str]) -> bool:
+    """True when `gh issue view` or `gh pr view` arguments print the comments (#606).
+
+    Anyone can comment on a public issue, so a reviewer reads an issue
+    through `mise run issue-brief`, which prints only the trusted comments.
+    That covers `--comments`, `-c` in a short-option cluster, and a
+    `--json` field list with one of COMMENT_FIELDS in it. A `--jq` or
+    `--template` reads only the fields `--json` asks for. A word whose
+    text the shell decides (an expansion such as a loop's `$f`, a
+    substitution or a glob) counts as a comment read too, since it can
+    become `--comments`.
+    """
+    for i, arg in enumerate(args):
+        if UNKNOWN_WORD & set(arg):
+            return True
+        if arg == "--comments" or arg.startswith("--comments="):
+            return True
+        if SHORT_OPTIONS.fullmatch(arg) and "c" in arg:
+            return True
+        fields = None
+        if arg == "--json" and i + 1 < len(args):
+            fields = args[i + 1]
+        elif arg.startswith("--json="):
+            fields = arg.removeprefix("--json=")
+        if fields is not None and COMMENT_FIELDS & {f.strip().lower() for f in fields.split(",")}:
+            return True
+    return False
+
+
+def is_comment_read(words: Sequence[str]) -> bool:
+    """True for a `gh issue view` or `gh pr view` that prints the comments."""
+    return tuple(words[:3]) in {("gh", "issue", "view"), ("gh", "pr", "view")} and reads_comments(
+        words[3:]
+    )
+
+
 @dataclass(frozen=True)
 class ReviewScope:
     """What one reviewer agent's Bash hook allows besides REVIEW_COMMANDS.
@@ -1024,6 +1088,13 @@ def mark_expansions(command: str) -> str:
 # took out of a review command (#414). The block message shows it as `$(...)`.
 SUBSTITUTION = "\x01"
 SUBSTITUTION_STARTS = ("$(", "<(", ">(", "=(")
+
+
+# The characters that make a word's text the shell's to decide: the
+# EXPANSION and SUBSTITUTION markers and the glob characters `*`, `?` and
+# `[` (https://zsh.sourceforge.io/Doc/Release/Expansion.html, "Filename
+# Generation"). reads_comments reads them.
+UNKNOWN_WORD = frozenset({EXPANSION, SUBSTITUTION, "*", "?", "["})
 BRACE_WORD_END = frozenset(" \t\n;|&<>()}")
 
 
@@ -1289,7 +1360,9 @@ def review_allows(words: Sequence[str], scope: ReviewScope = CODE_REVIEW) -> boo
     if words[0] == "uniq" and uniq_writes(words[1:]):
         return False
     if words[:2] == ["mise", "run"]:
-        return len(words) == 3 and words[2] in scope.tasks
+        return (len(words) == 3 and words[2] in scope.tasks) or is_issue_brief(words)
+    if is_comment_read(words):
+        return False
     if words[:2] == ["mise", "tasks"] and MISE_TASKS_WRITERS & set(words[2:]):
         return False
     if words[0] == "git":
@@ -1348,6 +1421,14 @@ def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
         if reason:
             return reason
     for segment in review_segments(outer):
+        if is_comment_read(segment.words):
+            return (
+                f"`{' '.join(segment.words[:3])}` with `--comments`, `-c`, a `--json` "
+                "comments or reviews field, or a word the shell decides (a `$`, a "
+                "substitution, `*`, `?` or `[`) can print every comment by anyone. Read an "
+                "issue through `mise run issue-brief -- <issue>`, or the brief in your "
+                "prompt, which hold only the trusted comments (#606)."
+            )
         if segment.role is not None or not review_allows(segment.words, scope):
             allowed = ", ".join(" ".join(c) for c in (*REVIEW_COMMANDS, *sorted(scope.exact)))
             task_list = ", ".join(scope.tasks)
@@ -1355,8 +1436,8 @@ def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
             shown = shown.replace(SUBSTITUTION, "$(...)")
             return (
                 f"`{shown}` is not a review command. A reviewer runs only {allowed}, "
-                "sed -n with p scripts, for loops over these, cd, and mise run with one "
-                f"of {task_list}. A reviewer never edits."
+                "sed -n with p scripts, for loops over these, cd, mise run with one "
+                f"of {task_list}, and mise run issue-brief -- <issue>. A reviewer never edits."
             )
     return None
 

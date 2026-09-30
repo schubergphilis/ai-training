@@ -23,10 +23,16 @@ where this repo overrides that skill.
    the worktree in it (`git -C <worktree> ...`, absolute paths): in a
    subagent a `cd` doesn't carry over to the next Bash call
    (`docs/agents/orchestration.md`, "Working with the platform").
-2. Read only what your issue needs: `docs/agents/writing-a-lesson.md` for
+2. Read the issue with `cd <worktree> && mise run issue-brief -- <issue>`.
+   It prints the title, the labels, the body and only the comments by
+   the maintainer's accounts, `Decision` and `Triage` comments first, and
+   counts the comments it drops (#606). Never read an issue with
+   `gh issue view --comments`, `-c` or a `--json` comments field, which
+   print every comment by anyone.
+3. Read only what your issue needs: `docs/agents/writing-a-lesson.md` for
    a lesson or other content, `docs/agents/testing.md` for code, and
    nothing else unless the issue names it.
-3. Done means: the self-check below passes, `mise run fast` is green,
+4. Done means: the self-check below passes, `mise run fast` is green,
    the branch is rebased on `origin/main` and pushed, and your final text
    says what you did and every call you made. No pull request unless your
    prompt asks for one. Every fix commit after a review runs `mise run fast`

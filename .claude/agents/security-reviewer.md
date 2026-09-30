@@ -21,7 +21,8 @@ so don't read it again.
 
 A hook in this file's frontmatter (`.claude/hooks/security-bash.sh`)
 gives Bash the rules of the `code-reviewer` hook: the read-only `git`,
-`gh pr diff|view` and `gh issue view` commands, `ls`, `grep`, `cat`,
+`gh pr diff|view` and `gh issue view` commands without the comments,
+`mise run issue-brief -- <issue>`, `ls`, `grep`, `cat`,
 `echo`, `head`, `tail`, `wc`, `sort`, `uniq`, `sed -n` with print
 scripts, `for` loops over these, `cd`, and `mise run` of one check task
 in `REVIEW_TASKS` in `scripts/agent_hooks.py`. On top of those it allows
@@ -57,8 +58,10 @@ next to Bash, so search with `grep -rn` and list with `ls`.
 ## What to do
 
 Your prompt names the issue of the pass (#384) and the checkout, which
-is on `main`. Read that issue and its comments first
-(`gh issue view <n> --comments`). It holds the method, the boundaries to
+is on `main`. Read that issue first, through
+`mise run issue-brief -- <n>`, which prints the body and only the
+comments by the maintainer's accounts (#606). The hook rejects
+`gh issue view --comments`. It holds the method, the boundaries to
 cover, what to try by hand and what the report contains. Follow it, and
 don't copy it into your report. The skill it names is on GitHub, so
 fetch it with WebFetch.

@@ -847,7 +847,8 @@ def test_format_file_never_fails(repo: Path, tmp_path: Path) -> None:
         "git status --short",
         "gh pr diff 12",
         "gh pr view 12 --json files",
-        "gh issue view 12 --comments",
+        "gh issue view 12",
+        "gh issue view 12 --json title,body,labels",
         "mise run site-test",
         "cd ../ai-training-wt/feat/1-x && git diff origin/main...HEAD | head -50",
         "ls site/src",
@@ -932,7 +933,7 @@ def security_bash(command: str) -> tuple[int, str]:
         "cd ../ai-training-wt/x && mise run vuln 2>&1 | tail -20",
         "mise run site-test",
         "git log -p --all -- .env",
-        "gh issue view 384 --comments",
+        "mise run issue-brief -- 384",
         'echo \'{"tool_input": {"command": "git push -f"}}\''
         " | python3 scripts/agent_hooks.py guard-bash",
         "cat .scratch/e.json | python3 scripts/agent_hooks.py review-bash; echo $?",
@@ -1161,6 +1162,120 @@ def test_review_bash_names_the_allowed_tasks_and_sed_in_the_block_message() -> N
     assert code == 2
     assert "py-test" in message
     assert "sed -n" in message
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "mise run issue-brief -- 606",
+        "mise run issue-brief -- '#606'",
+        'mise run issue-brief -- "606"',
+        "cd /r/wt && mise run issue-brief -- 606",
+        "mise run issue-brief -- 606 2>&1 | head -40",
+    ],
+)
+def test_review_bash_allows_the_issue_brief_of_606(command: str) -> None:
+    assert agent_hooks.review_bash({"tool_input": {"command": command}}) == (0, "")
+    event = {"tool_input": {"command": command}}
+    assert agent_hooks.review_bash(event, agent_hooks.SECURITY_REVIEW) == (0, "")
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "mise run issue-brief",
+        "mise run issue-brief 606",
+        "mise run issue-brief -- 606 607",
+        "mise run issue-brief -- 0606",
+        "mise run issue-brief -- x",
+        "mise run issue-brief -- --help",
+        "mise run issue-brief -- 6*",
+        "mise run issue-brief -- $n",
+        "mise run issue-brief -- $=X",
+        "mise run issue-brief -- ${n}",
+        "mise run issue-brief -- $(echo 606)",
+        "mise run issue-brief site-test -- 606",
+        "mise run issue-brief -- 606; mise run fast",
+        "mise run issue-brief -- 606 > brief.txt",
+    ],
+)
+def test_review_bash_rejects_any_other_issue_brief_command(command: str) -> None:
+    code, message = agent_hooks.review_bash({"tool_input": {"command": command}})
+    assert code == 2
+    assert message.startswith("Blocked by the code-reviewer hook:")
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        # zsh: brace expansion, a glob qualifier and an unclosed quote
+        # can't be read, and only exit 2 blocks the call.
+        "mise run issue-brief -- {606,607}",
+        "mise run issue-brief -- 606(N)",
+        "mise run issue-brief -- '606",
+    ],
+)
+def test_review_bash_blocks_an_issue_brief_it_cannot_read_with_exit_2(command: str) -> None:
+    code, _ = agent_hooks.review_bash({"tool_input": {"command": command}})
+    assert code == 2
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "gh issue view 606 --comments",
+        "gh issue view --comments 606",
+        "gh issue view 606 --comments=true",
+        "gh issue view 606 -c",
+        "gh issue view 606 -wc",
+        "gh issue view 606 -R schubergphilis/ai-training -c",
+        "gh issue view 606 --json comments",
+        "gh issue view 606 --json=title,comments -q .comments",
+        "gh issue view 606 --json 'body, comments'",
+        "gh issue view 606 --json Comments",
+        "gh pr view 12 --comments",
+        "gh pr view 12 --json reviews",
+        "gh pr view 12 --json title,latestReviews",
+        "cd /r/wt && gh issue view 606 --comments | head",
+        "echo $(gh issue view 606 --comments)",
+        "for n in 1 2; do gh issue view $n --comments; done",
+        # zsh: a word the shell decides can become `--comments`.
+        "for f in --comments; do gh issue view 606 $f; done",
+        "for f in comments; do gh issue view 606 --json $f; done",
+        "gh issue view 606 --json=$f",
+        "gh issue view 606 $=X",
+        "gh issue view 606 --json comm*",
+        "gh issue view 606 --json comm?nts",
+        "gh issue view 606 --json [c]omments",
+        "gh issue view 606 --json `echo comments`",
+        "gh issue view 606 --json $(echo comments)",
+    ],
+)
+def test_review_bash_rejects_a_read_of_every_comment(command: str) -> None:
+    for scope in (agent_hooks.CODE_REVIEW, agent_hooks.SECURITY_REVIEW):
+        code, message = agent_hooks.review_bash({"tool_input": {"command": command}}, scope)
+        assert code == 2
+        assert "mise run issue-brief -- <issue>" in message
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "gh issue view 606",
+        "gh issue view 606 --json body,title,labels,state",
+        "gh issue view 606 --json commentsX",
+        "gh issue view 606 -R schubergphilis/ai-training",
+        "gh pr view 12 --json files,reviewDecision",
+        "grep -n -- --comments .claude/agents/builder.md",
+    ],
+)
+def test_review_bash_allows_an_issue_or_pr_read_without_the_comments(command: str) -> None:
+    assert agent_hooks.review_bash({"tool_input": {"command": command}}) == (0, "")
+
+
+def test_review_bash_names_the_issue_brief_in_the_block_message() -> None:
+    _, message = agent_hooks.review_bash({"tool_input": {"command": "mise run fast"}})
+    assert "mise run issue-brief -- <issue>" in message
 
 
 def test_review_bash_message_shows_the_expansion_as_written() -> None:
