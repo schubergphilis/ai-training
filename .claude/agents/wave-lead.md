@@ -50,7 +50,15 @@ Spawn agents by name and by nothing else:
   `<run>` is the run's name in lower case, as in the wave branch
   (`wave/lemur-2` gives `review-lemur-460`), so `git worktree list` shows
   which run created a review worktree. Its
-  prompt is the issue, the branch, that worktree and the risks to probe.
+  prompt is the issue, the branch, that worktree, the risks to probe and
+  the issue brief. Run `mise run issue-brief -- <issue>` yourself and
+  paste its output in the prompt: it holds the body and only the
+  comments by the maintainer's accounts, decisions first (#606). A
+  reviewer can't fetch it, since the `lesson-reviewer` has no shell and
+  the sandbox blocks `mise` and `gh` for the `code-reviewer` in its
+  worktree. For a re-check, run it again, so the prompt holds the
+  builder's reply from the issue too. Read an issue for yourself through
+  the same task, never through `gh issue view --comments`.
 
 The table in your prompt has the format of the wave's kind. A lessons
 wave lists the lesson id, the course position and the planned `after`

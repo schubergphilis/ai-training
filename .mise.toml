@@ -202,6 +202,15 @@ run = "uv run --locked python scripts/harness_metrics.py"
 description = "Open dispatcher runs and the next run name, as JSON: mise run run-name [-- [--check <issue>] [--exclusive <kind>] [--resume <Name>]]"
 run = "uv run --locked python scripts/run_name.py"
 
+# The brief a builder or reviewer reads an issue through (#606): title,
+# state, labels, the body when a trusted account opened the issue, and only
+# the comments by the trusted accounts of scripts/wave_status.py, Decision
+# and Triage comments first. It counts the other comments and never prints
+# them. Network (gh).
+[tasks.issue-brief]
+description = "One issue with only its trusted comments, decisions first: mise run issue-brief -- <issue>"
+run = "uv run --locked python scripts/issue_brief.py"
+
 # Branch cleanup, for human maintainers only: no agent runs this task,
 # also not as a dry run. It lists the remote branches that are merged into
 # `main` (every commit's patch is in `main`) and older than 14 days, or

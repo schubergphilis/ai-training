@@ -15,7 +15,18 @@ gh issue edit <number> --add-blocked-by <m>     # or --remove-blocked-by, --add-
 gh issue edit <number> --parent <n>             # or --remove-parent, --add-sub-issue, --remove-sub-issue
 gh issue view <number> --json blockedBy,blocking,parent,subIssues,closedByPullRequestsReferences
 gh pr view <number> --json closingIssuesReferences
+mise run issue-brief -- <number>
 ```
+
+An agent that builds or reviews an issue reads it with
+`mise run issue-brief -- <number>` (`scripts/issue_brief.py`, #606). It
+prints the title, the labels, the body and only the comments by the
+accounts in `TRUSTED_VERDICT_AUTHORS` (`scripts/wave_status.py`), with
+`Decision` and `Triage` comments first, and counts the other comments
+without their text. It withholds the body when another account opened
+the issue. Anyone can comment on a public issue, so
+`gh issue view --comments` puts an outsider's text in the agent's
+context, and the review hooks reject it.
 
 The relationship flags and fields need gh 2.94.0 or later, the release
 that added sub-issues and relationships to `gh issue`
