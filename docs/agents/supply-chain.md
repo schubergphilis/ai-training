@@ -30,6 +30,17 @@ nobody pushes fails a scheduled run. No advisory is ever ignored.
   `mise run setup`) comes before `lint` and `spell`. `@playwright/test` is the one
   Playwright package (the screenshot script imports `chromium` from it
   too).
+- `site/package.json` sets `"trustedDependencies": []`, so bun runs no
+  install script of any dependency. An explicit list replaces bun's
+  default trusted list (<https://bun.com/docs/install/lifecycle>), and
+  `bun pm default-trusted` prints that default. The build needs no
+  script today: bun links the `esbuild` binary from its platform package
+  in place of its `postinstall`, and skips the scripts of `sharp` 0.33 and
+  later, which loads its prebuilt `@img/*` package
+  (<https://github.com/oven-sh/bun/blob/main/src/install/postinstall_optimizer.rs>).
+  To trust a package, run `bun pm untrusted` in `site/` after
+  the install, add the name to the array in the same pull request as the
+  dependency, and say in it which script runs and why the build needs it.
 - `uv.lock` is committed and must stay in the tree. `mise run ci` and CI
   install with `py-install-frozen`. The dev group in `pyproject.toml` is
   exact-pinned. Use `mise run py-install` when deliberately changing it,
