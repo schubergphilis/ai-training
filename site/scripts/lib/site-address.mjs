@@ -3,7 +3,7 @@
  * project path under it). `astro.config.mjs` reads both from here, and so
  * does `mise run bundles`, which can't import that config from a `bun`
  * script (it loads Starlight and every integration). `vitest.config.ts`
- * repeats `BASE` in `test.env` for `src/lib/url.ts`.
+ * sets `test.env` from `BASE` for `src/lib/url.ts`.
  */
 export const SITE = 'https://schubergphilis.github.io';
 export const BASE = '/ai-training';
