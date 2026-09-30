@@ -35,6 +35,8 @@ harness run is open. The runs the check counts are the other open runs:
   only the open runs with a lower issue number. When two new runs race,
   the issue number decides which is later: the higher number refuses and
   closes its issue, and the lower one passes, so one of them goes on.
+  The runs are read from the newest issues as well as from the label
+  listing, which can lag by a few seconds (`fetch_issues`, #616).
 
 The functions are pure over the file's text and the run issues that
 `main` fetches with `gh`, so tests/test_run_name.py can feed them planted
@@ -53,7 +55,7 @@ import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast
 
 REPO = "schubergphilis/ai-training"
 RUN_LABEL = "dispatcher-run"
@@ -68,6 +70,18 @@ HARNESS = "harness"
 """The kind of a harness run."""
 REFUSED = 3
 """The exit code when the harness exclusivity check refuses the run."""
+RECENT_LIMIT = 50
+"""How many of the newest issues `--check` reads without the search index (#616)."""
+RECENT_QUERY = """
+query($owner: String!, $repo: String!, $limit: Int!) {
+  repository(owner: $owner, name: $repo) {
+    issues(first: $limit, orderBy: {field: CREATED_AT, direction: DESC}) {
+      nodes { number title state createdAt labels(first: 100) { nodes { name } } }
+    }
+  }
+}
+"""
+"""The newest issues of the repository, with their labels, from the issues connection."""
 
 type Gh = Callable[[Sequence[str]], object]
 """Runs gh with the arguments and returns its parsed JSON output."""
@@ -96,6 +110,28 @@ class RunIssue(TypedDict):
     title: str
     state: Literal["OPEN", "CLOSED"]
     createdAt: str
+
+
+class Label(TypedDict):
+    """A label as the GraphQL API gives it."""
+
+    name: str
+
+
+class Labels(TypedDict):
+    """The labels connection of an issue."""
+
+    nodes: list[Label]
+
+
+class RecentIssue(TypedDict):
+    """One of the newest issues, as RECENT_QUERY gives it."""
+
+    number: int
+    title: str
+    state: Literal["OPEN", "CLOSED"]
+    createdAt: str
+    labels: Labels
 
 
 class Run(TypedDict):
@@ -258,14 +294,40 @@ def name_taken_by(runs: Sequence[Run], own: int) -> Run | None:
 def with_issue(issues: Sequence[RunIssue], issue: RunIssue) -> list[RunIssue]:
     """The run issues with `issue` added when the list lacks it.
 
-    `gh issue list` with a label can miss an issue for a few seconds after
-    it is created (the #353 dry run hit this), so `--check N` fetches issue
-    N on its own and merges it in. An older rival has had those seconds,
-    so the list shows it.
+    `--check N` uses it for issue N when N is older than the newest
+    issues that `fetch_issues` reads (see `with_recent`).
     """
     if any(i["number"] == issue["number"] for i in issues):
         return list(issues)
     return [*issues, issue]
+
+
+def with_recent(
+    issues: Sequence[RunIssue], recent: Sequence[RecentIssue], check: int
+) -> list[RunIssue]:
+    """The run issues, with the newest issues of the repository merged in.
+
+    `recent` are the newest issues, which `fetch_issues` reads without
+    the search index. Each run issue among them (one with the
+    `dispatcher-run` label, and issue `check` whatever its labels, as
+    `--check` has always taken it) replaces the listed issue with its
+    number, or is added when the listing lacks it. So a rival run opened
+    seconds before issue `check` counts even when the label listing
+    doesn't show it yet (#616).
+    """
+    fresh: list[RunIssue] = [
+        {
+            "number": item["number"],
+            "title": item["title"],
+            "state": item["state"],
+            "createdAt": item["createdAt"],
+        }
+        for item in recent
+        if item["number"] == check
+        or RUN_LABEL in {label["name"] for label in item["labels"]["nodes"]}
+    ]
+    covered = {item["number"] for item in recent}
+    return [i for i in issues if i["number"] not in covered] + fresh
 
 
 def parse_args(argv: Sequence[str]) -> Args:
@@ -403,8 +465,50 @@ def gh_json(args: Sequence[str]) -> object:
         raise RunNameError(f"run-name: gh {' '.join(args[:2])} failed: {e}") from e
 
 
+def fetch_recent(gh: Gh) -> list[RecentIssue]:
+    """The RECENT_LIMIT newest issues of the repository, newest first, with their labels."""
+    owner, repo = REPO.split("/")
+    answer = gh(
+        [
+            "api",
+            "graphql",
+            "-f",
+            f"query={RECENT_QUERY}",
+            "-F",
+            f"owner={owner}",
+            "-F",
+            f"repo={repo}",
+            "-F",
+            f"limit={RECENT_LIMIT}",
+        ]
+    )
+    try:
+        nodes = cast("dict[str, Any]", answer)["data"]["repository"]["issues"]["nodes"]
+    except (KeyError, TypeError) as e:
+        raise RunNameError(f"run-name: gh api graphql gave no issues: {e}") from e
+    return cast("list[RecentIssue]", nodes)
+
+
 def fetch_issues(check: int | None, gh: Gh) -> list[RunIssue]:
-    """Every run issue, open and closed, plus issue `check` when the listing lacks it."""
+    """Every run issue, open and closed, and with `check` the newest ones for sure.
+
+    The label listing is `gh issue list -l`, which goes through the search
+    API (`GH_DEBUG=api` shows an `IssueSearch` query), and the search index
+    can miss an issue for a few seconds after it is created (#353). With
+    `--check N` a rival opened seconds before N can be that new (#616), so
+    one GraphQL call reads the RECENT_LIMIT newest issues from the issues
+    connection, which doesn't go through the index, and `with_recent`
+    merges the run issues among them in. Issue N is among them in the
+    common case, so that call also replaces the `gh issue view N` that
+    `--check` used to make: two gh calls, as before. Relisting until the
+    listing shows N would cost at least one more call and a wait whenever
+    the listing lags, which is right after the create when `--check` runs,
+    and it would trust the index to show the lower numbers first.
+    RECENT_LIMIT is the cap: a rival the listing lacks was opened seconds
+    before N, and a wave files far fewer than 50 issues in seconds. When
+    N is older than the newest 50, `gh issue view N` fetches it, and every
+    rival older than N has had the time to reach the listing.
+    """
     listed = cast(
         "list[RunIssue]",
         gh(
@@ -426,8 +530,11 @@ def fetch_issues(check: int | None, gh: Gh) -> list[RunIssue]:
     )
     if check is None:
         return listed
+    merged = with_recent(listed, fetch_recent(gh), check)
+    if any(i["number"] == check for i in merged):
+        return merged
     own = cast("RunIssue", gh(["issue", "view", str(check), "-R", REPO, "--json", FIELDS]))
-    return with_issue(listed, own)
+    return with_issue(merged, own)
 
 
 def main(

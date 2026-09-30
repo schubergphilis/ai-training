@@ -252,9 +252,10 @@ printed.
       issue with a comment that quotes the `refusal` and names the other
       run (`gh issue close <number> --comment ...`), and stop as step 1
       does. The earlier run's own check usually passes, so one of the two
-      goes on. The `gh issue list` listing can miss an issue created a few
-      seconds before, so two runs started within seconds can both pass
-      (#616). A name clash can also make both refuse: when the earlier run
+      goes on. The script also reads the 50 newest issues past the label
+      listing, which can miss an issue for a few seconds after it is
+      created. A run opened seconds before yours counts too (#616). A
+      name clash can make both refuse: when the earlier run
       retries under a new name in step 4, its new issue has the higher
       number, and the maintainer then starts one of the two again.
       On any other exit code, close your issue with a comment that quotes
