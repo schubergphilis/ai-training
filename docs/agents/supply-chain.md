@@ -35,6 +35,8 @@ nobody pushes fails a scheduled run. No advisory is ever ignored.
   exact-pinned. Use `mise run py-install` when deliberately changing it,
   commit the result, and move the `ruff-pre-commit` rev in `prek.toml` to
   the same ruff version.
+  `tests/test_ruff_pin.py` fails when the rev's `# vX.Y.Z` comment and the
+  pin differ.
 - `mise run site-audit` (`bun audit`) must be clean. Fix an advisory in a
   *transitive* package with the `overrides` block in `site/package.json`.
 - `mise run vuln` (osv-scanner) must be clean. The task scans `uv.lock`
