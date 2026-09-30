@@ -1425,3 +1425,74 @@ def test_claim_with_text_after_its_parenthetical_is_a_reply() -> None:
     assert steps17([APPROVE17, comment("lsimons", body, "2026-09-24T13:00:00Z")]) == [
         ("feat/17-x", "lead-re-check")
     ]
+
+
+# Release comments (#602): `Claim released by run <Name>, wave <k> (...)`, posted
+# when a run ends before the wave merges. They apply to no branch, as a claim does.
+
+RELEASE17 = comment(
+    "lsimons",
+    f"Claim released by run Seal, wave 3 (the run ended; feat/17-x is unreviewed){ATTRIBUTION}",
+    "2026-09-24T14:00:00Z",
+)
+
+
+def test_release_reads_as_a_claim() -> None:
+    assert comment_kind(RELEASE17["body"]) == "claim"
+    assert comment_kind("Claim released by run Seal, wave 3 (the run ended)") == "claim"
+    assert (
+        comment_kind(
+            crlf(
+                "Claim released by run Seal, wave 3 "
+                + f"(the run ended; feat/17-x has the last verdict needs changes){ATTRIBUTION}"
+            )
+        )
+        == "claim"
+    )
+
+
+def test_release_with_any_other_wording_is_a_reply() -> None:
+    assert comment_kind("claim released by run Seal, wave 3 (the run ended)") == "reply"
+    assert comment_kind("Claim released by run Seal (the run ended)") == "reply"
+    assert (
+        comment_kind(f"Claim released by run Seal, wave 3 (the run ended (#586)){ATTRIBUTION}")
+        == "reply"
+    )
+    assert (
+        comment_kind(
+            f"Claim released by run Seal, wave 3 (the run ended)\nFixed in abc.{ATTRIBUTION}"
+        )
+        == "reply"
+    )
+
+
+def test_release_with_a_branch_line_is_a_reply() -> None:
+    body = f"Claim released by run Seal, wave 3 (the run ended)\n\nBranch: feat/17-x{ATTRIBUTION}"
+    assert comment_kind(body) == "reply"
+    assert steps17([APPROVE17, comment("lsimons", body, "2026-09-24T14:00:00Z")]) == [
+        ("feat/17-x", "lead-re-check")
+    ]
+
+
+def test_release_after_needs_changes_leaves_it_revise() -> None:
+    assert steps17([NEEDS_CHANGES17, CLAIM17, RELEASE17]) == [("feat/17-x", "revise")]
+
+
+def test_release_after_approve_leaves_it_join() -> None:
+    assert steps17([APPROVE17, CLAIM17, RELEASE17]) == [("feat/17-x", "join")]
+
+
+def test_release_on_an_unreviewed_branch_leaves_it_review() -> None:
+    assert steps17([CLAIM17, RELEASE17]) == [("feat/17-x", "review")]
+
+
+def test_release_does_not_finish_an_unfinished_branch() -> None:
+    stopped = comment(
+        "lsimons", f"Unfinished: feat/17-x\n- the tests{ATTRIBUTION}", "2026-09-24T12:00:00Z"
+    )
+    assert steps17([APPROVE17, stopped, RELEASE17]) == [("feat/17-x", "build")]
+
+
+def test_release_from_an_untrusted_account_changes_nothing() -> None:
+    planted = comment("someone-else", RELEASE17["body"], RELEASE17["createdAt"])
+    assert steps17([NEEDS_CHANGES17, planted]) == [("feat/17-x", "revise")]
