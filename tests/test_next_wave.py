@@ -1885,7 +1885,7 @@ def test_parse_issue_state_reads_the_open_native_blockers() -> None:
 @pytest.mark.parametrize(
     ("field", "message"),
     [
-        (None, "needs gh 2.100.0 or later"),
+        (None, "needs gh 2.94.0 or later"),
         ([], "blockedBy []"),
         ({"nodes": []}, "blockedBy {'nodes': []}"),
         ({"nodes": [], "totalCount": 1}, "blockedBy lists 0 of 1 blockers"),
@@ -1953,14 +1953,14 @@ def test_main_exits_1_and_names_the_gh_version_when_the_list_lacks_blocked_by(
     assert code == 1
     assert out.stdout == ""
     assert out.stderr.startswith("next-wave: gh issue list failed: unreadable output: KeyError(")
-    assert "needs gh 2.100.0 or later" in out.stderr
+    assert "needs gh 2.94.0 or later" in out.stderr
 
 
 @pytest.mark.parametrize("command", [GH, view(5)])
 def test_main_exits_1_and_names_the_gh_version_when_gh_has_no_blocked_by_field(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], command: str
 ) -> None:
-    # What a gh before 2.100.0 prints for the field, and its exit code.
+    # What a gh before 2.94.0 prints for the field, and its exit code.
     unknown = b'Unknown JSON field: "blockedBy"\nAvailable fields:\n  assignees\n'
     # Every command but `command` works, so `--only 5` reaches the lookup.
     working = {BUN: PLAN_JSON.encode(), GH: b"[]"}
@@ -1980,7 +1980,7 @@ def test_main_exits_1_and_names_the_gh_version_when_gh_has_no_blocked_by_field(
     assert err == (
         unknown.decode()
         + f"next-wave: {name} failed: this gh has no blockedBy field,"
-        + " which needs gh 2.100.0 or later\n"
+        + " which needs gh 2.94.0 or later\n"
     )
 
 

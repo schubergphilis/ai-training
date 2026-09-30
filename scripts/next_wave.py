@@ -26,7 +26,7 @@ lines of the body. An issue is blocked by the union of its open
 `blockedBy` issues and its `Blocked by #N` lines that name an open issue,
 each number once (#579). An open blocker in another repository holds
 the issue as unreadable, named `owner/repo#N`, since a `#N` here always
-means an issue of this repository. The `blockedBy` field needs gh 2.100.0 or later,
+means an issue of this repository. The `blockedBy` field needs gh 2.94.0 or later,
 and on an older gh the picker stops with a `next-wave:` line that names
 that version, since without the field every issue would look unblocked.
 A `Blocked by #N` line blocks the issue while #N is
@@ -157,8 +157,11 @@ FENCE = re.compile(r" {0,3}(`{3,}(?=[^`]*$)|~{3,})")
 ISSUE_LIMIT = 1000
 
 # The first gh whose `gh issue list --json` and `gh issue view --json` have
-# the `blockedBy` field (docs/agents/issue-tracker.md).
-GH_MIN_VERSION = "2.100.0"
+# the `blockedBy` field: the v2.94.0 release notes, "Issue types,
+# sub-issues, and relationships in `gh issue`" (cli/cli#13057,
+# https://github.com/cli/cli/releases/tag/v2.94.0), and
+# docs/agents/issue-tracker.md.
+GH_MIN_VERSION = "2.94.0"
 
 type Kind = Literal["lessons", "content", "code", "harness"]
 KINDS: tuple[Kind, ...] = ("lessons", "content", "code", "harness")
@@ -1129,7 +1132,7 @@ BLOCKER_URL = re.compile(r"https://github\.com/([^/]+/[^/]+)/(?:issues|pull)/([1
 
 
 def native_blockers(raw: dict[str, object]) -> tuple[list[int], list[str]]:
-    """The open issues of one issue's `blockedBy` field, as gh 2.100.0 gives
+    """The open issues of one issue's `blockedBy` field, as gh 2.94.0 gives
     it: `{"nodes": [{"number": N, "state": "OPEN", "url": U, ...}], "totalCount": T}`.
 
     The numbers of the open ones in this repository (`REPO`), and the open
