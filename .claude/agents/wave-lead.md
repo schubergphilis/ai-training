@@ -218,8 +218,9 @@ stopped before it could report. Don't restart the wave:
    first line is `Claimed by run <Name>, wave <k>`, or
    `Claim released by run <Name>, wave <k>` when a run ended before the
    wave merged (a parenthetical after it is allowed), and that has
-   nothing but the attribution lines after it, not even a code fence. It applies to no branch,
-   so it is no reply and doesn't finish an `Unfinished:` branch. A trusted
+   nothing but the attribution lines after it, not even a code fence. It
+   applies to no branch, so it is no reply and doesn't finish an
+   `Unfinished:` branch. A trusted
    comment whose `Branch:` line names a pushed `feat/<other issue>-*`
    branch is a pointer: the tool lists that branch
    under this issue too, with a `pointer` field that names the issue that

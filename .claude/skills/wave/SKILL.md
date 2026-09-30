@@ -189,7 +189,10 @@ printed.
    so it gives the same answer in any checkout.
 
 2. **Preflight.** With `--resume <Name>`, first read that run's issue
-   (`gh issue view <run> --json body -q .body`). When the last line of
+   (`gh issue view <run> --json body -q .body`). When it has a trusted
+   `Run ended:` comment (step 3), skip this step and go on with step 3,
+   whose `Run ended:` route wins over the routing below, an
+   `awaiting restart` last line included. When the last line of
    its `## Waves` section is `wave <k>: awaiting restart, PR #<n>`, skip
    this step, since that session runs in the wave worktree on the wave
    branch, and go on with step 3 and then "Resuming after a restart".
@@ -204,12 +207,21 @@ printed.
 3. **Resume or open.** With `--resume <Name>`, find the open run issue
    with that name among them, and stop when there is none. Its body gives
    the arguments, and its `In flight` line, if any, is the wave to resume
-   (step 3 of the loop). When the run issue's newest comment
-   (`gh issue view <run> --json comments -q '.comments[-1].body'`) starts
-   with `Run ended:`, the session that ended the run died before the
-   close: write the run's file as below, do "When the run ends" from the
-   release of the claims on, and resume no wave. Write its current body to the run's file, with
-   the `Run: #<run>` line right after the `## Arguments` heading:
+   (step 3 of the loop). When the run issue has a comment by `lsimons` or
+   `lsimons-bot` whose body starts with `Run ended:`, the session that
+   ended the run died before the close. The check reads every comment,
+   since a later comment can follow that one, and only those two
+   accounts, since anyone can comment on a public issue:
+
+   ```bash
+   gh issue view <run> --json comments -q '.comments | map(select(.author.login == "lsimons" or .author.login == "lsimons-bot") | select(.body | test("^Run ended:"))) | length > 0'
+   ```
+
+   When it prints `true`, write the run's file as below, do "When the run
+   ends" from the release of the claims on, and resume no wave. This
+   route wins over step 2's, an `awaiting restart` last line included.
+   Write its current body to the run's file, with the `Run: #<run>` line
+   right after the `## Arguments` heading:
 
    ```bash
    mkdir -p .scratch && gh issue view <run> --json body -q .body |
@@ -373,6 +385,8 @@ printed.
    issue's comments again. When another run's `Claimed by run` comment is
    older than yours and that run's issue is still open, drop the issue from
    the wave, delete your claim comment, and say so in your next message.
+   A claim that the same run's later `Claim released by run <Name>, wave <k>`
+   comment follows doesn't count.
 6. **Fill the template.** Read `.claude/skills/wave/wave-lead-prompt.md`
    and replace:
    - `{{WAVE}}`: the wave's name in reports, `<NAME> wave <k>`, for
@@ -638,14 +652,15 @@ numbers. Then release the claims (below), and close the run issue with
 prints `OPEN`. A merged pull request's closing keyword can have closed it
 already ("The run issue after a merge"), and `gh issue close --comment`
 on a closed issue posts no comment, so the comment comes first and on its
-own. Your final report repeats the run's
-pending collision notes for the maintainer to read, lists the released
-issues, and names each open pull request whose issues stay claimed.
+own. Your final report repeats the run's pending collision notes for the
+maintainer to read, lists the released issues, and names each open pull
+request whose issues stay claimed.
 
 When the session dies after the `Run ended:` comment and before the
 close, the run issue is still open, and `/wave --resume <Name>` does the
 release and the close again ("Starting a run", step 3). The release skips
-every issue it already released, since it is no longer assigned to you.
+every issue that already holds its release comment, so it posts each
+comment once.
 A run issue closed by hand skips this section, so its claims stay until
 someone releases them as below.
 
@@ -662,9 +677,12 @@ builders may still push. For each such wave `<k>`:
 1. **The claimed issues.** For the `In flight` line, they are the issues
    on the line. For the other lines, they are the open issues that hold
    the wave's claim:
-   `gh issue list -s open --assignee @me --search '"Claimed by run <Name>, wave <k>" in:comments' --json number -q '.[].number'`.
-   Skip an issue that is closed or no longer assigned to you
-   (`gh issue view <n> --json state,assignees`).
+   `gh issue list -s open --search '"Claimed by run <Name>, wave <k>" in:comments' --json number -q '.[].number'`.
+   Skip an issue that is closed or that already holds this wave's
+   `Claim released by run <Name>, wave <k>` comment from `lsimons` or
+   `lsimons-bot` (`gh issue view <n> --json state,assignees,comments`).
+   Every run posts and assigns as the same account, so the assignee alone
+   doesn't say whether this run released the issue.
 2. **An open pull request.** For a line with `PR #<n>`, read
    `gh pr view <n> --json state,closingIssuesReferences`. While its state
    is `OPEN`, the issues it closes stay claimed, because the pull request
@@ -675,8 +693,8 @@ builders may still push. For each such wave `<k>`:
    other claimed issue, and every one when the pull request is closed.
 3. **Release.** Run `mise run wave-status -- wave/<name>-<k> <issues>`
    once for the issues to release. For each issue, run
-   `gh issue edit <n> --remove-assignee @me`, then comment one line and
-   the attribution lines:
+   `gh issue edit <n> --remove-assignee @me` when you are still an
+   assignee, then comment one line and the attribution lines:
    `Claim released by run <Name>, wave <k> (the run ended<branches>)`.
    `<branches>` adds, for each entry of the issue's `branches` list in the
    `wave-status` output, `; <branch> is unreviewed` when its `verdict` is
