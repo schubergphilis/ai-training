@@ -153,7 +153,9 @@ def test_main_reports_drift_on_stderr(
     ext = tmp_path / "ext.ini"
     base.write_text((REPO_ROOT / ".vale.ini").read_text(encoding="utf-8"), encoding="utf-8")
     real_ext = (REPO_ROOT / ".vale-extended.ini").read_text(encoding="utf-8")
-    dropped = "TokenIgnores = (https?://\\S+), (Academy\\s[a-z0-9-]+)\n"
+    dropped = (
+        "TokenIgnores = (https?://\\S+), (Academy\\s[a-z0-9-]+), (Claude\\ssupport\\s[a-z0-9-]+)\n"
+    )
     assert real_ext.count(dropped) == 1
     ext.write_text(real_ext.replace(dropped, ""), encoding="utf-8")
     assert vale_configs.main(["vale_configs.py", str(base), str(ext)]) == 1
