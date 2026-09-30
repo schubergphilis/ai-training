@@ -28,6 +28,10 @@ Usage: python3 rank.py [--totals]
 Without a flag, prints both rankings with scores and the totals. With
 `--totals`, prints only the totals line.
 
+The lesson page runs a port of this program in the browser,
+`site/src/scripts/bias-in-patterns-ranker-logic.ts`, with the bonus on a
+slider. A change to the ranking here needs the same change there.
+
 Standard library only, Python 3.9 or later.
 """
 

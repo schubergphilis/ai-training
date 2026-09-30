@@ -1,8 +1,9 @@
 id: safety/bias-in-patterns
 title: Seeing bias across many answers
 description: >-
-  Read two shortlists from a simulated ranker that each look fair on their own, count who made the
-  cut when the names are swapped, and decide how much checking a task that affects people gets.
+  Read two shortlists from a simulated ranker on the page that each look fair on their own, count
+  who made the cut when the names are swapped, and decide how much checking a task that affects
+  people gets.
 mode: tutorial
 covers: safety/failure-modes
 serves: [safety/verifies-output/calibrates-trust]
@@ -26,6 +27,9 @@ sources: [Wilson 2024, Bertrand 2004, Academy ai-capabilities-and-limitations]
 sources-checked: 2026-09-24
 review-by: 2027-03-24
 minutes: 15
+proofs:
+  - safety/bias-in-patterns/both_runs.py
+  - safety/bias-in-patterns/totals.py
 notes: >-
   The fixture is a constructed simulation of a slanted ranker, and the page says so twice: it ranks
   twelve made-up records under two invented name lists, swaps the lists, and tallies the shortlist
@@ -35,4 +39,9 @@ notes: >-
   across the two lists so that neither list reads as one group. The claim that real
   models slant by name rests on Wilson and Caliskan 2024 (resume retrieval, checked 2026-09-24) and
   the swapped-name method on Bertrand and Mullainathan 2004. Bloomberg's 2024 GPT ranking analysis
-  was not cited because its page is behind a paywall and could not be checked.
+  was not cited because its page is behind a paywall and could not be checked. The widget
+  (BiasInPatternsRanker) is a port of rank.py with the bonus on a slider from 0 to 6, starting at
+  the 2 that rank.py fixes. Ties keep record order at every bonus, as in rank.py. The text fence on
+  the page is the output of both_runs.py, which holds the totals line totals.py prints, so mise
+  run examples fails when either prints a line the page doesn't show (#284). The graded
+  predict-the-totals became a Choice with the same id and objective.

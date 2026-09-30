@@ -129,7 +129,6 @@ export const FOUNDATIONS_GROUP = 'foundations';
  * that shows no banned surface fails the check. No wildcards.
  */
 export const FOUNDATIONS_EXEMPT = new Map([
-	['safety/bias-in-patterns', 284], // #284: went live after #238 was written
 	['safety/saying-ai-helped', 284], // #284
 ]);
 
