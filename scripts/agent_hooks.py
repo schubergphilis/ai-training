@@ -50,6 +50,9 @@ It also rejects the other ways to skip the git hooks (`SKIP`, `PREK_SKIP`,
 `gh <noun> delete`, a `gh api graphql` delete mutation, and a push that
 deletes a remote branch (#421).
 
+No agent runs `mise run branch-cleanup` (scripts/branch_cleanup.py), not
+even as a dry run: it is for human maintainers only.
+
 No agent pushes to `main` (#353): every change reaches it through a pull
 request. `gh pr merge` is allowed only when `AI_TRAINING_ROLE` names a
 role that may merge, either in the hook's environment or as a prefix on
@@ -627,6 +630,42 @@ def rm_leaves_scratch(words: Sequence[str], cwd: str) -> str | None:
     return None
 
 
+BRANCH_CLEANUP_SCRIPT = "branch_cleanup.py"
+BRANCH_CLEANUP_TASK = "branch-cleanup"
+PYTHON = re.compile(r"^python[0-9.]*$")
+LAUNCHERS = frozenset({"env", "exec", "nohup", "command", "time", "sudo", "uv", "uvx"})
+
+
+def runs_branch_cleanup(words: Sequence[str]) -> bool:
+    """True when a simple command runs scripts/branch_cleanup.py, which is for humans only.
+
+    That is `mise` with the `branch-cleanup` task in its words, the script
+    as the command, or a Python interpreter with the script or the
+    `branch_cleanup` module in its words. A launcher before them (`env`,
+    `uv run`, `nohup`...) and its options are skipped. A command that only
+    names the file, such as `git add`, `ruff check` or `cat`, passes.
+    """
+    rest = list(words)
+    while rest:
+        name = Path(rest[0]).name
+        if name == "mise":
+            return BRANCH_CLEANUP_TASK in rest
+        if name == BRANCH_CLEANUP_SCRIPT:
+            return True
+        if PYTHON.match(name):
+            return "branch_cleanup" in rest or any(
+                Path(word).name == BRANCH_CLEANUP_SCRIPT for word in rest[1:]
+            )
+        if name not in LAUNCHERS:
+            return False
+        rest = rest[1:]
+        if name == "uv" and rest[:1] == ["run"]:
+            rest = rest[1:]
+        while rest and (rest[0].startswith("-") or "=" in rest[0]):
+            rest = rest[1:]
+    return False
+
+
 def hooks_skipped(what: str) -> str:
     """The block message for a command that turns git hooks off (#391, #421)."""
     return (
@@ -682,6 +721,11 @@ def check_segment(
             "`gh pr merge` is for the wave lead, the dispatcher, or a coordinator the "
             "maintainer asked to merge. Report the pull request as ready instead. A role "
             f"that may merge prefixes the command with `{ROLE_VAR}=<role>`."
+        )
+    if runs_branch_cleanup(words):
+        return (
+            "`mise run branch-cleanup` (scripts/branch_cleanup.py) is for human maintainers "
+            "only, also without `--apply`. Report the branches that should go instead."
         )
     reason = check_hooks_and_deletes(segment)
     if reason:

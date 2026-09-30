@@ -199,6 +199,17 @@ run = "uv run --locked python scripts/harness_metrics.py"
 description = "Open dispatcher runs and the next run name, as JSON: mise run run-name [-- --check <issue>]"
 run = "uv run --locked python scripts/run_name.py"
 
+# Branch cleanup, for human maintainers only: no agent runs this task,
+# also not as a dry run. It lists the remote branches that are merged into
+# `main` (every commit's patch is in `main`) and older than 14 days, or
+# `-- --days N`, and with `-- --apply` deletes them on GitHub and locally.
+# It stops at the first `gh` or `git` error. The rules are in
+# scripts/branch_cleanup.py, and the guard-bash hook rejects the task for
+# agents. Network (gh).
+[tasks.branch-cleanup]
+description = "Humans only: list merged remote branches older than 14 days; delete with -- --apply: mise run branch-cleanup [-- --days N] [--apply]"
+run = "uv run --locked python scripts/branch_cleanup.py"
+
 # The build writes the checkpoint export (spec S03 "Checkpoint export") to
 # site/dist/data/checkpoints.json from src/pages/data/checkpoints.json.ts.
 # This reads it back and checks it against the lesson pages and the topic

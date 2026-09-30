@@ -36,6 +36,10 @@ Tools are pinned in `.mise.toml`, so run `mise install` once. Then:
 - `mise run links` - `lychee` check of *external* URLs. Not part of `ci`,
   because it is a network check that flakes on rate limits. Internal links
   are validated by `starlight-links-validator` during `mise run site-build`.
+- `mise run branch-cleanup` - For maintainers only, and never run by an
+  agent. Lists the remote branches that are merged into `main` and older
+  than 14 days (`-- --days 3` for a shorter window). With `-- --apply` it
+  deletes them on GitHub and locally, and it stops at the first error.
 
 Open a pull request against `main`. CI runs the same `mise run ci` gate plus a
 [zizmor](https://docs.zizmor.sh/) audit of the GitHub Actions workflows; both

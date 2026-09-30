@@ -44,7 +44,7 @@ select = ["E", "F", "I", "W", "N", "UP", "B", "C4", "SIM", "PTH", "RUF"]
 
 [tool.ruff.lint.isort]
 # The scripts are imported by name from tests/, so sort them as ours.
-known-first-party = ["agent_hooks", "harness_metrics", "mise_refresh", "prose_eval", "prose_metrics", "run_name", "vale_configs", "wave_status"]
+known-first-party = ["agent_hooks", "branch_cleanup", "harness_metrics", "mise_refresh", "prose_eval", "prose_metrics", "run_name", "vale_configs", "wave_status"]
 
 [tool.ruff.lint.per-file-ignores]
 # Lesson fixtures show `open()` and `os.path` on purpose: they are what a

@@ -421,6 +421,45 @@ def test_commits_and_pushes_that_keep_the_hooks_pass(command: str) -> None:
 @pytest.mark.parametrize(
     "command",
     [
+        "mise run branch-cleanup",
+        "mise run branch-cleanup -- --days 3 --apply",
+        "mise r branch-cleanup",
+        "mise branch-cleanup",
+        "scripts/branch_cleanup.py --apply",
+        "./scripts/branch_cleanup.py",
+        "python3 scripts/branch_cleanup.py",
+        "python3.14 -u scripts/branch_cleanup.py --days 3",
+        "uv run --locked python scripts/branch_cleanup.py",
+        "uv run scripts/branch_cleanup.py",
+        "env FOO=1 python3 scripts/branch_cleanup.py",
+        "cd scripts && python3 -m branch_cleanup",
+        "git status && mise run branch-cleanup",
+    ],
+)
+def test_branch_cleanup_is_rejected_for_agents(command: str) -> None:
+    reason = check(command)
+    assert reason is not None
+    assert "human maintainers only" in reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git add scripts/branch_cleanup.py tests/test_branch_cleanup.py",
+        "uv run --locked ruff check scripts/branch_cleanup.py",
+        "cat scripts/branch_cleanup.py",
+        "uv run --locked pytest tests/test_branch_cleanup.py",
+        "mise tasks",
+        "mise run py-test",
+    ],
+)
+def test_commands_that_only_name_branch_cleanup_pass(command: str) -> None:
+    assert check(command) is None
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
         "gh repo delete schubergphilis/ai-training --yes",
         "gh api -X DELETE repos/o/r/git/refs/heads/x",
         "gh api repos/o/r/issues/comments/1 -X DELETE",
