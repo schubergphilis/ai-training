@@ -803,7 +803,7 @@ def trusted_comments(
     by the same run for the same wave, or None while the claim holds. A
     release's `releasedBy` is always None. A trusted comment that contains
     `Follow-ups from` but whose first line doesn't match is listed in
-    `unmatchedFollowUps` with its first line, so a lead's follow-ups comment
+    `unmatchedFollowUps` with its first non-blank line, so a lead's follow-ups comment
     with another first line is named and never dropped without a word.
     """
     follow_ups: list[FollowUps] = []
@@ -829,7 +829,9 @@ def trusted_comments(
                     "author": c["author"],
                     "createdAt": c["createdAt"],
                     "url": c["url"],
-                    "firstLine": lines_of(c["body"])[0],
+                    "firstLine": next(
+                        (js_trim(line) for line in lines_of(c["body"]) if js_trim(line)), ""
+                    ),
                 }
             )
         claim = claim_of(c["body"])
