@@ -68,7 +68,10 @@ leaves out a planned lesson's issue (#526), with the reason
 lessons wave applies the `assumes` rule the build enforces.
 The other way round, a lessons wave gives an issue under `--only` that is
 no planned lesson the reason `not a planned lesson (use --kind K)`, where
-K is the issue's kind label, or `content` when it has none (#529).
+K is the issue's kind label, or `content` when it has none, and the
+reason `not a planned lesson (has more than one kind label)` when it has
+more than one (#529). An open issue without `ready-for-agent` gets
+`not ready-for-agent` first.
 
 A `code` wave (#494) picks the ready, unassigned issues with the `code`
 label that no plan file claims, with the same dependency lines and the
@@ -595,6 +598,9 @@ def pick_lessons_wave(
             state = None if n in ready else lookup(n)
             if state is not None and not is_open_issue(state):
                 reason = "no such open issue"
+            elif state is not None and "ready-for-agent" not in state["labels"]:
+                # The order `issue_reason_outside` uses: readiness before the kind.
+                reason = "not ready-for-agent"
             else:
                 labels = ready[n]["labels"] if state is None else state["labels"]
                 reason = not_a_lesson_text(labels)

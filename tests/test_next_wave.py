@@ -395,7 +395,9 @@ def test_with_only_reports_every_listed_number_that_is_not_in_the_wave_with_a_re
         live=["a/live"],
     )
     ready = [issue(1), issue(3, ["someone"]), issue(4), issue(5), issue(6), issue(50)]
-    lookup = Lookups({51: state(), 52: state(pull_request=True), 999: state("CLOSED")})
+    lookup = Lookups(
+        {51: state(labels=["ready-for-agent"]), 52: state(pull_request=True), 999: state("CLOSED")}
+    )
     r = lessons_wave(lessons, ready, lookup, only=[1, 2, 3, 4, 5, 6, 9, 50, 51, 52, 999], size=1)
     assert ids(r["wave"]) == ["a/1"]
     assert r["notPicked"] == [
@@ -596,14 +598,14 @@ def test_a_fetched_issue_that_is_no_lesson_names_the_kind_of_its_label(kind: str
 
 @pytest.mark.parametrize("kind", ["content", "code", "harness"])
 def test_a_looked_up_issue_that_is_no_lesson_names_the_kind_of_its_label(kind: str) -> None:
-    lookup = Lookups({2: state(labels=[kind])})
+    lookup = Lookups({2: state(labels=["ready-for-agent", kind])})
     r = lessons_wave(one_lesson(), [issue(1)], lookup, only=[1, 2])
     assert r["notPicked"] == [{"issue": 2, "reason": f"not a planned lesson (use --kind {kind})"}]
     assert lookup.asked == [2]
 
 
 def test_an_issue_without_a_kind_label_that_is_no_lesson_keeps_the_content_reason() -> None:
-    lookup = Lookups({3: state(labels=["bug"])})
+    lookup = Lookups({3: state(labels=["ready-for-agent", "bug"])})
     ready = [issue(1), issue(2, labels=["ready-for-agent"])]
     r = lessons_wave(one_lesson(), ready, lookup, only=[2, 3])
     assert r["notPicked"] == [
@@ -618,6 +620,12 @@ def test_an_issue_with_two_kind_labels_that_is_no_lesson_names_no_kind() -> None
     assert r["notPicked"] == [
         {"issue": 2, "reason": "not a planned lesson (has more than one kind label)"}
     ]
+
+
+def test_a_looked_up_issue_without_ready_for_agent_that_is_no_lesson_is_not_ready() -> None:
+    lookup = Lookups({2: state(labels=["code"])})
+    r = lessons_wave(one_lesson(), [issue(1)], lookup, only=[2])
+    assert r["notPicked"] == [{"issue": 2, "reason": "not ready-for-agent"}]
 
 
 def test_a_fetched_issue_is_not_looked_up_for_its_kind() -> None:
@@ -1449,7 +1457,7 @@ def test_main_runs_lesson_plan_in_site_and_prints_the_wave_as_markdown(
         monkeypatch,
         capsys,
         ["--only", "11,12,13"],
-        {BUN: PLAN_JSON, GH: GH_JSON, view(13): view_json()},
+        {BUN: PLAN_JSON, GH: GH_JSON, view(13): view_json(labels=["ready-for-agent"])},
     )
     assert code == 0
     assert out.stderr == ""
