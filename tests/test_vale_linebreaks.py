@@ -441,6 +441,12 @@ SPLIT_IGNORES = {
         "Vale.Terms",
         "See Academy\nintroduction-to-claude-cowork for the course.",
     ),
+    "Claude support slug": (
+        "[*.{yaml,yml}]",
+        r"(Claude\ssupport\s[a-z0-9-]+)",
+        "Vale.Terms",
+        "See Claude support\nget-started-with-claude-cowork for the page.",
+    ),
 }
 
 
