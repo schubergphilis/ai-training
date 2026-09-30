@@ -34,14 +34,14 @@ const first = catalog.flatMap((c) => c.lessons)[0];
 <style>
 	.overall { margin: 1rem 0 1.5rem; }
 	.overall-row { display: flex; align-items: center; gap: 0.75rem; }
-	.overall-bar { flex: 1; height: 0.75rem; border-radius: 4px; background: var(--sl-color-gray-5); overflow: hidden; }
+	.overall-bar { flex: 1; height: 0.75rem; border-radius: var(--at-radius-pill); background: var(--sl-color-gray-5); overflow: hidden; }
 	.overall-bar > div { height: 100%; width: 0; background: var(--at-done); transition: width 0.3s; }
 	.overall-skipped { color: var(--sl-color-gray-3); font-size: 0.9rem; }
 	.overall-text { margin: 0.4rem 0 0; color: var(--sl-color-gray-3); font-size: 0.9rem; }
 	.overall-due { margin: 0.5rem 0 0; padding: 0; list-style: none; font-size: 0.9rem; }
 	.overall-due li { margin: 0.2rem 0; }
 	.overall-actions { margin: 0.75rem 0 0; display: flex; flex-wrap: wrap; gap: 0.75rem; }
-	.overall-continue, .overall-map { display: inline-block; padding: 0.45rem 1rem; border-radius: 6px; font-weight: 600; text-decoration: none; }
+	.overall-continue, .overall-map { display: inline-block; padding: 0.45rem 1rem; border-radius: var(--at-radius-pill); font-weight: 600; text-decoration: none; }
 	.overall-continue { background: var(--sl-color-bg-accent); color: var(--sl-color-text-invert); }
 	.overall-map { border: 1px solid var(--sl-color-gray-4); color: var(--sl-color-text); background: var(--sl-color-bg-nav); }
 </style>

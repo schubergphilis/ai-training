@@ -40,6 +40,16 @@
 	--sl-color-bg-nav: #ffffff;
 }
 
+/* Corner radii, as in the learning platform (spec S14): 16px for cards and
+   panels, 10px for rows inside them, 6px for inputs and code, and fully
+   rounded badges and buttons. */
+:root {
+	--at-radius-sm: 6px;
+	--at-radius-md: 10px;
+	--at-radius-lg: 16px;
+	--at-radius-pill: 999px;
+}
+
 /* Fonts: Inter for all text, as in the learning platform (spec S14),
    self-hosted from @fontsource-variable/inter (astro.config.mjs's
    `customCss`). Headings at weight 600 with slightly tight letter spacing,
@@ -89,6 +99,23 @@ h1#_top {
 	}
 }
 
+/* Starlight's cards and badges in the learning platform's shapes (spec
+   S14): cards are defined by a border, with a small shadow only on hover,
+   and badges are fully rounded. Starlight's component styles sit in a
+   cascade layer, so these unlayered rules win. */
+.sl-link-card,
+.card {
+	border-radius: var(--at-radius-lg);
+	box-shadow: none;
+}
+.sl-link-card:hover {
+	border-color: var(--sl-color-accent);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.sl-badge {
+	border-radius: var(--at-radius-pill);
+}
+
 /* Make a whole card clickable (the card is wrapped in a `.card-link` anchor)
    with a subtle lift-and-highlight on hover - used on the splash landing page. */
 .card-link {
@@ -117,7 +144,7 @@ h1#_top {
 	display: inline-block;
 	margin-inline-start: 0.4rem;
 	padding: 0 0.45em;
-	border-radius: 999px;
+	border-radius: var(--at-radius-pill);
 	font-size: var(--sl-text-xs);
 	font-weight: 600;
 	line-height: 1.5;
