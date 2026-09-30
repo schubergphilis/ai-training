@@ -128,9 +128,7 @@ export const FOUNDATIONS_GROUP = 'foundations';
  * issue that rewrites it. Remove a line when its issue lands: a listed lesson
  * that shows no banned surface fails the check. No wildcards.
  */
-export const FOUNDATIONS_EXEMPT = new Map([
-	['safety/saying-ai-helped', 284], // #284
-]);
+export const FOUNDATIONS_EXEMPT = new Map([]);
 
 /**
  * Fence languages a foundations page may not show: the five tags spec S03

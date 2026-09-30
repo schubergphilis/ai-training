@@ -1,10 +1,15 @@
 """Report how much of one file also appears in another, line for line.
 
-No arguments:   python3 compare.py
-    Compares generated.py, the function an assistant returned, with
-    library/truncate.py, the library function it resembles.
+This is the rule of the line comparer widget on the lesson page
+(`site/src/scripts/line-compare-logic.ts`), and the page shows what it
+prints in `text` fences. The lesson file lists this script and
+`compare_rewrite.py` as proofs.
 
-One argument:   python3 compare.py rewritten.py
+No arguments:   python3 compare.py
+    Compares sample/generated.py, the function an assistant returned, with
+    sources/truncate.py, the library function it resembles.
+
+One argument:   python3 compare.py sample/rewritten.py
     Compares another file in this directory with the same library function.
 
 A line counts as shared when its text, with the spaces around it removed,
@@ -15,7 +20,8 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LIBRARY = os.path.join("library", "truncate.py")
+LIBRARY = os.path.join("sources", "truncate.py")
+GENERATED = os.path.join("sample", "generated.py")
 
 
 def code_lines(path: str) -> "list[str]":
@@ -30,9 +36,10 @@ def report(candidate: str, library: str = LIBRARY) -> str:
     candidate_lines = code_lines(candidate)
     shared = [line for line in candidate_lines if line in library_lines]
     only_here = [line for line in candidate_lines if line not in library_lines]
+    name = os.path.basename(library)
     lines = [
-        f"{len(shared)} of {len(candidate_lines)} lines of {candidate} also appear in {library}",
-        f"only in {candidate}:",
+        f"{len(shared)} of {len(candidate_lines)} lines also appear in {name}",
+        f"lines not in {name}:",
     ]
     lines.extend("  " + line for line in only_here)
     return "\n".join(lines)
@@ -40,7 +47,7 @@ def report(candidate: str, library: str = LIBRARY) -> str:
 
 def main(argv: "list[str]") -> None:
     if len(argv) == 1:
-        candidate = "generated.py"
+        candidate = GENERATED
     elif len(argv) == 2:
         candidate = argv[1]
     else:

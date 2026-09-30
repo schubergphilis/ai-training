@@ -2,8 +2,8 @@ id: safety/saying-ai-helped
 title: Saying that AI helped, and crediting what it copied
 description: >-
   Write the disclosure line in its three parts, what the AI did, what you checked and who is
-  accountable, run a script that shows how much of a generated function came from a library, and
-  look up the disclosure rule of the place the work goes to.
+  accountable, use a comparer that shows how much of a generated function came from a library,
+  and look up the disclosure rule of the place the work goes to.
 mode: tutorial
 covers: safety/responsible-use
 serves:
@@ -27,12 +27,17 @@ exercise:
   brief: >-
     Write the disclosure line for three artifacts you produced this month, and for one of them find
     the rule of the place it went to.
+proofs:
+  - safety/saying-ai-helped/compare.py
+  - safety/saying-ai-helped/compare_rewrite.py
 sources: [ICMJE authorship, curl contribute, AI Act, Academy ai-fluency-framework-foundations]
 sources-checked: 2026-09-23
 review-by: 2027-03-23
 minutes: 15
 notes: >-
-  Introduces no concept: deepens disclosure and licensing-and-attribution with a fixture that
-  compares a generated function with a known library source and reports the near-verbatim match.
+  Introduces no concept: deepens disclosure and licensing-and-attribution with a line comparer
+  widget (#284) that compares a generated function with a known library source and reports the
+  near-verbatim match. The widget is a port of compare.py, which stays in CI as the proof through
+  compare.py and compare_rewrite.py.
   The library and its author in the fixture are invented. DLAI-2 was inspiration only and is not
   cited on the page. The ICMJE and curl rules move, so review-by covers them.

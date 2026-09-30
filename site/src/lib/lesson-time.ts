@@ -79,6 +79,8 @@ export const LESSON_TIME = {
 	 * press and a look at a result the page also shows in a fence (#238).
 	 * `BiasInPatternsRanker` is two minutes: a press at the bonus the page
 	 * shows, then presses at other bonuses to compare the totals (#284).
+	 * `LineCompare` is one minute, like `FormatChecker`: a press and a look
+	 * at a result the page also shows in a fence (#284).
 	 */
 	widgetSeconds: {
 		Sampler: 180,
@@ -89,6 +91,7 @@ export const LESSON_TIME = {
 		Redactor: 60,
 		ClaimChecker: 60,
 		BiasInPatternsRanker: 120,
+		LineCompare: 60,
 	} as Record<string, number>,
 	/** The shown estimate is rounded to this many minutes, because the constants are not calibrated. */
 	roundToMinutes: 5,
