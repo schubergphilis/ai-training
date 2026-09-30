@@ -163,7 +163,7 @@ printed.
    one its issue title gives. When the check refuses the run, the script
    exits 3 and prints the message on stderr and as `refusal` in its JSON.
    Stop with that message. Exit 0 with `"refusal": null` means the run may
-   start. The script (`scripts/run_name.py`) refuses when:
+   start. On any other exit code, stop and show its stderr. The script (`scripts/run_name.py`) refuses when:
 
    - this run is a harness run and any other run is open:
      `A harness run starts only when no other run is open. Open: Run <Name> (#<n>), ...`
@@ -223,7 +223,15 @@ printed.
    3. When it exits 3, the exclusivity check refuses your run: close your
       issue with a comment that quotes the `refusal` and names the other
       run (`gh issue close <number> --comment ...`), and stop as step 1
-      does. The earlier run's own check passes, so one of the two goes on.
+      does. The earlier run's own check usually passes, so one of the two
+      goes on. The `gh issue list` listing can miss an issue created a few
+      seconds before, so two runs started within seconds can both pass
+      (#616). A name clash can also make both refuse: when the earlier run
+      retries under a new name in step 4, its new issue has the higher
+      number, and the maintainer then starts one of the two again.
+      On any other exit code, close your issue with a comment that quotes
+      the stderr, so no half-opened run blocks the next one, and stop and
+      show the stderr.
       That close comment is the stop comment of "When the run ends", and
       nothing else of that section applies to a run that never started.
    4. When its `takenBy` isn't null, an older open run got the same name
@@ -523,7 +531,7 @@ Stop, and say which one it was, when:
 - a harness wave is awaiting restart (the lead's `open` report on a
   harness wave, step 8);
 - the harness exclusivity check refuses the run ("Starting a run"
-  step 1), or the `--kind` check refuses its kind;
+  step 1 or step 3.3), or the `--kind` check refuses its kind;
 - a step of "Resuming after a restart" fails, or the maintainer declines
   the merge there;
 - the maintainer says stop.
