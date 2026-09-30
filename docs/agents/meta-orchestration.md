@@ -394,7 +394,7 @@ everything below.
 - The wave as `next-wave` printed it: issue numbers, lesson ids, course
   positions, and for each lesson the `after` entries that are still
   planned. A planned `after` is ordering advice for the lead (spec S11:
-  `after` is only read while a lesson is coming, and neither the data check
+  the lesson graph reads `after` only while a lesson is coming, and neither the data check
   nor the build needs its target live). It never requires stacking one
   branch on another. The picker blocks the `assumes` dependencies that
   would.
