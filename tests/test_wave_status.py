@@ -1333,9 +1333,17 @@ def test_claim_with_a_branch_line_is_a_reply() -> None:
     ]
 
 
-def test_claim_with_a_fenced_branch_line_is_still_a_claim() -> None:
+def test_claim_with_a_fenced_branch_line_is_a_reply() -> None:
     body = f"Claimed by run Seal, wave 3\n\n```\nBranch: feat/17-x\n```{ATTRIBUTION}"
-    assert comment_kind(body) == "claim"
+    assert comment_kind(body) == "reply"
+
+
+def test_claim_with_a_fenced_fix_sentence_after_it_is_a_reply() -> None:
+    body = f"Claimed by run Seal, wave 3\n\n```\nFixed in abc.\n```{ATTRIBUTION}"
+    assert comment_kind(body) == "reply"
+    assert steps17([APPROVE17, comment("lsimons", body, "2026-09-24T13:00:00Z")]) == [
+        ("feat/17-x", "lead-re-check")
+    ]
 
 
 def test_claim_after_needs_changes_leaves_it_revise() -> None:

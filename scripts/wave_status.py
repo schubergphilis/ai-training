@@ -50,12 +50,12 @@ builder reply after it and no lead re-check after that reply is
 The dispatcher posts `Claimed by run <Name>, wave <k>` on every issue it
 picks (.claude/skills/wave/SKILL.md, "Claim"), sometimes with a
 parenthetical after it (#457). A trusted comment whose first line is
-exactly that, and whose other lines outside code fences are blank or
-attribution lines, is a claim (#507). A claim applies to no branch: it is no builder reply, it
-doesn't finish an `Unfinished:` branch and it doesn't clear a lead
-re-check. Any other wording, such as `Claimed by run` in a fence, in the
-middle of a sentence, or with a `Branch:` line or any other text after
-it, stays a reply, so a variant errs toward more work.
+exactly that, and whose other lines are blank or attribution lines, is
+a claim (#507). A claim applies to no branch: it is no builder reply,
+it doesn't finish an `Unfinished:` branch and it doesn't clear a lead
+re-check. Any other wording, such as `Claimed by run` in a fence, in
+the middle of a sentence, or with a `Branch:` line, a code fence or any
+other text after it, stays a reply, so a variant errs toward more work.
 
 A lead that puts one issue's commits on another issue's branch posts a
 pointer comment on the first issue with a `Branch:` line for that branch
@@ -315,14 +315,14 @@ def is_claim(body: str) -> bool:
     """Whether a comment is the dispatcher's claim of the issue for a run.
 
     Its first line is `Claimed by run <Name>, wave <k>`, with an optional
-    parenthetical, and every other line outside a code fence is blank or an
-    attribution line. The dispatcher writes nothing else, so a comment with
-    more text, such as a `Branch:` line or a fix sentence, is something else
-    and stays a reply.
+    parenthetical, and every other line is blank or an attribution line.
+    Lines inside a code fence count too. The dispatcher writes nothing else,
+    so a comment with more text, such as a `Branch:` line, a fenced block
+    or a fix sentence, is something else and stays a reply.
     """
     if CLAIM_LINE.match(lines_of(body)[0]) is None:
         return False
-    rest = lines_outside_fences(body)[1:]
+    rest = lines_of(body)[1:]
     return all(js_trim(line) == "" or ATTRIBUTION_LINE.match(line) for line in rest)
 
 

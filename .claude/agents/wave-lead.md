@@ -207,8 +207,8 @@ stopped before it could report. Don't restart the wave:
    `re-checked by lead`, a claim, and any other comment after a verdict
    counts as a builder reply. A claim is the dispatcher's comment whose
    first line is `Claimed by run <Name>, wave <k>` (a parenthetical after
-   it is allowed) and that has no `Branch:` line outside a code fence:
-   nothing but the attribution lines may follow it. It applies to no branch,
+   it is allowed) and that has nothing but the attribution lines after
+   it, not even a code fence. It applies to no branch,
    so it is no reply and doesn't finish an `Unfinished:` branch. A trusted
    comment whose `Branch:` line names a pushed `feat/<other issue>-*`
    branch is a pointer: the tool lists that branch
