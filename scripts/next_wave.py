@@ -20,8 +20,14 @@ stops it with exit 1. The functions between are pure apart from that
 lookup, which the tests pass in, so tests/test_next_wave.py can feed them
 planted lessons and issues.
 
-Every kind reads the dependency lines of an issue body (docs/agents/triage.md,
-"Dependency lines"). A `Blocked by #N` line blocks the issue while #N is
+Every kind reads an issue's dependencies (docs/agents/triage.md,
+"Dependencies"): GitHub's `blocked by` relationship and the dependency
+lines of the body. An issue is blocked by the union of its open
+`blockedBy` issues and its `Blocked by #N` lines that name an open issue,
+each number once (#579). The `blockedBy` field needs gh 2.100.0 or later,
+and on an older gh the picker stops with a `next-wave:` line that names
+that version, since without the field every issue would look unblocked.
+A `Blocked by #N` line blocks the issue while #N is
 open, an issue or a pull request. A `Not before YYYY-MM-DD` line blocks it
 while the date is after today, read in UTC, so on that date it is free. A
 line that starts with `Blocked by #` or `Not before` but isn't the form
@@ -42,8 +48,9 @@ such a lesson can't land. An `after` entry that is still planned does not
 block. It is reported per lesson as ordering advice for the wave lead.
 Each candidate carries `unblocks`, the number of blocked candidates whose
 missing objectives it serves (direct only, no transitive closure). A
-blocked candidate that a `Blocked by`, `Not before` or unreadable line
-also holds counts for none, since writing the lesson doesn't free it. With
+blocked candidate that an issue dependency (a `blocked by` relationship,
+or a `Blocked by`, `Not before` or unreadable line) also holds counts for
+none, since writing the lesson doesn't free it. With
 `--unblockers-first`, an area's candidates sort by that count descending
 ahead of course position, so `concepts/agent-loop` comes before an
 earlier lesson that unblocks nothing. The planned `after` rule still
@@ -54,9 +61,9 @@ reported and the order stays earliest-in-course.
 
 A `content` wave picks the ready, unassigned issues with the `content`
 label that no plan file claims as its lesson issue, in ascending issue
-number, leaving out the ones its dependency lines block. Its Blocked list
+number, leaving out the ones its dependencies block. Its Blocked list
 is printed only when it has an entry, and in JSON it is the last key, so
-a wave without dependency lines prints as it did before them. An issue
+a wave without dependencies prints as it did before them. An issue
 with more than one of the `content`, `code` and `harness` labels breaks
 the rule that the kind labels are exclusive (docs/agents/issue-tracker.md),
 so a content, code or harness wave lists it under Skipped with the reason
@@ -68,7 +75,7 @@ leaves out a planned lesson's issue (#526), with the reason
 lessons wave applies the `assumes` rule the build enforces.
 
 A `code` wave (#494) picks the ready, unassigned issues with the `code`
-label that no plan file claims, with the same dependency lines and the
+label that no plan file claims, with the same dependencies and the
 same nits rule. The issues with the `bug` label come first, then the
 rest, each part in ascending issue number, which is the order run Emu
 (#362) chose by hand. It prints as a content wave does, with the kind in
@@ -76,7 +83,7 @@ the heading.
 
 A `harness` wave (#365) picks the ready, unassigned issues with the
 `harness` label that no plan file claims, in ascending issue number, with
-the same dependency lines and the same nits rule, and prints as a code
+the same dependencies and the same nits rule, and prints as a code
 wave does. Its default size is 4, since every issue in it adds items to
 the one `After the restart` checklist the maintainer works through by
 hand. The other kinds default to 6.
@@ -123,8 +130,8 @@ ISSUE_LIST = re.compile(r"[1-9][0-9]*(,[1-9][0-9]*)*", re.ASCII)
 # A lone UTF-16 surrogate, which JSON.stringify writes as a `\uXXXX` escape.
 LONE_SURROGATE = re.compile("[\ud800-\udfff]")
 
-# The dependency lines of an issue body (docs/agents/triage.md, "Dependency
-# lines"). Each is matched whole against a trimmed line, case as written. A
+# The dependency lines of an issue body (docs/agents/triage.md,
+# "Dependencies"). Each is matched whole against a trimmed line, case as written. A
 # `Blocked by` line names one issue. A trimmed line that starts with one of
 # the two prefixes but isn't the form whole, or whose date isn't a real
 # date, is reported as unreadable, so a near miss never drops silently.
@@ -140,6 +147,10 @@ FENCE = re.compile(r" {0,3}(`{3,}(?=[^`]*$)|~{3,})")
 # `gh issue list` returns at most this many issues. A list that reaches it
 # may be cut short, so `main` stops with an error there.
 ISSUE_LIMIT = 1000
+
+# The first gh whose `gh issue list --json` and `gh issue view --json` have
+# the `blockedBy` field (docs/agents/issue-tracker.md).
+GH_MIN_VERSION = "2.100.0"
 
 type Kind = Literal["lessons", "content", "code", "harness"]
 KINDS: tuple[Kind, ...] = ("lessons", "content", "code", "harness")
@@ -171,16 +182,23 @@ class ReadyIssue(TypedDict):
     assignees: list[str]
     labels: list[str]
     body: str
+    # The open issues GitHub's `blocked by` relationship names, in the
+    # order gh gives them.
+    blockedBy: list[int]
 
 
 class IssueState(TypedDict):
-    """One issue as `gh issue view --json state,labels,assignees,url` gives it."""
+    """One issue as `gh issue view --json state,labels,assignees,url,blockedBy` gives it."""
 
     # OPEN or CLOSED, and MERGED for a merged pull request.
     state: str
     labels: list[str]
     assignees: list[str]
     pullRequest: bool
+    # The open issues its `blocked by` relationship names, as in `ReadyIssue`.
+    # No pick reads it yet: it is there so the lookup and the list read the
+    # same fields and need the same gh.
+    blockedBy: list[int]
 
 
 # Looks up one issue that is not in the fetched set. `main` passes one that
@@ -189,9 +207,10 @@ type Lookup = Callable[[int], IssueState]
 
 
 class Dependencies(TypedDict):
-    """What an issue's dependency lines hold it back by."""
+    """What an issue's dependencies hold it back by."""
 
-    # The `Blocked by` issues that are still open, in body order.
+    # The open issues its `blocked by` relationship or a `Blocked by` line
+    # names, each once: the relationship's first, then the lines' in body order.
     blockedByIssues: list[int]
     # The latest `Not before` date when it is after today, as YYYY-MM-DD.
     notBefore: str | None
@@ -221,7 +240,7 @@ class BlockedEntry(TypedDict):
     issue: int
     id: str
     # The assumed objectives no live lesson serves. Empty when only the
-    # issue's dependency lines hold it back.
+    # issue's dependencies hold it back.
     blockedBy: list[Blocker]
     # The three dependency fields, each present only when it holds something.
     blockedByIssues: NotRequired[list[int]]
@@ -359,17 +378,23 @@ def read_date(value: str) -> date | None:
         return None
 
 
-def dependencies(body: str, is_open: Callable[[int], bool], today: date) -> Dependencies:
-    """What an issue body's dependency lines hold the issue back by.
+def dependencies(
+    body: str, is_open: Callable[[int], bool], today: date, native: Sequence[int] = ()
+) -> Dependencies:
+    """What an issue's dependencies hold the issue back by.
 
-    A `Blocked by #N` line holds it while #N is open. Two lines name two
-    blockers, and the same number twice counts once. A `Not before` line
+    `native` is the open issues of its `blocked by` relationship, and each
+    one holds it. A `Blocked by #N` line holds it while #N is open. The
+    native blockers come first, then the lines' blockers in body order,
+    and a number that the relationship and a line both name, or two lines,
+    counts once. A `Not before` line
     holds it while its date is after `today`, so on that date it is free.
     With two, the later date counts. An unreadable line holds the issue
     too, since the picker can't tell what it asks for.
     """
     blocked_by, not_before, unreadable = dependency_lines(body)
-    open_blockers = [n for n in dict.fromkeys(blocked_by) if is_open(n)]
+    lines_open = [n for n in dict.fromkeys(blocked_by) if n in native or is_open(n)]
+    open_blockers = list(dict.fromkeys([*native, *lines_open]))
     dates: list[date] = []
     for value in not_before:
         d = read_date(value)
@@ -469,7 +494,7 @@ def pick_lessons_wave(
     area in turn, in area order, until `size` is reached or the areas run
     out, so every area gets progress. Every candidate ends up in exactly one
     of the four lists: `wave`, `blocked` (it assumes an objective no live
-    lesson serves, or its issue's dependency lines hold it), `skipped` (the
+    lesson serves, or its issue's dependencies hold it), `skipped` (the
     issue is not ready, is assigned, or is not in `only`) or `waiting` (fit
     for a wave, but this one is full), grouped by area.
     """
@@ -526,7 +551,7 @@ def pick_lessons_wave(
             for o in dict.fromkeys(lesson["assumes"])
             if o not in served_live
         ]
-        deps = dependencies(issue["body"], is_open, day)
+        deps = dependencies(issue["body"], is_open, day, issue["blockedBy"])
         if blocked_by or held(deps):
             entry: BlockedEntry = {"issue": number, "id": lesson_id, "blockedBy": blocked_by}
             add_dependency_fields(entry, deps)
@@ -552,7 +577,7 @@ def pick_lessons_wave(
         rank = c["position"] if c["position"] is not None else math.inf
         return (has_after, score, rank)
 
-    # A lesson that a `Blocked by`, `Not before` or unreadable line also holds
+    # A lesson that a blocker issue, a `Not before` or an unreadable line also holds
     # stays blocked when the serving lesson is written, so it counts for no one.
     freeable = [
         b for b in blocked if not ("blockedByIssues" in b or "notBefore" in b or "unreadable" in b)
@@ -708,7 +733,7 @@ def pick_issue_wave(
     issue with more than one kind label is skipped, ahead of the planned
     and nits rules. The first `size` are the wave and the rest wait. An
     assigned issue, or one outside `only`, is skipped with the reason. One
-    that its dependency lines hold is blocked.
+    that its dependencies hold is blocked.
     """
     day = today if today is not None else today_utc()
     ready = {i["number"]: i for i in ready_issues}
@@ -739,7 +764,7 @@ def pick_issue_wave(
             reason = f"issue is assigned to {', '.join(i['assignees'])}"
             skipped.append({"issue": i["number"], "reason": reason})
             continue
-        deps = dependencies(i["body"], is_open, day)
+        deps = dependencies(i["body"], is_open, day, i["blockedBy"])
         if held(deps):
             entry: ContentBlockedEntry = {"issue": i["number"], "title": i["title"]}
             add_dependency_fields(entry, deps)
@@ -894,7 +919,7 @@ def format_content_wave(result: ContentWave) -> str:
         labels = ", ".join(code(label) for label in w["labels"])
         title = w["title"].replace("|", "\\|")
         lines.append(f"| #{w['issue']} | {title} | {labels} |")
-    # Only when there is one, so a wave without dependency lines prints as it did before them.
+    # Only when there is one, so a wave without dependencies prints as it did before them.
     if result["blocked"]:
         lines += ["", f"## Blocked ({len(result['blocked'])})", ""]
         for b in result["blocked"]:
@@ -978,14 +1003,24 @@ def kinds_text() -> str:
     return f"{', '.join(KINDS[:-1])} or {KINDS[-1]}"
 
 
+# What gh prints on stderr for a `--json` field it doesn't have, as gh
+# 2.101.0 does for any unknown field.
+UNKNOWN_BLOCKED_BY = 'Unknown JSON field: "blockedBy"'
+
+
 def run(command: Sequence[str], cwd: Path | None = None) -> str:
-    """The stdout of a command, or exit 1 with the command named. Its stderr goes to ours."""
+    """The stdout of a command, or exit 1 with the command named.
+
+    Its stderr goes to ours once the command is done. A gh that fails on an
+    unknown `blockedBy` field is older than `GH_MIN_VERSION`, and the exit
+    line says so.
+    """
     try:
         result = subprocess.run(
             list(command),
             cwd=cwd,
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
+            capture_output=True,
             check=False,
         )
     except OSError as e:
@@ -995,7 +1030,13 @@ def run(command: Sequence[str], cwd: Path | None = None) -> str:
             else str(e)
         )
         fail(command, reason)
+    err = result.stderr.decode("utf-8", errors="replace") if result.stderr else ""
+    sys.stderr.write(err)
     if result.returncode != 0:
+        if command[0] == "gh" and UNKNOWN_BLOCKED_BY in err:
+            fail(
+                command, f"this gh has no blockedBy field, which needs gh {GH_MIN_VERSION} or later"
+            )
         fail(command, f"Command failed: {' '.join(command)}")
     return result.stdout.decode("utf-8", errors="replace")
 
@@ -1042,9 +1083,46 @@ def parse_lesson_plan(output: str) -> list[PlannedLesson]:
     return lessons
 
 
+def native_blockers(raw: dict[str, object]) -> list[int]:
+    """The open issues of one issue's `blockedBy` field, as gh 2.100.0 gives
+    it: `{"nodes": [{"number": N, "state": "OPEN", ...}], "totalCount": T}`.
+
+    A missing field is an error that names the gh version, and so is a
+    list cut short (fewer nodes than `totalCount`), since a blocker left
+    out could be an open one. GitHub allows a blocker in another
+    repository, and the picker reads it by its number like the others.
+    """
+    if "blockedBy" not in raw:
+        raise KeyError(f"no blockedBy field, which needs gh {GH_MIN_VERSION} or later")
+    field = raw["blockedBy"]
+    if not isinstance(field, dict):
+        raise TypeError(f"blockedBy {field!r}")
+    field = cast("dict[str, object]", field)
+    nodes = field.get("nodes")
+    total = field.get("totalCount")
+    if not isinstance(nodes, list) or not isinstance(total, int):
+        raise TypeError(f"blockedBy {field!r}")
+    nodes = cast("list[object]", nodes)
+    if len(nodes) < total:
+        raise ValueError(f"blockedBy lists {len(nodes)} of {total} blockers")
+    numbers: list[int] = []
+    for node in nodes:
+        if not isinstance(node, dict):
+            raise TypeError(f"blockedBy node {node!r}")
+        node = cast("dict[str, object]", node)
+        number = node.get("number")
+        state = node.get("state")
+        if not isinstance(number, int) or not isinstance(state, str):
+            raise TypeError(f"blockedBy node {node!r}")
+        if state == "OPEN":
+            numbers.append(number)
+    return numbers
+
+
 def parse_issues(output: str) -> list[ReadyIssue]:
-    """The issues from `gh issue list --json number,title,assignees,labels,body`
-    output, with assignees as login names and labels as names."""
+    """The issues from `gh issue list --json number,title,assignees,labels,body,blockedBy`
+    output, with assignees as login names, labels as names and `blockedBy`
+    as its open issues."""
     issues: list[ReadyIssue] = []
     for raw in cast("list[dict[str, object]]", json.loads(output)):
         assignees = cast("list[dict[str, str]]", raw.get("assignees") or [])
@@ -1059,13 +1137,14 @@ def parse_issues(output: str) -> list[ReadyIssue]:
                 "assignees": [a["login"] for a in assignees],
                 "labels": [label["name"] for label in labels],
                 "body": body,
+                "blockedBy": native_blockers(raw),
             }
         )
     return issues
 
 
 def parse_issue_state(output: str) -> IssueState:
-    """One issue from `gh issue view --json state,labels,assignees,url` output.
+    """One issue from `gh issue view --json state,labels,assignees,url,blockedBy` output.
 
     `gh issue view` gives a pull request too, and its `url` has `/pull/`.
     """
@@ -1081,6 +1160,7 @@ def parse_issue_state(output: str) -> IssueState:
         "labels": [label["name"] for label in labels],
         "assignees": [a["login"] for a in assignees],
         "pullRequest": "/pull/" in url,
+        "blockedBy": native_blockers(raw),
     }
 
 
@@ -1108,7 +1188,7 @@ def issue_list_command(kind: Kind) -> list[str]:
         "-L",
         str(ISSUE_LIMIT),
         "--json",
-        "number,title,assignees,labels,body",
+        "number,title,assignees,labels,body,blockedBy",
     ]
 
 
@@ -1121,7 +1201,7 @@ def issue_view_command(number: int) -> list[str]:
         "-R",
         REPO,
         "--json",
-        "state,labels,assignees,url",
+        "state,labels,assignees,url,blockedBy",
     ]
 
 
