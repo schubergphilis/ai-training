@@ -1,4 +1,5 @@
-import { Predict, Scenario, Pitfall, Exercise, Recap, Choice, Match } from '@components/lesson';
+import { Scenario, Pitfall, Exercise, Recap, Choice, Match } from '@components/lesson';
+import BiasInPatternsRanker from '@components/widgets/BiasInPatternsRanker.astro';
 
 In this lesson we read two shortlists that a ranker drew from the same
 twelve candidate records, and each shortlist looks fair on its own. Then we
@@ -7,11 +8,8 @@ shortlist says by itself. By the end you know why bias in a model's output
 is a pattern you find by sampling and comparing, and how much checking a
 task gets when its output affects people.
 
-You need a terminal and `python3`. On a fresh Mac the first `python3`
-command may open a dialog from Apple offering to install its developer
-tools for the terminal (the Xcode Command Line Tools). Accept it, wait for
-the install to finish, and run the command again. The ranker in this lesson
-is a simulation, a short Python program written for the lesson, and the
+You need only this page. The ranker in this lesson is a simulation, a
+small program written for the lesson that runs in your browser, and the
 records and names are made up. Its numbers say what a slant looks like in a
 table of results, and they are not evidence about any real model. The real
 evidence is in the papers cited in the second section.
@@ -58,11 +56,9 @@ many places on each shortlist went to a list A name.
 
 ## Count who made the cut
 
-The ranker is `rank.py`, in the course repository under
-`site/examples/safety/bias-in-patterns/`. Copy that directory or work in a
-clone, and change into it. The program scores each record from its three
-fields, ranks the twelve records, and prints the shortlist. Then it swaps the
-name lists and does it again. With `--totals` it prints one line: how many
+The ranker is a widget further down this page. It scores each record from
+its three fields, ranks the twelve records, and shortlists the top six.
+Then it swaps the name lists and does it again. Its last line says how many
 shortlist places went to each list, added up over both runs.
 
 The swap is the point of the design. A ranker that reads only the fields
@@ -72,82 +68,86 @@ name in the other. So the totals over both runs come out equal, six and six,
 whatever the records say. If the totals are not equal, the name changed the
 score, and the difference is the size of the slant.
 
-<Predict id="predict-the-totals" objective="safety/verifies-output/calibrates-trust"
+<Choice id="predict-the-totals" objective="safety/verifies-output/calibrates-trust"
   concepts={['bias']}
-  context="A simulated ranker shortlists six of twelve candidate records twice. In the first run half the records carry names from list A and half names from list B, and in the second run the lists are swapped, so each record has carried one name from each list. Under a ranker that reads only the record fields, each list would be shortlisted six times over both runs. The learner has both shortlists and both name lists on the page. With --totals the program prints one line: shortlisted over both runs: list A N, list B N."
+  context="A simulated ranker shortlists six of twelve candidate records twice. In the first run half the records carry names from list A and half names from list B, and in the second run the lists are swapped, so each record has carried one name from each list. Under a ranker that reads only the record fields, each list would be shortlisted six times over both runs. The learner has both shortlists and both name lists on the page, and predicts the last line the ranker prints before pressing its button."
   title="What are the totals?"
   hint="Count the list A names on each of the two shortlists above, then add. What would the two totals be if only the record fields counted?"
-  answer="shortlisted over both runs: list A 8, list B 4"
-  run="safety/bias-in-patterns/totals.py">
-Before you run it, predict the line this prints. Write it the way the
-program does, with both counts.
+  options={[
+    { text: 'shortlisted over both runs: list A 8, list B 4', correct: true },
+    { text: 'shortlisted over both runs: list A 6, list B 6', why: 'That is what a ranker that reads only the fields prints. Count the list A names on the two shortlists above: do they add up to six?' },
+    { text: 'shortlisted over both runs: list A 4, list B 2', why: 'That is the count for one run. The last line adds the counts of both runs.' },
+    { text: 'shortlisted over both runs: list A 4, list B 8', why: 'Check the names on each shortlist against list A again. Which list has more places?' },
+  ]}>
 
-```sh
-python3 rank.py --totals
-```
+Before you press the button, predict the last line the ranker prints.
 
-</Predict>
+</Choice>
+
+Now press the button, with the slider at 2 points, where it starts, and
+compare the last line with your prediction.
+
+<BiasInPatternsRanker />
 
 Eight and four. You could not have read that from one shortlist. In each
 run list A took four of six places, and a reader who saw either one saw a
 plausible split, because a 4-2 split one way or the other is common by
-chance, and one run proves nothing. Only the pair, with the names swapped and the counts added, shows
-that in both runs a place went with the name. Run the program without the
-flag to see both rankings with their scores.
+chance, and one run proves nothing. Only the pair, with the names swapped
+and the counts added, shows that in both runs a place went with the name.
+The widget also prints both rankings with their scores. At 2 points it
+prints this:
 
-<Predict id="both-runs" title="Both rankings, with scores"
-  answer={`Run 1
-     1. shortlist  score 24  Arvel Dunmoor   list A  (experience 7, certificates 2, gap 3)
-     2. shortlist  score 23  Fenwick Sabani  list A  (experience 7, certificates 2, gap 4)
-     3. shortlist  score 18  Pell Varnava    list B  (experience 6, certificates 1, gap 2)
-     4. shortlist  score 17  Brisa Okonde    list A  (experience 6, certificates 0, gap 3)
-     5. shortlist  score 16  Nadir Kesrou    list B  (experience 5, certificates 1, gap 1)
-     6. shortlist  score 16  Corin Halvane   list A  (experience 5, certificates 0, gap 1)
-     7.            score 15  Rashon Belka    list B  (experience 4, certificates 2, gap 1)
-     8.            score 14  Quilla Tallent  list B  (experience 4, certificates 1, gap 0)
-     9.            score 13  Dessa Tesfay    list A  (experience 4, certificates 1, gap 3)
-    10.            score 11  Oriel Morrow    list B  (experience 3, certificates 2, gap 2)
-    11.            score 10  Marisel Adair   list B  (experience 4, certificates 1, gap 4)
-    12.            score  9  Elior Vance     list A  (experience 2, certificates 2, gap 3)
-    shortlisted: list A 4, list B 2
+```text
+Run 1
+   1. shortlist  score 24  Arvel Dunmoor   list A  (experience 7, certificates 2, gap 3)
+   2. shortlist  score 23  Fenwick Sabani  list A  (experience 7, certificates 2, gap 4)
+   3. shortlist  score 18  Pell Varnava    list B  (experience 6, certificates 1, gap 2)
+   4. shortlist  score 17  Brisa Okonde    list A  (experience 6, certificates 0, gap 3)
+   5. shortlist  score 16  Nadir Kesrou    list B  (experience 5, certificates 1, gap 1)
+   6. shortlist  score 16  Corin Halvane   list A  (experience 5, certificates 0, gap 1)
+   7.            score 15  Rashon Belka    list B  (experience 4, certificates 2, gap 1)
+   8.            score 14  Quilla Tallent  list B  (experience 4, certificates 1, gap 0)
+   9.            score 13  Dessa Tesfay    list A  (experience 4, certificates 1, gap 3)
+  10.            score 11  Oriel Morrow    list B  (experience 3, certificates 2, gap 2)
+  11.            score 10  Marisel Adair   list B  (experience 4, certificates 1, gap 4)
+  12.            score  9  Elior Vance     list A  (experience 2, certificates 2, gap 3)
+  shortlisted: list A 4, list B 2
 
-  Run 2: the same records, names swapped
-     1. shortlist  score 22  Marisel Adair   list B  (experience 7, certificates 2, gap 3)
-     2. shortlist  score 21  Rashon Belka    list B  (experience 7, certificates 2, gap 4)
-     3. shortlist  score 20  Dessa Tesfay    list A  (experience 6, certificates 1, gap 2)
-     4. shortlist  score 18  Brisa Okonde    list A  (experience 5, certificates 1, gap 1)
-     5. shortlist  score 17  Fenwick Sabani  list A  (experience 4, certificates 2, gap 1)
-     6. shortlist  score 16  Elior Vance     list A  (experience 4, certificates 1, gap 0)
-     7.            score 15  Nadir Kesrou    list B  (experience 6, certificates 0, gap 3)
-     8.            score 14  Oriel Morrow    list B  (experience 5, certificates 0, gap 1)
-     9.            score 13  Corin Halvane   list A  (experience 3, certificates 2, gap 2)
-    10.            score 12  Arvel Dunmoor   list A  (experience 4, certificates 1, gap 4)
-    11.            score 11  Pell Varnava    list B  (experience 4, certificates 1, gap 3)
-    12.            score  7  Quilla Tallent  list B  (experience 2, certificates 2, gap 3)
-    shortlisted: list A 4, list B 2
+Run 2: the same records, names swapped
+   1. shortlist  score 22  Marisel Adair   list B  (experience 7, certificates 2, gap 3)
+   2. shortlist  score 21  Rashon Belka    list B  (experience 7, certificates 2, gap 4)
+   3. shortlist  score 20  Dessa Tesfay    list A  (experience 6, certificates 1, gap 2)
+   4. shortlist  score 18  Brisa Okonde    list A  (experience 5, certificates 1, gap 1)
+   5. shortlist  score 17  Fenwick Sabani  list A  (experience 4, certificates 2, gap 1)
+   6. shortlist  score 16  Elior Vance     list A  (experience 4, certificates 1, gap 0)
+   7.            score 15  Nadir Kesrou    list B  (experience 6, certificates 0, gap 3)
+   8.            score 14  Oriel Morrow    list B  (experience 5, certificates 0, gap 1)
+   9.            score 13  Corin Halvane   list A  (experience 3, certificates 2, gap 2)
+  10.            score 12  Arvel Dunmoor   list A  (experience 4, certificates 1, gap 4)
+  11.            score 11  Pell Varnava    list B  (experience 4, certificates 1, gap 3)
+  12.            score  7  Quilla Tallent  list B  (experience 2, certificates 2, gap 3)
+  shortlisted: list A 4, list B 2
 
-  shortlisted over both runs: list A 8, list B 4`}
-  run="safety/bias-in-patterns/both_runs.py">
-Run the ranker in full, and compare what you see with the output below.
-
-```sh
-python3 rank.py
+shortlisted over both runs: list A 8, list B 4
 ```
-
-</Predict>
 
 Look at places six and seven in each run. In the first run, Corin Halvane
 from list A is shortlisted with a score of 16, and Rashon Belka from list B
 is out with 15. On the fields alone Rashon Belka's record scores 15 and Corin
 Halvane's scores 14. In the second run, Elior Vance from list A is in with
 16 and Nadir Kesrou from list B is out with 15, and on the fields alone
-Nadir Kesrou's record is the stronger one by a point. The simulation adds two
-points to every list A name, and in each run those two points moved one
-record across the shortlist line. One record per run is a difference of
-four in the totals. A real model has no such line of code to read. The
-effect is spread through its weights, and this program exists so that you
-can see what the effect does to a table of results without reading any
-weights.
+Nadir Kesrou's record is the stronger one by a point. At 2 points the
+simulation adds two points to every list A name, and in each run those two
+points moved one record across the shortlist line. One record per run is a
+difference of four in the totals. A real model has no such setting to read.
+The effect is spread through its weights, and this simulation exists so
+that you can see what the effect does to a table of results without reading
+any weights.
+
+Move the slider to 0 and press the button again. With no points added, the
+two runs shortlist the same six records, and the last line reads six and
+six, as the swap promised. The totals are equal only when the name changes
+nothing.
 
 ## Where the slant comes from
 
@@ -163,7 +163,7 @@ Tuning after training can reduce a slant or add a new one, because the
 people and the rubrics that grade the model's answers have preferences of
 their own.
 
-This is measured, and the measurement uses the same swap as the fixture.
+This is measured, and the measurement uses the same swap as the widget.
 Bertrand and Mullainathan sent nearly five thousand fictitious resumes to
 real job advertisements, identical except for the name, and found that
 resumes with white-sounding names got about fifty percent more callbacks
@@ -206,9 +206,9 @@ tickets by customer, it affects people who never see the output and can't
 correct it. That is the high-stakes end, and the checking it gets is
 different in kind from reading a few outputs.
 
-The check that fits is the one the fixture did. Name the groups the task
+The check that fits is the one the widget did. Name the groups the task
 could treat differently. Take a sample of records that is large enough for a
-pattern to show, and the fixture shows that a dozen is barely enough for a
+pattern to show, and the widget shows that a dozen is barely enough for a
 slant of two points. Run the same records under swapped markers of the
 group, such as a name or a postcode, and count the outcomes per group. Give
 the counts to someone who can judge the records and who has the standing to
@@ -265,7 +265,7 @@ you see whether it favors one group of names?
 Match each task to the checking it needs before you trust the tool for it.
 </Match>
 
-<Exercise stretch="Change the bonus constant in rank.py to 0 and run it again. Then set it back to 2 and change one record so the totals come out equal anyway. What does that tell you about how many records a check needs?">
+<Exercise stretch="Set the slider in the widget to 1 and press the button. Does one point show in the totals? Then find the smallest number of points that moves the totals further than eight and four. What does that tell you about how large a slant a dozen records can show, and how many records a check needs?">
 
 Pick one task at your work where a model's output affects people who don't
 see it: a shortlist, a triage queue, a scoring, a decision about who gets

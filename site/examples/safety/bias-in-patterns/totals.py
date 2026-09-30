@@ -1,7 +1,7 @@
 """Runs the ranker twice, names swapped, and prints only the totals line.
 
-The lesson shows `python3 rank.py --totals`. The line is what the learner
-predicts after counting the two shortlists on the page.
+The line is the one the lesson page asks the learner to predict, and it
+is on the page in a `text` fence.
 """
 
 import os

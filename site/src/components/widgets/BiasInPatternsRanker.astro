@@ -1,0 +1,95 @@
+---
+/**
+ * BiasInPatternsRanker: the simulated ranker of "Seeing bias across many
+ * answers". The learner sets the points the ranker adds to a list A name
+ * and presses the button to rank the same twelve records twice, with the
+ * name lists swapped in the second run. The widget prints both rankings
+ * with scores and the totals line, the lines `rank.py` prints. Teaches and
+ * never grades (spec S03 "Widgets"), and writes nothing to the progress
+ * record. The ranker is `scripts/bias-in-patterns-ranker-logic.ts`, and
+ * `scripts/bias-in-patterns-ranker.ts` binds each instance.
+ */
+import { DEFAULT_BONUS, MAX_BONUS } from '@scripts/bias-in-patterns-ranker-logic';
+---
+
+<div class="not-content bias-in-patterns-ranker" data-bias-in-patterns-ranker>
+	<label class="bp-bonus">
+		Points added to a list A name <input type="range" min="0" max={MAX_BONUS} step="1" value={DEFAULT_BONUS} />
+		<output>{DEFAULT_BONUS}</output>
+	</label>
+	<button type="button" class="bp-go">Rank both runs</button>
+	<div class="bp-report" aria-live="polite">
+		<pre class="bp-runs"></pre>
+		<p class="bp-totals"></p>
+	</div>
+</div>
+
+<style>
+	.bias-in-patterns-ranker {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: var(--at-radius-lg);
+		background: var(--at-surface);
+		font-size: var(--sl-text-sm);
+	}
+
+	.bp-bonus {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.bp-bonus input {
+		flex: 1;
+		max-width: 20rem;
+	}
+
+	.bp-go {
+		align-self: flex-start;
+		padding: 0.35rem 0.85rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: var(--at-radius-pill);
+		background: transparent;
+		color: var(--sl-color-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.bp-go:hover,
+	.bp-go:focus-visible {
+		background: var(--sl-color-bg-accent);
+		color: var(--sl-color-text-invert);
+	}
+
+	.bp-report {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		font-family: var(--sl-font-mono);
+		font-size: var(--sl-text-xs);
+		line-height: 1.5;
+	}
+
+	.bp-runs {
+		margin: 0;
+		padding: 0;
+		background: transparent;
+		white-space: pre;
+		overflow-x: auto;
+	}
+
+	.bp-totals {
+		margin: 0;
+		font-weight: 600;
+	}
+</style>
+
+<script>
+	import { mountBiasInPatternsRankers } from '@scripts/bias-in-patterns-ranker';
+
+	mountBiasInPatternsRankers(document);
+</script>
