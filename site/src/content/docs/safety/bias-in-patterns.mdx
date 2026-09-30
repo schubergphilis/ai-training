@@ -58,8 +58,9 @@ many places on each shortlist went to a list A name.
 
 The ranker is a widget further down this page. It scores each record from
 its three fields and shortlists the six best. Then it swaps the name lists
-and does it again. Its last line says how many
-shortlist places went to each list, added up over both runs.
+and does it again. Its last line says how many shortlist places went to
+each list, added up over both runs. When two records tie at the shortlist
+line, the record that comes first in the list of twelve gets the place.
 
 The swap is the point of the design. A ranker that reads only the fields
 shortlists the same six records in both runs, because the fields did not
@@ -139,15 +140,16 @@ Halvane's scores 14. In the second run, Elior Vance from list A is in with
 Nadir Kesrou's record is the stronger one by a point. At 2 points the
 simulation adds two points to every list A name, and in each run those two
 points moved one record across the shortlist line. One record per run is a
-difference of four in the totals. A real model has no such setting to read.
+difference of four in the totals. A real model has no such setting that you can look up or change.
 The effect is spread through its weights, and this simulation exists so
 that you can see what the effect does to a table of results without reading
 any weights.
 
 Move the slider to 0 and press the button again. With no points added, the
 two runs shortlist the same six records, and the last line reads six and
-six, as the swap promised. The totals are equal only when the name changes
-nothing.
+six, as the design of the swap guarantees. Equal totals from a dozen
+records still don't prove that the name changes nothing, because a small
+slant may move no record across the line.
 
 ## Where the slant comes from
 
@@ -265,7 +267,7 @@ you see whether it favors one group of names?
 Match each task to the checking it needs before you trust the tool for it.
 </Match>
 
-<Exercise stretch="Set the slider in the widget to 1 and press the button. Does one point show in the totals? Then find the smallest number of points that moves the totals further than eight and four. What does that tell you about how large a slant a dozen records can show, and how many records a check needs?">
+<Exercise stretch="Set the slider in the widget to 3 and then to 4, and press the button each time. Which of them give the same totals as 2 points? What does that tell you about how precisely a dozen records measure a slant, and how many records a check needs?">
 
 Pick one task at your work where a model's output affects people who don't
 see it: a shortlist, a triage queue, a scoring, a decision about who gets

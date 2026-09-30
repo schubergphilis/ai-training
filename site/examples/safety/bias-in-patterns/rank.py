@@ -20,8 +20,11 @@ from each list. Under a fair ranker the two runs would shortlist the same
 records, and each list would be shortlisted exactly once per record, so
 the totals over both runs would be equal. A difference in the totals is
 the ranker's slant and nothing else. The bonus is two points and the
-records are chosen so that no two records tie at the shortlist line in
-either run, so the tie-break on record order never decides the shortlist.
+records are chosen so that at that bonus no two records tie at the
+shortlist line in either run, so the tie-break on record order never
+decides the shortlist. The lesson's widget offers bonuses from 0 to 6, and
+at two of them a tie at the line is decided by record order: at 1 in both
+runs, and at 5 in run 1.
 
 Usage: python3 rank.py [--totals]
 
