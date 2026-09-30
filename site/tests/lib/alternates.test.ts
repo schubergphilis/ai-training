@@ -53,7 +53,8 @@ describe('a lesson alternate', () => {
 		expect(md).toContain(
 			'Stem of the match?\n\nStatements:\n\n- Row one\n- Row two\n\nOptions:\n\n- Opt one\n- Opt two\n',
 		);
-		expect(md).toContain('Stem of the order?\n\n- alpha\n- zeta\n');
+		// Sorted by the text the reader sees: a step that starts with a code span sorts by its backtick.
+		expect(md).toContain('Stem of the order?\n\n- `cat` beta\n- alpha\n- zeta\n');
 		expect(md).toContain('Stem of the sort?\n\nBuckets:\n\n- Keep\n- Drop\n\nItems:\n\n- Item x\n- Item y\n');
 		// The broken text is copied as written, its link included.
 		expect(md).toContain('Stem of the repair?\n\n```text\nbad [x](/y/) text\n```\n');

@@ -32,7 +32,7 @@ Stem of the multi-choice?
 Stem of the match?
 </Match>
 
-<Order id="or" objective="o1" title="Order them" hint="HINTWORD" concepts={['token']} steps={['zeta', 'alpha']}>
+<Order id="or" objective="o1" title="Order them" hint="HINTWORD" concepts={['token']} steps={['zeta', '\`cat\` beta', 'alpha']}>
 Stem of the order?
 </Order>
 

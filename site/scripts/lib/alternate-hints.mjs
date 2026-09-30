@@ -6,7 +6,8 @@
  * in `site/dist` and start with an H1. Each alternate under `site/dist` must
  * in turn have its HTML page next to it, with the hint. So no published page
  * points at an alternate that doesn't exist, and no alternate is left without
- * the page that announces it. All hints must share one origin and base path.
+ * the page that announces it. Each hint must start with `root`, Astro's
+ * `site` plus the base path (`SITE_ROOT` in `site-address.mjs`).
  * `scripts/check-bundles.mjs` runs this; tests import it.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -35,14 +36,13 @@ export function alternateHints(html) {
 /**
  * Every problem with the hints and alternates under `distDir`.
  * @param {string} distDir
+ * @param {string} root the expected site root, such as `https://schubergphilis.github.io/ai-training/`
  * @returns {{ errors: string[], hints: number }}
  */
-export function checkAlternateHints(distDir) {
+export function checkAlternateHints(distDir, root) {
 	/** @type {string[]} */
 	const errors = [];
 	const files = [...walk(distDir)].sort();
-	/** @type {Set<string>} */
-	const roots = new Set();
 	/** @type {Set<string>} */
 	const hinted = new Set();
 	for (const file of files.filter((p) => p.endsWith('.html'))) {
@@ -65,14 +65,18 @@ export function checkAlternateHints(distDir) {
 			errors.push(`${rel}: the Markdown alternate hint ${href} is not this page's alternate, ${want}`);
 			continue;
 		}
-		roots.add(`${url.origin}${url.pathname.slice(0, -want.length)}`);
+		const hintRoot = `${url.origin}${url.pathname.slice(0, -want.length)}`;
+		// `root` may end in `/`, as `SITE_ROOT` does; the hint's root is compared with one slash at its end.
+		if (`${hintRoot}/` !== `${root.replace(/\/$/, '')}/`) {
+			errors.push(`${rel}: the Markdown alternate hint ${href} is not under the site root ${root}`);
+			continue;
+		}
 		const target = join(distDir, ...want.split('/'));
 		hinted.add(target);
 		if (!existsSync(target)) errors.push(`${rel}: the Markdown alternate hint ${href} points at no file in dist`);
 		else if (!readFileSync(target, 'utf8').startsWith('# '))
 			errors.push(`${relative(distDir, target)}: a Markdown alternate starts with its H1 title`);
 	}
-	if (roots.size > 1) errors.push(`Markdown alternate hints use ${roots.size} site roots: ${[...roots].join(', ')}`);
 	for (const file of files.filter((p) => p.endsWith(`${sep}index.md`))) {
 		if (!hinted.has(file))
 			errors.push(`${relative(distDir, file)}: a Markdown alternate whose page has no head hint for it`);

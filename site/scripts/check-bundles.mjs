@@ -20,6 +20,7 @@ import { join } from 'node:path';
 import { checkAlternateHints } from './lib/alternate-hints.mjs';
 import { checkBundles, checkExportCitations } from './lib/bundles.mjs';
 import { checkRenderedCitations } from './lib/rendered-citations.mjs';
+import { SITE_ROOT } from './lib/site-address.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
 const { errors, bundles } = checkBundles(
@@ -30,7 +31,7 @@ const { errors, bundles } = checkBundles(
 errors.push(...checkExportCitations(join(root, 'dist/data/checkpoints.json')));
 const rendered = checkRenderedCitations(join(root, 'dist'));
 errors.push(...rendered.errors);
-const alternates = checkAlternateHints(join(root, 'dist'));
+const alternates = checkAlternateHints(join(root, 'dist'), SITE_ROOT);
 errors.push(...alternates.errors);
 
 if (errors.length) {

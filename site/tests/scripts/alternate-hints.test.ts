@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { alternateHints, checkAlternateHints } from '../../scripts/lib/alternate-hints.mjs';
+import { SITE_ROOT } from '../../scripts/lib/site-address.mjs';
 
 const ROOT = 'https://schubergphilis.github.io/ai-training';
 const roots: string[] = [];
@@ -41,11 +42,13 @@ describe('checkAlternateHints', () => {
 			'safety/agent-risk/index.md': '# Title\n',
 			'progress/index.html': page(),
 		});
-		expect(checkAlternateHints(root)).toEqual({ errors: [], hints: 1 });
+		expect(checkAlternateHints(root, ROOT)).toEqual({ errors: [], hints: 1 });
+		// The site root as `site-address.mjs` exports it, with its trailing slash.
+		expect(checkAlternateHints(root, SITE_ROOT)).toEqual({ errors: [], hints: 1 });
 	});
 	it('rejects a hint that points at a file that does not exist', () => {
 		const root = dist({ 'safety/index.html': page(`${ROOT}/safety/index.md`) });
-		expect(checkAlternateHints(root).errors).toEqual([
+		expect(checkAlternateHints(root, ROOT).errors).toEqual([
 			`safety/index.html: the Markdown alternate hint ${ROOT}/safety/index.md points at no file in dist`,
 		]);
 	});
@@ -54,12 +57,12 @@ describe('checkAlternateHints', () => {
 			'safety/index.html': page(`${ROOT}/concepts/index.md`),
 			'concepts/index.md': '# C\n',
 		});
-		expect(checkAlternateHints(root).errors).toEqual([
+		expect(checkAlternateHints(root, ROOT).errors).toEqual([
 			`safety/index.html: the Markdown alternate hint ${ROOT}/concepts/index.md is not this page's alternate, /safety/index.md`,
 			'concepts/index.md: a Markdown alternate whose page has no head hint for it',
 		]);
 	});
-	it('rejects a relative hint, two hints on a page, two site roots and an alternate without an H1', () => {
+	it('rejects a relative hint, two hints on a page and an alternate without an H1', () => {
 		const root = dist({
 			'a/index.html': page('/ai-training/a/index.md'),
 			'b/index.html': page(`${ROOT}/b/index.md`).replace(
@@ -67,14 +70,35 @@ describe('checkAlternateHints', () => {
 				`<link rel="alternate" type="text/markdown" href="${ROOT}/b/index.md"/></head>`,
 			),
 			'b/index.md': 'No title\n',
-			'c/index.html': page('https://example.org/c/index.md'),
-			'c/index.md': '# C\n',
 		});
-		expect(checkAlternateHints(root).errors).toEqual([
+		expect(checkAlternateHints(root, ROOT).errors).toEqual([
 			'a/index.html: the Markdown alternate hint "/ai-training/a/index.md" is not an absolute URL',
 			'b/index.html: 2 Markdown alternate hints, expected one',
 			'b/index.md: a Markdown alternate starts with its H1 title',
-			`Markdown alternate hints use 2 site roots: ${ROOT}, https://example.org`,
+		]);
+	});
+	it('rejects a hint on another origin or under another base, even when all hints agree', () => {
+		const root = dist({
+			'c/index.html': page('https://example.org/ai-training/c/index.md'),
+			'd/index.html': page('https://schubergphilis.github.io/other/d/index.md'),
+		});
+		expect(checkAlternateHints(root, ROOT).errors).toEqual([
+			`c/index.html: the Markdown alternate hint https://example.org/ai-training/c/index.md is not under the site root ${ROOT}`,
+			`d/index.html: the Markdown alternate hint https://schubergphilis.github.io/other/d/index.md is not under the site root ${ROOT}`,
+		]);
+	});
+	it('rejects a hint with a query or a fragment', () => {
+		const root = dist({
+			'e/index.html': page(`${ROOT}/e/index.md?v=1`),
+			'f/index.html': page(`${ROOT}/f/index.md#top`),
+			'e/index.md': '# E\n',
+			'f/index.md': '# F\n',
+		});
+		expect(checkAlternateHints(root, ROOT).errors).toEqual([
+			`e/index.html: the Markdown alternate hint ${ROOT}/e/index.md?v=1 is not this page's alternate, /e/index.md`,
+			`f/index.html: the Markdown alternate hint ${ROOT}/f/index.md#top is not this page's alternate, /f/index.md`,
+			'e/index.md: a Markdown alternate whose page has no head hint for it',
+			'f/index.md: a Markdown alternate whose page has no head hint for it',
 		]);
 	});
 });
