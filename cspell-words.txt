@@ -34,6 +34,8 @@ Brindlewick
 Stenberg
 
 # Products, tools, projects
+Adwaita
+libadwaita
 Interphases
 gitleaks
 Cowork

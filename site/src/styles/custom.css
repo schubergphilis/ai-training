@@ -1,43 +1,47 @@
-/* Theme matching the learning platform that deep links into lessons, and
-   the organization site at schubergphilis.github.io (spec S14). Accent: SBP
-   Blue #1e80ed, the organization's public brand color. Starlight derives all
-   surfaces/text/borders from an accent ramp (low/accent/high), a gray ramp
-   (1=lightest .. 6/7=darkest in dark mode, inverted in light) and
-   black/white, so overriding those restyles the whole site. Dark mode is
-   `:root`; light mode is `:root[data-theme='light']`. */
+/* The GNOME Adwaita color scheme (libadwaita 1.10's CSS variables, spec
+   S14), mapped onto Starlight's design tokens. The accent is Adwaita's blue,
+   close to the organization's brand blue but not the same value. Values
+   that Adwaita gives as a translucent color are composited onto the surface
+   they sit on, so every token here is opaque. Where an Adwaita value falls
+   below the contrast the site asserts (e2e/contrast.spec.ts), a value from
+   Adwaita's palette replaces it, and the spec lists each case. Starlight
+   derives all surfaces/text/borders from an accent ramp (low/accent/high),
+   a gray ramp (1=lightest .. 6/7=darkest in dark mode, inverted in light)
+   and black/white. Dark mode is `:root`; light mode is
+   `:root[data-theme='light']`. */
 :root {
-	--sl-color-accent-low: #0d2e52;
-	--sl-color-accent: #1e80ed;
-	--sl-color-accent-high: #7fb8f5; /* link text, 9.0:1 on the page */
-	--sl-color-white: #f8f9fb; /* headings */
-	--sl-color-gray-1: #f3f4f7;
-	--sl-color-gray-2: #ecedf2; /* body text (fg) */
-	--sl-color-gray-3: #b1b8c5; /* secondary text */
-	--sl-color-gray-4: #757d8c; /* control borders */
-	--sl-color-gray-5: #353b4e; /* borders / hairlines */
-	--sl-color-gray-6: #1d2230; /* nav & sidebar bg */
-	--sl-color-black: #0f1218; /* page bg */
+	--sl-color-accent-low: #273a55; /* the accent at 25% on the window */
+	--sl-color-accent: #3584e4; /* accent background */
+	--sl-color-accent-high: #81d0ff; /* standalone accent: link text */
+	--sl-color-white: #ffffff; /* headings: the window foreground */
+	--sl-color-gray-1: #f6f5f4;
+	--sl-color-gray-2: #f6f5f4; /* body text (palette light 2) */
+	--sl-color-gray-3: #c0bfbc; /* secondary text (palette light 4) */
+	--sl-color-gray-4: #9a9996; /* control borders (palette light 5) */
+	--sl-color-gray-5: #434346; /* borders: the foreground at 15% */
+	--sl-color-gray-6: #2e2e32; /* header and sidebar */
+	--sl-color-black: #1d1d20; /* view: inputs and map nodes */
 }
 :root[data-theme='light'] {
-	--sl-color-accent-low: #e7f2fc;
-	--sl-color-accent: #1e80ed;
-	/* #1e80ed on white is 3.9:1, below the 4.5:1 text needs. Links, the
-	   current page and filled buttons use this darker blue (5.4:1), and
-	   #1e80ed stays on borders, rings and progress fills. */
-	--sl-color-accent-high: #1469c8;
+	--sl-color-accent-low: #e9f2fc; /* the accent at 11% on white */
+	--sl-color-accent: #3584e4;
+	/* The accent background is 3.8:1 on white, below the 4.5:1 text needs.
+	   Links, the current page and filled buttons use the standalone accent
+	   instead, and the accent background stays on borders, rings and
+	   progress fills. */
+	--sl-color-accent-high: #0461be;
 	--sl-color-text-accent: var(--sl-color-accent-high);
 	--sl-color-bg-accent: var(--sl-color-accent-high);
-	--sl-color-white: #1a1f36; /* headings (fg) */
-	--sl-color-gray-1: #232838;
-	--sl-color-gray-2: #2d3142; /* body text */
-	--sl-color-gray-3: #5f6878; /* secondary text */
-	--sl-color-gray-4: #7f8898; /* control borders */
-	--sl-color-gray-5: #e2e5eb; /* borders */
-	--sl-color-gray-6: #f0f2f5;
-	--sl-color-gray-7: #f8f9fb;
-	--sl-color-black: #ffffff; /* page bg */
-	/* A white header, as in the learning platform. */
-	--sl-color-bg-nav: #ffffff;
+	--sl-color-white: #242428; /* headings */
+	--sl-color-gray-1: #2a2a2e;
+	--sl-color-gray-2: #333338; /* body text: the window foreground on white */
+	--sl-color-gray-3: #5e5c64; /* secondary text (palette dark 2) */
+	--sl-color-gray-4: #77767b; /* control borders (palette dark 1) */
+	--sl-color-gray-5: #e0e0e1; /* borders: the foreground at 15% */
+	--sl-color-gray-6: #ebebed; /* the sidebar background */
+	--sl-color-gray-7: #f3f3f5; /* the secondary sidebar background */
+	--sl-color-black: #ffffff; /* view: inputs and map nodes */
+	--sl-color-bg-nav: #ffffff; /* the header bar */
 }
 
 /* Corner radii, as in the learning platform (spec S14): 16px for cards and
@@ -67,31 +71,29 @@ h1#_top {
 	letter-spacing: -0.01em;
 }
 
-/* Page and surfaces, as in the learning platform (spec S14). In light mode
-   the page behind the content is light grey, and the header, both side
-   menus and every interactive element (checkpoints, widgets, cards) are
-   white. In dark mode both side menus are dark grey, and interactive
-   elements sit on a surface a step lighter than the page. `--at-inset` is
-   for a block inside a surface, such as a hint or a code sample.
-   `--sl-color-bg` stays the surface color in light mode, so inputs and map
-   nodes that use it stay white. */
+/* Page, surfaces and side menus in Adwaita's roles (spec S14): the page is
+   the window background, checkpoints, widgets and cards are cards, the
+   left menu is the sidebar and the right menu the secondary sidebar.
+   `--at-inset` is for a hint or a code sample inside a card. */
 :root {
-	--at-page: var(--sl-color-bg);
-	--at-surface: #1d2230;
-	--at-inset: #2a2f40;
+	--at-page: #222226; /* window */
+	--at-surface: #343437; /* card: white at 8% on the window */
+	--at-inset: #45454a; /* white at 16% on the window */
+	--at-sidebar-2: #28282c; /* secondary sidebar */
 }
 :root[data-theme='light'] {
-	--at-page: #f0f2f5;
-	--at-surface: #ffffff;
-	--at-inset: var(--sl-color-gray-6);
-	--sl-color-bg-sidebar: #ffffff;
-	--sl-color-bg-inline-code: var(--sl-color-gray-5);
+	--at-page: #fafafb; /* window */
+	--at-surface: #ffffff; /* card */
+	--at-inset: #f3f3f5;
+	--at-sidebar-2: #f3f3f5; /* secondary sidebar */
+	--sl-color-bg-sidebar: #ebebed; /* sidebar */
+	--sl-color-bg-inline-code: var(--sl-color-gray-6);
 }
 body {
 	background-color: var(--at-page);
 }
 .right-sidebar {
-	background-color: var(--sl-color-bg-sidebar);
+	background-color: var(--at-sidebar-2);
 }
 
 /* The theme toggle in the header takes the color of the social icons next

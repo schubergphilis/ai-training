@@ -14,9 +14,9 @@ import sharp from 'sharp';
 
 const docsDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-const ACCENT = '#1469c8'; // the light-mode link and button blue
+const ACCENT = '#0461be'; // the light-mode link and button blue (Adwaita's standalone accent)
 const PAGE = '#ffffff'; // white "paper"
-const LINE = '#1469c8'; // text lines
+const LINE = '#0461be'; // text lines
 
 // A page (rounded rect) with a folded corner and three text lines.
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Docs">

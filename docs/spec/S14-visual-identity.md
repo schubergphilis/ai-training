@@ -31,79 +31,98 @@ quieter version: a white header, a light grey page, white cards with thin
 borders, Inter at weight 600 for headings, fully rounded badges and
 buttons, and teal for "done".
 
-This spec follows the learning platform. Most learners come from there, its
-design is meant for long study sessions, and it uses only free fonts and
-plain color values. The organization site uses the same blue, and the
-shared accent makes the three sites look related.
+This spec follows the learning platform for layout, type, and shapes. Most
+learners come from there, its design is meant for long study sessions, and
+it uses only free fonts and plain color values. The colors come from an
+open source scheme instead of the brand: the GNOME desktop's Adwaita
+scheme, as libadwaita 1.10 defines it in its
+[CSS variables](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.10/css-variables.html).
+Its blue is close to the brand blue. The sites look related, and a
+screenshot of a lesson fits next to the organization's own material. The
+site takes the color values from that page and credits it here. It
+doesn't copy the page's text or its style sheets.
 
 ## Design
 
 ### What the site takes and what it leaves out
 
-| Part                          | Decision                                                                                                    |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| SBP Blue `#1E80ED`            | Taken as the accent. A color value is a fact, and the organization site publishes it in its own CSS.        |
-| Neutral greys, teal, amber    | Taken, as values chosen to match the learning platform in both themes.                                      |
-| Inter (SIL Open Font License) | Taken for the interface and for the lesson body.                                                            |
-| Radii, borders, pills         | Taken: 16px cards, pill badges and buttons, borders instead of shadows.                                     |
-| Company logo and wordmark     | Left out. It is a trademark and can't be licensed as CC BY-SA. The site uses its current favicon and title. |
-| TT Interphases                | Left out. It is a licensed font.                                                                            |
-| Brand guide text and images   | Left out. The brand guide sources are private.                                                              |
-| Blue header bar               | Left out. The learning platform uses a white header, and a lesson opened from it should look like it.       |
+| Part                          | Decision                                                                                                                            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| SBP Blue `#1E80ED`            | Left out as a value. The accent is GNOME Adwaita's blue, `#3584e4`: hue 213° against the brand's 212°, from an open source desktop. |
+| Other colors                  | Taken from Adwaita: its greys, window, card and sidebar colors, and its success and warning colors.                                 |
+| Inter (SIL Open Font License) | Taken for the interface and for the lesson body.                                                                                    |
+| Radii, borders, pills         | Taken: 16px cards, pill badges and buttons, borders instead of shadows.                                                             |
+| Company logo and wordmark     | Left out. It is a trademark and can't be licensed as CC BY-SA. The site uses its current favicon and title.                         |
+| TT Interphases                | Left out. It is a licensed font.                                                                                                    |
+| Brand guide text and images   | Left out. The brand guide sources are private.                                                                                      |
+| Blue header bar               | Left out. The learning platform uses a white header, and a lesson opened from it should look like it.                               |
 
 ### Palette
 
 The site keeps Starlight's token model (`site/src/styles/custom.css`): an
-accent ramp, a gray ramp and black and white, per theme. The values:
+accent ramp, a gray ramp and black and white, per theme. Each value is an
+Adwaita variable or palette color, or is derived from one. Adwaita gives
+some colors as a translucent black or white. The site composites those
+onto the color behind them, so every token is opaque.
 
-| Token                    | Light     | Dark      | Role                                                |
-| ------------------------ | --------- | --------- | --------------------------------------------------- |
-| `--sl-color-accent`      | `#1e80ed` | `#1e80ed` | Borders, rings, progress fills, focus               |
-| `--sl-color-accent-high` | `#1469c8` | `#7fb8f5` | Link text, current page, filled buttons             |
-| `--sl-color-accent-low`  | `#e7f2fc` | `#0d2e52` | Tints, and the header of a prompt or response block |
-| `--sl-color-white`       | `#1a1f36` | `#f8f9fb` | Headings                                            |
-| `--sl-color-gray-2`      | `#2d3142` | `#ecedf2` | Body text                                           |
-| `--sl-color-gray-3`      | `#5f6878` | `#b1b8c5` | Secondary text                                      |
-| `--sl-color-gray-4`      | `#7f8898` | `#757d8c` | Control borders                                     |
-| `--sl-color-gray-5`      | `#e2e5eb` | `#353b4e` | Borders                                             |
-| `--sl-color-gray-6`      | `#f0f2f5` | `#1d2230` | Code and hint backgrounds, dark sidebar             |
-| `--sl-color-gray-7`      | `#f8f9fb` | -         | Light sidebar                                       |
-| `--sl-color-black`       | `#ffffff` | `#0f1218` | Page background                                     |
+| Token                    | Light     | Dark      | Role                                    | Adwaita source                                     |
+| ------------------------ | --------- | --------- | --------------------------------------- | -------------------------------------------------- |
+| `--sl-color-accent`      | `#3584e4` | `#3584e4` | Borders, rings, progress fills, focus   | Blue accent background                             |
+| `--sl-color-accent-high` | `#0461be` | `#81d0ff` | Link text, current page, filled buttons | Blue standalone accent                             |
+| `--sl-color-accent-low`  | `#e9f2fc` | `#273a55` | Tints, and block and sort zone headers  | The accent mixed into white and into the window    |
+| `--sl-color-white`       | `#242428` | `#ffffff` | Headings                                | Window foreground (light: a step darker than body) |
+| `--sl-color-gray-2`      | `#333338` | `#f6f5f4` | Body text                               | Window foreground on white; palette light 2        |
+| `--sl-color-gray-3`      | `#5e5c64` | `#c0bfbc` | Secondary text                          | Palette dark 2 and light 4                         |
+| `--sl-color-gray-4`      | `#77767b` | `#9a9996` | Control borders                         | Palette dark 1 and light 5                         |
+| `--sl-color-gray-5`      | `#e0e0e1` | `#434346` | Borders                                 | The foreground at the border opacity, 15%          |
+| `--sl-color-gray-6`      | `#ebebed` | `#2e2e32` | Light code background, dark header      | Sidebar background                                 |
+| `--sl-color-black`       | `#ffffff` | `#1d1d20` | Inputs and map nodes                    | View background                                    |
 
-Three more tokens in `custom.css` set the page and its surfaces, as in the
-learning platform:
+Four more tokens set the page, its cards and the right-hand menu, in
+Adwaita's roles:
 
-| Token          | Light     | Dark      | Role                                                  |
-| -------------- | --------- | --------- | ----------------------------------------------------- |
-| `--at-page`    | `#f0f2f5` | `#0f1218` | The page behind the content                           |
-| `--at-surface` | `#ffffff` | `#1d2230` | Checkpoints, lesson blocks, widgets, cards            |
-| `--at-inset`   | `#f0f2f5` | `#2a2f40` | A hint or a code sample inside a checkpoint or widget |
+| Token            | Light     | Dark      | Role                                                  | Adwaita source                  |
+| ---------------- | --------- | --------- | ----------------------------------------------------- | ------------------------------- |
+| `--at-page`      | `#fafafb` | `#222226` | The page behind the content                           | Window background               |
+| `--at-surface`   | `#ffffff` | `#343437` | Checkpoints, lesson blocks, widgets, cards            | Card background                 |
+| `--at-inset`     | `#f3f3f5` | `#45454a` | A hint or a code sample inside a checkpoint or widget | Secondary sidebar; white at 16% |
+| `--at-sidebar-2` | `#f3f3f5` | `#28282c` | The right-hand menu                                   | Secondary sidebar background    |
 
-In light mode the header and both side menus are white. In dark mode
-both side menus are `#1d2230`. The theme toggle in the header uses the
-link color, as the social icons next to it do.
+The header uses the header bar background (white, and `#2e2e32` in dark
+mode). The left-hand menu uses the sidebar background (`#ebebed`, and
+`#2e2e32` in dark mode). The theme toggle in the header uses the link
+color, as the social icons next to it do.
 
-`#1e80ed` on white has a contrast ratio of 3.9:1. That's enough for a
-border or a ring (3:1) but below the 4.5:1 that text needs. Starlight's
-light theme puts the plain accent on text and on fills that hold text. The
-site points `--sl-color-text-accent` and `--sl-color-bg-accent` at
-`#1469c8` (5.4:1) in light mode. In dark mode, `#7fb8f5` on `#0f1218` is
-9.0:1. Text on an accent fill, such as the Check button, the due count and
-the widget buttons on hover, uses `--sl-color-bg-accent` and
+The site replaces three of Adwaita's colors with Adwaita palette colors. Adwaita dims secondary text by
+opacity, and at 55% it is below 4.5:1, so secondary text uses palette dark
+2 and light 4. The dark control border uses light 5, because palette dark
+1 is below 3:1 on a dark card.
+
+The blue accent background on white has a contrast ratio of 3.8:1. That's
+enough for a border or a ring (3:1) but below the 4.5:1 that text needs.
+Starlight's light theme puts the plain accent on text and on fills that
+hold text. The site points `--sl-color-text-accent` and
+`--sl-color-bg-accent` at the standalone accent in light mode, which is
+6.1:1 on white. Text on an accent fill, such as the Check button, the due
+count and the widget buttons on hover, uses `--sl-color-bg-accent` and
 `--sl-color-text-invert` as a pair.
 
-The status colors in `site/src/styles/lesson.css` change from green to the
-learning platform's teal, `#36c5b0`, and warnings change to amber,
-`#f5a623`. Dark mode uses both unchanged. On white, the teal is
-2.2:1 and the amber 2.0:1, so light mode uses darker tones:
+The status colors in `site/src/styles/lesson.css` are Adwaita's success
+and warning colors. A fill uses the background tone and text uses the
+standalone tone. The light success background is 2.3:1 on white, so fills
+use the dark success background in both themes, and a filled Done button
+uses the standalone tone:
 
-| Token              | Light     | Dark      | Role                           |
-| ------------------ | --------- | --------- | ------------------------------ |
-| `--at-done`        | `#239b89` | `#36c5b0` | Done fills, borders, and rings |
-| `--at-done-text`   | `#1a7466` | `#36c5b0` | Done text                      |
-| `--at-done-strong` | `#1a7466` | `#36c5b0` | A filled Done button           |
-| `--at-on-done`     | `#ffffff` | `#0f1218` | Text on a Done button          |
-| `--at-warn`        | `#9a5800` | `#f5a623` | Warning text and borders       |
+| Token              | Light     | Dark      | Role                           | Adwaita source                  |
+| ------------------ | --------- | --------- | ------------------------------ | ------------------------------- |
+| `--at-done`        | `#26a269` | `#26a269` | Done fills, borders, and rings | Dark success background         |
+| `--at-done-text`   | `#007c3d` | `#78e9ab` | Done text                      | Success standalone              |
+| `--at-done-strong` | `#007c3d` | `#78e9ab` | A filled Done button           | Success standalone              |
+| `--at-on-done`     | `#ffffff` | `#1d1d20` | Text on a Done button          | Success foreground; view (dark) |
+| `--at-warn`        | `#905400` | `#ffc252` | Warning text and borders       | Warning standalone              |
+
+Adwaita's document font, Adwaita Sans, is based on Inter. The type below
+matches it too.
 
 ### Type
 

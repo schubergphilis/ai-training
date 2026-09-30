@@ -3,21 +3,23 @@
    out of lesson pages, so the styles must travel with the class names. */
 
 :root {
-	/* Done is the learning platform's teal (spec S14). */
-	--at-done: #36c5b0; /* fills, borders, rings */
-	--at-done-text: #36c5b0;
-	--at-done-strong: #36c5b0; /* a filled Done button */
-	--at-on-done: #0f1218; /* text on --at-done-strong */
-	--at-warn: #f5a623;
+	/* Done is Adwaita's success color, and warnings its warning color (spec
+	   S14): the background tone for fills, the standalone tone for text. */
+	--at-done: #26a269; /* fills, borders, rings */
+	--at-done-text: #78e9ab;
+	--at-done-strong: #78e9ab; /* a filled Done button */
+	--at-on-done: #1d1d20; /* text on --at-done-strong */
+	--at-warn: #ffc252;
 }
 :root[data-theme='light'] {
-	/* #36c5b0 on white is 2.2:1, so light mode uses darker teals: 3.4:1 for
-	   a state fill, 5.6:1 for text. The warning amber is darkened to 5.6:1. */
-	--at-done: #239b89;
-	--at-done-text: #1a7466;
-	--at-done-strong: #1a7466;
+	/* The light success background is 2.3:1 on white, so a fill uses the
+	   dark one (3.3:1), and a filled Done button the standalone tone with
+	   white text (5.3:1). */
+	--at-done: #26a269;
+	--at-done-text: #007c3d;
+	--at-done-strong: #007c3d;
 	--at-on-done: #ffffff;
-	--at-warn: #9a5800;
+	--at-warn: #905400;
 }
 
 /* Plain links in a `not-content` container (the tutor block, the progress

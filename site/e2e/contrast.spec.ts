@@ -26,6 +26,9 @@ const PAIRS: Pair[] = [
 	{ what: 'prompt and response header text', fg: '--sl-color-gray-2', bg: '--sl-color-accent-low', min: 4.5 },
 	{ what: 'illustrative prompt header text', fg: '--at-warn', bg: '--sl-color-accent-low', min: 4.5 },
 	{ what: 'link text in the sidebar', fg: '--sl-color-text-accent', bg: '--sl-color-bg-sidebar', min: 4.5 },
+	{ what: 'secondary text in the sidebar', fg: '--sl-color-gray-3', bg: '--sl-color-bg-sidebar', min: 4.5 },
+	{ what: 'link text in the right-hand menu', fg: '--sl-color-text-accent', bg: '--at-sidebar-2', min: 4.5 },
+	{ what: 'secondary text in the right-hand menu', fg: '--sl-color-gray-3', bg: '--at-sidebar-2', min: 4.5 },
 	{ what: 'text on an accent fill', fg: '--sl-color-text-invert', bg: '--sl-color-bg-accent', min: 4.5 },
 	{ what: 'text on a Done button', fg: '--at-on-done', bg: '--at-done-strong', min: 4.5 },
 ];
