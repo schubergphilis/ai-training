@@ -181,8 +181,10 @@ subdirectory when the agent works on files under that directory. Claude
 Code, for example, reads the instruction files in the directory you start
 it in and in every directory above it when the session starts. It reads a
 subdirectory's file when it first reads a file in that subdirectory. In
-both places the `CLAUDE.md` files come first, and it reads an `AGENTS.md`
-only where the rule above allows (@Claude Code memory).
+both places a `CLAUDE.md` wins over an `AGENTS.md`. Claude Code reads an
+`AGENTS.md` only under the rule above, and a subdirectory's `AGENTS.md`
+only when that subdirectory also has no `CLAUDE.md` of its own
+(@Claude Code memory).
 
 The tools differ on a conflict between two files. The AGENTS.md format
 says that the file closest to the edited file takes precedence
