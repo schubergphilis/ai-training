@@ -211,7 +211,7 @@ describe('pythonVersion and interpreters', () => {
 		expect(res.error).toBeUndefined();
 		expect(res.list?.map((i) => i.cmd)).toEqual(['python3', 'python3.9']);
 		expect(res.list?.[1]?.label).toMatch(/^python 3\.9\.\d+$/);
-	});
+	}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 });
 
 describe('runFixture and checkExamples', () => {
@@ -241,7 +241,7 @@ describe('runFixture and checkExamples', () => {
 			error: 'unsupported fixture type .sh; fixtures are Python scripts (S03 "Examples")',
 		});
 		expect(runFixture(examples, 'x.rb').error).toContain('unsupported fixture type .rb');
-	});
+	}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 	it('fails a fixture whose interpreter cannot start, naming the interpreter', () => {
 		const res = runFixture(examples, 'hi.py', { label: 'missing', cmd: 'python-nope' }, fakeSpawn({}));
 		expect(res).toEqual({ error: 'cannot run hi.py with python-nope: spawnSync python-nope ENOENT' });
@@ -264,7 +264,7 @@ describe('runFixture and checkExamples', () => {
 			spawnSyncReal(cmd, args, { ...opts, timeout: 200 })) as unknown as typeof spawnSync;
 		const res = runFixture(examples, 'hang.py', undefined, spawnShort);
 		expect(res.error).toMatch(/cannot run hang\.py with python3: did not finish within/);
-	});
+	}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 	it('runs a fixture with the interpreter it is given', () => {
 		writeFileSync(join(examples, 'version.py'), 'import sys\nprint(sys.version_info[0], sys.version_info[1])\n');
 		const floor = FLOOR.split('.').join(' ');
@@ -272,13 +272,13 @@ describe('runFixture and checkExamples', () => {
 			status: 0,
 			stdout: floor,
 		});
-	});
+	}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 	it('checks a content tree against its fixtures on both interpreters', () => {
 		const res = checkExamples(content, examples, undefined, undefined, new Map());
 		expect(res).toMatchObject({ found: 2, checked: 4, failures: [] });
 		expect(res.interpreters).toHaveLength(2);
 		expect(res.interpreters[1]).toMatch(/^python 3\.9\./);
-	});
+	}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 	it('fails without running anything when an interpreter is missing', () => {
 		const res = checkExamples(content, examples, undefined, { error: 'no floor' });
 		expect(res).toEqual({ found: 0, proofs: 0, checked: 0, failures: ['no floor'], interpreters: [] });
@@ -288,7 +288,7 @@ describe('runFixture and checkExamples', () => {
 		mkdirSync(empty);
 		const res = checkExamples(empty, examples);
 		expect(res.failures[0]).toContain('no <Predict run=...> examples found');
-	});
+	}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 });
 
 describe('usesModule', () => {
@@ -626,7 +626,7 @@ describe('proofs of a foundations page (#497)', () => {
 		it('runs a listed proof for real and counts it as run, so no UNRUN_EXEMPT entry is needed', () => {
 			const res = checkExamples(content, examples, undefined, one, new Map());
 			expect(res).toMatchObject({ found: 1, proofs: 1, checked: 2, failures: [] });
-		});
+		}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 		it('fails the page when the proof prints a line the page does not show', () => {
 			writeFileSync(join(examples, 'found', 'y', 'hidden.py'), 'print("total: 4")\nprint("per call: 1")\n');
 			try {
@@ -637,13 +637,13 @@ describe('proofs of a foundations page (#497)', () => {
 			} finally {
 				writeFileSync(join(examples, 'found', 'y', 'hidden.py'), 'print("total: 3")\nprint("per call: 1")\n');
 			}
-		});
+		}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 		it('fails an UNRUN_EXEMPT entry for a fixture a proof runs', () => {
 			const exempt = new Map([['found/y/hidden.py', 'foundations page, not wired yet']]);
 			expect(checkExamples(content, examples, undefined, one, exempt).failures).toEqual([
 				"UNRUN_EXEMPT found/y/hidden.py: a <Predict run=...> or a lesson file's proofs runs it now; drop the entry",
 			]);
-		});
+		}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 		it('reports the fixture as unrun once the lesson file drops it', () => {
 			writeFileSync(lessonFile, 'id: found/y\n');
 			try {
@@ -653,7 +653,7 @@ describe('proofs of a foundations page (#497)', () => {
 			} finally {
 				writeFileSync(lessonFile, withProofs);
 			}
-		});
+		}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 		it('fails a lesson file whose proofs is not a list of paths', () => {
 			writeFileSync(lessonFile, 'id: found/y\nproofs: found/y/hidden.py\n');
 			try {
@@ -663,6 +663,6 @@ describe('proofs of a foundations page (#497)', () => {
 			} finally {
 				writeFileSync(lessonFile, withProofs);
 			}
-		});
+		}, 30000); // Starts Python in a child process, which is slow on a busy machine (#555).
 	});
 });

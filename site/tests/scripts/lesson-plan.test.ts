@@ -1,6 +1,4 @@
-import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { AreaTree } from '../../scripts/lib/area-tree.mjs';
 import { lessonPlan } from '../../scripts/lib/lesson-plan.mjs';
 
@@ -126,10 +124,20 @@ describe('lessonPlan', () => {
 });
 
 describe('lesson-plan command', () => {
-	it('prints the plan of this checkout as JSON with a trailing newline', () => {
-		const script = fileURLToPath(new URL('../../scripts/lesson-plan.mjs', import.meta.url));
-		// Bun, as `mise run lesson-plan` runs it: data.mjs imports TypeScript, which Node won't load.
-		const out = execFileSync('bun', [script], { encoding: 'utf8' });
+	it('prints the plan of this checkout as JSON with a trailing newline', async () => {
+		// In-process: importing the script runs it once, and the spy collects what it writes. A `bun`
+		// child process took over 5 s on a busy machine (#555).
+		const chunks: string[] = [];
+		const write = vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
+			chunks.push(String(chunk));
+			return true;
+		});
+		try {
+			await import('../../scripts/lesson-plan.mjs');
+		} finally {
+			write.mockRestore();
+		}
+		const out = chunks.join('');
 		expect(out.endsWith('}\n')).toBe(true);
 		const plan = JSON.parse(out);
 		expect(plan.lessons.length).toBeGreaterThan(0);
