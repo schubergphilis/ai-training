@@ -1,21 +1,22 @@
 /// <reference types="vitest/config" />
 import { getViteConfig } from 'astro/config';
+import { BASE } from './scripts/lib/site-address.mjs';
 
 // `getViteConfig` gives the tests the same aliases (`@lib/*`, `@scripts/*`)
 // and virtual modules (`astro:content`) the site builds with, so a lib module
 // needs no test-only shim. Two things it does not give:
 //
 // - `import.meta.env.BASE_URL`: Vitest builds `import.meta.env` from
-//   `test.env`, so the site's base is repeated here for `lib/url.ts`. It must
-//   match `base` in astro.config.mjs (that file cannot be imported here: it
-//   pulls in a TypeScript-only integration Node refuses to load from
-//   node_modules).
+//   `test.env`, so the site's base is set here for `lib/url.ts`, from
+//   `BASE` in scripts/lib/site-address.mjs, where astro.config.mjs reads it
+//   too. astro.config.mjs itself cannot be imported here: it pulls in a
+//   TypeScript-only integration Node refuses to load from node_modules.
 // - Content collections: `getViteConfig` skips the content sync, so
 //   `getCollection()` returns nothing. Tests that need a lesson list mock
 //   `astro:content` (see tests/lib/content.ts) with a small fixture set.
 export default getViteConfig({
 	test: {
-		env: { BASE_URL: '/ai-training/' },
+		env: { BASE_URL: `${BASE}/` },
 		include: ['tests/**/*.test.ts'],
 		// Pure modules run under Node. A test that needs a DOM says so at its
 		// top with `// @vitest-environment happy-dom`.

@@ -10,11 +10,22 @@ import {
 } from '@lib/tutor-instructions';
 import { absoluteUrl } from '@lib/url';
 import { describe, expect, it } from 'vitest';
-import { SITE } from '../../scripts/lib/site-address.mjs';
+import { BASE, SITE } from '../../scripts/lib/site-address.mjs';
 
 /** Astro's `site`, which astro.config.mjs reads from site-address.mjs, so a change there fails the SKILL.md checks below. */
 const site = SITE;
-const ROOT = `${site}/ai-training`;
+const ROOT = `${site}${BASE}`;
+
+describe('astro.config.mjs', () => {
+	const config = readFileSync(new URL('../../astro.config.mjs', import.meta.url), 'utf8');
+	it('takes site and base from scripts/lib/site-address.mjs, so the checks here and in bundles use its values', () => {
+		expect(config).toMatch(/^import \{ BASE, SITE \} from '\.\/scripts\/lib\/site-address\.mjs';$/m);
+		expect(config).toMatch(/^\tsite: SITE,$/m);
+		expect(config).toMatch(/^const base = BASE;$/m);
+		expect(config).not.toMatch(/\bsite:\s*['"`]/);
+		expect(config).not.toMatch(/\bbase\s*[:=]\s*['"`]/);
+	});
+});
 
 describe('renderTutorInstructions', () => {
 	const text = renderTutorInstructions({ body: '# Tutor\n\nBody.\n', site, built: '2026-09-24' });
@@ -84,7 +95,7 @@ describe('the bootstrap SKILL.md', () => {
 			`\`\`\`text\n${ROOT}/\n${LOCAL_TUTOR_BASE}\n\`\`\``,
 		);
 		expect(tutorBase(`${ROOT}/using-agents/delegating/`, site)).toBe(`${ROOT}/`);
-		expect(tutorBase(LOCAL_TUTOR_BASE.replace('<port>', '4321'), site)).toBe('http://localhost:4321/ai-training/');
+		expect(tutorBase(LOCAL_TUTOR_BASE.replace('<port>', '4321'), site)).toBe(`http://localhost:4321${BASE}/`);
 		expect(skill, 'SKILL.md must tell the tutor to stop for any other host').toMatch(
 			/For a URL on any other host, or any other scheme, [^.]*and\s+stop\.\s+Fetch nothing from it/,
 		);
