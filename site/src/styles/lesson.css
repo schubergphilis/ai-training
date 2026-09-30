@@ -3,13 +3,21 @@
    out of lesson pages, so the styles must travel with the class names. */
 
 :root {
-	--at-done: #6b8f5e;
-	--at-done-text: #3f5c36;
-	--at-warn: var(--sl-color-accent-high);
+	/* Done is the learning platform's teal (spec S14). */
+	--at-done: #36c5b0; /* fills, borders, rings */
+	--at-done-text: #36c5b0;
+	--at-done-strong: #36c5b0; /* a filled Done button */
+	--at-on-done: #0f1218; /* text on --at-done-strong */
+	--at-warn: #f5a623;
 }
-:root[data-theme='dark'] {
-	--at-done: #7fa872;
-	--at-done-text: #a8c99c;
+:root[data-theme='light'] {
+	/* #36c5b0 on white is 2.2:1, so light mode uses darker teals: 3.4:1 for
+	   a state fill, 5.6:1 for text. The warning amber is darkened to 5.6:1. */
+	--at-done: #239b89;
+	--at-done-text: #1a7466;
+	--at-done-strong: #1a7466;
+	--at-on-done: #ffffff;
+	--at-warn: #9a5800;
 }
 
 /* ---- checkpoints ---- */
@@ -42,7 +50,7 @@
 	background: var(--sl-color-bg-nav); color: var(--sl-color-text); cursor: pointer; font: inherit; font-size: 0.9rem;
 }
 .checkpoint button:disabled, .recap-actions button:disabled, .covered-by button:disabled { opacity: 0.6; cursor: default; }
-.cp-check { background: var(--sl-color-accent); color: var(--sl-color-black); border-color: transparent; font-weight: 600; }
+.cp-check { background: var(--sl-color-bg-accent); color: var(--sl-color-text-invert); border-color: transparent; font-weight: 600; }
 .cp-hint { background: var(--sl-color-gray-6); padding: 0.5rem 0.75rem; border-radius: 4px; margin: 0.75rem 0 0; font-style: italic; }
 .cp-feedback { margin: 0.75rem 0 0; font-weight: 600; min-height: 1.2em; }
 .cp-feedback.ok { color: var(--at-done-text); }
@@ -126,7 +134,7 @@
 .recap-actions { display: flex; gap: 0.5rem 1rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
 .recap-finish-note { flex-basis: 100%; margin: 0; padding: 0.5rem 0.75rem; border-left: 4px solid var(--sl-color-accent); background: var(--sl-color-accent-low); border-radius: 4px; font-weight: 600; }
 .recap-finish-note:empty { display: none; }
-.recap-finish { background: var(--at-done) !important; color: #fff !important; border-color: transparent !important; font-weight: 600; }
+.recap-finish { background: var(--at-done-strong) !important; color: var(--at-on-done) !important; border-color: transparent !important; font-weight: 600; }
 .recap-objectives li::before { content: '✓ '; color: var(--at-done-text); }
 .recap-objectives { list-style: none; padding-left: 0.5rem; }
 /* The habit card after the recap (spec S07): text, then the state line, Done and Skip when due, results when retired. */
@@ -140,7 +148,7 @@
 /* `.habit-actions` sets `display: flex`, which outranks the browser's `[hidden] { display: none }`; restate it for the card and everything the script toggles inside it, as `.checkpoint [hidden]` does above. */
 .habit[hidden], .habit [hidden] { display: none !important; }
 .habit-actions button { padding: 0.35rem 0.85rem; border-radius: 4px; border: 1px solid var(--sl-color-gray-4); background: var(--sl-color-bg-nav); color: var(--sl-color-text); cursor: pointer; font: inherit; font-size: 0.9rem; }
-.habit-done { background: var(--at-done) !important; color: #fff !important; border-color: transparent !important; font-weight: 600; }
+.habit-done { background: var(--at-done-strong) !important; color: var(--at-on-done) !important; border-color: transparent !important; font-weight: 600; }
 .habit-results { margin: 0.5rem 0 0; padding-left: 1.25rem; font-size: 0.9rem; }
 .habit-results li[data-result='done'] { color: var(--at-done-text); }
 .habit-results li[data-result='skipped'] { color: var(--sl-color-gray-3); }

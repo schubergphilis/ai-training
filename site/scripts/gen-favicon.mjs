@@ -1,9 +1,9 @@
-// Generate the site favicon + apple-touch-icon from the LSD Warm palette.
+// Generate the site favicon + apple-touch-icon in the site's accent (spec S14).
 //
 // A simple "document" glyph: an accent-colored rounded page with a few text
 // lines, legible at favicon sizes. Swap this out for your own brand mark.
 //
-//   cd docs && bun run scripts/gen-favicon.mjs
+//   mise run site-favicon
 //
 // Writes public/favicon.svg and public/apple-touch-icon.png.
 
@@ -14,9 +14,9 @@ import sharp from 'sharp';
 
 const docsDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-const ACCENT = '#c17a23'; // LSD Warm accent
-const PAGE = '#ffebd2'; // warm off-white "paper"
-const LINE = '#c17a23'; // text lines
+const ACCENT = '#1e80ed'; // SBP Blue, the site accent
+const PAGE = '#ffffff'; // white "paper"
+const LINE = '#1e80ed'; // text lines
 
 // A page (rounded rect) with a folded corner and three text lines.
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Docs">

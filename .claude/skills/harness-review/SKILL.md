@@ -88,7 +88,7 @@ is read at its source, not taken from the summary.
 ## Report
 
 Write `index.html` in the report directory, one self-contained page
-styled like the site: the LSD Warm palette and the fonts from
+styled like the site: the palette and the fonts from
 `site/src/styles/custom.css`, light and dark. It holds:
 
 - a short summary;

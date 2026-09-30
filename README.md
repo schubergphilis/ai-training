@@ -65,7 +65,7 @@ ai-training/
 ├── prek.toml                     # git hooks, also run by `mise run lint`
 ├── site/                         # the Astro Starlight site
 │   ├── src/content/docs/         # the pages
-│   ├── src/styles/custom.css     # the LSD Warm theme
+│   ├── src/styles/custom.css     # the site theme (spec S14)
 │   ├── astro.config.mjs          # site, base path, sidebar, rehype plugin
 │   ├── package.json              # site dependencies (exact; bun.lock pins the tree)
 │   └── bun.lock                  # committed; never gitignore this

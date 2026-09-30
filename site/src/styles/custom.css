@@ -1,37 +1,43 @@
-/* LSD Warm theme, mapped onto Starlight's design tokens. Palette source:
-   ~/git/lsimons/lsimons-dotfiles/colors/lsd-colors.json. Starlight derives all
+/* Theme matching the learning platform that deep links into lessons, and
+   the organization site at schubergphilis.github.io (spec S14). Accent: SBP
+   Blue #1e80ed, the organization's public brand color. Starlight derives all
    surfaces/text/borders from an accent ramp (low/accent/high), a gray ramp
-   (1=lightest .. 6/7=darkest in dark mode, inverted in light) and black/white,
-   so overriding those restyles the whole site. Dark mode is `:root`; light mode
-   is `:root[data-theme='light']`. */
+   (1=lightest .. 6/7=darkest in dark mode, inverted in light) and
+   black/white, so overriding those restyles the whole site. Dark mode is
+   `:root`; light mode is `:root[data-theme='light']`. */
 :root {
-	/* LSD Warm Dark */
-	--sl-color-accent-low: #4a2f08;
-	--sl-color-accent: #c17a23;
-	--sl-color-accent-high: #eabb79;
-	--sl-color-white: #ffebd2; /* headings */
-	--sl-color-gray-1: #f0dcc4;
-	--sl-color-gray-2: #dfcab2; /* body text (fg) */
-	--sl-color-gray-3: #8a7761; /* muted */
-	--sl-color-gray-4: #6b5b44; /* dim */
-	--sl-color-gray-5: #3a2b16; /* borders / hairlines */
-	--sl-color-gray-6: #1f1000; /* nav & sidebar bg */
-	--sl-color-black: #1a0c00; /* page bg */
+	--sl-color-accent-low: #0d2e52;
+	--sl-color-accent: #1e80ed;
+	--sl-color-accent-high: #7fb8f5; /* link text, 9.0:1 on the page */
+	--sl-color-white: #f8f9fb; /* headings */
+	--sl-color-gray-1: #f3f4f7;
+	--sl-color-gray-2: #ecedf2; /* body text (fg) */
+	--sl-color-gray-3: #b1b8c5; /* secondary text */
+	--sl-color-gray-4: #757d8c; /* control borders */
+	--sl-color-gray-5: #353b4e; /* borders / hairlines */
+	--sl-color-gray-6: #1d2230; /* nav & sidebar bg */
+	--sl-color-black: #0f1218; /* page bg */
 }
 :root[data-theme='light'] {
-	/* LSD Warm Light */
-	--sl-color-accent-low: #f6e4c4;
-	--sl-color-accent: #c17a23;
-	--sl-color-accent-high: #8f5610; /* darkened for link contrast on snow */
-	--sl-color-white: #241100; /* headings (fg) */
-	--sl-color-gray-1: #3e290f;
-	--sl-color-gray-2: #4a3418; /* body text */
-	--sl-color-gray-3: #594329; /* dim */
-	--sl-color-gray-4: #765e44; /* faint */
-	--sl-color-gray-5: #dbcbb9; /* borders */
-	--sl-color-gray-6: #f0dfc9;
-	--sl-color-gray-7: #f7e9d6;
-	--sl-color-black: #faf1f3; /* page bg (snow) */
+	--sl-color-accent-low: #e7f2fc;
+	--sl-color-accent: #1e80ed;
+	/* #1e80ed on white is 3.9:1, below the 4.5:1 text needs. Links, the
+	   current page and filled buttons use this darker blue (5.4:1), and
+	   #1e80ed stays on borders, rings and progress fills. */
+	--sl-color-accent-high: #1469c8;
+	--sl-color-text-accent: var(--sl-color-accent-high);
+	--sl-color-bg-accent: var(--sl-color-accent-high);
+	--sl-color-white: #1a1f36; /* headings (fg) */
+	--sl-color-gray-1: #232838;
+	--sl-color-gray-2: #2d3142; /* body text */
+	--sl-color-gray-3: #5f6878; /* secondary text */
+	--sl-color-gray-4: #7f8898; /* control borders */
+	--sl-color-gray-5: #e2e5eb; /* borders */
+	--sl-color-gray-6: #f0f2f5;
+	--sl-color-gray-7: #f8f9fb;
+	--sl-color-black: #ffffff; /* page bg */
+	/* A white header, as in the learning platform. */
+	--sl-color-bg-nav: #ffffff;
 }
 
 /* Fonts: Merriweather Sans for on-screen/UI (Starlight's global --sl-font, so
@@ -48,10 +54,12 @@
 	font-family: 'Merriweather', Georgia, serif;
 }
 
-/* Keep the main content column white in light mode so images with white
-   backgrounds blend in; the header and sidebars keep the off-white LSD Warm
-   surface. `.main-pane` is only the content column. Dark mode keeps its
-   warm-dark content background. */
+/* The left sidebar gets the light grey the learning platform uses around
+   its cards, and the content column stays white so images with white
+   backgrounds blend in. `.main-pane` is only the content column. */
+:root[data-theme='light'] {
+	--sl-color-bg-sidebar: var(--sl-color-gray-7);
+}
 :root[data-theme='light'] .main-pane {
 	background-color: #ffffff;
 }
@@ -110,8 +118,8 @@
 	font-size: var(--sl-text-xs);
 	font-weight: 600;
 	line-height: 1.5;
-	background: var(--sl-color-accent);
-	color: var(--sl-color-black);
+	background: var(--sl-color-bg-accent);
+	color: var(--sl-color-text-invert);
 }
 .sidebar-content [aria-current='page'] .due-count {
 	background: var(--sl-color-text-invert);
