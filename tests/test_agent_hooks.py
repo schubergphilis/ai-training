@@ -96,6 +96,7 @@ def test_merge_needs_a_merging_role() -> None:
     assert reason is not None
     assert "wave lead" in reason
     assert check("AI_TRAINING_ROLE=wave-lead gh pr merge 12 --rebase") is None
+    assert check("AI_TRAINING_ROLE=dispatcher gh pr merge 12 --rebase") is None
     assert check("gh pr merge 12 --rebase", env={"AI_TRAINING_ROLE": "coordinator"}) is None
 
 

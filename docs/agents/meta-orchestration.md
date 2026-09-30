@@ -326,21 +326,25 @@ or `in session` as its source, so a later wave and a `/wave --resume`
 read it back and never record one comment twice. A wave whose lead is
 running keeps the approval it started with, and from the next lead the
 dispatcher spawns, including the new lead of a resumed wave, it goes
-back to per-PR approval. When a lead reports `failed`, a withdrawal
-given while it ran applies from that wave, because its resume spawns a
-new lead. A withdrawal in the session and one in a comment then act the
-same. The dispatcher fills the lead prompt's `{{APPROVAL}}` line with
-the withdrawal, which is otherwise left out. The lead of such a wave
-opens the wave pull request, doesn't merge it, and returns `open` with
-the reason `approval withdrawn` when every condition above holds, after
-it removes the wave's worktrees. The dispatcher marks the wave
-`awaiting approval` on the run issue, plays the chime, asks the
-maintainer to approve the pull request, and on approval merges it with
+back to per-PR approval. When the dispatcher resumes a wave, a
+withdrawal given while its earlier lead ran applies from that wave,
+whether that lead reported `failed` or never reported, because the
+resume spawns a new lead. A withdrawal in the session and one in a
+comment then act the same. The dispatcher fills the lead prompt's
+`{{APPROVAL}}` line with the withdrawal, which is otherwise left out.
+The lead of such a wave opens the wave pull request, doesn't merge it,
+and returns `open` with the reason `approval withdrawn` when every
+condition above holds, after it removes the wave's worktrees. The
+dispatcher marks the wave `awaiting approval` on the run issue, plays
+the chime, asks the maintainer to approve the pull request, and on
+approval merges it with
 `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`. It then treats
-the wave as `merged` and goes on to the next wave. Without the approval
-it stops as on any other `open`, and an `open` for any other reason
-still ends the loop. The standing approval comes back only when the
-maintainer gives it again.
+the wave as `merged` and goes on to the next wave. When that merge
+fails, the wave stays `awaiting approval` and the run stops, and a lead
+that merges under a withdrawn approval stops the run too. Without the
+approval it stops as on any other `open`, and an `open` for any other
+reason still ends the loop. The standing approval comes back only when
+the maintainer gives it again.
 
 ## The wave lead prompt
 
