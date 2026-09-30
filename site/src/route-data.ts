@@ -18,10 +18,21 @@ export function pagePathOf(pathname: string): string {
 	return path.endsWith('/') ? path : `${path}/`;
 }
 
+/**
+ * The list of pages with an alternate, read once per build, since every page runs this middleware. The dev
+ * server reads it on each request, so a lesson page added while it runs gets its hint without a restart.
+ */
+let paths: Promise<Set<string>> | undefined;
+function pagesWithAlternate(): Promise<Set<string>> {
+	if (import.meta.env.DEV) return alternatePaths();
+	paths ??= alternatePaths();
+	return paths;
+}
+
 export const onRequest = defineRouteMiddleware(async (context) => {
 	const site: string | undefined = import.meta.env.SITE;
 	if (!site) throw new Error('the Markdown alternate head hint needs `site` in astro.config.mjs for absolute URLs');
 	const path = pagePathOf(context.url.pathname);
-	if (!(await alternatePaths()).has(path)) return;
+	if (!(await pagesWithAlternate()).has(path)) return;
 	context.locals.starlightRoute.head.push(alternateHeadLink(path, new URL(site).origin));
 });

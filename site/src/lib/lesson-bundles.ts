@@ -164,7 +164,8 @@ function checkpointOptions(where: string, name: string, attrs: Map<string, Check
 					.map((t) => textOf(where, name, t)),
 			)}\n\nOptions:\n\n${list(texts('options'))}`;
 		case 'Order':
-			return list(texts('steps').sort((a, b) => a.localeCompare(b)));
+			// Sorted by the text the reader sees, code spans restored, as the checkpoint export sorts the source steps.
+			return list(texts('steps').sort((a, b) => aside.restore(a).localeCompare(aside.restore(b))));
 		case 'Sort':
 			return `Buckets:\n\n${list(texts('buckets'))}\n\nItems:\n\n${list(texts('items'))}`;
 		case 'Repair': {
