@@ -36,7 +36,7 @@ const { errors, bundles } = checkBundles(
 errors.push(...checkExportCitations(join(root, 'dist/data/checkpoints.json')));
 const data = checkDataFiles(join(root, 'dist/data'), join(root, 'src/data'));
 errors.push(...data.errors);
-errors.push(...checkDataIndex(join(root, 'dist/data'), join(root, 'src/data')));
+errors.push(...checkDataIndex(join(root, 'dist/data'), join(root, 'src/data'), SITE_ROOT));
 const rendered = checkRenderedCitations(join(root, 'dist'));
 errors.push(...rendered.errors);
 const alternates = checkAlternateHints(join(root, 'dist'), SITE_ROOT);

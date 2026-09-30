@@ -33,9 +33,11 @@
  * with no published file, a published file with no source, and a file whose
  * text differs, with the first line that differs. `checkDataIndex` checks
  * `dist/data/index.json` (S12 "Index") against the same list: each data file
- * listed once, each URL ending in the path of a built file, each `page`
- * ending in its id and built, and a lesson `live` exactly when its bundle
- * was built, with a null `page` and `bundle` when it is planned. The source-to-path table is
+ * listed once, every URL under the site root (`site-address.mjs`), each
+ * data URL the built file its entry's `id` names, each `page` the built page
+ * of its id, areas in group order and lessons in course order, and a lesson
+ * `live` exactly when its bundle was built, with a null `page` and `bundle`
+ * when it is planned. The source-to-path table is
  * written out here on purpose, not imported from `src/lib/data-files.ts`, so
  * a mistake in the route is not repeated in its check.
  */
@@ -43,7 +45,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 import { BUNDLE_VERSION } from '../../src/lib/bundle-version.ts';
-import { readAreaTree } from './area-tree.mjs';
+import { courseLessonIds, readAreaTree } from './area-tree.mjs';
 import { lessonPages, walk } from './data.mjs';
 
 /** Field name to the `typeof` it must have; the array fields follow. */
@@ -375,32 +377,27 @@ export function checkDataFiles(distDataDir, dataDir) {
 	return { errors, files: built.size };
 }
 
-/** The path under `/data/` without `.json` that `url` names, or null when it is no absolute URL of a `/data/*.json` file. */
-function dataPathOf(url) {
-	try {
-		const m = /\/data\/(.+)\.json$/.exec(new URL(url).pathname);
-		return m ? m[1] : null;
-	} catch {
-		return null;
-	}
+/**
+ * The path under `/data/` without `.json` that `url` names, or null when it
+ * is not a string that starts with `root` (the site root) and names a
+ * `data/*.json` file under it.
+ */
+function dataPathOf(url, root) {
+	if (typeof url !== 'string' || !url.startsWith(root)) return null;
+	const m = /^data\/(.+)\.json$/.exec(url.slice(root.length));
+	return m ? m[1] : null;
 }
 
-/** Whether `url` is an absolute URL whose path ends in `suffix` and whose page was built under `distDir`. */
-function isBuiltPage(url, suffix, distDir) {
-	try {
-		const { pathname } = new URL(url);
-		return pathname.endsWith(suffix) && existsSync(join(distDir, suffix, 'index.html'));
-	} catch {
-		return false;
-	}
-}
+/** The ids of `entries` (a list of objects with an `id`), or `[]` when it is no list. */
+const idsOf = (entries) => (Array.isArray(entries) ? entries.map((e) => e?.id) : []);
 
 /**
  * Check `index.json` under `distDataDir` (S12 "Index") against the data
- * tree under `dataDir` and the built site around `distDataDir`. Returns
- * the problems as strings.
+ * tree under `dataDir` and the built site around `distDataDir`. `root` is
+ * the site root every URL must start with (`SITE_ROOT` in
+ * `site-address.mjs`). Returns the problems as strings.
  */
-export function checkDataIndex(distDataDir, dataDir) {
+export function checkDataIndex(distDataDir, dataDir, root) {
 	const file = join(distDataDir, 'index.json');
 	if (!existsSync(file)) return [`${file} does not exist; run site-build first`];
 	let index;
@@ -413,47 +410,70 @@ export function checkDataIndex(distDataDir, dataDir) {
 	const distDir = join(distDataDir, '..');
 	const errors = [];
 	const listed = [];
-	const listUrl = (where, url) => {
-		const path = dataPathOf(url);
-		if (path === null || !existsSync(join(distDataDir, `${path}.json`)))
+	const offRoot = (where, url) => {
+		if (typeof url === 'string' && url.startsWith(root)) return false;
+		errors.push(`index.json: ${where} is ${JSON.stringify(url)}, not a URL under the site root ${root}`);
+		return true;
+	};
+	/** Record the data file `url` names, which must be `data/<expected>.json` under the root and built. */
+	const listUrl = (where, url, expected) => {
+		if (offRoot(where, url)) return null;
+		const path = dataPathOf(url, root);
+		if (path === null || !existsSync(join(distDataDir, `${path}.json`))) {
 			errors.push(`index.json: ${where} is ${JSON.stringify(url)}, not the URL of a built /data/ file`);
+			return path;
+		}
+		if (path !== expected)
+			errors.push(`index.json: ${where} is ${JSON.stringify(url)}, but its id says ${root}data/${expected}.json`);
 		return path;
 	};
-	const page = (where, url, suffix) => {
-		if (!isBuiltPage(url, suffix, distDir))
-			errors.push(`index.json: ${where} is ${JSON.stringify(url)}, expected the built page ending in ${suffix}`);
+	/** `url` must be the page at `path` (no leading slash) under the root, and built. */
+	const page = (where, url, path) => {
+		if (offRoot(where, url)) return;
+		if (url !== `${root}${path}` || !existsSync(join(distDir, path, 'index.html')))
+			errors.push(`index.json: ${where} is ${JSON.stringify(url)}, expected the built page ${root}${path}`);
 	};
 	if (index.version !== 1) errors.push(`index.json: version is ${JSON.stringify(index.version)}, expected 1`);
-	listed.push(listUrl('groups', index.groups));
-	if (listUrl('checkpoints', index.checkpoints) !== 'checkpoints')
-		errors.push(`index.json: checkpoints is ${JSON.stringify(index.checkpoints)}, expected /data/checkpoints.json`);
-	for (const area of Array.isArray(index.areas) ? index.areas : []) {
+	listed.push(listUrl('groups', index.groups, 'groups'));
+	listUrl('checkpoints', index.checkpoints, 'checkpoints');
+	const tree = readAreaTree(dataDir);
+	const areaIds = tree.groups
+		.flatMap((g) => (Array.isArray(g?.areas) ? g.areas : []))
+		.filter((a) => tree.areas.some((d) => d.dir === a && d.area !== null));
+	const indexAreas = Array.isArray(index.areas) ? index.areas : [];
+	if (JSON.stringify(idsOf(indexAreas)) !== JSON.stringify(areaIds))
+		errors.push(
+			`index.json: areas are ${JSON.stringify(idsOf(indexAreas))}, expected group order ${JSON.stringify(areaIds)}`,
+		);
+	for (const area of indexAreas) {
 		const a = String(area?.id);
-		listed.push(listUrl(`areas ${a} url`, area?.url));
-		page(`areas ${a} page`, area?.page, `/${a}/`);
+		listed.push(listUrl(`areas ${a} url`, area?.url, `areas/${a}`));
+		page(`areas ${a} page`, area?.page, `${a}/`);
 		for (const t of Array.isArray(area?.topics) ? area.topics : []) {
-			listed.push(listUrl(`topic ${t?.id} url`, t?.url));
-			page(`topic ${t?.id} page`, t?.page, `/topics/${t?.id}/`);
+			listed.push(listUrl(`topic ${t?.id} url`, t?.url, `topics/${t?.id}`));
+			page(`topic ${t?.id} page`, t?.page, `topics/${t?.id}/`);
 		}
 		for (const c of Array.isArray(area?.competencies) ? area.competencies : []) {
-			listed.push(listUrl(`competency ${c?.id} url`, c?.url));
-			page(`competency ${c?.id} page`, c?.page, `/competencies/${c?.id}/`);
+			listed.push(listUrl(`competency ${c?.id} url`, c?.url, `competencies/${c?.id}`));
+			page(`competency ${c?.id} page`, c?.page, `competencies/${c?.id}/`);
 		}
 		for (const c of Array.isArray(area?.courses) ? area.courses : [])
-			listed.push(listUrl(`course ${c?.id} url`, c?.url));
+			listed.push(listUrl(`course ${c?.id} url`, c?.url, `courses/${c?.id}`));
+		const courseOrder = (tree.areas.find((d) => d.dir === a)?.courses ?? []).flatMap((c) => courseLessonIds(c.data));
+		if (JSON.stringify(idsOf(area?.lessons)) !== JSON.stringify(courseOrder))
+			errors.push(
+				`index.json: area ${a} lessons are ${JSON.stringify(idsOf(area?.lessons))}, expected course order ${JSON.stringify(courseOrder)}`,
+			);
 		for (const l of Array.isArray(area?.lessons) ? area.lessons : []) {
-			listed.push(listUrl(`lesson ${l?.id} plan`, l?.plan));
+			listed.push(listUrl(`lesson ${l?.id} plan`, l?.plan, `lesson-plans/${l?.id}`));
 			const built = existsSync(join(distDataDir, 'lessons', `${l?.id}.json`));
 			if (l?.live !== built)
 				errors.push(
 					`index.json: lesson ${l?.id} live is ${JSON.stringify(l?.live)}, but its bundle ${built ? 'was' : 'was not'} built`,
 				);
 			if (built) {
-				page(`lesson ${l?.id} page`, l?.page, `/${l?.id}/`);
-				if (dataPathOf(l?.bundle) !== `lessons/${l?.id}`)
-					errors.push(
-						`index.json: lesson ${l?.id} bundle is ${JSON.stringify(l?.bundle)}, expected /data/lessons/${l?.id}.json`,
-					);
+				page(`lesson ${l?.id} page`, l?.page, `${l?.id}/`);
+				listUrl(`lesson ${l?.id} bundle`, l?.bundle, `lessons/${l?.id}`);
 			} else if (l?.page !== null || l?.bundle !== null) {
 				errors.push(`index.json: planned lesson ${l?.id} has a page or bundle; both must be null`);
 			}
