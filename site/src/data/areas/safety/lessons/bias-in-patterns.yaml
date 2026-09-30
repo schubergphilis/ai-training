@@ -34,8 +34,10 @@ notes: >-
   The fixture is a constructed simulation of a slanted ranker, and the page says so twice: it ranks
   twelve made-up records under two invented name lists, swaps the lists, and tallies the shortlist
   per list over both runs. Under a fair ranker the totals are equal by construction, so any
-  difference is the slant. The bonus is two points and the records are chosen so no tie decides the
-  shortlist line in either run. The names are invented, and the given names and surnames are mixed
+  difference is the slant. The bonus is two points and the records are chosen so that at 2 points no
+  tie decides the shortlist line in either run. At 1 point (both runs) and 5 points (run 1) a tie at
+  places 6 and 7 is decided by record order, so the stretch exercise asks only about 3 and 4, where
+  no tie decides the count, and the page says a tie goes to the earlier record. The names are invented, and the given names and surnames are mixed
   across the two lists so that neither list reads as one group. The claim that real
   models slant by name rests on Wilson and Caliskan 2024 (resume retrieval, checked 2026-09-24) and
   the swapped-name method on Bertrand and Mullainathan 2004. Bloomberg's 2024 GPT ranking analysis

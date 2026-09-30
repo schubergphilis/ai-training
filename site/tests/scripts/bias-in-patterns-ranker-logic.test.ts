@@ -81,6 +81,20 @@ describe('the ranker at other bonuses', () => {
 			lines.filter((line) => line.includes('shortlist  score')).map((line) => line.slice(line.indexOf('(')));
 		expect(shortlisted(report.runs[0] ?? []).sort()).toEqual(shortlisted(report.runs[1] ?? []).sort());
 	});
+	it('has a tie at the shortlist line at 1 point in both runs and at 5 points in run 1 only', () => {
+		const ties = [];
+		for (let bonus = 0; bonus <= MAX_BONUS; bonus++) {
+			for (const swapped of [false, true]) {
+				const ranking = rank(assignNames(swapped), bonus);
+				if (ranking[SHORTLIST - 1]?.score === ranking[SHORTLIST]?.score) ties.push([bonus, swapped ? 2 : 1]);
+			}
+		}
+		expect(ties).toEqual([
+			[1, 1],
+			[1, 2],
+			[5, 1],
+		]);
+	});
 	it('shows one point in the totals, and a larger slant at 6 points', () => {
 		expect(rankBoth(1).totals).toBe('shortlisted over both runs: list A 7, list B 5');
 		for (const bonus of [3, 4, 5]) expect(rankBoth(bonus).totals).toBe(TOTALS);

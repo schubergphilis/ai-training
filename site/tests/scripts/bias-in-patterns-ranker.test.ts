@@ -51,6 +51,9 @@ describe('mountBiasInPatternsRanker', () => {
 		expect(part<HTMLOutputElement>(root, '.bp-bonus output').value).toBe('2');
 		expect(part(root, '.bp-runs').textContent).toBe('');
 		expect(part(root, '.bp-totals').textContent).toBe('');
+		// Only the totals line is announced, so a screen reader doesn't read all 28 lines of both runs on each press.
+		expect(root.querySelectorAll('[aria-live]')).toHaveLength(1);
+		expect(part(root, '.bp-totals').getAttribute('aria-live')).toBe('polite');
 	});
 	it('prints both runs, a blank line apart, and the totals at 2 points', async () => {
 		const root = await show();
