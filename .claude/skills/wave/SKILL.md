@@ -433,14 +433,17 @@ printed.
      comment on the run issue (`gh issue view <run> --comments`), add
      the line to `## Standing approval`. Its source is the comment's URL,
      or `in session` with today's date. Skip a comment whose URL the
-     section already holds, so a resume never records an old comment a
+     section already holds. A resume then never records an old comment a
      second time. `<k>` is the wave of the next lead you spawn. While a
      lead runs in this session, that is one more than its wave, since a
      wave already running keeps the approval it started with. When no
      lead runs, it is the wave of the `In flight` line, whose resume
      spawns a new lead, and otherwise one more than the last wave on
-     `## Waves`. Say in your next message which wave the change applies
-     from.
+     `## Waves`. When a lead reports `failed`, change the `<k>` of every
+     line you recorded while it ran to that lead's wave, since its resume
+     spawns a new lead. A withdrawal in the session and one in a comment
+     then apply from the same wave. Say in your next message which wave
+     the change applies from.
    - Then act on the status.
    - `merged`: play `afplay /System/Library/Sounds/Glass.aiff` and go to
      step 1.
@@ -448,7 +451,7 @@ printed.
      line, from a wave whose prompt said the approval is withdrawn:
      chime, and ask the maintainer one yes-or-no question, whether to
      merge PR #<n>, with the PR's link. The run issue's line says
-     `awaiting approval` while you wait, so a resume asks again (step 3).
+     `awaiting approval` while you wait, and a resume asks again (step 3).
      On yes, merge it with
      `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`, wait for CI
      on `main` with `gh run watch` on the newest run, and replace the

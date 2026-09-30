@@ -144,7 +144,7 @@ merged, and so does any change to a spec, a gate, or shared tooling that a
 lesson branch drags along.
 
 When your prompt says the standing approval is withdrawn, don't merge a
-wave that meets all the conditions above. Leave its pull request open
+wave that meets the conditions above. Leave its pull request open
 and report `open` with the reason `approval withdrawn` on the
 `For the maintainer` line. The dispatcher asks the maintainer and merges
 it on approval. Before you report, finish as "Finishing" says, and
@@ -258,10 +258,10 @@ stopped before it could report. Don't restart the wave:
 
 ## Finishing
 
-After the merge, or after the pull request under a withdrawn approval
-("Standing approval"), remove the worktrees of your own wave and no
-others. A harness wave has no merge in your session, and it keeps its
-wave worktree ("Harness waves").
+After the merge, or after you open the pull request under a withdrawn
+approval ("Standing approval"), remove the worktrees of your own wave
+and no others. A harness wave has no merge in your session, and it keeps
+its wave worktree ("Harness waves").
 Build the list of paths from your prompt's table:
 `../ai-training-wt/feat/<issue>-<slug>` for each issue of the wave (both
 halves of a split issue), the `../ai-training-wt/review-<run>-<issue>`
