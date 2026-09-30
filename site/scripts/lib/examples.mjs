@@ -322,12 +322,13 @@ export function checkProofs(file, src, proofs, run, interps = DEFAULT_INTERPRETE
  * compares it: case folded, as the page folds it when it grades
  * (`normalizeAnswer` in `src/scripts/checkpoint-logic.ts`), and with the
  * characters that are not a letter or a digit cut from both ends, so `3,`
- * in `rows: 3, 5, 6` matches the answer `3`. A token of only such
- * characters (`->`) stays whole.
+ * in `rows: 3, 5, 6` matches the answer `3`. A leading `-` or `+` stays,
+ * because it is a sign: `3` does not match `-3`. A token of only cut
+ * characters (`...`) stays whole.
  */
 function answerToken(token) {
 	const folded = token.toLowerCase();
-	return folded.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '') || folded;
+	return folded.replace(/^[^\p{L}\p{N}+-]+|[^\p{L}\p{N}]+$/gu, '') || folded;
 }
 
 /**
@@ -338,15 +339,16 @@ function answerToken(token) {
  * foundations page, so its Predicts carry no `run`, and without this check
  * a changed fixture could leave the graded answer stale while the `text`
  * fences are updated. Returns one failure per missing token, naming the
- * page, the Predict and the token. A page that does not parse fails in
- * `textFenceLines` first.
+ * page, the Predict and the token. A page that does not parse, or a Predict
+ * prop the reader cannot read, returns no failure here: `checkSource` reports
+ * it once, and `checkProofs` calls this once per interpreter.
  */
 export function checkProofAnswers(file, src, output, label) {
 	let tags;
 	try {
 		tags = predictTags(src, file);
-	} catch (e) {
-		return [e.message];
+	} catch {
+		return [];
 	}
 	const shown = new Set(output.split(/\s+/).filter(Boolean).map(answerToken));
 	const failures = [];
