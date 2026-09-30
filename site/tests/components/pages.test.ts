@@ -115,11 +115,12 @@ describe('TopicMap', () => {
 	it('renders every topic in its area column with lesson coverage and prerequisite edges', async () => {
 		const html = await container.renderToString(TopicMap, {});
 		expect(html).toContain('data-topic="concepts/models"');
-		expect(html).toMatch(/data-topic="concepts\/models"[^>]*data-has-lesson="true"/);
-		expect(html).toMatch(/data-topic="safety\/risk"[^>]*data-has-lesson="false"/);
-		// A planned entry covers safety/risk; nothing at all names safety/governance.
-		expect(html).toMatch(/data-topic="safety\/risk"[^>]*data-planned="true"/);
-		expect(html).toMatch(/data-topic="safety\/governance"[^>]*data-has-lesson="false"[^>]*data-planned="false"/);
+		// A topic without a live lesson is not started, like any other: the map has no planned or gap state.
+		expect(html).toContain('data-topic="safety/governance" data-state="untouched"');
+		expect(html).not.toContain('data-has-lesson');
+		expect(html).not.toContain('data-planned');
+		expect(html).toContain('<span data-k="untouched">not started</span>');
+		expect(html).not.toContain('solid line');
 		expect(html).toContain('href="/ai-training/topics/safety/risk/"');
 		const edges = JSON.parse(/data-edges>([^<]*)</.exec(html)?.[1] ?? '[]');
 		expect(edges).toEqual([{ from: 'concepts/models', to: 'safety/risk', cross: true }]);
@@ -164,25 +165,15 @@ describe('CompetencyMap', () => {
 		expect(box(html, 'safety/judges-output')?.[1]).not.toContain('Draws on');
 		expect(box(html, 'concepts/explains-models')?.[1]).not.toContain('Draws on');
 	});
-	it('marks a live lesson, a planned lesson and no lesson for the colors', async () => {
+	it('starts every box and objective as not started, with or without a lesson', async () => {
 		const html = await container.renderToString(CompetencyMap, {});
-		expect(html).toMatch(/data-objective="o1" data-state="untouched" data-has-lesson="true" data-planned="false"/);
-		// Only the planned safety/coming serves names-risk: "lesson coming".
-		expect(html).toMatch(
-			/data-objective="safety\/spots-injection\/names-risk" data-state="untouched" data-has-lesson="false" data-planned="true"/,
-		);
-		// Nothing serves plans-defense: "no lesson planned".
-		expect(html).toMatch(
-			/data-objective="safety\/spots-injection\/plans-defense" data-state="untouched" data-has-lesson="false" data-planned="false"/,
-		);
-		expect(html).toMatch(
-			/data-competency="safety\/spots-injection" data-state="untouched" data-has-lesson="false" data-planned="true"/,
-		);
-		expect(html).toMatch(
-			/data-competency="safety\/judges-output" data-state="untouched" data-has-lesson="false" data-planned="false"/,
-		);
-		expect(html).toMatch(/data-competency="concepts\/explains-models" data-state="untouched" data-has-lesson="true"/);
-		expect(html).toContain('<span data-k="planned">lesson coming</span>');
+		expect(html).toMatch(/data-objective="o1" data-state="untouched">/);
+		// Nothing serves plans-defense, and it is not started like o1: the map has no planned or gap state.
+		expect(html).toMatch(/data-objective="safety\/spots-injection\/plans-defense" data-state="untouched">/);
+		expect(html).toMatch(/data-competency="safety\/judges-output" data-state="untouched">/);
+		expect(html).not.toContain('data-has-lesson');
+		expect(html).not.toContain('data-planned');
+		expect(html).toContain('<span data-k="untouched">not started</span>');
 		expect(html).not.toContain('solid line');
 		const coverage = JSON.parse(/data-coverage="([^"]*)"/.exec(html)?.[1]?.replace(/&quot;/g, '"') ?? '[]');
 		expect(coverage).toContainEqual({

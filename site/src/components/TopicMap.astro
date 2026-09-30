@@ -6,15 +6,12 @@
  */
 import { getCollection } from 'astro:content';
 import { getAreas } from '@lib/areas';
-import { getAllCoursePlans } from '@lib/courses';
 import { jsonForScript } from '@lib/json';
 import { getLessons } from '@lib/lessons';
 import { href } from '@lib/url';
 
 const topics = (await getCollection('topics')).map((t) => t.data);
 const lessons = await getLessons();
-// Topics a course plan covers with a lesson that isn't live yet (spec S02 "Storage").
-const planned = new Set((await getAllCoursePlans()).filter((e) => e.status !== 'live').map((e) => e.covers));
 const byArea = (await getAreas()).map((a) => {
 	const list = topics.filter((t) => t.area === a.slug);
 	// Order by prerequisite depth within the area, then by name.
@@ -44,14 +41,6 @@ const edges = topics.flatMap((t) =>
 ---
 
 <div class="not-content">
-	<p class="topic-legend">
-		<span data-k="none">no lesson planned</span>
-		<span data-k="planned">lesson coming</span>
-		<span data-k="untouched">has a lesson</span>
-		<span data-k="in-progress">in progress</span>
-		<span data-k="finished">finished</span>
-		<span>solid line: prerequisite within an area; dotted: across areas</span>
-	</p>
 	<div class="topic-map" data-topic-map data-coverage={JSON.stringify(coverage)}>
 		<svg class="topic-map-edges" aria-hidden="true"></svg>
 		{
@@ -59,7 +48,7 @@ const edges = topics.flatMap((t) =>
 				<div class="topic-col">
 					<p class="topic-col-title">{area.name}</p>
 					{topics.map((t) => (
-						<a class="topic-node" href={href(`/topics/${t.id}/`)} data-topic={t.id} data-state="untouched" data-has-lesson={String(lessons.some((l) => l.data.covers === t.id))} data-planned={String(planned.has(t.id))} title={t.definition}>
+						<a class="topic-node" href={href(`/topics/${t.id}/`)} data-topic={t.id} data-state="untouched" title={t.definition}>
 							{t.name}
 						</a>
 					))}
@@ -68,6 +57,11 @@ const edges = topics.flatMap((t) =>
 		}
 		<script is:inline type="application/json" data-edges set:html={jsonForScript(edges)} />
 	</div>
+	<p class="topic-legend">
+		<span data-k="untouched">not started</span>
+		<span data-k="in-progress">in progress</span>
+		<span data-k="finished">finished</span>
+	</p>
 </div>
 
 <script>

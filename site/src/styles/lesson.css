@@ -265,16 +265,9 @@
 .topic-col { display: grid; gap: 0.5rem; align-content: start; }
 .topic-col-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sl-color-gray-3); margin: 0; }
 .topic-node { display: block; position: relative; z-index: 1; padding: 0.45rem 0.6rem; border: 1.5px solid var(--sl-color-gray-4); border-radius: var(--at-radius-md); background: var(--sl-color-bg); text-decoration: none; color: inherit; font-size: 0.85rem; line-height: 1.25; }
-/* No lesson and none planned: a gap in the plan. */
-.topic-node[data-state='untouched'][data-has-lesson='false'][data-planned='false'],
-.competency-node[data-state='untouched'][data-has-lesson='false'][data-planned='false'] { opacity: 0.55; border-style: dashed; }
-.competency-objective[data-state='untouched'][data-has-lesson='false'][data-planned='false'] { border-style: dashed; }
-/* A lesson is planned or being written; the topic is covered on paper. */
-.topic-node[data-state='untouched'][data-has-lesson='false'][data-planned='true'],
-.competency-node[data-state='untouched'][data-has-lesson='false'][data-planned='true'] { opacity: 0.75; border-style: dotted; }
-.competency-objective[data-state='untouched'][data-has-lesson='false'][data-planned='true'] { border-style: dotted; }
+/* A topic, competency or objective has three states: not started, in progress and finished. In progress gets the accent border and tint, so it stands apart from not started. */
 .topic-node[data-state='in-progress'],
-:is(.competency-node, .competency-objective)[data-state='in-progress'] { border-color: var(--sl-color-accent); }
+:is(.competency-node, .competency-objective)[data-state='in-progress'] { border-color: var(--sl-color-accent); border-width: 2px; background: var(--sl-color-accent-low); }
 .topic-node[data-state='finished'],
 :is(.competency-node, .competency-objective)[data-state='finished'] { border-color: var(--at-done); background: color-mix(in srgb, var(--at-done) 14%, var(--sl-color-bg)); }
 .topic-node:hover { border-color: var(--sl-color-accent); }
@@ -289,10 +282,13 @@
 .competency-draws { margin: 0.4rem 0 0; font-size: 0.75rem; color: var(--sl-color-gray-3); }
 .topic-legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.8rem; color: var(--sl-color-gray-3); }
 .topic-legend span[data-k]::before { content: ''; display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 3px; margin-right: 0.3rem; vertical-align: middle; border: 1.5px solid var(--sl-color-gray-4); }
-.topic-legend [data-k='none']::before { border-style: dashed; opacity: 0.6; }
-.topic-legend [data-k='planned']::before { border-style: dotted; opacity: 0.8; }
-.topic-legend [data-k='in-progress']::before { border-color: var(--sl-color-accent); }
+.topic-legend [data-k='in-progress']::before { border-color: var(--sl-color-accent); background: var(--sl-color-accent-low); }
 .topic-legend [data-k='finished']::before { border-color: var(--at-done); background: var(--at-done); }
+
+/* The two map pages use the full width next to the left menu, with the menus' own side margin, so the map fits. Their intro paragraphs keep the normal width. The competency map puts three areas in a row, so its boxes wrap less. */
+.main-pane:has(.topic-map) { --sl-content-width: 100%; --sl-content-pad-x: var(--sl-sidebar-pad-x); }
+.main-pane:has(.topic-map) .sl-markdown-content > :not(.not-content) { max-width: 45rem; }
+@media (min-width: 60rem) { .competency-map { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 1.5rem; } }
 
 /* ---- progress page ---- */
 .progress-overview { display: grid; gap: 0.75rem; margin: 1rem 0 2rem; }

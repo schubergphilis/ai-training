@@ -82,9 +82,8 @@ its page exists and **planned** otherwise, and the page's existence is the
 whole record. The course
 page renders the plan as the lesson graph: live lessons are the nodes, and
 planned ones are dimmed "coming" nodes in their planned position. Progress
-never counts a coming lesson. The topic map uses the plan too: a topic with
-no lesson at all is a gap, and a topic with a planned lesson shows as
-"lesson coming".
+never counts a coming lesson. The topic and competency maps don't use the
+plan: a topic without a live lesson is not started, like any other.
 
 ```yaml
 id: safety

@@ -111,6 +111,12 @@ Tutor mode cites these URLs when it points a learner somewhere.
 - The competency map colors each competency and each objective by the state
   of the lessons that serve it, with the same states and colors as the topic
   map.
+- Both maps show three states: not started, in progress and finished. A
+  topic, competency or objective without a live lesson is not started. The
+  maps show no separate state for a planned lesson or a gap in the plan, and
+  their legend doesn't explain the line styles of the prerequisite edges.
+- The competency map puts three areas in a row on a wide screen, so the
+  six areas take two rows.
 
 ## Learner's reference
 

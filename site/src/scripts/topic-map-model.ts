@@ -17,7 +17,7 @@ export interface TopicCoverage {
 /**
  * Finished once every covering lesson is finished or skipped, in progress
  * once any has an entry, else untouched. A topic without lessons stays
- * untouched; the markup's `data-has-lesson` and `data-planned` color it.
+ * untouched, which the map shows as not started.
  */
 export function topicState(lessons: readonly string[], rec: ProgressRecord): 'finished' | 'in-progress' | 'untouched' {
 	const states = lessons.map((l) => rec.lessons[l]?.state);
