@@ -204,7 +204,11 @@ printed.
 3. **Resume or open.** With `--resume <Name>`, find the open run issue
    with that name among them, and stop when there is none. Its body gives
    the arguments, and its `In flight` line, if any, is the wave to resume
-   (step 3 of the loop). Write its current body to the run's file, with
+   (step 3 of the loop). When the run issue's newest comment
+   (`gh issue view <run> --json comments -q '.comments[-1].body'`) starts
+   with `Run ended:`, the session that ended the run died before the
+   close: write the run's file as below, do "When the run ends" from the
+   release of the claims on, and resume no wave. Write its current body to the run's file, with
    the `Run: #<run>` line right after the `## Arguments` heading:
 
    ```bash
@@ -679,10 +683,55 @@ maintainer's decision, the final report quotes its options and its
 recommendation (`triage.md`, "What a maintainer decision needs").
 Nothing is left in a record for the maintainer to reconcile by hand.
 
-Then, on every stop that ends the run, comment the stop condition on the
-run issue and close it (`gh issue close <run> --comment ...`). Your final
-report repeats the run's pending collision notes for the maintainer to
-read.
+Then, on every stop that ends the run, comment on the run issue, with
+the first line `Run ended: <stop condition>` and, under `--no-filing`,
+the filed numbers. Then release the claims (below), and close the run
+issue (`gh issue close <run>`). Your final report repeats the run's
+pending collision notes for the maintainer to read, lists the released
+issues, and names each open pull request whose issues stay claimed.
+
+When the session dies after the `Run ended:` comment and before the
+close, the run issue is still open, and `/wave --resume <Name>` does the
+release and the close again ("Starting a run", step 3). The release skips
+every issue it already released, since it is no longer assigned to you.
+A run issue closed by hand skips this section, so its claims stay until
+someone releases them as below.
+
+### Releasing the claims
+
+Step 5 of the loop assigns each issue of a wave, and the picker skips
+assigned issues. So when the run ends, release the claims of every wave
+whose `## Waves` line isn't `merged`: the `In flight` line (a lead that
+never reported, or reported `failed`) and the lines `open`,
+`awaiting approval` and `awaiting restart`. When the maintainer says stop
+while a lead runs, release after that lead has stopped, since its
+builders may still push. For each such wave `<k>`:
+
+1. **The claimed issues.** For the `In flight` line, they are the issues
+   on the line. For the other lines, they are the open issues that hold
+   the wave's claim:
+   `gh issue list -s open --assignee @me --search '"Claimed by run <Name>, wave <k>" in:comments' --json number -q '.[].number'`.
+   Skip an issue that is closed or no longer assigned to you
+   (`gh issue view <n> --json state,assignees`).
+2. **An open pull request.** For a line with `PR #<n>`, read
+   `gh pr view <n> --json state,closingIssuesReferences`. While its state
+   is `OPEN`, the issues it closes stay claimed, because the pull request
+   holds their work and its merge closes them, and a new run would build
+   them a second time. That holds for a harness wave `awaiting restart`
+   too. When the maintainer later closes that pull request without a
+   merge, those issues are released by hand with step 3. Release every
+   other claimed issue, and every one when the pull request is closed.
+3. **Release.** Run `mise run wave-status -- wave/<name>-<k> <issues>`
+   once for the issues to release. For each issue, run
+   `gh issue edit <n> --remove-assignee @me`, then comment one line and
+   the attribution lines:
+   `Claim released by run <Name>, wave <k> (the run ended<branches>)`.
+   `<branches>` adds, for each entry of the issue's `branches` list in the
+   `wave-status` output, `; <branch> is unreviewed` when its `verdict` is
+   null, and otherwise `; <branch> has the last verdict <verdict>`, with
+   the `verdict` field of that verdict. Write nothing else: `wave-status`
+   reads the comment as a claim, which applies to no branch, only while
+   it has no other line and no parenthesis inside its parentheses.
 
 ## Stop conditions
 

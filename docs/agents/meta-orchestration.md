@@ -307,6 +307,9 @@ awaiting restart", on a failed step after a restart, on the maintainer's
 no to a harness merge, on a failed dispatcher merge of a wave
 `awaiting approval`, and when the exclusivity check refuses a resumed
 run, since a later `/wave --resume <Name>` continues it.
+When it closes the run, it unassigns the issues that a wave without a
+merge still claims, except the ones an open wave pull request closes, and
+comments on each with the review state of its `feat/` branches.
 
 A picker that exits non-zero stops the loop too, before any claim. The
 dispatcher quotes the picker's `next-wave:` error line, such as a failed

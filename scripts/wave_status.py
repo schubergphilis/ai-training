@@ -49,8 +49,10 @@ builder reply after it and no lead re-check after that reply is
 
 The dispatcher posts `Claimed by run <Name>, wave <k>` on every issue it
 picks (.claude/skills/wave/SKILL.md, "Claim"), sometimes with a
-parenthetical after it (#457). A trusted comment whose first line is
-exactly that, and whose other lines are blank or attribution lines, is
+parenthetical after it (#457). When the run ends before the wave merges,
+it posts `Claim released by run <Name>, wave <k> (...)` ("Releasing the
+claims", #602). A trusted comment whose first line is exactly one of
+the two, and whose other lines are blank or attribution lines, is
 a claim (#507). A claim applies to no branch: it is no builder reply,
 it doesn't finish an `Unfinished:` branch and it doesn't clear a lead
 re-check. Any other wording, such as `Claimed by run` in a fence, in
@@ -120,11 +122,12 @@ FENCE_LINE = re.compile(rf"{_S}*(`{{3,}}|~{{3,}})({_DOT}*)\Z", _FLAGS)
 LEAD_RE_CHECK_LINE = re.compile(rf"{_S}*\**re-checked by lead\b", _FLAGS | re.IGNORECASE)
 
 # The first line of the dispatcher's claim comment, `Claimed by run Seal, wave 3`,
+# or of its release comment, `Claim released by run Seal, wave 3 (the run ended)`,
 # with an optional parenthetical after it that holds no parenthesis itself.
 # The name is one capitalized word (scripts/run_name.py). Case-sensitive, as
 # the dispatcher writes it.
 CLAIM_LINE = re.compile(
-    rf"{_S}*Claimed by run [A-Z][a-z]+, wave [1-9][0-9]*"
+    rf"{_S}*(?:Claimed|Claim released) by run [A-Z][a-z]+, wave [1-9][0-9]*"
     + rf"(?: \([^()\n\r\u2028\u2029]*\))?{_S}*\Z",
     _FLAGS,
 )
@@ -312,9 +315,10 @@ def is_unfinished(body: str) -> bool:
 
 
 def is_claim(body: str) -> bool:
-    """Whether a comment is the dispatcher's claim of the issue for a run.
+    """Whether a comment is the dispatcher's claim of the issue for a run, or its release.
 
-    Its first line is `Claimed by run <Name>, wave <k>`, with an optional
+    Its first line is `Claimed by run <Name>, wave <k>` or
+    `Claim released by run <Name>, wave <k>`, with an optional
     parenthetical, and every other line is blank or an attribution line.
     Lines inside a code fence count too. The dispatcher writes nothing else,
     so a comment with more text, such as a `Branch:` line, a fenced block
