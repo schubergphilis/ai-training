@@ -9,8 +9,8 @@ needs a line saying that AI helped? The
 [first lesson](/safety/responsible-use/) of this course gave the test: say
 so when the reader would judge the work differently knowing it. In this
 lesson we write that line for the contract and for the function, one part
-at a time. A comparer on the page then shows what the function was copied
-from, and the last section looks up the disclosure rule of the place a
+at a time. A comparer on the page then shows how much of the function came
+from a library, and the last section looks up the disclosure rule of the place a
 piece of work goes to.
 
 The comparer runs in your browser and sends your text nowhere. The library
@@ -139,32 +139,52 @@ def shorten(text, limit, marker="..."):
 
 You don't need to read it as code. The first line names the function, the
 line in triple quotes under it is a short description, and the lines
-starting with `#` are comments for a human reader. The comments are more polished than
-the request, and they explain choices you didn't ask for. The first lesson
-called that the sign to search for a phrase. Searching for the comment
-about the comma finds `truncate.py`, a file from a small open-source
-library. The comparer below shows that file at the top, with the
-function the assistant returned in the text box. When you press Compare,
-it takes each non-blank line in the box, ignores the spaces around it, and
-checks whether the library file has the same line. It prints how many
-lines it found and then lists the lines that are only in the box.
+starting with `#` are comments for a human reader. The comments are more
+polished than the request, and they explain choices you didn't ask for. The
+first lesson called that the sign to search for a phrase. Searching for the
+comment about the comma finds `truncate.py`, a file from a small
+open-source library.
 
-<LineCompare candidate="safety/saying-ai-helped/sample/generated.py"
-  source="safety/saying-ai-helped/sources/truncate.py" />
+```text
+# truncate.py, from the Hazeldine text helpers
+# Copyright (c) 2021 M. Hazeldine
+# MIT License. This line stands in for the full permission notice in LICENSE.
+
+
+def truncate_words(text, limit, marker="..."):
+    """Cut text after `limit` words and add the marker if anything was cut."""
+    words = text.split()
+    if len(words) <= limit:
+        return text
+    # Keep whole words only; never cut one in half
+    kept = " ".join(words[:limit])
+    # Drop trailing punctuation so the marker does not follow a comma
+    kept = kept.rstrip(",;:")
+    return kept + marker
+```
 
 <Choice id="how-much-was-copied" objective="safety/handles-data-safely/respects-licenses"
   concepts={['licensing-and-attribution']}
-  context="An assistant returned a ten-line function, shorten, with a one-line description and two comments. A search finds a library function, truncate_words, whose body is the same line for line, under a different function name and with a three-line license header above it. A comparer counts how many of the ten lines of the generated function are also a line of the library file, ignoring the spaces around each line."
-  title="How many lines match?" hint="Go through the two listings line by line. Which line of the generated function has no twin in the library file?"
+  context="An assistant returned a ten-line function, shorten, with a one-line description and two comments. A search finds a library file with a three-line license header and a function, truncate_words, whose description, two comments and code lines are word for word the same as those of shorten. Only the line that names the function is different. A comparer counts how many of the ten lines of the generated function are also a line of the library file, ignoring the spaces around each line."
+  title="How many lines match?" hint="Which line of the generated function has no twin in the library file?"
   options={[
-    { text: '10 of 10. The two functions are the same.', why: 'Look at the first line of each. The generated function is called shorten, and the library function is called truncate_words.' },
+    { text: '10 of 10. The two functions are the same.', why: 'The generated function is called shorten and the library function is called truncate_words, so the line that names the function differs.' },
     { text: '9 of 10. Only the line with the function name differs.', correct: true },
-    { text: '8 of 10. The function name and the description under it differ.', why: 'Compare the description lines in quotes. They are the same, word for word.' },
-    { text: '6 of 10. The code matches apart from the function name, and the description and the two comments are the assistant\'s own words.', why: 'The two comments and the description are in the library file too. The search found the file through one of those comments.' },
+    { text: '8 of 10. The function name and the description under it differ.', why: 'The description is in the library file too, word for word.' },
+    { text: '6 of 10. The code matches apart from the function name, and the description and the two comments are the assistant\'s own words.', why: 'The description and the two comments are in the library file too, word for word. The search found the file through one of those comments.' },
   ]}>
-Before you press Compare, how many of the ten lines of the generated
-function does the comparer find in the library file?
+How many of the ten lines of the generated function are also a line of the
+library file?
 </Choice>
+
+The comparer below checks your answer. Its text box holds the function the
+assistant returned. When you press Compare, it looks for each non-blank
+line of the box in the library file, ignoring the spaces around the line.
+It prints how many lines it found and then lists the lines that are only in
+the box.
+
+<LineCompare candidate="safety/saying-ai-helped/sample/generated.py"
+  source="safety/saying-ai-helped/sources/truncate.py" showSource={false} />
 
 For the generated function, the comparer prints this:
 
@@ -183,8 +203,8 @@ code on one condition, that the copyright line and the full permission
 notice stay with every copy. The one-line header in the example stands in
 for that notice, and a real library ships the full text in its `LICENSE`
 file. So the function may go into the pull request with the copyright line
-and the license text above it, and a line in the pull request description that says
-where it came from. The tool's own terms don't change this. They govern your use of
+and the license text above it, and a line in the pull request description
+that says where it came from. The tool's own terms don't change this. They govern your use of
 the tool, and they can't grant rights to code the model took from someone
 else.
 
@@ -222,7 +242,7 @@ gone. That difference is what a reviewer looks for.
   options={[
     { text: 'Keep the function and add the library\'s copyright notice above it.', consequence: 'A notice is what a permissive license asks for. This license asks that the program using the code be shared under the same terms, and your product is not.' },
     { text: 'Rename the variables and reorder the comments until the comparison finds fewer shared lines.', consequence: 'The function is still a copy of the library function, now with its origin hidden. The obligation is unchanged, and a reviewer who finds it later has one more reason to distrust the pull request.' },
-    { text: 'Remove the function and write a new one from the requirement, with the library file closed.', correct: true, consequence: 'The pull request holds your own work, and the description says why the first version was replaced.' },
+    { text: 'Remove the function and write a new one from the requirement, with the library file closed.', correct: true, consequence: 'The pull request holds your own work, and the pull request description says why the first version was replaced.' },
     { text: 'Ask the assistant whether the function is original, and go ahead if it says yes.', consequence: 'The model has no record of where its output came from, and it answers the question with the same confidence either way.' },
   ]}>
 Your search for the comment finds the function in a library whose license

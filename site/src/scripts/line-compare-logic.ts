@@ -13,7 +13,8 @@
  * Where JavaScript can't see what Python sees, the result can differ.
  * Python's `str.strip()` and JavaScript's `trim()` remove nearly the same
  * whitespace: `trim()` also removes U+FEFF, and `strip()` also removes the
- * separators U+001C to U+001F. Pasted code rarely holds either.
+ * separators U+001C to U+001F and U+0085 (next line). Pasted code rarely
+ * holds any of them.
  */
 
 /** The report for one comparison: the count line, and the heading and lines that follow it. */
