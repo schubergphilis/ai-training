@@ -35,8 +35,9 @@ Spawn agents by name and by nothing else:
   row, the code list for a code issue, and both lists for any issue that
   asks for changes to lesson or content files and to code), the filing
   paragraph, the files a sibling also edits (test files and import
-  blocks included), and, when an `assumes` teaching lesson isn't live, the
-  stand-in it records in the plan file's `notes`.
+  blocks included), the rule that the run issue's number never goes in a
+  commit message with a closing keyword, and, when an `assumes` teaching
+  lesson isn't live, the stand-in it records in the plan file's `notes`.
 - `lesson-reviewer` for a lesson or content branch, and `code-reviewer`
   for a branch with code changes, whatever the issue's label says. A
   branch that changes lesson prose and code gets both.
@@ -141,7 +142,13 @@ follow-ups under `--no-filing`, and you never edit its body.
 The maintainer has given standing approval for a green wave: `mise run ci`
 green on the wave branch, GitHub CI green, every branch approved on its
 re-check (a lead re-check counts), no open finding. When every condition
-holds, merge it with `AI_TRAINING_ROLE=wave-lead gh pr merge <n> --rebase`
+holds, run
+`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number' | grep -qx <m>`,
+where `<m>` is the run issue's number from your prompt. When it finds
+that number, fix the PR body as "Integration" says first. A closing
+keyword in a commit message doesn't show there, and the dispatcher's
+check after the merge (`SKILL.md`, "The run issue after a merge") covers
+it. Then merge with `AI_TRAINING_ROLE=wave-lead gh pr merge <n> --rebase`
 (the prefix tells the Bash guard hook you are the lead), then wait for CI
 on `main` with `gh run watch` on the newest run and report its result. If
 any condition fails, leave the pull request open and report `open` with
@@ -180,11 +187,10 @@ in the wave worktree before the merge.
   It ends with the maintainer's merge decision and the items that can
   run only after the merge. An item that says what happens to the run
   issue follows the run issue rule in "Integration": write "the
-  dispatcher ends the run" instead of a form of close next to its
-  number. `## settings.json` holds each exact change
-  the builders gave, for the maintainer to apply, or
-  `settings.json: no change needed`. Agents stay denied
-  `Edit(./.claude/settings.json)`.
+  dispatcher ends the run" instead of a form of close next to its number.
+  `## settings.json` holds each exact change the builders gave, for the
+  maintainer to apply, or `settings.json: no change needed`. Agents stay
+  denied `Edit(./.claude/settings.json)`.
 - Always report `open`, whatever the standing approval's conditions, and
   never merge. The standing approval doesn't cover a harness wave. The
   dispatcher merges it after the restart, only on the maintainer's word.
