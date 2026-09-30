@@ -4,7 +4,7 @@ Claude Code replaces argument placeholders in a skill's content before the
 model reads it. The forms, from "Available string substitutions" on
 https://code.claude.com/docs/en/skills, are `$ARGUMENTS`, `$ARGUMENTS[N]`,
 `$N` (such as `$0` for the first argument), and `$name` for a name the
-`arguments` frontmatter list declares. The same page says a file in
+`arguments` frontmatter field declares. The same page says a file in
 `.claude/commands/` works the same way as a skill, and that a single
 backslash before the token (`\\$1`) keeps it literal, while a doubled
 backslash (`\\\\$1`) does not.
@@ -12,9 +12,10 @@ backslash (`\\\\$1`) does not.
 So an awk `$0` in `.claude/skills/wave/SKILL.md` reached the dispatcher as
 `--resume` whenever `/wave` had arguments, and the run body check failed.
 This test reads every `SKILL.md` under `.claude/skills/` and every `.md`
-file under `.claude/commands/`. Supporting files in a skill directory and
-the subagent files in `.claude/agents/` are not skill content on that page,
-so their `$0` reaches the model as written and they are not checked.
+file under `.claude/commands/`. That page describes substitution in "the
+skill content" and "the skill's markdown content" only. It says nothing of
+supporting files in a skill directory or of the subagent files in
+`.claude/agents/`, so they are not checked.
 """
 
 import re
@@ -38,7 +39,12 @@ def substituted_files(root: Path) -> list[Path]:
 
 
 def declared_arguments(text: str) -> list[str]:
-    """Return the names in the frontmatter `arguments` list, inline or block form."""
+    """Return the names the frontmatter `arguments` field declares.
+
+    The skills page's frontmatter reference says the field "Accepts a
+    space-separated string or a YAML list", so this reads a flow list
+    (`[a, b]`), a block list (`- a` lines) and a plain string (`a b`).
+    """
     match = re.match(r"---\n(.*?)\n---\n", text, re.DOTALL)
     if match is None:
         return []
@@ -50,6 +56,8 @@ def declared_arguments(text: str) -> list[str]:
         value = line.removeprefix("arguments:").strip()
         if value.startswith("["):
             names += [n.strip().strip("'\"") for n in value.strip("[]").split(",")]
+        elif value:
+            names += value.strip("'\"").split()
         else:
             for item in lines[index + 1 :]:
                 if not item.lstrip().startswith("- "):
@@ -104,9 +112,12 @@ def test_other_dollars_pass(line: str) -> None:
 def test_declared_argument_is_found() -> None:
     inline = "---\nname: x\narguments: [issue, branch]\n---\n\nBuild $issue on $branchy.\n"
     block = "---\narguments:\n  - issue\n---\n\nBuild $issue.\n"
+    spaced = "---\narguments: issue branch\n---\n\nBuild $issue on $branch.\n"
     assert declared_arguments(inline) == ["issue", "branch"]
     assert placeholders(inline) == [(6, "Build $issue on $branchy.")]
     assert placeholders(block) == [(6, "Build $issue.")]
+    assert declared_arguments(spaced) == ["issue", "branch"]
+    assert placeholders(spaced) == [(5, "Build $issue on $branch.")]
 
 
 def test_substituted_files_are_skills_and_commands(tmp_path: Path) -> None:
