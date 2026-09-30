@@ -66,8 +66,8 @@ only open issues without `content`, `code` or `harness`.
 
 ## Relationships
 
-GitHub records three kinds of link between issues and pull requests, and
-new issues use them instead of body text. `triage.md` has the rules and
+GitHub records these links between issues and pull requests, and new
+issues use them instead of body text. `triage.md` has the rules and
 the checks behind them.
 
 - **Blocked by and blocking**, for order only: the issue can't start
