@@ -70,8 +70,18 @@ accent ramp, a gray ramp and black and white, per theme. The values:
 | `--sl-color-gray-7`      | `#f8f9fb` | -         | Light sidebar                           |
 | `--sl-color-black`       | `#ffffff` | `#0f1218` | Page background                         |
 
-The light header is white (`--sl-color-bg-nav`), and the content column
-has a white background so images with white backgrounds blend in.
+Three more tokens in `custom.css` set the page and its surfaces, as in the
+learning platform:
+
+| Token          | Light     | Dark      | Role                                                    |
+| -------------- | --------- | --------- | ------------------------------------------------------- |
+| `--at-page`    | `#f0f2f5` | `#0f1218` | The page behind the content                             |
+| `--at-surface` | `#ffffff` | `#1d2230` | Checkpoints, lesson blocks, widgets, cards              |
+| `--at-inset`   | `#f0f2f5` | `#2a2f40` | A block inside a surface, such as a hint or code sample |
+
+In light mode the header and both side menus are white. In dark mode
+both side menus are `#1d2230`. The theme toggle in the header uses the
+link color, as the social icons next to it do.
 
 `#1e80ed` on white has a contrast ratio of 3.9:1. That's enough for a
 border or a ring (3:1) but below the 4.5:1 that text needs. Starlight's

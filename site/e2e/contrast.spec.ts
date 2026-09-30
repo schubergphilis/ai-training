@@ -9,18 +9,23 @@ import { expect, test } from './fixtures';
 
 type Pair = { what: string; fg: string; bg: string; min: number };
 
+/** Text and state colors sit both on the page and on a surface (a checkpoint, a widget, a card). */
+const GROUNDS = ['--at-page', '--at-surface'];
+const ON_BOTH: Omit<Pair, 'bg'>[] = [
+	{ what: 'body text', fg: '--sl-color-text', min: 4.5 },
+	{ what: 'secondary text', fg: '--sl-color-gray-3', min: 4.5 },
+	{ what: 'link text', fg: '--sl-color-text-accent', min: 4.5 },
+	{ what: 'done text', fg: '--at-done-text', min: 4.5 },
+	{ what: 'warning text', fg: '--at-warn', min: 4.5 },
+	{ what: 'done fill', fg: '--at-done', min: 3 },
+	{ what: 'accent border', fg: '--sl-color-accent', min: 3 },
+];
 const PAIRS: Pair[] = [
-	{ what: 'body text', fg: '--sl-color-text', bg: '--sl-color-bg', min: 4.5 },
-	{ what: 'secondary text', fg: '--sl-color-gray-3', bg: '--sl-color-bg', min: 4.5 },
-	{ what: 'link text', fg: '--sl-color-text-accent', bg: '--sl-color-bg', min: 4.5 },
+	...ON_BOTH.flatMap((p) => GROUNDS.map((bg) => ({ ...p, what: `${p.what} on ${bg}`, bg }))),
+	{ what: 'body text in a hint or code sample', fg: '--sl-color-text', bg: '--at-inset', min: 4.5 },
 	{ what: 'link text in the sidebar', fg: '--sl-color-text-accent', bg: '--sl-color-bg-sidebar', min: 4.5 },
 	{ what: 'text on an accent fill', fg: '--sl-color-text-invert', bg: '--sl-color-bg-accent', min: 4.5 },
-	{ what: 'done text', fg: '--at-done-text', bg: '--sl-color-bg', min: 4.5 },
 	{ what: 'text on a Done button', fg: '--at-on-done', bg: '--at-done-strong', min: 4.5 },
-	{ what: 'warning text', fg: '--at-warn', bg: '--sl-color-bg', min: 4.5 },
-	{ what: 'warning text in a pitfall', fg: '--at-warn', bg: '--sl-color-gray-6', min: 4.5 },
-	{ what: 'done fill', fg: '--at-done', bg: '--sl-color-bg', min: 3 },
-	{ what: 'accent border', fg: '--sl-color-accent', bg: '--sl-color-bg', min: 3 },
 ];
 
 for (const theme of ['light', 'dark'] as const) {

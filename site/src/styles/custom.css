@@ -67,14 +67,40 @@ h1#_top {
 	letter-spacing: -0.01em;
 }
 
-/* The left sidebar gets the light grey the learning platform uses around
-   its cards, and the content column stays white so images with white
-   backgrounds blend in. `.main-pane` is only the content column. */
-:root[data-theme='light'] {
-	--sl-color-bg-sidebar: var(--sl-color-gray-7);
+/* Page and surfaces, as in the learning platform (spec S14). In light mode
+   the page behind the content is light grey, and the header, both side
+   menus and every interactive element (checkpoints, widgets, cards) are
+   white. In dark mode both side menus are dark grey, and interactive
+   elements sit on a surface a step lighter than the page. `--at-inset` is
+   for a block inside a surface, such as a hint or a code sample.
+   `--sl-color-bg` stays the surface color in light mode, so inputs and map
+   nodes that use it stay white. */
+:root {
+	--at-page: var(--sl-color-bg);
+	--at-surface: #1d2230;
+	--at-inset: #2a2f40;
 }
-:root[data-theme='light'] .main-pane {
-	background-color: #ffffff;
+:root[data-theme='light'] {
+	--at-page: #f0f2f5;
+	--at-surface: #ffffff;
+	--at-inset: var(--sl-color-gray-6);
+	--sl-color-bg-sidebar: #ffffff;
+	--sl-color-bg-inline-code: var(--sl-color-gray-5);
+}
+body {
+	background-color: var(--at-page);
+}
+.right-sidebar {
+	background-color: var(--sl-color-bg-sidebar);
+}
+
+/* The theme toggle in the header takes the color of the social icons next
+   to it (the accent text color), and the heading color on hover, as they do. */
+header starlight-theme-select label {
+	color: var(--sl-color-text-accent);
+}
+header starlight-theme-select label:hover {
+	color: var(--sl-color-white);
 }
 
 /* The docs may use floated `align="right"`/`align="left"` images. Cap their
@@ -107,6 +133,7 @@ h1#_top {
 .card {
 	border-radius: var(--at-radius-lg);
 	box-shadow: none;
+	background-color: var(--at-surface);
 }
 .sl-link-card:hover {
 	border-color: var(--sl-color-accent);
