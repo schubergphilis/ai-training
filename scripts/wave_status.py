@@ -2,6 +2,7 @@
 """The state of a wave for a resuming lead (`mise run wave-status`, #351).
 
 Usage: mise run wave-status -- <wave-branch> <issue> [<issue> ...]
+   or: mise run wave-status -- --claims-and-follow-ups <issue> [<issue> ...]
 
 Prints JSON: per issue, its pushed `feat/<issue>-*` branches, and per
 branch the last review verdict that applies to it and the next step (#417),
@@ -59,6 +60,15 @@ re-check. Any other wording, such as `Claimed by run` in a fence, in
 the middle of a sentence, or with a `Branch:` line, a code fence or any
 other text after it, stays a reply, so a variant errs toward more work.
 
+With `--claims-and-follow-ups`, it prints instead, per issue, the
+follow-ups comments (a first line `Follow-ups from <NAME> wave <k>`, which
+a lead posts on the run issue under `--no-filing`) and the claim and
+release comments, each with its author and time (#605). Only comments by
+an account in TRUSTED_VERDICT_AUTHORS count here too, because the
+dispatcher files what a follow-ups comment lists and drops an issue from
+its wave for another run's claim. A claim or release is what `is_claim`
+reads as one.
+
 A lead that puts one issue's commits on another issue's branch posts a
 pointer comment on the first issue with a `Branch:` line for that branch
 (#455). A trusted comment on issue N whose `Branch:` line names a pushed
@@ -78,6 +88,10 @@ from typing import Literal, NoReturn, NotRequired, TypedDict, cast
 
 REPO = "schubergphilis/ai-training"
 USAGE = "usage: mise run wave-status -- <wave-branch> <issue> [<issue> ...]"
+CLAIMS_AND_FOLLOW_UPS = "--claims-and-follow-ups"
+CLAIMS_AND_FOLLOW_UPS_USAGE = (
+    f"usage: mise run wave-status -- {CLAIMS_AND_FOLLOW_UPS} <issue> [<issue> ...]"
+)
 
 # The accounts whose `Verdict:` comments a lead acts on.
 TRUSTED_VERDICT_AUTHORS = ("lsimons", "lsimons-bot")
@@ -126,9 +140,20 @@ LEAD_RE_CHECK_LINE = re.compile(rf"{_S}*\**re-checked by lead\b", _FLAGS | re.IG
 # with an optional parenthetical after it that holds no parenthesis itself.
 # The name is one capitalized word (scripts/run_name.py). Case-sensitive, as
 # the dispatcher writes it.
+# Group 1 is `Claimed` or `Claim released`, group 2 the run's name, group 3 the wave.
 CLAIM_LINE = re.compile(
-    rf"{_S}*(?:Claimed|Claim released) by run [A-Z][a-z]+, wave [1-9][0-9]*"
+    rf"{_S}*(Claimed|Claim released) by run ([A-Z][a-z]+), wave ([1-9][0-9]*)"
     + rf"(?: \([^()\n\r\u2028\u2029]*\))?{_S}*\Z",
+    _FLAGS,
+)
+
+# The first line of a wave lead's follow-ups comment on the run issue under
+# `--no-filing`, `Follow-ups from OCELOT wave 3` (.claude/skills/wave/SKILL.md,
+# "Filing"), optionally as a Markdown heading or in bold. Group 1 is the
+# run's name in capitals, group 2 the wave. Case-sensitive, as the lead writes it.
+FOLLOW_UPS_LINE = re.compile(
+    rf"{_S}*(?:#{{1,6}}{_S}+)?(?:\*\*)?"
+    + rf"Follow-ups from ([A-Z]+) wave ([1-9][0-9]*)(?:\*\*)?{_S}*\Z",
     _FLAGS,
 )
 
@@ -211,6 +236,36 @@ class WaveStatus(TypedDict):
 class Args(TypedDict):
     waveBranch: str
     issues: list[int]
+
+
+class FollowUps(TypedDict):
+    run: str
+    wave: int
+    author: str
+    createdAt: str
+    url: str
+    body: str
+
+
+class Claim(TypedDict):
+    kind: Literal["claim", "release"]
+    run: str
+    wave: int
+    author: str
+    createdAt: str
+    url: str
+    releasedBy: str | None
+
+
+class TrustedComments(TypedDict):
+    issue: int
+    followUps: list[FollowUps]
+    claims: list[Claim]
+
+
+class TrustedReport(TypedDict):
+    trustedAuthors: list[str]
+    issues: list[TrustedComments]
 
 
 def js_trim(text: str) -> str:
@@ -620,6 +675,104 @@ def wave_status(
     }
 
 
+def follow_ups_of(body: str) -> tuple[str, int] | None:
+    """The run's name and the wave a follow-ups comment's first line names, or None.
+
+    The first line is `Follow-ups from <NAME> wave <k>`, bare, as a Markdown
+    heading or in bold. The `## <title>` sections after it are the issues the
+    lead would have filed.
+    """
+    match = FOLLOW_UPS_LINE.match(lines_of(body)[0])
+    return (match.group(1), int(match.group(2))) if match else None
+
+
+def claim_of(body: str) -> tuple[Literal["claim", "release"], str, int] | None:
+    """Whether a comment is a claim or a release, with the run's name and the wave, or None.
+
+    A comment is one when `is_claim` says so, the rule `comment_kind` uses too.
+    """
+    match = CLAIM_LINE.match(lines_of(body)[0])
+    if match is None or not is_claim(body):
+        return None
+    kind: Literal["claim", "release"] = "claim" if match.group(1) == "Claimed" else "release"
+    return kind, match.group(2), int(match.group(3))
+
+
+def trusted_comments(
+    issue: int,
+    comments: Sequence[IssueComment],
+    trusted: Sequence[str] = TRUSTED_VERDICT_AUTHORS,
+) -> TrustedComments:
+    """The follow-ups comments and the claim comments on an issue by trusted accounts.
+
+    Oldest first. A comment from any other account is left out, so an
+    outsider's `Follow-ups from ...` comment files nothing and an
+    outsider's `Claimed by run ...` comment drops no issue from a wave
+    (#605). A claim's `releasedBy` is the url of the first later release
+    by the same run for the same wave, or None while the claim holds. A
+    release's `releasedBy` is always None.
+    """
+    follow_ups: list[FollowUps] = []
+    claims: list[Claim] = []
+    for c in trusted_in_order(comments, trusted):
+        heading = follow_ups_of(c["body"])
+        if heading is not None:
+            follow_ups.append(
+                {
+                    "run": heading[0],
+                    "wave": heading[1],
+                    "author": c["author"],
+                    "createdAt": c["createdAt"],
+                    "url": c["url"],
+                    "body": c["body"],
+                }
+            )
+            continue
+        claim = claim_of(c["body"])
+        if claim is None:
+            continue
+        kind, run_name, wave = claim
+        if kind == "release":
+            for earlier in claims:
+                if (
+                    earlier["kind"] == "claim"
+                    and earlier["run"] == run_name
+                    and earlier["wave"] == wave
+                    and earlier["releasedBy"] is None
+                ):
+                    earlier["releasedBy"] = c["url"]
+        entry: Claim = {
+            "kind": kind,
+            "run": run_name,
+            "wave": wave,
+            "author": c["author"],
+            "createdAt": c["createdAt"],
+            "url": c["url"],
+            "releasedBy": None,
+        }
+        claims.append(entry)
+    return {"issue": issue, "followUps": follow_ups, "claims": claims}
+
+
+def trusted_report(comments_by_issue: Mapping[int, Sequence[IssueComment]]) -> TrustedReport:
+    """What `mise run wave-status -- --claims-and-follow-ups <issue>...` prints as JSON."""
+    return {
+        "trustedAuthors": list(TRUSTED_VERDICT_AUTHORS),
+        "issues": [trusted_comments(n, cs) for n, cs in comments_by_issue.items()],
+    }
+
+
+def parse_issues(rest: Sequence[str], mode: str) -> list[int] | str:
+    """Issue numbers, with or without `#`, or an error message."""
+    if not rest:
+        return f"wave-status: name the issues after {mode}"
+    issues = [r.removeprefix("#") for r in rest]
+    bad = next((r for r in issues if not ISSUE_NUMBER.fullmatch(r)), None)
+    if bad is not None:
+        return f"wave-status: {json.dumps(bad, ensure_ascii=False)} is not an issue number"
+    return [int(r) for r in issues]
+
+
 def parse_args(argv: Sequence[str]) -> Args | str:
     """`<wave-branch> <issue> <issue> ...` from the command line, or an error message."""
     if not argv or not argv[0].startswith("wave/"):
@@ -709,6 +862,15 @@ def to_json(value: object) -> str:
 
 
 def main(argv: Sequence[str]) -> int:
+    if argv and argv[0] == CLAIMS_AND_FOLLOW_UPS:
+        issues = parse_issues(argv[1:], CLAIMS_AND_FOLLOW_UPS)
+        if isinstance(issues, str):
+            print(issues, file=sys.stderr)
+            print(CLAIMS_AND_FOLLOW_UPS_USAGE, file=sys.stderr)
+            return 2
+        report = trusted_report({n: issue_comments(n) for n in issues})
+        sys.stdout.buffer.write(to_json(report).encode("utf-8"))
+        return 0
     args = parse_args(argv)
     if isinstance(args, str):
         print(args, file=sys.stderr)

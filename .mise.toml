@@ -178,7 +178,9 @@ run = "bun scripts/lesson-plan.mjs"
 # `feat/<issue>-*` branches and per branch the last `Verdict:` comment and
 # next step (#417), counting only the accounts in TRUSTED_VERDICT_AUTHORS
 # (scripts/wave_status.py), plus the wave branch and the local worktrees,
-# as JSON. Network (git ls-remote, gh).
+# as JSON. With `--claims-and-follow-ups <issue>...` it prints instead the
+# trusted follow-ups and claim comments on those issues (#605), which the
+# /wave dispatcher reads. Network (git ls-remote, gh).
 [tasks.wave-status]
 description = "State of a wave for a resuming lead, as JSON: mise run wave-status -- <wave-branch> <issue>..."
 run = "uv run --locked python scripts/wave_status.py"
