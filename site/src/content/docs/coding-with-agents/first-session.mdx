@@ -43,22 +43,28 @@ the `cp` line.
 ```sh
 cd ~
 git clone https://github.com/schubergphilis/ai-training.git
-cp -R ai-training/site/examples/coding-with-agents/first-session/fixture-repo ~/fixture-repo
-cd ~/fixture-repo
-git init -q
-git add .
-git commit -qm "fixture as shipped"
+cp -R ai-training/site/examples/coding-with-agents/first-session/fixture-repo ~/fixture-repo \
+  && cd ~/fixture-repo \
+  && git init -q \
+  && git add . \
+  && git commit -qm "fixture as shipped"
 ```
 
-If git asks who you are, follow its message and run the commit again.
-From then on, `git checkout -- .` inside the copy puts every file back the
-way it was. Expect to reset it at least once.
+The `&&` between the commands stops the rest when one of them fails, so
+git never runs in the wrong directory. If git asks who you are, follow its
+message, and then run `git commit -qm "fixture as shipped"` again inside
+`~/fixture-repo`.
+
+Run these commands once. From then on, `git checkout -- .` inside the copy
+puts every file back the way it was. Expect to reset it at least once. To
+start over from nothing, delete `~/fixture-repo` and run the commands again
+from the `cp` line on.
 
 Inside are five files: `todo.py`, the program; `test_todo.py`, its
 tests; `todos.json`, a committed list of three items; `README.md`; and
 `AGENTS.md`, four lines of instructions for the agent. Run the program
-before you run the agent. You want to know
-what "working" looks like before someone else changes it.
+before you run the agent. You want to know what "working" looks like
+before someone else changes it.
 
 <Predict id="run-list" title="Show the list"
   answer={`1. [ ] Buy milk
@@ -78,9 +84,10 @@ working with the agent is what this lesson teaches.
 
 ## Start the agent and ask it to explain
 
-Start your coding agent from inside your copy of `fixture-repo`. The directory you start
-in is the agent's world: it reads and edits files there, and it runs
-commands there. Starting one level too high hands it your whole home directory.
+Start your coding agent from inside your copy of `fixture-repo`. The
+directory you start in is the agent's world: it reads and edits files
+there, and it runs commands there. Starting one level too high hands it
+your whole home directory.
 
 Check one setting before your first message. This lesson is built around
 the moment the agent asks you before it edits a file, and some agents start
