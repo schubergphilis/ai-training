@@ -453,6 +453,8 @@ it refuses, so a checklist can run the refusals as commands. A new run
 runs it again after `gh issue create`, with `--check <n>`, and then counts
 only the runs with a lower issue number: of two new runs that both passed
 the first check, the one with the higher number closes its issue with a
-comment that names the other run. The
+comment that names the other run. The `gh issue list` listing can miss
+an issue created a few seconds before, so two runs started within
+seconds can both pass this second check (#616). The
 `harness-review` reminder at preflight stays, since a harness run is
 where the issues a review files get done.
