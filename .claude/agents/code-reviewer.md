@@ -36,14 +36,14 @@ read it again.
 Your prompt names the issue, the branch, the review worktree (detached at
 the branch tip) and the diff file the lead wrote there (`review.diff`).
 It also holds the issue brief, the output of
-`mise run issue-brief -- <issue>`: the issue's body and only the comments
-by the maintainer's accounts, decisions first (#606). The lead runs it,
-because the sandbox blocks `mise` and `gh` for an agent in a worktree
+`mise run issue-brief -- <issue>`: only the comments by the maintainer's
+accounts, decisions first, and the body only when one of those accounts
+opened the issue (#606). The lead runs it, because the sandbox blocks
+`mise` and `gh` for an agent in a worktree
 (`docs/agents/orchestration.md`, "Working with the platform"). Read the
-issue from that brief. When your prompt has none, run
-`mise run issue-brief -- <issue>` yourself. The hook rejects
-`gh issue view --comments`, `-c` and a `--json` comments field, since
-those print every comment by anyone.
+issue from that brief only. When your prompt has none, say so in the
+review. The hook rejects `gh issue view --comments`, `-c` and a `--json`
+comments field, since those print every comment by anyone.
 
 ## How to review
 

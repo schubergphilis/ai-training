@@ -52,8 +52,9 @@ Spawn agents by name and by nothing else:
   which run created a review worktree. Its
   prompt is the issue, the branch, that worktree, the risks to probe and
   the issue brief. Run `mise run issue-brief -- <issue>` yourself and
-  paste its output in the prompt: it holds the body and only the
-  comments by the maintainer's accounts, decisions first (#606). A
+  paste its output in the prompt: it holds only the comments by the
+  maintainer's accounts, decisions first, and the body only when one of
+  those accounts opened the issue (#606). A
   reviewer can't fetch it, since the `lesson-reviewer` has no shell and
   the sandbox blocks `mise` and `gh` for the `code-reviewer` in its
   worktree. For a re-check, run it again, so the prompt holds the
