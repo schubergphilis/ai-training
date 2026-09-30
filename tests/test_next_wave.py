@@ -1718,7 +1718,12 @@ def test_dependency_lines_opens_a_fence_only_as_commonmark_does() -> None:
 def test_dependencies_holds_an_issue_while_a_blocker_is_open_and_lists_two_blockers() -> None:
     body = "Blocked by #5\nBlocked by #6\nBlocked by #7\nBlocked by #5"
     d = nw.dependencies(body, lambda n: n in (5, 7), TODAY)
-    assert d == {"blockedByIssues": [5, 7], "notBefore": None, "unreadable": []}
+    assert d == {
+        "blockedByIssues": [5, 7],
+        "foreignBlockers": [],
+        "notBefore": None,
+        "unreadable": [],
+    }
     assert nw.held(d)
     closed = nw.dependencies("Blocked by #6", lambda n: False, TODAY)
     assert not nw.held(closed)
@@ -1738,7 +1743,12 @@ def test_dependencies_waits_for_a_future_date_and_frees_the_issue_on_that_date()
 @pytest.mark.parametrize("value", ["2026-13-01", "2026-02-30", "0000-01-01"])
 def test_dependencies_reports_an_unreadable_date_and_holds_the_issue(value: str) -> None:
     d = nw.dependencies(f"Not before {value}", lambda n: True, TODAY)
-    assert d == {"blockedByIssues": [], "notBefore": None, "unreadable": [f"Not before {value}"]}
+    assert d == {
+        "blockedByIssues": [],
+        "foreignBlockers": [],
+        "notBefore": None,
+        "unreadable": [f"Not before {value}"],
+    }
     assert nw.held(d)
 
 
@@ -1828,14 +1838,16 @@ def test_parse_splits_an_open_blocker_in_another_repository_by_its_url() -> None
     assert nw.native_blockers(raw) == ([40, 44], ["other/repo#42"])
 
 
-def test_an_open_blocker_in_another_repository_alone_holds_the_issue_as_unreadable() -> None:
+def test_an_open_blocker_in_another_repository_alone_holds_the_issue_by_its_full_name() -> None:
     lookup = Lookups({})
-    ready = [harness_issue(30, foreign=["other/repo#42"])]
+    ready = [harness_issue(30, foreign=["other/repo#42", "other/repo#43"])]
     r = harness_wave([], ready, lookup, only=[30], today=TODAY)
     assert r["wave"] == []
-    unreadable = "Blocked by other/repo#42 (another repository)"
-    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "unreadable": [unreadable]}]
-    assert r["notPicked"] == [{"issue": 30, "reason": f"unreadable dependency line `{unreadable}`"}]
+    foreign = ["other/repo#42", "other/repo#43"]
+    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "foreignBlockers": foreign}]
+    reason = "blocker in another repository: other/repo#42, other/repo#43"
+    assert r["notPicked"] == [{"issue": 30, "reason": reason}]
+    assert f"- #30 Lesson #30: {reason}\n" in format_wave(r)
     assert lookup.asked == []
 
 
@@ -1846,8 +1858,25 @@ def test_a_blocker_in_another_repository_does_not_answer_for_a_local_line() -> N
     ready = [harness_issue(30, body="Blocked by #42", foreign=["other/repo#42"])]
     r = harness_wave([], ready, lookup, today=TODAY)
     assert lookup.asked == [42]
-    unreadable = "Blocked by other/repo#42 (another repository)"
-    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "unreadable": [unreadable]}]
+    assert r["blocked"] == [
+        {"issue": 30, "title": "Lesson #30", "foreignBlockers": ["other/repo#42"]}
+    ]
+
+
+@pytest.mark.parametrize(
+    ("blocked_by", "foreign"), [([40], []), ([], ["other/repo#42"])], ids=["local", "foreign"]
+)
+def test_unblocks_does_not_count_a_blocked_lesson_a_relationship_also_holds(
+    blocked_by: list[int], foreign: list[str]
+) -> None:
+    # As with a dependency line: writing `a/loop` doesn't free `a/blocked-one`.
+    ready = [
+        issue(n, blocked_by=blocked_by if n == 4 else (), foreign=foreign if n == 4 else ())
+        for n in range(1, 8)
+    ]
+    r = lessons_wave(unblock_plan(), ready, Lookups({}), size=6, unblockers_first=True, today=TODAY)
+    assert "a/blocked-one" in [b["id"] for b in r["blocked"]]
+    assert [(w["id"], w["unblocks"]) for w in r["wave"]] == WITHOUT_BLOCKED_ONE
 
 
 def test_native_blocks_a_lesson_too() -> None:
@@ -1855,6 +1884,13 @@ def test_native_blocks_a_lesson_too() -> None:
     r = lessons_wave(lessons, [issue(30, blocked_by=[40])], Lookups({}), today=TODAY)
     assert r["wave"] == []
     assert r["blocked"] == [{"issue": 30, "id": "a/1", "blockedBy": [], "blockedByIssues": [40]}]
+    foreign = issue(30, foreign=["other/repo#42"])
+    r = lessons_wave(lessons, [foreign], Lookups({}), only=[30], today=TODAY)
+    assert r["blocked"] == [
+        {"issue": 30, "id": "a/1", "blockedBy": [], "foreignBlockers": ["other/repo#42"]}
+    ]
+    reason = "blocker in another repository: other/repo#42"
+    assert r["notPicked"] == [{"issue": 30, "reason": reason}]
 
 
 def test_parse_issues_keeps_only_the_open_native_blockers() -> None:
