@@ -114,7 +114,11 @@
 .cp-chip.cp-dragging { opacity: 0.5; }
 .cp-bucket.cp-drop-hover .cp-bucket-items, .cp-pool-wrap.cp-drop-hover .cp-pool { border-style: solid; border-color: var(--sl-color-accent); background: var(--sl-color-accent-low); }
 .cp-buckets { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.5rem; }
-.cp-bucket-target, .cp-pool-target { width: 100%; text-align: left; font-weight: 600; }
+/* A zone's target button is the header of its drop area, in the tint of the prompt and response headers, joined to the dashed area under it. */
+.checkpoint .cp-bucket-target, .checkpoint .cp-pool-target { display: block; width: 100%; text-align: left; font-weight: 600; background: var(--sl-color-accent-low); border: 1px solid var(--sl-color-gray-4); border-bottom: 0; border-radius: var(--at-radius-md) var(--at-radius-md) 0 0; }
+.cp-pool, .cp-bucket-items { border-top: 0 !important; border-radius: 0 0 var(--at-radius-md) var(--at-radius-md) !important; }
+/* Items to sort sit on the inset tone, so they stand out from the white checkpoint. */
+.checkpoint .cp-chip { background: var(--at-inset); border-color: var(--sl-color-gray-5); }
 .cp-bucket-target::after, .cp-pool-target::after { content: ' ↓'; color: var(--sl-color-gray-3); }
 
 /* review-only. These are flex containers, and an author `display` beats the
