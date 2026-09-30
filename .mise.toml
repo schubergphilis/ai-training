@@ -239,10 +239,13 @@ run = "bun scripts/check-checkpoints.mjs"
 # page to site/dist/data/lessons/<area>/<lesson>.json. This reads them back
 # and checks them against the lesson pages, so it runs after `site-build`.
 # site/scripts/lib/bundles.mjs lists what it rejects in its header comment.
+# It also compares each built data-tree file (spec S12 "Data tree as JSON",
+# dist/data/<kind>/<id>.json) with its YAML source, and checks that
+# dist/data/index.json lists each of them.
 # The same run rejects a `(@key)` citation left unresolved in the text of any
 # built HTML page (site/scripts/lib/rendered-citations.mjs).
 [tasks.bundles]
-description = "Check the built lesson bundles under dist/data/lessons against the lesson pages: one per page, every S08 field, fenced code unchanged; and no unresolved (@key) citation in a built HTML page (after site-build)"
+description = "Check the built lesson bundles under dist/data/lessons against the lesson pages: one per page, every S08 field, fenced code unchanged; each built S12 data file against its YAML and dist/data/index.json; and no unresolved (@key) citation in a built HTML page (after site-build)"
 depends = ["require-setup"]
 dir = "site"
 run = "bun scripts/check-bundles.mjs"

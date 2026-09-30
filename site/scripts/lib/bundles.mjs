@@ -25,9 +25,22 @@
  * fixture lessons. This check reads the built files, so a rewrite that only
  * shows on a real lesson page fails in CI rather than on the tutor.
  * `scripts/check-bundles.mjs` is the command-line entry; tests import this.
+ *
+ * `checkDataFiles` checks the data tree as JSON (spec S12 "Data tree as
+ * JSON"): each built `dist/data/<kind>/<id>.json` must be its YAML source
+ * under `src/data/`, parsed with the `yaml` package and without its `notes`,
+ * as the two-space JSON text the build writes. It reports a data-tree file
+ * with no published file, a published file with no source, and a file whose
+ * text differs, with the first line that differs. `checkDataIndex` checks
+ * `dist/data/index.json` (S12 "Index") against the same list: each data file
+ * listed once, each URL ending in the path of a built file, and a lesson
+ * `live` exactly when its bundle was built. The source-to-path table is
+ * written out here on purpose, not imported from `src/lib/data-files.ts`, so
+ * a mistake in the route is not repeated in its check.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { parse } from 'yaml';
 import { BUNDLE_VERSION } from '../../src/lib/bundle-version.ts';
 import { readAreaTree } from './area-tree.mjs';
 import { lessonPages, walk } from './data.mjs';
@@ -254,4 +267,207 @@ export function checkBundles(bundlesDir, contentDir, dataDir) {
 		if (!pages.has(id)) errors.push(`${id}: bundle without a lesson page`);
 	}
 	return { errors, bundles: built.size };
+}
+
+/** The published files under `dist/data/` that are not the data tree: the bundles, the checkpoint export and the index. */
+const NOT_DATA_TREE = new Set(['checkpoints', 'index']);
+
+/**
+ * Every data-tree file under `dataDir` (site/src/data) that S12 "Files"
+ * publishes, as published path (under `/data/`, without `.json`) to source
+ * file. `bibliography.yaml` and `alignment/` do not publish.
+ */
+export function dataTreeSources(dataDir) {
+	const out = new Map();
+	const yamlStems = (dir) =>
+		existsSync(dir)
+			? readdirSync(dir)
+					.filter((f) => f.endsWith('.yaml'))
+					.sort()
+					.map((f) => f.slice(0, -'.yaml'.length))
+			: [];
+	if (existsSync(join(dataDir, 'groups.yaml'))) out.set('groups', join(dataDir, 'groups.yaml'));
+	const areasDir = join(dataDir, 'areas');
+	const areas = existsSync(areasDir)
+		? readdirSync(areasDir, { withFileTypes: true })
+				.filter((d) => d.isDirectory())
+				.map((d) => d.name)
+				.sort()
+		: [];
+	for (const area of areas) {
+		const dir = join(areasDir, area);
+		if (existsSync(join(dir, 'area.yaml'))) out.set(`areas/${area}`, join(dir, 'area.yaml'));
+		for (const stem of yamlStems(join(dir, 'topics')))
+			out.set(`topics/${area}/${stem}`, join(dir, 'topics', `${stem}.yaml`));
+		for (const stem of yamlStems(join(dir, 'competencies')))
+			out.set(`competencies/${area}/${stem}`, join(dir, 'competencies', `${stem}.yaml`));
+		for (const stem of yamlStems(join(dir, 'courses')))
+			out.set(`courses/${stem}`, join(dir, 'courses', `${stem}.yaml`));
+		for (const stem of yamlStems(join(dir, 'lessons')))
+			out.set(`lesson-plans/${area}/${stem}`, join(dir, 'lessons', `${stem}.yaml`));
+	}
+	return out;
+}
+
+/** A parsed data-tree file without its `notes`: the top-level key, and the one of each course part. */
+export function withoutNotes(data) {
+	if (data === null || typeof data !== 'object' || Array.isArray(data)) return data;
+	const out = Object.fromEntries(Object.entries(data).filter(([k]) => k !== 'notes'));
+	if (Array.isArray(out.parts))
+		out.parts = out.parts.map((p) =>
+			p !== null && typeof p === 'object' && !Array.isArray(p)
+				? Object.fromEntries(Object.entries(p).filter(([k]) => k !== 'notes'))
+				: p,
+		);
+	return out;
+}
+
+/** The published paths of the data-tree files under `distDataDir`: every `.json` but the bundles, the export and the index. */
+export function publishedDataPaths(distDataDir) {
+	const out = new Set();
+	if (!existsSync(distDataDir)) return out;
+	for (const p of walk(distDataDir)) {
+		if (!p.endsWith('.json')) continue;
+		const path = p.slice(distDataDir.length + 1).replace(/\.json$/, '');
+		if (path.startsWith('lessons/') || NOT_DATA_TREE.has(path)) continue;
+		out.add(path);
+	}
+	return out;
+}
+
+/** The first line where `actual` and `expected` differ, as an error suffix. */
+function firstDifference(actual, expected) {
+	const a = actual.split('\n');
+	const e = expected.split('\n');
+	for (let i = 0; i < Math.max(a.length, e.length); i++) {
+		if (a[i] !== e[i])
+			return `line ${i + 1} is ${JSON.stringify(a[i] ?? null)}, expected ${JSON.stringify(e[i] ?? null)}`;
+	}
+	return 'the texts differ';
+}
+
+/**
+ * Check the data tree as JSON under `distDataDir` (site/dist/data) against
+ * its YAML under `dataDir` (site/src/data). Returns
+ * `{ errors: string[], files: number }`.
+ */
+export function checkDataFiles(distDataDir, dataDir) {
+	if (!existsSync(distDataDir)) return { errors: [`${distDataDir} does not exist; run site-build first`], files: 0 };
+	const errors = [];
+	const sources = dataTreeSources(dataDir);
+	const built = publishedDataPaths(distDataDir);
+	for (const [path, source] of [...sources].sort(([a], [b]) => (a < b ? -1 : 1))) {
+		if (!built.has(path)) {
+			errors.push(`data/${path}.json: data-tree file ${source.slice(dataDir.length + 1)} has no published file`);
+			continue;
+		}
+		const expected = `${JSON.stringify(withoutNotes(parse(readFileSync(source, 'utf8'))), null, 2)}\n`;
+		const actual = readFileSync(join(distDataDir, `${path}.json`), 'utf8');
+		if (actual !== expected)
+			errors.push(
+				`data/${path}.json: differs from ${source.slice(dataDir.length + 1)}: ${firstDifference(actual, expected)}`,
+			);
+	}
+	for (const path of [...built].sort()) {
+		if (!sources.has(path)) errors.push(`data/${path}.json: published data file without a source under src/data`);
+	}
+	return { errors, files: built.size };
+}
+
+/** The path under `/data/` without `.json` that `url` names, or null when it is no absolute URL of a `/data/*.json` file. */
+function dataPathOf(url) {
+	try {
+		const m = /\/data\/(.+)\.json$/.exec(new URL(url).pathname);
+		return m ? m[1] : null;
+	} catch {
+		return null;
+	}
+}
+
+/** Whether `url` is an absolute URL whose path ends in `suffix` and whose page was built under `distDir`. */
+function isBuiltPage(url, suffix, distDir) {
+	try {
+		const { pathname } = new URL(url);
+		return pathname.endsWith(suffix) && existsSync(join(distDir, suffix, 'index.html'));
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Check `index.json` under `distDataDir` (S12 "Index") against the data
+ * tree under `dataDir` and the built site around `distDataDir`. Returns
+ * the problems as strings.
+ */
+export function checkDataIndex(distDataDir, dataDir) {
+	const file = join(distDataDir, 'index.json');
+	if (!existsSync(file)) return [`${file} does not exist; run site-build first`];
+	let index;
+	try {
+		index = JSON.parse(readFileSync(file, 'utf8'));
+	} catch (e) {
+		return [`index.json: not JSON: ${e.message}`];
+	}
+	if (index === null || typeof index !== 'object' || Array.isArray(index)) return ['index.json: not a JSON object'];
+	const distDir = join(distDataDir, '..');
+	const errors = [];
+	const listed = [];
+	const listUrl = (where, url) => {
+		const path = dataPathOf(url);
+		if (path === null || !existsSync(join(distDataDir, `${path}.json`)))
+			errors.push(`index.json: ${where} is ${JSON.stringify(url)}, not the URL of a built /data/ file`);
+		return path;
+	};
+	const page = (where, url, suffix) => {
+		if (!isBuiltPage(url, suffix, distDir))
+			errors.push(`index.json: ${where} is ${JSON.stringify(url)}, expected the built page ending in ${suffix}`);
+	};
+	if (index.version !== 1) errors.push(`index.json: version is ${JSON.stringify(index.version)}, expected 1`);
+	listed.push(listUrl('groups', index.groups));
+	if (listUrl('checkpoints', index.checkpoints) !== 'checkpoints')
+		errors.push(`index.json: checkpoints is ${JSON.stringify(index.checkpoints)}, expected /data/checkpoints.json`);
+	for (const area of Array.isArray(index.areas) ? index.areas : []) {
+		const a = String(area?.id);
+		listed.push(listUrl(`areas ${a} url`, area?.url));
+		page(`areas ${a} page`, area?.page, `/${a}/`);
+		for (const t of Array.isArray(area?.topics) ? area.topics : []) {
+			listed.push(listUrl(`topic ${t?.id} url`, t?.url));
+			page(`topic ${t?.id} page`, t?.page, `/topics/${t?.id}/`);
+		}
+		for (const c of Array.isArray(area?.competencies) ? area.competencies : []) {
+			listed.push(listUrl(`competency ${c?.id} url`, c?.url));
+			page(`competency ${c?.id} page`, c?.page, `/competencies/${c?.id}/`);
+		}
+		for (const c of Array.isArray(area?.courses) ? area.courses : [])
+			listed.push(listUrl(`course ${c?.id} url`, c?.url));
+		for (const l of Array.isArray(area?.lessons) ? area.lessons : []) {
+			listed.push(listUrl(`lesson ${l?.id} plan`, l?.plan));
+			const built = existsSync(join(distDataDir, 'lessons', `${l?.id}.json`));
+			if (l?.live !== built)
+				errors.push(
+					`index.json: lesson ${l?.id} live is ${JSON.stringify(l?.live)}, but its bundle ${built ? 'was' : 'was not'} built`,
+				);
+			if (built) {
+				page(`lesson ${l?.id} page`, l?.page, `/${l?.id}/`);
+				if (dataPathOf(l?.bundle) !== `lessons/${l?.id}`)
+					errors.push(
+						`index.json: lesson ${l?.id} bundle is ${JSON.stringify(l?.bundle)}, expected /data/lessons/${l?.id}.json`,
+					);
+			} else if (l?.page !== null || l?.bundle !== null) {
+				errors.push(`index.json: planned lesson ${l?.id} has a page or bundle; both must be null`);
+			}
+		}
+	}
+	const expected = dataTreeSources(dataDir);
+	const seen = new Set();
+	for (const path of listed) {
+		if (path === null) continue;
+		if (seen.has(path)) errors.push(`index.json: data/${path}.json is listed twice`);
+		seen.add(path);
+		if (!expected.has(path)) errors.push(`index.json: data/${path}.json is listed but is no data-tree file`);
+	}
+	for (const path of expected.keys()) {
+		if (!seen.has(path)) errors.push(`index.json: data/${path}.json is not listed`);
+	}
+	return errors;
 }
