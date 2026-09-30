@@ -9,6 +9,7 @@ course position now.
 
 import io
 import json
+import re
 import subprocess
 from collections.abc import Mapping, Sequence
 from datetime import date
@@ -69,7 +70,11 @@ def plan(areas: Sequence[Area], live: Sequence[str] = ()) -> list[PlannedLesson]
 
 
 def issue(
-    number: int, assignees: Sequence[str] = (), labels: Sequence[str] = (), body: str = ""
+    number: int,
+    assignees: Sequence[str] = (),
+    labels: Sequence[str] = (),
+    body: str = "",
+    blocked_by: Sequence[int] = (),
 ) -> ReadyIssue:
     return {
         "number": number,
@@ -77,13 +82,20 @@ def issue(
         "assignees": list(assignees),
         "labels": list(labels),
         "body": body,
+        "blockedBy": list(blocked_by),
     }
 
 
 def state(
     value: str = "OPEN", labels: Sequence[str] = (), pull_request: bool = False
 ) -> IssueState:
-    return {"state": value, "labels": list(labels), "assignees": [], "pullRequest": pull_request}
+    return {
+        "state": value,
+        "labels": list(labels),
+        "assignees": [],
+        "pullRequest": pull_request,
+        "blockedBy": [],
+    }
 
 
 class Lookups:
@@ -655,7 +667,14 @@ def plan_lessons() -> list[PlannedLesson]:
 
 
 def titled(number: int, title: str, labels: Sequence[str] = ("content",)) -> ReadyIssue:
-    return {"number": number, "title": title, "assignees": [], "labels": list(labels), "body": ""}
+    return {
+        "number": number,
+        "title": title,
+        "assignees": [],
+        "labels": list(labels),
+        "body": "",
+        "blockedBy": [],
+    }
 
 
 def test_content_picks_ready_content_issues_by_number_leaving_out_planned_lessons() -> None:
@@ -1348,18 +1367,23 @@ class FakeCommands:
 
 
 BUN = "bun scripts/lesson-plan.mjs"
+# The `blockedBy` field of an issue with no `blocked by` relationship, as gh gives it.
+NO_BLOCKERS: dict[str, object] = {"nodes": [], "totalCount": 0}
 GH = (
     "gh issue list -R schubergphilis/ai-training -s open -l ready-for-agent -L 1000"
-    " --json number,title,assignees,labels,body"
+    " --json number,title,assignees,labels,body,blockedBy"
 )
 GH_CONTENT = (
     "gh issue list -R schubergphilis/ai-training -s open -l ready-for-agent -l content -L 1000"
-    " --json number,title,assignees,labels,body"
+    " --json number,title,assignees,labels,body,blockedBy"
 )
 
 
 def view(number: int) -> str:
-    return f"gh issue view {number} -R schubergphilis/ai-training --json state,labels,assignees,url"
+    return (
+        f"gh issue view {number} -R schubergphilis/ai-training"
+        " --json state,labels,assignees,url,blockedBy"
+    )
 
 
 def view_json(value: str = "OPEN", labels: Sequence[str] = (), kind: str = "issues") -> str:
@@ -1369,6 +1393,7 @@ def view_json(value: str = "OPEN", labels: Sequence[str] = (), kind: str = "issu
             "labels": [{"name": label} for label in labels],
             "state": value,
             "url": f"https://github.com/schubergphilis/ai-training/{kind}/1",
+            "blockedBy": NO_BLOCKERS,
         }
     )
 
@@ -1409,6 +1434,7 @@ GH_JSON = json.dumps(
             "assignees": [],
             "labels": [{"name": "ready-for-agent"}],
             "body": "",
+            "blockedBy": NO_BLOCKERS,
         },
         {
             "number": 12,
@@ -1416,6 +1442,7 @@ GH_JSON = json.dumps(
             "assignees": [{"login": "someone"}],
             "labels": [{"name": "ready-for-agent"}],
             "body": "Blocked by #99",
+            "blockedBy": NO_BLOCKERS,
         },
     ]
 )
@@ -1585,6 +1612,7 @@ def test_main_writes_a_lone_surrogate_in_the_markdown_as_u_fffd_as_javascript_di
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "content"}],
                 "body": "",
+                "blockedBy": NO_BLOCKERS,
             }
         ]
     )
@@ -1708,6 +1736,203 @@ def test_dependencies_reports_an_unreadable_date_and_holds_the_issue(value: str)
     d = nw.dependencies(f"Not before {value}", lambda n: True, TODAY)
     assert d == {"blockedByIssues": [], "notBefore": None, "unreadable": [f"Not before {value}"]}
     assert nw.held(d)
+
+
+# The `blocked by` relationship (#579): its open issues and the `Blocked by`
+# lines together, each number once.
+
+
+def blocker_node(number: int, value: str = "OPEN") -> dict[str, object]:
+    return {
+        "id": f"I_{number}",
+        "number": number,
+        "state": value,
+        "title": f"Issue {number}",
+        "url": f"https://github.com/schubergphilis/ai-training/issues/{number}",
+    }
+
+
+def blocked_by_field(*nodes: dict[str, object]) -> dict[str, object]:
+    return {"nodes": list(nodes), "totalCount": len(nodes)}
+
+
+def harness_issue(number: int, body: str = "", blocked_by: Sequence[int] = ()) -> ReadyIssue:
+    return issue(number, labels=["harness"], body=body, blocked_by=blocked_by)
+
+
+def test_native_only_blocks_the_issue_without_a_lookup() -> None:
+    lookup = Lookups({})
+    r = harness_wave([], [harness_issue(30, blocked_by=[40])], lookup, today=TODAY)
+    assert r["wave"] == []
+    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "blockedByIssues": [40]}]
+    assert lookup.asked == []
+
+
+def test_a_line_only_still_blocks_the_issue_through_a_lookup() -> None:
+    lookup = Lookups({40: state()})
+    r = harness_wave([], [harness_issue(30, body="Blocked by #40")], lookup, today=TODAY)
+    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "blockedByIssues": [40]}]
+    assert lookup.asked == [40]
+
+
+def test_native_and_a_line_naming_the_same_issue_count_it_once() -> None:
+    lookup = Lookups({})
+    ready = [harness_issue(30, body="Blocked by #40", blocked_by=[40])]
+    r = harness_wave([], ready, lookup, only=[30], today=TODAY)
+    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "blockedByIssues": [40]}]
+    assert r["notPicked"] == [{"issue": 30, "reason": "blocked by #40"}]
+    # The relationship already says #40 is open, so the line needs no lookup.
+    assert lookup.asked == []
+
+
+def test_native_and_a_line_naming_different_issues_list_both_native_first() -> None:
+    lookup = Lookups({41: state()})
+    ready = [harness_issue(30, body="Blocked by #41", blocked_by=[40])]
+    r = harness_wave([], ready, lookup, only=[30], today=TODAY)
+    assert r["blocked"] == [{"issue": 30, "title": "Lesson #30", "blockedByIssues": [40, 41]}]
+    assert r["notPicked"] == [{"issue": 30, "reason": "blocked by #40, #41"}]
+    assert "- #30 Lesson #30: blocked by #40, #41\n" in format_wave(r)
+
+
+def test_native_blocks_a_lesson_too() -> None:
+    lessons = plan([{"dir": "a", "course": ["a/1"], "lessons": [{"id": "a/1", "issue": 30}]}])
+    r = lessons_wave(lessons, [issue(30, blocked_by=[40])], Lookups({}), today=TODAY)
+    assert r["wave"] == []
+    assert r["blocked"] == [{"issue": 30, "id": "a/1", "blockedBy": [], "blockedByIssues": [40]}]
+
+
+def test_parse_issues_keeps_only_the_open_native_blockers() -> None:
+    raw: list[dict[str, object]] = [
+        {
+            "number": 30,
+            "title": "t",
+            "assignees": [],
+            "labels": [],
+            "body": "",
+            "blockedBy": blocked_by_field(
+                blocker_node(40, "CLOSED"), blocker_node(41), blocker_node(42, "CLOSED")
+            ),
+        }
+    ]
+    assert nw.parse_issues(json.dumps(raw))[0]["blockedBy"] == [41]
+
+
+def test_parse_issue_state_reads_the_open_native_blockers() -> None:
+    raw = json.loads(view_json())
+    raw["blockedBy"] = blocked_by_field(blocker_node(40), blocker_node(41, "CLOSED"))
+    assert nw.parse_issue_state(json.dumps(raw))["blockedBy"] == [40]
+
+
+@pytest.mark.parametrize(
+    ("field", "message"),
+    [
+        (None, "needs gh 2.100.0 or later"),
+        ([], "blockedBy []"),
+        ({"nodes": []}, "blockedBy {'nodes': []}"),
+        ({"nodes": [], "totalCount": 1}, "blockedBy lists 0 of 1 blockers"),
+        ({"nodes": [7], "totalCount": 1}, "blockedBy node 7"),
+        ({"nodes": [{"number": 7}], "totalCount": 1}, "blockedBy node {'number': 7}"),
+    ],
+)
+def test_native_blockers_rejects_a_field_it_cannot_read(field: object, message: str) -> None:
+    raw: dict[str, object] = {} if field is None else {"blockedBy": field}
+    with pytest.raises((KeyError, TypeError, ValueError), match=re.escape(message)):
+        nw.native_blockers(raw)
+
+
+def native_list(state_of_40: str) -> str:
+    return json.dumps(
+        [
+            {
+                "number": 30,
+                "title": "Issue 30",
+                "assignees": [],
+                "labels": [{"name": "ready-for-agent"}, {"name": "harness"}],
+                "body": "",
+                "blockedBy": blocked_by_field(blocker_node(40, state_of_40)),
+            }
+        ]
+    )
+
+
+GH_HARNESS = GH_CONTENT.replace("-l content", "-l harness")
+
+
+def test_main_lists_an_issue_only_the_relationship_blocks_as_blocked(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    outputs: dict[str, str | int | OSError] = {BUN: PLAN_JSON, GH_HARNESS: native_list("OPEN")}
+    code, out, fake = run_main(monkeypatch, capsys, ["--kind", "harness", "--json"], outputs)
+    assert code == 0
+    assert [" ".join(c) for c, _ in fake.calls] == [BUN, GH_HARNESS]
+    result = json.loads(out.stdout)
+    assert result["wave"] == []
+    assert result["blocked"] == [{"issue": 30, "title": "Issue 30", "blockedByIssues": [40]}]
+
+
+def test_main_does_not_block_on_a_closed_native_blocker(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    outputs: dict[str, str | int | OSError] = {BUN: PLAN_JSON, GH_HARNESS: native_list("CLOSED")}
+    code, out, fake = run_main(monkeypatch, capsys, ["--kind", "harness", "--json"], outputs)
+    assert code == 0
+    assert [" ".join(c) for c, _ in fake.calls] == [BUN, GH_HARNESS]
+    result = json.loads(out.stdout)
+    assert [w["issue"] for w in result["wave"]] == [30]
+    assert result["blocked"] == []
+
+
+def test_main_exits_1_and_names_the_gh_version_when_the_list_lacks_blocked_by(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    gh = '[{"number": 1, "title": "t", "assignees": [], "labels": [], "body": ""}]'
+    code, out, _ = run_main(monkeypatch, capsys, [], {BUN: PLAN_JSON, GH: gh})
+    assert code == 1
+    assert out.stdout == ""
+    assert out.stderr.startswith("next-wave: gh issue list failed: unreadable output: KeyError(")
+    assert "needs gh 2.100.0 or later" in out.stderr
+
+
+@pytest.mark.parametrize("command", [GH, view(5)])
+def test_main_exits_1_and_names_the_gh_version_when_gh_has_no_blocked_by_field(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], command: str
+) -> None:
+    # What a gh before 2.100.0 prints for the field, and its exit code.
+    unknown = b'Unknown JSON field: "blockedBy"\nAvailable fields:\n  assignees\n'
+    # Every command but `command` works, so `--only 5` reaches the lookup.
+    working = {BUN: PLAN_JSON.encode(), GH: b"[]"}
+
+    def fake(argv: list[str], **_: object) -> subprocess.CompletedProcess[bytes]:
+        joined = " ".join(argv)
+        if joined == command:
+            return subprocess.CompletedProcess(argv, 1, b"", unknown)
+        return subprocess.CompletedProcess(argv, 0, working[joined], b"")
+
+    monkeypatch.setattr(subprocess, "run", fake)
+    with pytest.raises(SystemExit) as e:
+        nw.main(["--only", "5"])
+    assert e.value.code == 1
+    err = capsys.readouterr().err
+    name = " ".join(command.split()[:3])
+    assert err == (
+        unknown.decode()
+        + f"next-wave: {name} failed: this gh has no blockedBy field,"
+        + " which needs gh 2.100.0 or later\n"
+    )
+
+
+def test_run_passes_the_stderr_of_a_command_on_and_keeps_the_plain_failure_line(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fake(command: list[str], **_: object) -> subprocess.CompletedProcess[bytes]:
+        return subprocess.CompletedProcess(command, 1, b"", b"HTTP 502\n")
+
+    monkeypatch.setattr(subprocess, "run", fake)
+    with pytest.raises(SystemExit):
+        nw.run(["gh", "issue", "list"])
+    assert capsys.readouterr().err == (
+        "HTTP 502\nnext-wave: gh issue list failed: Command failed: gh issue list\n"
+    )
 
 
 def dependency_plan() -> list[PlannedLesson]:
@@ -1854,6 +2079,7 @@ def test_main_fetches_a_content_wave_with_both_labels_and_looks_up_a_blocker_onc
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "content"}],
                 "body": "Blocked by #90",
+                "blockedBy": NO_BLOCKERS,
             }
             for n in (30, 31)
         ]
@@ -1882,6 +2108,7 @@ def test_main_fetches_a_code_wave_with_the_code_label(
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "code"}, *extra],
                 "body": "",
+                "blockedBy": NO_BLOCKERS,
             }
             for n, extra in ((30, []), (31, [{"name": "bug"}]))
         ]
@@ -1910,6 +2137,7 @@ def test_main_fetches_a_harness_wave_with_the_harness_label_and_a_size_of_four(
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "harness"}],
                 "body": "",
+                "blockedBy": NO_BLOCKERS,
             }
             for n in range(30, 36)
         ]
@@ -1947,7 +2175,17 @@ def test_main_exits_1_when_the_list_reaches_the_limit(
 ) -> None:
     monkeypatch.setattr(nw, "ISSUE_LIMIT", 2)
     gh = json.dumps(
-        [{"number": n, "title": "t", "assignees": [], "labels": [], "body": ""} for n in (1, 2)]
+        [
+            {
+                "number": n,
+                "title": "t",
+                "assignees": [],
+                "labels": [],
+                "body": "",
+                "blockedBy": NO_BLOCKERS,
+            }
+            for n in (1, 2)
+        ]
     )
     limited = GH.replace("-L 1000", "-L 2")
     code, out, _ = run_main(monkeypatch, capsys, [], {BUN: PLAN_JSON, limited: gh})
