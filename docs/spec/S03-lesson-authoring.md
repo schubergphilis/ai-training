@@ -276,7 +276,8 @@ pitfall and the exercise.
   and the key's position varies across a lesson. CI (`mise run checkpoints`) fails an item on four cues: `longest` (the key is more
   than 40 percent longer than the longest distractor, or for `multi-choice` the
   mean key is that much longer than the mean distractor), `hedge` (only the
-  key hedges), `echo` (only the key repeats a content word of the stem)
+  key hedges), `echo` (only the key repeats a content word of the stem,
+  where a `(@key)` citation doesn't count because the page shows a number)
   and `fixed-position` (in a lesson with four or more `choice`/`scenario`
   items, one index holds the key in more than three quarters of them,
   counting every item, and an exempt item is never a hit).

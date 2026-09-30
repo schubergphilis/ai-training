@@ -266,7 +266,8 @@ percent and at least 12 characters longer than the longest distractor,
 counted without Markdown marks; for `MultiChoice` the mean length of the
 keys against the mean of the distractors), `hedge` (a key hedges and no
 distractor does), `echo` (a key shares a content word of four or more
-letters with the stem and no distractor does) and `fixed-position`
+letters with the stem and no distractor does, and a stem's `(@key)`
+citations don't count) and `fixed-position`
 (in a lesson with four or more `Choice` or `Scenario` items, one index
 holds the key in more than three quarters of them, so four of four
 fails and three of four passes). Every item counts toward that total,

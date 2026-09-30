@@ -8,6 +8,7 @@ import {
 	checkpointTagId,
 	conceptIds,
 	pageCheckpointIds,
+	stemWithoutCitations,
 } from '../../scripts/lib/checkpoints.mjs';
 
 const roots: string[] = [];
@@ -125,6 +126,34 @@ describe('checkCheckpoints', () => {
 		const { errors, warnings } = check(tree({ version: 1, items }, { 'content/a/x.mdx': page }));
 		expect(errors).toEqual(['a/x#one: phase "later" is not one of first, review, practice']);
 		expect(warnings).toEqual([]);
+	});
+});
+
+describe('checkCheckpoints echo over cited stems', () => {
+	const CITED_PAGE = PAGE.replace('Stem.', 'Where does a subagent run (@Claude Code subagents)?');
+	const cited = item('one', {
+		stem: 'Where does a subagent run (Create custom subagents, Claude Code documentation)?',
+		options: ['In its own context window', 'In the main thread', 'Documentation of the tool'],
+		answer: 'Documentation of the tool',
+	});
+	const items = [cited, item('two', { kind: 'sort', stem: '' })];
+	it('does not count the words of a citation the page shows as a number', () => {
+		expect(check(tree({ version: 1, items }, { 'content/a/x.mdx': CITED_PAGE })).errors).toEqual([]);
+	});
+	it('still counts the stem words the learner reads', () => {
+		const page = CITED_PAGE.replace('subagent run', 'documentation tool run');
+		expect(check(tree({ version: 1, items }, { 'content/a/x.mdx': page })).errors).toEqual([
+			expect.stringMatching(/^a\/x#one: echo: /),
+		]);
+	});
+});
+
+describe('stemWithoutCitations', () => {
+	it('drops each citation and the spaces before it, and keeps one in code', () => {
+		expect(stemWithoutCitations('Where does it run (@Claude Code\n  subagents)?')).toBe('Where does it run?');
+		expect(stemWithoutCitations('One (@a) and two (@b).')).toBe('One and two.');
+		expect(stemWithoutCitations('Type `(@key)` here.')).toBe('Type `(@key)` here.');
+		expect(stemWithoutCitations('No citation.')).toBe('No citation.');
 	});
 });
 

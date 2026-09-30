@@ -29,8 +29,10 @@
  * `scripts/check-checkpoints.mjs` is the command-line entry; tests import this.
  */
 import { existsSync, readFileSync } from 'node:fs';
+import { citationSpans } from '../../plugins/citation-syntax.mjs';
 import { KIND_OF_TAG, PHASES } from '../../src/lib/checkpoint-rules.ts';
 import { checkpointTagsOfSource } from '../../src/lib/checkpoint-tags.ts';
+import { setAsideCode } from '../../src/lib/plain-citations.ts';
 import { allTopics, readAreaTree } from './area-tree.mjs';
 import { lessonPages } from './data.mjs';
 import { walkMdx } from './examples.mjs';
@@ -134,15 +136,38 @@ export function checkpointTagId(tag) {
 }
 
 /**
+ * A stem's source with every `(@key)` citation and the spaces before it
+ * removed, the words the learner reads: the page renders a citation as a
+ * number, while the export spells it out as its source (plain-citations.ts).
+ * Code is set aside first, as `plainCitations` does, so a `(@key)` in a code
+ * span stays, since the page shows it as written.
+ * @param {string} stem
+ * @returns {string}
+ */
+export function stemWithoutCitations(stem) {
+	const aside = setAsideCode(stem);
+	let out = '';
+	let last = 0;
+	for (const { index, length } of citationSpans(aside.text)) {
+		out += aside.text.slice(last, index).replace(/\s+$/, '');
+		last = index + length;
+	}
+	return aside.restore(out + aside.text.slice(last));
+}
+
+/**
  * `<lesson>#<id>` for every checkpoint tag in every lesson page under
- * `contentDir`, read with the same reader the build uses. A tag the reader
- * rejects fails the build first, so it is reported here as an error rather
- * than thrown.
+ * `contentDir`, read with the same reader the build uses, and in `stems`
+ * each one's stem without citations (`stemWithoutCitations`), for the
+ * `echo` cue. A tag the reader rejects fails the build first, so it is
+ * reported here as an error rather than thrown.
  */
 export function pageCheckpointIds(contentDir, dataDir) {
 	const areaIds = new Set(readAreaTree(dataDir).areas.map((a) => a.dir));
 	const lessons = lessonPages(contentDir, areaIds);
 	const out = new Set();
+	/** @type {Map<string, string>} */
+	const stems = new Map();
 	const errors = [];
 	for (const p of walkMdx(contentDir)) {
 		const lesson = p.slice(contentDir.length + 1).replace(/\.mdx$/, '');
@@ -151,13 +176,16 @@ export function pageCheckpointIds(contentDir, dataDir) {
 			for (const t of checkpointTagsOfSource(readFileSync(p, 'utf8'), lesson)) {
 				const id = checkpointTagId(t);
 				if (id === undefined) errors.push(`${lesson}: <${t.tag}> without an id="..."`);
-				else out.add(`${lesson}#${id}`);
+				else {
+					out.add(`${lesson}#${id}`);
+					stems.set(`${lesson}#${id}`, stemWithoutCitations(t.stem));
+				}
 			}
 		} catch (e) {
 			errors.push(e.message);
 		}
 	}
-	return { ids: out, errors };
+	return { ids: out, stems, errors };
 }
 
 /**
@@ -183,7 +211,7 @@ export function checkCheckpoints(file, contentDir, dataDir) {
 
 	const known = conceptIds(dataDir);
 	const kinds = new Set(Object.values(KIND_OF_TAG));
-	const { ids: expected, errors: pageErrors } = pageCheckpointIds(contentDir, dataDir);
+	const { ids: expected, stems, errors: pageErrors } = pageCheckpointIds(contentDir, dataDir);
 	errors.push(...pageErrors);
 	const seen = new Set();
 	for (const [i, item] of data.items.entries()) {
@@ -211,8 +239,10 @@ export function checkCheckpoints(file, contentDir, dataDir) {
 	for (const id of [...expected].sort()) {
 		if (!seen.has(id)) fail(`${id}: checkpoint in the lesson page is missing from the export`);
 	}
+	// The `echo` cue reads the page's stem without citations; an item no page has keeps the export's stem.
 	const guess = checkGuessability(
 		data.items.filter((item) => typeof item?.lesson === 'string' && typeof item?.id === 'string'),
+		(item) => stems.get(`${item.lesson}#${item.id}`) ?? (typeof item.stem === 'string' ? item.stem : ''),
 	);
 	errors.push(...guess.errors);
 	const alternates = checkAlternates(data.items);

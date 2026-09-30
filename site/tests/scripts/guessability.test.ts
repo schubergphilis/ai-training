@@ -142,6 +142,15 @@ describe('itemCues', () => {
 		expect(itemCues({ ...echo, options: ['Reading access', 'A scratch copy', 'Access to send'] })).toEqual([]);
 		expect(itemCues({ ...echo, stem: '' })).toEqual([]);
 	});
+	it('reads echo from the stem it is given, so words the learner never sees do not count', () => {
+		const cited = item({
+			stem: 'Where does a subagent run (Create custom subagents, Claude Code documentation)?',
+			options: ['In its own context window', 'In the main thread', 'Documentation of the tool'],
+			answer: 'Documentation of the tool',
+		});
+		expect(itemCues(cited)).toEqual(['echo']);
+		expect(itemCues(cited, 'Where does a subagent run?')).toEqual([]);
+	});
 	it('ignores kinds outside the check', () => {
 		expect(
 			itemCues(item({ kind: 'order', options: ['a', 'bbbbbbbbbbbbbbbbbbbb'], answer: 'bbbbbbbbbbbbbbbbbbbb' })),
@@ -220,6 +229,18 @@ describe('fixedPositionLessons', () => {
 		const five = [...items.slice(0, 3), at('a/x', 'u', 1, { guessable: 'x' }), at('a/x', 'v', 1, { guessable: 'x' })];
 		expect(fixedPositionLessons(five)).toEqual([{ lesson: 'a/x', index: 1, hits: 5, count: 5 }]);
 		expect(fixedPositionLessons(five, (i) => i.id === 'u' || i.id === 'v')).toEqual([]);
+	});
+});
+
+describe('checkGuessability stemOf', () => {
+	it('passes the stem stemOf returns to the echo cue', () => {
+		const cited = item({
+			stem: 'Where does a subagent run (Create custom subagents, Claude Code documentation)?',
+			options: ['In its own context window', 'In the main thread', 'Documentation of the tool'],
+			answer: 'Documentation of the tool',
+		});
+		expect(checkGuessability([cited]).errors).toEqual([expect.stringMatching(/^a\/x#q: echo: /)]);
+		expect(checkGuessability([cited], () => 'Where does a subagent run?').errors).toEqual([]);
 	});
 });
 
