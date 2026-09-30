@@ -293,7 +293,8 @@ One tick:
 The dispatcher edits no code, commits nothing and runs no check of the
 site, except for a small fix on a harness wave branch after the restart.
 The loop ends on a failed preflight, a refusal by the harness
-exclusivity check, an empty wave, an exhausted whitelist, an `open` or
+exclusivity check, a `--kind` value that isn't a kind, a picker that
+exits non-zero, an empty wave, an exhausted whitelist, an `open` or
 `failed` report (for a harness wave, "harness wave awaiting restart"), a
 failed step after a restart, the maintainer declining a harness merge,
 a lead's merge under a withdrawn approval, a failed dispatcher merge of
@@ -305,10 +306,13 @@ the run issue, files the `--no-filing` follow-ups and closes it. It
 leaves the run open, with nothing filed, on `failed`, on "harness wave
 awaiting restart", on a failed step after a restart, on the maintainer's
 no to a harness merge, on a failed dispatcher merge of a wave
-`awaiting approval`, and when the exclusivity check, the preflight or
-the `--kind` check stops a resumed run, since a later
+`awaiting approval`, on the picker exiting non-zero, and when the
+exclusivity check of "Starting a run" step 1, the preflight or the
+`--kind` value check stops a resumed run, since a later
 `/wave --resume <Name>` continues it. On a new run those three stops
-come before the run issue exists, so there is no run to close.
+come before the run issue exists, so there is no run to close. The
+exclusivity check that a new run runs again after it creates its issue
+closes that issue itself, with a comment that quotes the refusal.
 When it closes the run, it removes itself as assignee from each issue
 that a wave without a merge still claims, except the ones an open wave
 pull request closes, and comments on each with the review state of its

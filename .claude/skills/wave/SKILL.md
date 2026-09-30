@@ -33,7 +33,8 @@ flags themselves keep them.
   issues outside the lesson plans, `bug` issues first, then ascending number) or `harness` (ready
   `harness` issues outside the lesson plans by ascending number, built and reviewed as code, and
   merged only after a restart, see "Harness runs"). Passed to the picker.
-  Check the kind before anything else. For any other value, stop with
+  Check the value before anything else, with `--resume` too. For any
+  other value, stop with
   `--kind is lessons, content, code or harness, got "<value>"`, the
   picker's own message, and do nothing more.
 - `--only N,N,...`: an issue whitelist for the whole run. The picker skips
@@ -47,7 +48,9 @@ flags themselves keep them.
   unattended run, so the loop has a fixed amount of work and never grows
   its own queue.
 - `--resume <Name>`: continue the open run with that name, with the
-  arguments its run issue holds. Other arguments are ignored. Without
+  arguments its run issue holds. Other arguments are ignored once the
+  `--kind` value check has passed, so a valid kind that differs from the
+  run's kind changes nothing. Without
   `--resume`, `/wave` always starts a new run. It never guesses which open
   run belongs to this session, and it never looks up the machine's name.
 
@@ -683,14 +686,16 @@ continues the run later:
 - a failed merge of a wave `awaiting approval` (step 8);
 - the exclusivity check refusing a resumed run ("Starting a run", step 1);
 - the preflight stopping a resumed run ("Starting a run", step 2);
-- the `--kind` check refusing the value on a resumed run ("Arguments");
+- the `--kind` value check refusing the value on a resumed run
+  ("Arguments");
 - the picker exiting non-zero ("One tick of the loop", step 4).
 
 The fix for the preflight stop is a `git pull` or a push, and for the
-`--kind` refusal a corrected command, so neither ends the run. Both come
-before step 3 resumes the run and write nothing, so the run issue, its
-claims and its `In flight` line stay as they were, and the next `/wave --resume <Name>` reads the
-run back from its issue as "Starting a run", step 3 says. On a new run,
+`--kind` value refusal a corrected command, so neither ends the run.
+Both come before step 3 resumes the run and write nothing, so the run
+issue, its claims and its `In flight` line stay as they were, and the
+next `/wave --resume <Name>` reads the run back from its issue as
+"Starting a run", step 3 says. On a new run,
 these two stops and the exclusivity refusal of step 1 come before step 3
 opens the run issue, so there is no run to end and this section doesn't
 apply.
@@ -785,7 +790,7 @@ Stop, and say which one it was, when:
 - a harness wave is awaiting restart (the lead's `open` report on a
   harness wave, step 8);
 - the harness exclusivity check refuses the run ("Starting a run"
-  step 1 or step 3.3), or the `--kind` check refuses its kind;
+  step 1 or step 3.3), or the `--kind` value check refuses the value;
 - a step of "Resuming after a restart" fails, or the maintainer declines
   the merge there;
 - the maintainer says stop.
