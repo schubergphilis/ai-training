@@ -12,6 +12,7 @@
  * so the page shows the file its proof fixture checks. `fields` and
  * `priorities` default to the ones `check_items.py` uses.
  */
+import { exampleFile } from '@lib/example-files';
 import { DEFAULT_CONFIG } from '@scripts/format-checker-logic';
 
 interface Props {
@@ -25,20 +26,7 @@ const { fields = [...DEFAULT_CONFIG.fields], priorities = [...DEFAULT_CONFIG.pri
 if (fields.length === 0) throw new Error('FormatChecker: fields is empty');
 if (priorities.length === 0) throw new Error('FormatChecker: priorities is empty');
 
-const SAMPLE_ROOT = '../../../examples/';
-const samples = import.meta.glob<string>('../../../examples/**/sample/*', {
-	query: '?raw',
-	import: 'default',
-	eager: true,
-});
-
-let text = '';
-if (sample !== undefined) {
-	const found = samples[SAMPLE_ROOT + sample];
-	if (found === undefined)
-		throw new Error(`FormatChecker: no sample ${sample} (a file in a sample/ directory under site/examples/)`);
-	text = found;
-}
+const text = sample === undefined ? '' : exampleFile(sample, 'FormatChecker');
 ---
 
 <div
