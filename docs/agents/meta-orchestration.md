@@ -396,8 +396,8 @@ everything below.
   planned. A planned `after` is ordering advice for the lead (spec S11:
   the lesson graph reads `after` only while a lesson is coming, and
   neither the data check nor the build needs its target live). It never
-  requires stacking one branch on another. The picker blocks the `assumes` dependencies that
-  would.
+  requires stacking one branch on another. The picker blocks the
+  `assumes` dependencies that would.
 
 - The instruction to follow `docs/agents/orchestration.md` end to end, in
   integration mode: one builder per issue, one reviewer per pushed branch,
