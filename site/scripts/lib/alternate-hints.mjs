@@ -10,23 +10,40 @@
  * `site` plus the base path (`SITE_ROOT` in `site-address.mjs`).
  * The pages S12 "Which pages get one" gives no alternate (the front page, the
  * topic and competency maps, the progress, reference and settings pages, and
- * the review pages) must carry no hint and have no alternate.
+ * the review pages) must carry no hint and have no alternate. Every other
+ * page's `index.html` must carry the hint, so a page that
+ * `alternateSources` leaves out fails the check.
  * `scripts/check-bundles.mjs` runs this; tests import it.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { walk } from './data.mjs';
 
 const LINK = /<link\b[^>]*>/gi;
 
 /**
+ * The area slugs: the directory names under `site/src/data/areas/`, since
+ * an area's directory is its id (spec S09).
+ */
+const AREAS = new Set(
+	readdirSync(fileURLToPath(new URL('../../src/data/areas/', import.meta.url)), { withFileTypes: true })
+		.filter((d) => d.isDirectory())
+		.map((d) => d.name),
+);
+
+/**
  * The pages S12 "Which pages get one" lists as having no alternate, as page
  * directories under dist (`''` is the front page), and whether `dir` is one.
- * A review page is `<area>/review/`, one per course.
+ * A review page is `<area>/review/`, one per course, so `review` under a
+ * directory that is no area slug (`guides/review`) is an ordinary page.
  * @param {string} dir
+ * @param {Set<string>} [areas] the area slugs, `site/src/data/areas/` by default
  */
-export function hasNoAlternate(dir) {
-	return ['', 'map', 'competencies', 'progress', 'reference', 'settings'].includes(dir) || /^[^/]+\/review$/.test(dir);
+export function hasNoAlternate(dir, areas = AREAS) {
+	if (['', 'map', 'competencies', 'progress', 'reference', 'settings'].includes(dir)) return true;
+	const review = /^([^/]+)\/review$/.exec(dir);
+	return review !== null && areas.has(review[1] ?? '');
 }
 
 /** An attribute of one `<link>` tag's source, or undefined. Astro writes attributes in double quotes. */
@@ -61,8 +78,14 @@ export function checkAlternateHints(distDir, root) {
 	for (const file of files.filter((p) => p.endsWith('.html'))) {
 		const rel = relative(distDir, file);
 		const hints = alternateHints(readFileSync(file, 'utf8'));
-		if (hints.length === 0) continue;
 		const pageDir = dirname(rel) === '.' ? '' : dirname(rel).split(sep).join('/');
+		if (hints.length === 0) {
+			// Every page S12 doesn't exclude has an alternate, so a page left out of `alternateSources` fails here.
+			// `404.html` is no page URL; only a page directory's `index.html` is checked.
+			if (file.endsWith(`${sep}index.html`) && !hasNoAlternate(pageDir))
+				errors.push(`${rel}: a page that spec S12 gives a Markdown alternate has no alternate hint`);
+			continue;
+		}
 		if (hasNoAlternate(pageDir)) {
 			errors.push(`${rel}: a page that spec S12 gives no Markdown alternate has an alternate hint`);
 			continue;

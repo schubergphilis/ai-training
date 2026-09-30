@@ -77,7 +77,8 @@ const coursePage: DocFixture = {
 const agentRisk = { ...(docs.find((d) => d.id === 'safety/agent-risk') as DocFixture) };
 agentRisk.data = { ...agentRisk.data, description: 'What changes.' };
 const deeper = { ...(docs.find((d) => d.id === 'safety/deeper') as DocFixture) };
-deeper.data = { ...deeper.data, description: 'Go deeper.' };
+// Serves o1 too, so two lessons share one objective on the explains-models competency alternate.
+deeper.data = { ...deeper.data, description: 'Go deeper.', serves: ['o1'] };
 
 /** A guide with a root-relative link, a fragment link, a citation and a fenced block whose token stays as written. */
 const guide: DocFixture = {

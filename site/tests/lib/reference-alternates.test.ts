@@ -198,6 +198,49 @@ describe('competencyAlternate', () => {
 			'## Alignment\n\n| Framework | Code | Asks | Objectives here |\n| --------- | ---- | ---- | --------------- |\n| F | C1 | Ask one | checks |\n\n## References',
 		);
 	});
+	it('keeps both objectives of one alignment row that names two of its own', () => {
+		const alignment = alignmentRowsOf(
+			[
+				{
+					framework: 'F',
+					rows: [
+						{
+							code: 'C1',
+							asks: 'Ask one',
+							objectives: ['safety/judges-output/checks', 'other/x/y', 'safety/judges-output/later'],
+						},
+					],
+				},
+			],
+			new Set(['safety/judges-output/checks', 'safety/judges-output/later']),
+		);
+		expect(alignment).toEqual([
+			{
+				framework: 'F',
+				code: 'C1',
+				asks: 'Ask one',
+				objectives: ['safety/judges-output/checks', 'safety/judges-output/later'],
+			},
+		]);
+		expect(competencyAlternate({ ...competency, alignment }, site)).toContain('| F | C1 | Ask one | checks, later |\n');
+	});
+	it('lists every lesson that serves one objective, in the given order', () => {
+		const two = {
+			...competency,
+			objectives: [
+				{
+					...(competency.objectives[0] as ObjectiveData),
+					servedBy: [
+						{ id: 'safety/agent-risk', title: 'Why agent safety is different' },
+						{ id: 'safety/deeper', title: 'Deeper' },
+					],
+				},
+			],
+		};
+		expect(competencyAlternate(two, site)).toContain(
+			`Served by: [Why agent safety is different](${ROOT}/safety/agent-risk/), [Deeper](${ROOT}/safety/deeper/)\n`,
+		);
+	});
 	it('throws on an unknown citation key, as the page build does', () => {
 		const bad = {
 			...competency,

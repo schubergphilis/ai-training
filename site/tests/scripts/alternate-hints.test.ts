@@ -118,6 +118,23 @@ describe('checkAlternateHints', () => {
 	});
 });
 
+describe('checkAlternateHints on a page without a hint', () => {
+	it('rejects a page S12 gives an alternate when it has no hint, and passes 404.html and the excluded pages', () => {
+		const root = dist({
+			'guides/forgotten/index.html': page(),
+			'guides/review/index.html': page(),
+			'404.html': page(),
+			'index.html': page(),
+			'map/index.html': page(),
+			'safety/review/index.html': page(),
+		});
+		expect(checkAlternateHints(root, ROOT).errors).toEqual([
+			'guides/forgotten/index.html: a page that spec S12 gives a Markdown alternate has no alternate hint',
+			'guides/review/index.html: a page that spec S12 gives a Markdown alternate has no alternate hint',
+		]);
+	});
+});
+
 describe('hasNoAlternate', () => {
 	it('names the pages S12 gives no alternate, and none that it gives one', () => {
 		for (const dir of ['', 'map', 'competencies', 'progress', 'reference', 'settings', 'safety/review'])
@@ -130,7 +147,12 @@ describe('hasNoAlternate', () => {
 			'contributing',
 			'topics/safety/risk',
 			'competencies/safety/judges-output',
+			'guides/review',
 		])
 			expect(hasNoAlternate(dir)).toBe(false);
+	});
+	it('matches a review page under an area slug only', () => {
+		expect(hasNoAlternate('safety/review', new Set(['concepts']))).toBe(false);
+		expect(hasNoAlternate('concepts/review', new Set(['concepts']))).toBe(true);
 	});
 });

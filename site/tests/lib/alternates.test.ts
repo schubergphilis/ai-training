@@ -212,7 +212,9 @@ describe('a competency page alternate', () => {
 		const md = await alternateOf('/competencies/concepts/explains-models/');
 		expect(md).toContain('## Alignment\n\n| Framework | Code | Asks | Objectives here |');
 		expect(md).toContain('| AI Fluency 4D | Discernment | Judge the output | o1 |');
-		expect(md).toContain(`Served by: [How a language model works](${ROOT}/concepts/how-models-work/)`);
+		expect(md).toContain(
+			`Served by: [How a language model works](${ROOT}/concepts/how-models-work/), [Deeper](${ROOT}/safety/deeper/)\n`,
+		);
 		expect(md).not.toContain('## References');
 	});
 });
