@@ -36,6 +36,8 @@ const TYPES = {
 	'.woff2': 'font/woff2',
 	'.xml': 'application/xml; charset=utf-8',
 	'.txt': 'text/plain; charset=utf-8',
+	// As GitHub Pages serves a Markdown alternate (spec S12 "URL scheme").
+	'.md': 'text/markdown; charset=utf-8',
 	'.pdf': 'application/pdf',
 };
 

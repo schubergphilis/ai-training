@@ -1,0 +1,81 @@
+/**
+ * The Markdown alternate head hint check (spec S12 "Head hints"): after
+ * `site-build`, each built HTML page that carries
+ * `<link rel="alternate" type="text/markdown" href="...">` must point at the
+ * alternate of that same page, `<page URL>index.md`, and that file must be
+ * in `site/dist` and start with an H1. Each alternate under `site/dist` must
+ * in turn have its HTML page next to it, with the hint. So no published page
+ * points at an alternate that doesn't exist, and no alternate is left without
+ * the page that announces it. All hints must share one origin and base path.
+ * `scripts/check-bundles.mjs` runs this; tests import it.
+ */
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, relative, sep } from 'node:path';
+import { walk } from './data.mjs';
+
+const LINK = /<link\b[^>]*>/gi;
+
+/** An attribute of one `<link>` tag's source, or undefined. Astro writes attributes in double quotes. */
+function attr(tag, name) {
+	return new RegExp(`\\s${name}="([^"]*)"`, 'i').exec(tag)?.[1];
+}
+
+/**
+ * The `href` of every Markdown alternate hint in `html`, in order.
+ * @param {string} html
+ * @returns {string[]}
+ */
+export function alternateHints(html) {
+	return [...html.matchAll(LINK)]
+		.map((m) => m[0])
+		.filter((tag) => attr(tag, 'rel') === 'alternate' && attr(tag, 'type') === 'text/markdown')
+		.map((tag) => attr(tag, 'href') ?? '');
+}
+
+/**
+ * Every problem with the hints and alternates under `distDir`.
+ * @param {string} distDir
+ * @returns {{ errors: string[], hints: number }}
+ */
+export function checkAlternateHints(distDir) {
+	/** @type {string[]} */
+	const errors = [];
+	const files = [...walk(distDir)].sort();
+	/** @type {Set<string>} */
+	const roots = new Set();
+	/** @type {Set<string>} */
+	const hinted = new Set();
+	for (const file of files.filter((p) => p.endsWith('.html'))) {
+		const rel = relative(distDir, file);
+		const hints = alternateHints(readFileSync(file, 'utf8'));
+		if (hints.length === 0) continue;
+		if (hints.length > 1) errors.push(`${rel}: ${hints.length} Markdown alternate hints, expected one`);
+		const href = hints[0] ?? '';
+		// The page's own directory, as a URL path: `safety/agent-risk/index.html` is `/safety/agent-risk/`.
+		const dir = dirname(rel) === '.' ? '/' : `/${dirname(rel).split(sep).join('/')}/`;
+		let url;
+		try {
+			url = new URL(href);
+		} catch {
+			errors.push(`${rel}: the Markdown alternate hint ${JSON.stringify(href)} is not an absolute URL`);
+			continue;
+		}
+		const want = `${dir}index.md`;
+		if (!url.pathname.endsWith(want) || url.search || url.hash) {
+			errors.push(`${rel}: the Markdown alternate hint ${href} is not this page's alternate, ${want}`);
+			continue;
+		}
+		roots.add(`${url.origin}${url.pathname.slice(0, -want.length)}`);
+		const target = join(distDir, ...want.split('/'));
+		hinted.add(target);
+		if (!existsSync(target)) errors.push(`${rel}: the Markdown alternate hint ${href} points at no file in dist`);
+		else if (!readFileSync(target, 'utf8').startsWith('# '))
+			errors.push(`${relative(distDir, target)}: a Markdown alternate starts with its H1 title`);
+	}
+	if (roots.size > 1) errors.push(`Markdown alternate hints use ${roots.size} site roots: ${[...roots].join(', ')}`);
+	for (const file of files.filter((p) => p.endsWith(`${sep}index.md`))) {
+		if (!hinted.has(file))
+			errors.push(`${relative(distDir, file)}: a Markdown alternate whose page has no head hint for it`);
+	}
+	return { errors, hints: hinted.size };
+}

@@ -1,4 +1,11 @@
-import { type BundleSources, buildLessonBundles, bundleOf, lessonUrl, proseOf } from '@lib/lesson-bundles';
+import {
+	type BundleSources,
+	buildLessonBundles,
+	bundleOf,
+	lessonUrl,
+	proseOf,
+	renderLessonBody,
+} from '@lib/lesson-bundles';
 import type { Lesson } from '@lib/lessons';
 import { describe, expect, it, vi } from 'vitest';
 import { bibliography, competencies, docs, topics } from './content';
@@ -11,6 +18,43 @@ const ROOT = 'https://schubergphilis.github.io/ai-training';
 describe('lessonUrl', () => {
 	it('is the lesson page under site and base', () => {
 		expect(lessonUrl('safety/agent-risk', site)).toBe(`${ROOT}/safety/agent-risk/`);
+	});
+});
+
+describe('renderLessonBody with the alternate flag', () => {
+	const pageUrl = `${ROOT}/x/y/`;
+	const alt = (body: string, components?: Record<string, () => string>) =>
+		renderLessonBody(body, site, 'x/y', {}, { pageUrl, ...(components ? { components } : {}) }).markdown;
+	it('is the bundle prose without the flag', () => {
+		const body = '<Habit id="h">\nDo it.\n</Habit>\n\nSee [a](#b).\n';
+		expect(renderLessonBody(body, site, 'x/y', {}).markdown).toBe(proseOf(body, site, 'x/y'));
+		expect(alt(body)).toBe(`#### Habit\n\nDo it.\n\nSee [a](${pageUrl}#b).\n`);
+	});
+	it('lists Scenario options, keeps a multi-line option in its item, and resolves a raw HTML fragment link', () => {
+		expect(
+			alt(
+				'<Scenario id="s" objective="o" title="S" options={[{ text: \'One\\nline two\', correct: true, consequence: \'Q\' }]}>\nStem.\n</Scenario>\n\n<a href="#s">up</a>\n',
+			),
+		).toBe(`#### Checkpoint: S\n\nStem.\n\n- One\n  line two\n\n<a href="${pageUrl}#s">up</a>\n`);
+	});
+	it('renders a component by name through `components`', () => {
+		expect(alt('Intro.\n\n<CoursePlan area="x" />\n', { CoursePlan: () => '- A lesson' })).toBe(
+			'Intro.\n\n- A lesson\n',
+		);
+	});
+	it('names the lesson when a checkpoint prop has the wrong form', () => {
+		expect(() => alt('<Choice id="c" objective="o" title="C" options="none">\nS.\n</Choice>\n')).toThrow(
+			'x/y: options of <Choice> must be an array',
+		);
+		expect(() => alt('<Order id="o" objective="o" title="O" steps={[1]}>\nS.\n</Order>\n')).toThrow(
+			'x/y: an item of <Order> has no text',
+		);
+		expect(() => alt('<Repair id="r" objective="o" title="R" broken={1}>\nS.\n</Repair>\n')).toThrow(
+			'x/y: broken of <Repair> must be a string',
+		);
+		expect(() => alt('<Predict id="p" title="P" answer={1}>\nS.\n</Predict>\n')).toThrow(
+			'x/y: answer of an example <Predict> must be a string',
+		);
 	});
 });
 

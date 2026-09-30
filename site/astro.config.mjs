@@ -181,6 +181,8 @@ export default defineConfig({
 			description:
 				'An open training suite for getting started with AI: concepts, safety, using agents, AI-assisted software engineering, customizing and building agents.',
 			favicon: '/favicon.svg',
+			// Adds the Markdown alternate head hint to the pages that have one (spec S12 "Head hints").
+			routeMiddleware: './src/route-data.ts',
 			head: [
 				{
 					tag: 'link',
