@@ -41,7 +41,8 @@ names the branch on a `Branch:` line.
 The builder, the reviewers and the lead all post as the same trusted
 accounts, so the kind of a comment comes from its text (#420), read outside
 code fences only (#457): a `Verdict:` line is a review (the last one
-counts), an `Unfinished:` first line is a builder at its turn limit, a line
+counts), an `Unfinished:` first line is a builder at its turn limit, a
+`Parked by lead:` first line is the lead leaving a branch out, a line
 starting `re-checked by lead` is the lead's check of a fix commit, and any
 other trusted comment after a verdict is a builder reply. An approve with a
 builder reply after it and no lead re-check after that reply is
@@ -58,6 +59,17 @@ it doesn't finish an `Unfinished:` branch and it doesn't clear a lead
 re-check. Any other wording, such as `Claimed by run` in a fence, in
 the middle of a sentence, or with a `Branch:` line, a code fence or any
 other text after it, stays a reply, so a variant errs toward more work.
+
+A lead that parks a branch after its second `Verdict: needs changes`
+posts a comment whose first line is `Parked by lead: <branch>`, with the
+reason after it (#615). A trusted comment with that first line is a
+parked note: it is no builder reply, so it doesn't add to `commentsAfter`,
+doesn't clear a lead re-check and doesn't finish an `Unfinished:` branch.
+The branch keeps its step, and the one its first line names, when that
+is a pushed branch of the issue, gets a `parked` field with the note's
+url until a later verdict, builder reply or `Unfinished:` comment applies
+to it. `Parked by lead:` with no branch after it, in a fence or in the
+middle of a sentence stays a reply, so a variant errs toward more work.
 
 A lead that puts one issue's commits on another issue's branch posts a
 pointer comment on the first issue with a `Branch:` line for that branch
@@ -121,6 +133,12 @@ FENCE_LINE = re.compile(rf"{_S}*(`{{3,}}|~{{3,}})({_DOT}*)\Z", _FLAGS)
 # Only lines outside code fences count.
 LEAD_RE_CHECK_LINE = re.compile(rf"{_S}*\**re-checked by lead\b", _FLAGS | re.IGNORECASE)
 
+# The first line of the lead's note when it parks a branch, `Parked by lead: feat/1-x`.
+PARKED_LINE = re.compile(
+    rf"{_S}*\**Parked by lead(?::\**|\**:){_S}*\**{_S}*`?([^{JS_WHITESPACE}`*]+)`?",
+    _FLAGS | re.IGNORECASE,
+)
+
 # The first line of the dispatcher's claim comment, `Claimed by run Seal, wave 3`,
 # or of its release comment, `Claim released by run Seal, wave 3 (the run ended)`,
 # with an optional parenthetical after it that holds no parenthesis itself.
@@ -145,7 +163,7 @@ FEAT_BRANCH = re.compile(r"feat/([1-9][0-9]*)-", _FLAGS)
 LONE_SURROGATE = re.compile("[\ud800-\udfff]")
 
 type VerdictWord = Literal["approve", "needs changes"]
-type CommentKind = Literal["verdict", "unfinished", "lead-re-check", "claim", "reply"]
+type CommentKind = Literal["verdict", "unfinished", "parked", "lead-re-check", "claim", "reply"]
 
 
 class IssueComment(TypedDict):
@@ -182,11 +200,16 @@ class Pointer(TypedDict):
     url: str
 
 
+class Parked(TypedDict):
+    url: str
+
+
 class BranchStatus(TypedDict):
     name: str
     verdict: Verdict | None
     unfinished: Unfinished | None
     next: str
+    parked: NotRequired[Parked]
     pointer: NotRequired[Pointer]
 
 
@@ -283,6 +306,8 @@ def comment_kind(body: str) -> CommentKind:
         return "verdict"
     if is_unfinished(body):
         return "unfinished"
+    if parked_branch_of(body) is not None:
+        return "parked"
     if is_lead_re_check(body):
         return "lead-re-check"
     if is_claim(body):
@@ -314,6 +339,16 @@ def is_unfinished(body: str) -> bool:
     return UNFINISHED_LINE.match(lines_of(body)[0]) is not None
 
 
+def parked_branch_of(body: str) -> str | None:
+    """The branch a `Parked by lead: <branch>` first line names, or None.
+
+    The first line of a comment is never inside a code fence, so a fenced
+    or quoted `Parked by lead:` names nothing.
+    """
+    match = PARKED_LINE.match(lines_of(body)[0])
+    return (normalize_branch(match.group(1)) or None) if match else None
+
+
 def is_claim(body: str) -> bool:
     """Whether a comment is the dispatcher's claim of the issue for a run, or its release.
 
@@ -341,7 +376,8 @@ def unfinished_branch_of(body: str) -> str | None:
 def applies_to(body: str, branch: str, branches: Sequence[str]) -> bool:
     """Whether a comment applies to a branch.
 
-    A claim applies to no branch. Any other comment does when it names
+    A claim and a parked note apply to no branch, so neither counts as a
+    reply (`parked_note` reads the parked notes). Any other comment does when it names
     that branch on its `Unfinished:` or `Branch:` line. The other
     cases err toward more work, never toward `join`:
 
@@ -355,7 +391,7 @@ def applies_to(body: str, branch: str, branches: Sequence[str]) -> bool:
       both halves of a split issue.
     """
     kind = comment_kind(body)
-    if kind == "claim":
+    if kind in ("claim", "parked"):
         return False
     named = unfinished_branch_of(body) if kind == "unfinished" else None
     if named is None:
@@ -456,6 +492,31 @@ def last_trusted_verdict(
     return last
 
 
+def parked_note(
+    comments: Sequence[IssueComment],
+    branch: str,
+    branches: Sequence[str],
+    trusted: Sequence[str] = TRUSTED_VERDICT_AUTHORS,
+) -> Parked | None:
+    """The last trusted parked note that names a branch, or None.
+
+    None too when a later trusted comment applies to the branch (a verdict,
+    a builder reply or an `Unfinished:` comment), since the branch then
+    moved on. A lead re-check, a claim and another parked note don't. A
+    parked note applies only to the branch its first line names, so on a
+    split issue the other half never reads as parked.
+    """
+    found: Parked | None = None
+    for c in trusted_in_order(comments, trusted):
+        kind = comment_kind(c["body"])
+        if kind == "parked":
+            if parked_branch_of(c["body"]) == branch:
+                found = {"url": c["url"]}
+        elif kind != "lead-re-check" and applies_to(c["body"], branch, branches):
+            found = None
+    return found
+
+
 def utf16_order(text: str) -> bytes:
     """A sort key in UTF-16 code unit order, as JavaScript's default sort compares."""
     return text.encode("utf-16-be", "surrogatepass")
@@ -518,15 +579,22 @@ def pointer_branches(
 def branch_status(
     name: str, comments: Sequence[IssueComment], names: Sequence[str]
 ) -> BranchStatus:
-    """A branch with the verdict and next step its issue's comments give it."""
+    """A branch with the verdict and next step its issue's comments give it.
+
+    With a `parked` field only when a parked note for it is still current.
+    """
     verdict = last_trusted_verdict(comments, name, names)
     unfinished = open_unfinished(comments, name, names)
-    return {
+    status: BranchStatus = {
         "name": name,
         "verdict": verdict,
         "unfinished": unfinished,
         "next": next_step(verdict, unfinished),
     }
+    parked = parked_note(comments, name, names)
+    if parked is not None:
+        status["parked"] = parked
+    return status
 
 
 def parse_ls_remote(output: str) -> list[str]:
