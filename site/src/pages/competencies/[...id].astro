@@ -7,6 +7,7 @@ import CompetencyObjectives from '@components/CompetencyObjectives.astro';
 import References from '@components/References.astro';
 import { areaOf, getAreas } from '@lib/areas';
 import { type BibliographyEntry, competencyHeadings, createCitations, renderObjectives } from '@lib/citations';
+import { alignmentRowsOf } from '@lib/reference-alternates';
 import { href } from '@lib/url';
 
 export async function getStaticPaths() {
@@ -19,8 +20,10 @@ const area = areaOf(await getAreas(), competency.area);
 const topics = (await getCollection('topics')).map((t) => t.data);
 // Alignment rows (spec S10 "Alignment") are kept per framework; a competency's rows are the ones naming one of its objectives.
 const own = new Set(competency.objectives.map((o) => o.id));
-const alignment = (await getCollection('alignment')).flatMap((f) =>
-	f.data.rows.filter((r) => r.objectives.some((o) => own.has(o))).map((r) => ({ framework: f.data.framework, ...r })),
+// The Markdown alternate lists the same rows (spec S12), with each row's objectives cut to this competency's.
+const alignment = alignmentRowsOf(
+	(await getCollection('alignment')).map((f) => f.data),
+	own,
 );
 // Behaviors cite with `(@key)` (spec S03 "Citations and terms"); the page numbers them and lists the References last.
 const bibliography: Record<string, BibliographyEntry> = Object.fromEntries(
@@ -55,7 +58,7 @@ const headings = competencyHeadings(alignment.length, references.length);
 								<td>{a.framework}</td>
 								<td>{a.code}</td>
 								<td>{a.asks}</td>
-								<td>{a.objectives.filter((o) => own.has(o)).map((o) => o.split('/').pop()).join(', ')}</td>
+								<td>{a.objectives.map((o) => o.split('/').pop()).join(', ')}</td>
 							</tr>
 						))}
 					</tbody>

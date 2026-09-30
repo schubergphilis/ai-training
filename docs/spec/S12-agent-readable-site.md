@@ -5,9 +5,10 @@ on a person's behalf: a Markdown alternate of each content page, an
 `llms.txt` index with an `llms-full.txt` companion, the data tree as JSON
 under `/data/`, and the stance on crawlers.
 
-**Status:** Accepted - build issues #499 (Markdown alternates), #500
-(`llms.txt`, `llms-full.txt`) and #501 (data tree as JSON) are open, none
-merged.
+**Status:** Accepted - build issues #500 (`llms.txt`, `llms-full.txt`)
+and #501 (data tree as JSON) are open.
+
+Build issue #499 (Markdown alternates) is merged.
 
 Each build issue updates the Status line and the index row when it
 merges.

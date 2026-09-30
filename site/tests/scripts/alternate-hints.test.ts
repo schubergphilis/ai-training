@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { alternateHints, checkAlternateHints } from '../../scripts/lib/alternate-hints.mjs';
+import { alternateHints, checkAlternateHints, hasNoAlternate } from '../../scripts/lib/alternate-hints.mjs';
 import { SITE_ROOT } from '../../scripts/lib/site-address.mjs';
 
 const ROOT = 'https://schubergphilis.github.io/ai-training';
@@ -100,5 +100,37 @@ describe('checkAlternateHints', () => {
 			'e/index.md: a Markdown alternate whose page has no head hint for it',
 			'f/index.md: a Markdown alternate whose page has no head hint for it',
 		]);
+	});
+	it('rejects a hint or an alternate on a page that spec S12 gives none', () => {
+		const root = dist({
+			'index.html': page(`${ROOT}/index.md`),
+			'index.md': '# Home\n',
+			'map/index.html': page(`${ROOT}/map/index.md`),
+			'safety/review/index.html': page(),
+			'safety/review/index.md': '# Review\n',
+		});
+		expect(checkAlternateHints(root, ROOT).errors).toEqual([
+			'index.html: a page that spec S12 gives no Markdown alternate has an alternate hint',
+			'map/index.html: a page that spec S12 gives no Markdown alternate has an alternate hint',
+			'index.md: a page that spec S12 gives no Markdown alternate has one',
+			'safety/review/index.md: a page that spec S12 gives no Markdown alternate has one',
+		]);
+	});
+});
+
+describe('hasNoAlternate', () => {
+	it('names the pages S12 gives no alternate, and none that it gives one', () => {
+		for (const dir of ['', 'map', 'competencies', 'progress', 'reference', 'settings', 'safety/review'])
+			expect(hasNoAlternate(dir)).toBe(true);
+		for (const dir of [
+			'safety',
+			'safety/agent-risk',
+			'guides/tutor',
+			'glossary',
+			'contributing',
+			'topics/safety/risk',
+			'competencies/safety/judges-output',
+		])
+			expect(hasNoAlternate(dir)).toBe(false);
 	});
 });

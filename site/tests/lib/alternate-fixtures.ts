@@ -79,5 +79,40 @@ agentRisk.data = { ...agentRisk.data, description: 'What changes.' };
 const deeper = { ...(docs.find((d) => d.id === 'safety/deeper') as DocFixture) };
 deeper.data = { ...deeper.data, description: 'Go deeper.' };
 
-/** The docs of the alternate tests: the lesson above, a course page, and the two safety lessons of `content.ts`. */
-export const alternateDocs: DocFixture[] = [lesson, coursePage, agentRisk, deeper];
+/** A guide with a root-relative link, a fragment link, a citation and a fenced block whose token stays as written. */
+const guide: DocFixture = {
+	id: 'guides/tutor',
+	data: { title: 'How to study with the tutor', description: 'Install the tutor.' },
+	body: 'The tutor reads [a lesson](/safety/agent-risk/) (@AEC-02). See [Install](#install).\n\n## Install\n\n```sh\necho (@AEC-02)\n```\n',
+};
+const contributing: DocFixture = {
+	id: 'contributing',
+	data: { title: 'Contributing', description: 'Building the site.' },
+	body: 'Read [the guide](/guides/tutor/).\n',
+};
+const glossary: DocFixture = {
+	id: 'glossary',
+	data: { title: 'Glossary', description: 'Every concept.' },
+	body: "import Glossary from '@components/Glossary.astro';\n\nGenerated from the topic definitions.\n\n<Glossary />\n",
+};
+/** A docs page that S12 gives no alternate. */
+const progress: DocFixture = {
+	id: 'progress',
+	data: { title: 'Your progress', description: 'What you finished.' },
+	body: "import OverallProgress from '@components/OverallProgress.astro';\n\n<OverallProgress />\n",
+};
+
+/**
+ * The docs of the alternate tests: the lesson above, a course page, the two safety lessons of `content.ts`,
+ * a guide, the contributing page, the glossary, and the progress page, which has no alternate.
+ */
+export const alternateDocs: DocFixture[] = [
+	lesson,
+	coursePage,
+	agentRisk,
+	deeper,
+	guide,
+	contributing,
+	glossary,
+	progress,
+];
