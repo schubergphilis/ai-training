@@ -287,13 +287,16 @@ The loop ends on a failed preflight, a refusal by the harness
 exclusivity check, an empty wave, an exhausted whitelist, an `open` or
 `failed` report (for a harness wave, "harness wave awaiting restart"), a
 failed step after a restart, the maintainer declining a harness merge,
+a lead's merge under a withdrawn approval, a failed dispatcher merge of
+a wave `awaiting approval`,
 or the maintainer saying stop, and the dispatcher reports which. An
 `open` with the reason `approval withdrawn` that the maintainer approves
 doesn't end the loop. On most stops it comments the stop condition on
 the run issue, files the `--no-filing` follow-ups and closes it. It
 leaves the run open, with nothing filed, on `failed`, on "harness wave
 awaiting restart", on a failed step after a restart, on the maintainer's
-no to a harness merge, and when the exclusivity check refuses a resumed
+no to a harness merge, on a failed dispatcher merge of a wave
+`awaiting approval`, and when the exclusivity check refuses a resumed
 run, since a later `/wave --resume <Name>` continues it.
 
 A picker that exits non-zero stops the loop too, before any claim. The
