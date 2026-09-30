@@ -5,9 +5,9 @@ on a person's behalf: a Markdown alternate of each content page, an
 `llms.txt` index with an `llms-full.txt` companion, the data tree as JSON
 under `/data/`, and the stance on crawlers.
 
-**Status:** Accepted - build issues #499 (Markdown alternates), #500
-(`llms.txt`, `llms-full.txt`) and #501 (data tree as JSON) are open, none
-merged.
+**Status:** Accepted - build issues #499 (Markdown alternates) and #500
+(`llms.txt`, `llms-full.txt`) are open.
+Build issue #501 (data tree as JSON) is merged.
 
 Each build issue updates the Status line and the index row when it
 merges.
@@ -325,10 +325,10 @@ same `<area>/<lesson>` path, and a planned lesson has only the plan.
 
 A published file is the YAML file as JSON, minus `notes`: the same keys,
 spelled as in the YAML (`extends-to`, `sources-checked`), the same values,
-in the same key order. S09 "Area file" and S11 define `notes` as prose for
-authors that is never rendered, so every `notes` field is left out: the
-top-level one of an area, course or lesson file, and the one of a course
-part.
+in the same key order. S09 "Area file", S10 and S11 define `notes` as
+prose for authors that is never rendered, so every `notes` field is left
+out: the top-level one of an area, competency, course or lesson file, and
+the one of a course part.
 
 The endpoint reads the raw file with the `yaml` package, as
 `site/scripts/lib/data.mjs` does, and not through the content

@@ -8,12 +8,17 @@
  * dist/data/checkpoints.json. The logic and the list of what it rejects are in
  * scripts/lib/bundles.mjs, which tests/scripts/bundles-export.test.ts covers.
  *
+ * It checks the data tree as JSON (spec S12 "Data tree as JSON"): each built
+ * dist/data/<kind>/<id>.json against its YAML source under src/data, and
+ * dist/data/index.json against the same list (`checkDataFiles` and
+ * `checkDataIndex` in scripts/lib/bundles.mjs).
+ *
  * The same run checks every built HTML page for a `(@key)` citation that no
  * renderer resolved (scripts/lib/rendered-citations.mjs, covered by
  * tests/scripts/rendered-citations.test.ts). This file only reports.
  */
 import { join } from 'node:path';
-import { checkBundles, checkExportCitations } from './lib/bundles.mjs';
+import { checkBundles, checkDataFiles, checkDataIndex, checkExportCitations } from './lib/bundles.mjs';
 import { checkRenderedCitations } from './lib/rendered-citations.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
@@ -23,6 +28,9 @@ const { errors, bundles } = checkBundles(
 	join(root, 'src/data'),
 );
 errors.push(...checkExportCitations(join(root, 'dist/data/checkpoints.json')));
+const data = checkDataFiles(join(root, 'dist/data'), join(root, 'src/data'));
+errors.push(...data.errors);
+errors.push(...checkDataIndex(join(root, 'dist/data'), join(root, 'src/data')));
 const rendered = checkRenderedCitations(join(root, 'dist'));
 errors.push(...rendered.errors);
 
@@ -32,6 +40,9 @@ if (errors.length) {
 	process.exit(1);
 }
 console.log(`bundles: ${bundles} bundle${bundles === 1 ? '' : 's'} under dist/data/lessons, one per lesson page`);
+console.log(
+	`bundles: ${data.files} data file${data.files === 1 ? '' : 's'} under dist/data, each its YAML source, all in index.json`,
+);
 console.log(
 	`bundles: ${rendered.pages} HTML page${rendered.pages === 1 ? '' : 's'} under dist, no unresolved citation`,
 );

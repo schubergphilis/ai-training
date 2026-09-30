@@ -15,6 +15,7 @@ changed file is prose or prose tooling (see "When the browser suite runs").
 | Examples  | `mise run examples`    | `site/scripts/check-examples.mjs`                                    | A `<Predict run= answer=>` whose fixture prints something else than the lesson shows                                                                               |
 | Export    | `mise run checkpoints` | `site/scripts/check-checkpoints.mjs`, after `site-build`             | A built `dist/data/checkpoints.json` that misses a page checkpoint, has an item without a page, or a bad concept id                                                |
 | Bundles   | `mise run bundles`     | `site/scripts/check-bundles.mjs`, after `site-build`                 | A built `dist/data/lessons/<id>.json` missing for a page, without an S08 field, or with a fenced block changed; a raw `(@key)` outside code on any built HTML page |
+| Data tree | `mise run bundles`     | The same `check-bundles.mjs` run                                     | A built `dist/data/<kind>/<id>.json` that differs from its YAML source (S12), or a data file `dist/data/index.json` does not list                                  |
 | e2e       | `mise run site-e2e`    | Playwright, `site/e2e/*.spec.ts`, against the built site             | The scripts and the markup disagreeing, a page error, a console error, a flow that only works with real navigation                                                 |
 
 ## Tasks
