@@ -24,8 +24,13 @@ describe('the head hint middleware', () => {
 		await onRequest(context as never, async () => {});
 		return head;
 	}
+	const describedBy = {
+		tag: 'link',
+		attrs: { rel: 'describedby', href: 'https://schubergphilis.github.io/ai-training/llms.txt' },
+	};
 	it('adds the alternate link to a lesson page and a course page', async () => {
 		expect(await headOf('/ai-training/safety/agent-risk/')).toEqual([
+			describedBy,
 			{
 				tag: 'link',
 				attrs: {
@@ -35,10 +40,10 @@ describe('the head hint middleware', () => {
 				},
 			},
 		]);
-		expect(await headOf('/ai-training/safety/')).toHaveLength(1);
+		expect(await headOf('/ai-training/safety/')).toHaveLength(2);
 	});
-	it('adds nothing to a page without an alternate', async () => {
-		expect(await headOf('/ai-training/')).toEqual([]);
-		expect(await headOf('/ai-training/progress/')).toEqual([]);
+	it('adds only the llms.txt link to a page without an alternate', async () => {
+		expect(await headOf('/ai-training/')).toEqual([describedBy]);
+		expect(await headOf('/ai-training/progress/')).toEqual([describedBy]);
 	});
 });
