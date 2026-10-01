@@ -108,7 +108,7 @@ The budget is the loop's last stop. At every critique, `reflect` adds
 the length of the question, the passage and the draft to `spent`, and
 after the revision it stops with `budget_spent` once `spent` is over
 2000 characters. For this draft a critique adds 286 characters, or 301
-when the draft starts with "Good question! ".
+when the draft starts with Good question! and a space.
 
 ```python
 def critic_is_it_good(item: dict, draft: str) -> list[str]:
