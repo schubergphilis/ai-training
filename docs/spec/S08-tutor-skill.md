@@ -92,8 +92,8 @@ files because the bootstrap fetches the bundle and reads the export itself,
 and the rule must still hold when the instruction file is an older local
 build or comes back summarized from the fallback fetch tool. The rule only
 lowers the odds that the tutor acts on planted text. The control that holds
-is that the bootstrap uses one tool and the learner approves each command
-(see "Recommended flags").
+is the learner's approval of each command under the recommended flags (see
+"Recommended flags").
 
 The bootstrap needs the two files verbatim. The agents' built-in fetch
 tools (Claude Code's `WebFetch`, opencode's `webfetch`) summarize a page

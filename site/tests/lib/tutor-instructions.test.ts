@@ -132,10 +132,13 @@ function curlRefusesRedirects(command: string): boolean {
 		else if (word === '--no-location') follows = false;
 		else if (word === '--max-redirs') maxRedirs = words[++i];
 		else if (/^-[a-zA-Z]/.test(word)) {
-			for (const flag of word.slice(1)) {
+			for (let j = 1; j < word.length; j++) {
+				const flag = word[j] ?? '';
 				if (flag === 'L') follows = true;
 				if (CURL_SHORT_WITH_VALUE.has(flag)) {
-					if (word.endsWith(flag)) i++;
+					// The value is the rest of the word, or the next word when the
+					// option is the word's last character.
+					if (j === word.length - 1) i++;
 					break;
 				}
 			}
@@ -149,6 +152,7 @@ describe('curlRefusesRedirects', () => {
 		'curl -fsSL --max-redirs 0 <url>',
 		'curl -fsS --location --max-redirs 0 <url>',
 		'curl -fsS -o L -L --max-redirs 0 <url>',
+		'curl -foo -L --max-redirs 0 <url>',
 	])('accepts %s', (command) => {
 		expect(curlRefusesRedirects(command)).toBe(true);
 	});
@@ -162,6 +166,11 @@ describe('curlRefusesRedirects', () => {
 		['turns -L off again with --no-location', 'curl -fsSL --max-redirs 0 --no-location <url>'],
 		['has an L that is the value of -o', 'curl -fsoL --max-redirs 0 <url>'],
 		['has an L that is the value of a separate -o', 'curl -fso L --max-redirs 0 <url>'],
+		['turns -L off after an -o whose value repeats its letter', 'curl -fsSL --max-redirs 0 -oo --no-location <url>'],
+		[
+			'lifts the limit after an -H whose value repeats its letter',
+			'curl -fsSL --max-redirs 0 -HH --max-redirs 5 <url>',
+		],
 		['is not curl', 'wget <url>'],
 	])('rejects a command that %s', (_label, command) => {
 		expect(curlRefusesRedirects(command)).toBe(false);
