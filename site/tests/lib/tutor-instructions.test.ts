@@ -141,7 +141,7 @@ describe('curlRefusesRedirects', () => {
 
 describe('the bootstrap fetch', () => {
 	const skill = readFileSync(new URL('../../../.claude/skills/ai-tutor/SKILL.md', import.meta.url), 'utf8');
-	const commands = [...skill.matchAll(/`(curl [^`]*)`/g)].map((m) => m[1]);
+	const commands = [...skill.matchAll(/`(curl [^`]*)`/g)].map((m) => m[1] ?? '');
 
 	it('names a curl command, and every one fails on a redirect, so a fetch stays on the allowed host', () => {
 		expect(commands, 'SKILL.md must name the curl command it fetches with').not.toHaveLength(0);
