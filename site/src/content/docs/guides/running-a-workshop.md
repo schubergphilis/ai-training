@@ -148,8 +148,9 @@ below has the details.
 
 - Give each exercise a start state, a finished state, and a diff between
   them, as tags such as `ex1-start` and `ex1-done`. Pairs run
-  `git checkout -f ex1-start` to start or reset, which discards their
-  changes, and `git checkout -f ex1-done` to see the finished state.
+  `git checkout -f ex1-start` to reset and `git checkout -f ex1-done` to see
+  the finished state, and both discard their changes but keep new files,
+  which `git clean -fd` removes.
 - Leave one thing for the pair to figure out, and build the rest for them in
   advance.
 - Always give the agent a check it can run, such as a test, or a command with
