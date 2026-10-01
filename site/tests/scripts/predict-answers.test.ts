@@ -59,6 +59,11 @@ describe('missingAnswerWords', () => {
 		expect(missingAnswerWords('Café: open', 'Is the cafe open?', '')).toEqual(['Café']);
 		expect(missingAnswerWords('東京: 晴れ', 'What does lookup("東京") print?', '')).toEqual(['晴れ']);
 	});
+	it('keeps a combining accent inside its word', () => {
+		const decomposed = 'Cafe\u0301';
+		expect(answerWords(`${decomposed} open`)).toEqual([decomposed, 'open']);
+		expect(missingAnswerWords(`${decomposed}: open`, 'Is the Cafe open?', '')).toEqual([decomposed]);
+	});
 	it('skips an answer of numbers only', () => {
 		expect(missingAnswerWords('3\n1133 0.004323 2.0', 'How many calls?', '')).toEqual([]);
 	});
