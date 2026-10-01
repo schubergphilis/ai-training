@@ -47,9 +47,10 @@
  *   applies the policy to both;
  * - has an inline event handler attribute (`onclick=` and the like) on a
  *   tag outside a script or style, which no hash in `script-src` allows;
- * - has a `<script src>`, a `<base href>`, or a `<link href>` whose `rel`
- *   makes the browser fetch it (`FETCHING_RELS`), whose URL does not resolve
- *   to the site's origin, anywhere in the page (`offSite`).
+ * - has a `<script src>`, a `<base href>`, or a `<link>` whose `rel` makes
+ *   the browser contact a server (`FETCHING_RELS`) with an `href` or an
+ *   `imagesrcset` URL, whose URL does not resolve to the site's origin,
+ *   anywhere in the page (`offSite`).
  *
  * A policy in a `<meta>` applies only to the content after it, and Astro
  * writes the meta at the end of `<head>`, after Starlight's head tags and its
@@ -63,8 +64,9 @@
  * HTML Standard (https://html.spec.whatwg.org/multipage/parsing.html#named-character-reference-state).
  * A numeric reference counts without its `;` (`&#58`), and so does one of
  * the legacy named ones such as `&amp`, except before `=` or a letter or
- * digit. `decodeHTMLAttribute` of the `entities` package implements that. It then parses the value with `new URL` against `SITE_ROOT`.
- * Node's `URL` follows the WHATWG URL Standard (https://url.spec.whatwg.org/#concept-basic-url-parser),
+ * digit. `decodeHTMLAttribute` of the `entities` package implements that.
+ * The check then parses the decoded value with `new URL` against
+ * `SITE_ROOT`. Node's `URL` follows the WHATWG URL Standard (https://url.spec.whatwg.org/#concept-basic-url-parser),
  * as browsers do: it strips leading and trailing C0 controls and spaces,
  * removes every tab and newline, and reads a `\` as a `/` in an `http:` or
  * `https:` URL. So `/\evil.example/a.js`, `https&#58;//evil.example` and
@@ -129,13 +131,15 @@ const ATTR = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 /** The script types a browser does not run, and so the policy does not apply to: JSON data blocks. */
 const DATA_TYPE = /^application\/(ld\+)?json$/i;
 /**
- * The `rel` tokens of a `<link>` that makes the browser request its `href`. They are the external resource
- * link types of the HTML Standard (https://html.spec.whatwg.org/multipage/links.html#linkTypes) and
- * three that browsers add: `apple-touch-icon` and `apple-touch-icon-precomposed`, which Safari fetches for
+ * The `rel` tokens of a `<link>` that makes a browser contact the server its URL names, which the site
+ * promises not to do (`SECURITY.md`). They are the external resource link types of the HTML Standard
+ * (https://html.spec.whatwg.org/multipage/links.html#linkTypes), and five that browsers add. Chromium
+ * fetches `prerender` as a NoState Prefetch (https://developer.chrome.com/docs/web-platform/prerender-pages)
+ * and `compression-dictionary` as a shared compression dictionary
+ * (https://developer.chrome.com/blog/shared-dictionary-compression). Safari fetches `apple-touch-icon` and `apple-touch-icon-precomposed`, which Safari fetches for
  * the home screen (https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html),
  * and `mask-icon`, its pinned tab icon (https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/pinnedTabs/pinnedTabs.html).
- * `dns-prefetch` and `preconnect` fetch no file, but they contact the other server, which the site promises
- * not to do (`SECURITY.md`).
+ * `dns-prefetch` and `preconnect` fetch no file, but they still contact the server.
  */
 export const FETCHING_RELS = [
 	'stylesheet',
@@ -149,6 +153,8 @@ export const FETCHING_RELS = [
 	'prefetch',
 	'dns-prefetch',
 	'preconnect',
+	'prerender',
+	'compression-dictionary',
 ];
 
 const SITE_URL = new URL(SITE_ROOT);
@@ -162,9 +168,19 @@ const SITE_URL = new URL(SITE_ROOT);
  * @returns {string | undefined}
  */
 export function offSite(raw) {
+	return offSiteDecoded(decodeHTMLAttribute(raw));
+}
+
+/**
+ * `offSite` for a value whose character references are already decoded. Decoding happens once, as in the
+ * browser, so `https&amp;#58;//` stays the text `https&#58;//`.
+ * @param {string} value
+ * @returns {string | undefined}
+ */
+function offSiteDecoded(value) {
 	let url;
 	try {
-		url = new URL(decodeHTMLAttribute(raw), SITE_ROOT);
+		url = new URL(value, SITE_ROOT);
 	} catch {
 		return undefined;
 	}
@@ -173,16 +189,50 @@ export function offSite(raw) {
 }
 
 /**
+ * The URLs of the image candidates in a decoded `srcset` or `imagesrcset` value, following "parse a srcset
+ * attribute" in the HTML Standard (https://html.spec.whatwg.org/multipage/images.html#parse-a-srcset-attribute).
+ * A URL is a run of characters without whitespace, so it may hold a comma (`data:a,b`); only commas at its
+ * end are dropped. The descriptors after it run to the next comma outside parentheses. A candidate the
+ * browser drops for a bad descriptor is still returned, which only makes the check stricter.
+ * @param {string} value
+ * @returns {string[]}
+ */
+export function srcsetUrls(value) {
+	const urls = [];
+	let pos = 0;
+	const space = /[\t\n\f\r ]/;
+	while (pos < value.length) {
+		while (pos < value.length && (space.test(value[pos]) || value[pos] === ',')) pos += 1;
+		if (pos >= value.length) break;
+		const start = pos;
+		while (pos < value.length && !space.test(value[pos])) pos += 1;
+		let url = value.slice(start, pos);
+		if (url.endsWith(',')) {
+			url = url.replace(/,+$/, '');
+		} else {
+			let inParens = false;
+			while (pos < value.length && (inParens || value[pos] !== ',')) {
+				if (value[pos] === '(') inParens = true;
+				else if (value[pos] === ')') inParens = false;
+				pos += 1;
+			}
+		}
+		urls.push(url);
+	}
+	return urls;
+}
+
+/**
  * The problem of a URL that `offSite` places on another site, naming the resolved URL when it differs.
- * @param {string} what
- * @param {string} raw
+ * @param {string} what what loads it, such as `<script>`
+ * @param {string} shown the URL as the problem names it
+ * @param {string | undefined} resolved what `offSite` gave
+ * @param {string} verb
  * @returns {string | undefined}
  */
-function offSiteProblem(what, raw) {
-	const resolved = offSite(raw);
+function offSiteProblem(what, shown, resolved, verb = 'loads an off-site file') {
 	if (resolved === undefined) return undefined;
-	const shown = resolved === raw ? raw : `${raw} (resolves to ${resolved})`;
-	return `${what} loads an off-site file: ${shown}`;
+	return `${what} ${verb}: ${resolved === shown ? shown : `${shown} (resolves to ${resolved})`}`;
 }
 
 /**
@@ -263,21 +313,27 @@ export function pageProblems(html) {
 			if (/^on[a-z]+$/.test(attr)) problems.push(`inline event handler attribute ${attr}= on <${name}>`);
 		}
 		// Content before the meta is outside the policy, so an off-site file is rejected wherever it is.
-		let problem;
+		const found = [];
 		const src = attrs.get('src');
-		if (name === 'script' && src !== undefined) problem = offSiteProblem('<script>', src);
+		if (name === 'script' && src !== undefined) found.push(offSiteProblem('<script>', src, offSite(src)));
 		const href = attrs.get('href');
 		// A `<base>` before the meta would send every relative URL after it to another site.
-		if (name === 'base' && href !== undefined) problem = offSiteProblem('<base>', href);
+		if (name === 'base' && href !== undefined)
+			found.push(offSiteProblem('<base>', href, offSite(href), 'points off the site'));
 		// `rel` is a set of space-separated tokens, compared ASCII case-insensitively
 		// (https://html.spec.whatwg.org/multipage/links.html#linkTypes).
 		const rel = decodeHTMLAttribute(attrs.get('rel') ?? '')
 			.toLowerCase()
 			.split(/[\t\n\f\r ]+/);
 		const fetching = rel.filter((token) => FETCHING_RELS.includes(token));
-		if (name === 'link' && href !== undefined && fetching.length > 0)
-			problem = offSiteProblem(`<link rel="${fetching.join(' ')}">`, href);
-		if (problem !== undefined) problems.push(problem);
+		if (name === 'link' && fetching.length > 0) {
+			const what = `<link rel="${fetching.join(' ')}">`;
+			if (href !== undefined) found.push(offSiteProblem(what, href, offSite(href)));
+			// `imagesrcset` gives a preload its image candidates, each fetched like `href`.
+			for (const url of srcsetUrls(decodeHTMLAttribute(attrs.get('imagesrcset') ?? '')))
+				found.push(offSiteProblem(`${what} imagesrcset`, url, offSiteDecoded(url)));
+		}
+		for (const problem of found) if (problem !== undefined) problems.push(problem);
 	}
 	return problems;
 }

@@ -30,8 +30,8 @@ build check (`mise run bundles`) rejects an inline script whose hash the
 policy doesn't list. It also rejects a script, a stylesheet, a `<base>`, and
 a `<link>` that makes the browser contact the server it names (an icon, a
 preload or prefetch, a manifest, `preconnect` or `dns-prefetch`), when its
-URL leads to another site. The check resolves each URL the way the browser
-does first.
+URL leads to another site. Before it compares a URL, the check resolves it
+the way the browser does.
 
 ## Scope
 
