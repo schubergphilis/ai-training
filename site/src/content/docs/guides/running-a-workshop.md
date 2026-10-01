@@ -149,7 +149,7 @@ below has the details.
 - Give each exercise a start state, a finished state, and a diff between
   them, as tags such as `ex1-start` and `ex1-done`. Pairs run
   `git checkout -f ex1-start` to reset and `git checkout -f ex1-done` to see
-  the finished state, and both discard their changes but keep new files,
+  the finished state. Both discard their changes but keep new files,
   which `git clean -fd` removes.
 - Leave one thing for the pair to figure out, and build the rest for them in
   advance.
