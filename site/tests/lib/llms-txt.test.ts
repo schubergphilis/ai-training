@@ -1,8 +1,9 @@
 import { alternateSources } from '@lib/alternates';
 import { describedByHeadLink, FULL_SEPARATOR, llmsFullTxt, llmsTxt, renderLlmsTxt } from '@lib/llms-txt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { EXTERNAL_LINKS } from '../../scripts/lib/llms-txt.mjs';
 import { alternateDocs } from './alternate-fixtures';
-import { type DocFixture, type LessonPlanFixture, lessonPlans } from './content';
+import { type CourseFixture, courses, type DocFixture, type LessonPlanFixture, lessonPlans } from './content';
 
 const site = 'https://schubergphilis.github.io';
 const ROOT = 'https://schubergphilis.github.io/ai-training';
@@ -11,6 +12,7 @@ const ROOT = 'https://schubergphilis.github.io/ai-training';
 const state = vi.hoisted(() => ({
 	docs: undefined as DocFixture[] | undefined,
 	lessonPlans: undefined as LessonPlanFixture[] | undefined,
+	courses: undefined as CourseFixture[] | undefined,
 }));
 
 vi.mock('astro:content', async () => {
@@ -20,6 +22,7 @@ vi.mock('astro:content', async () => {
 			mockContent({
 				...(state.docs ? { docs: state.docs } : {}),
 				...(state.lessonPlans ? { lessonPlans: state.lessonPlans } : {}),
+				...(state.courses ? { courses: state.courses } : {}),
 			}).getCollection(name),
 	};
 });
@@ -42,6 +45,7 @@ const describedPlans = lessonPlans.map((p) => ({
 beforeEach(() => {
 	state.docs = [frontPage, conceptsPage, ...alternateDocs];
 	state.lessonPlans = describedPlans;
+	state.courses = undefined;
 });
 
 /** The live lessons of the fixtures in course order, and the planned one. */
@@ -104,6 +108,54 @@ describe('llms.txt', () => {
 		const links = [...text.matchAll(/^- \[[^\]]+\]\(([^)]+)\)/gm)].map((m) => m[1] ?? '');
 		const other = [`${ROOT}/data/checkpoints.json`, `${ROOT}/data/tutor.md`, `${ROOT}/llms-full.txt`];
 		for (const url of links) expect(paths.has(url) || other.includes(url), url).toBe(true);
+	});
+	it('leaves out a planned lesson between two live ones and keeps the order of the others', async () => {
+		state.courses = courses.map((c) =>
+			c.data.id === 'safety'
+				? {
+						...c,
+						data: { id: 'safety', area: 'safety', lessons: ['safety/deeper', 'safety/coming', 'safety/agent-risk'] },
+					}
+				: c,
+		);
+		const text = await llmsTxt(site);
+		expect(text).not.toContain('safety/coming');
+		expect(text.indexOf(`${ROOT}/safety/deeper/index.md`)).toBeLessThan(
+			text.indexOf(`${ROOT}/safety/agent-risk/index.md`),
+		);
+		const full = await llmsFullTxt(site);
+		expect(full).not.toContain('# Coming soon');
+		expect(full.indexOf('# Deeper\n')).toBeLessThan(full.indexOf('# Why agent safety is different\n'));
+	});
+	it('lists the course page of an area whose course has no live lesson', async () => {
+		const later = describedPlans.find((p) => p.data.id === 'safety/coming') as LessonPlanFixture;
+		state.lessonPlans = [
+			...describedPlans,
+			{ id: 'using-agents/lessons/later', data: { ...later.data, id: 'using-agents/later', title: 'Later' } },
+		];
+		state.courses = [
+			...courses,
+			{
+				id: 'using-agents/courses/using-agents',
+				data: { id: 'using-agents', area: 'using-agents', lessons: ['using-agents/later'] },
+			},
+		];
+		state.docs = [
+			...(state.docs ?? []),
+			{ id: 'using-agents', data: { title: 'Using agents', description: 'Using agents.' }, body: 'The course.\n' },
+		];
+		const text = await llmsTxt(site);
+		expect(text).toContain(
+			`## Using agents\n\n- [Using agents](${ROOT}/using-agents/index.md): Using agents.\n\n## Guides`,
+		);
+		expect(text).not.toContain('using-agents/later');
+		const full = await llmsFullTxt(site);
+		expect(full.split(FULL_SEPARATOR).filter((t) => t.startsWith('# Using agents\n'))).toHaveLength(1);
+	});
+	it('holds no link off the site besides the license links the dist check allows', async () => {
+		const links = [...(await llmsTxt(site)).matchAll(/\]\(([^)\s]+)\)/g)].map((m) => m[1] ?? '');
+		const off = links.filter((url) => !url.startsWith(`${ROOT}/`));
+		expect(off).toEqual(EXTERNAL_LINKS);
 	});
 	it('fails when a live lesson has no description', async () => {
 		state.lessonPlans = lessonPlans;

@@ -26,10 +26,11 @@ function dist(files: Record<string, string>) {
 }
 
 const good = {
-	'llms.txt': `# AI Training\n\n> S.\n\n[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)\n\n## Safety\n\n- [Safety](${ROOT}/safety/index.md): Safety.\n`,
+	'llms.txt': `# AI Training\n\n> S.\n\n[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) and [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)\n\n## Safety\n\n- [Safety](${ROOT}/safety/index.md): Safety.\n`,
 	'llms-full.txt': '# Safety\n',
 	'safety/index.md': '# Safety\n',
 	'index.html': page(`${ROOT}/llms.txt`),
+	'404.html': page(`${ROOT}/llms.txt`),
 	'safety/index.html': page(`${ROOT}/llms.txt`),
 };
 
@@ -72,5 +73,29 @@ describe('checkLlmsTxt', () => {
 			`b/index.html: expected one <link rel="describedby" href="${want}">, got ["${want}","${want}"]`,
 			`c/index.html: expected one <link rel="describedby" href="${want}">, got ["${ROOT}/other.txt"]`,
 		]);
+	});
+	it('rejects an llms.txt or llms-full.txt that does not start with an H1 title', () => {
+		expect(checkLlmsTxt(dist({ ...good, 'llms.txt': `Intro\n${good['llms.txt']}` }), ROOT).errors).toEqual([
+			'llms.txt: does not start with an H1 title',
+		]);
+		expect(checkLlmsTxt(dist({ ...good, 'llms-full.txt': 'Safety\n' }), ROOT).errors).toEqual([
+			'llms-full.txt: does not start with an H1 title',
+		]);
+	});
+	it('rejects a root-relative link and a link on another origin, and allows the two license links', () => {
+		const extra =
+			'- [Rel](/ai-training/safety/index.md): x\n- [Other](https://example.com/ai-training/safety/index.md): x\n';
+		const root = dist({ ...good, 'llms.txt': `${good['llms.txt']}${extra}` });
+		expect(checkLlmsTxt(root, ROOT).errors).toEqual([
+			`llms.txt: the link /ai-training/safety/index.md is not an absolute URL under the site root ${ROOT}/`,
+			`llms.txt: the link https://example.com/ai-training/safety/index.md is not an absolute URL under the site root ${ROOT}/`,
+		]);
+	});
+	it('rejects a 404 page without the describedby link, and a dist without a 404 page', () => {
+		expect(checkLlmsTxt(dist({ ...good, '404.html': page() }), ROOT).errors).toEqual([
+			`404.html: expected one <link rel="describedby" href="${ROOT}/llms.txt">, got []`,
+		]);
+		const { '404.html': _gone, ...rest } = good;
+		expect(checkLlmsTxt(dist(rest), ROOT).errors).toEqual(['404.html: not in dist']);
 	});
 });
