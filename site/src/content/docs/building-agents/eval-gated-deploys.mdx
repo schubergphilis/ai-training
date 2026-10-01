@@ -141,7 +141,7 @@ line changes nothing for them.
 
 <Predict id="predict-the-shorter-gate" objective="building-agents/runs-in-production/gates-on-evals"
   concepts={['eval-gated-deploys']}
-  context="A handbook assistant has a golden set of 21 items: 10 routine, 5 ambiguous, 6 to refuse. A gate checks three metrics: refused (refuse items that get not found, hard, 100 percent), routine (routine items that pass, hard, 90 percent) and helpful (routine and ambiguous items that get a good answer other than not found, soft, 70 percent). On the current prompt the results are 6 of 6, 9 of 10 and 11 of 15. A new prompt drops the line that says to answer not found, so the fake model answers when one keyword is shared instead of two. Of the items that got not found, a01 and x03 get no page from the search. The others get a page whose closest sentence shares one keyword. For a05 that is the right page and the right sentence, and for a02, x01, x02, x04, x05 and x06 it is not. Routine items share two or more keywords with their answer. The report starts with prompt: and the prompt name. Each metric line has the metric name, hard or soft, the count as N of M, needs and the threshold percent, and pass or FAIL. Then comes a line new failures: with the ids that fail now and passed before, a line less helpful: with the ids that lost a helpful answer, each of the two saying none when it has no ids, and a last line deploy: allowed or deploy: blocked."
+  context="A handbook assistant has a golden set of 21 items: 10 routine, 5 ambiguous, 6 to refuse. A gate checks three metrics: refused (refuse items that get not found, hard, 100 percent), routine (routine items that pass, hard, 90 percent) and helpful (routine and ambiguous items that get a good answer other than not found, soft, 70 percent). On the current prompt the results are 6 of 6, 9 of 10 and 11 of 15. A new prompt drops the line that says to answer not found, so the fake model answers when one keyword is shared instead of two. Of the items that got not found, a01 and x03 get no page from the search. The others get a page whose closest sentence shares one keyword. For a05 that is the right page and the right sentence, and for a02, x01, x02, x04, x05 and x06 it is not. Routine items share two or more keywords with their answer. The report starts with prompt: and the prompt name. A metric line reads like routine hard 9 of 10 needs 90% pass, and a failed metric ends in FAIL instead of pass. Then comes a line new failures: with the ids that fail now and passed before, and a line less helpful: with the ids that lost a helpful answer. Each of the two lists its ids separated by spaces, or says none when it has no ids. The last line is the decision: deploy: allowed, deploy: blocked, or deploy: waits for a person to sign off."
   title="What does the gate report for the shorter prompt?"
   hint="Which of the nine not-found items get a page at all? Of those, which get the right sentence when one keyword is enough? And does a failed hard gate or a passed soft gate decide the last line?"
   answer={`prompt: shorter
@@ -158,8 +158,8 @@ count, the threshold, and `pass` or `FAIL`. After them the report has a
 `new failures:` line with the items that fail now and passed on the
 current prompt, and a `less helpful:` line with the items that lost a
 helpful answer. Each of the two says `none` when no item is on it. The
-last line is the decision, `deploy: allowed` or `deploy: blocked`. Then
-run it.
+last line is the decision: `deploy: allowed`, `deploy: blocked`, or
+`deploy: waits for a person to sign off`. Then run it.
 
 ```sh
 python3 gate.py shorter
