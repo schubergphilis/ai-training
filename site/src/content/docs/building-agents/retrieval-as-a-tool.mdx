@@ -409,7 +409,7 @@ Match each failure to its fix.
     { text: 'Add 20 more questions that the documents answer.', consequence: 'The agent passes those too, and it keeps inventing answers in production.' },
     { text: 'Switch to the retrieval loop, so the agent searches more.', consequence: 'More searches find nothing more. The agent still answers when nothing covers the question.' },
     { text: 'Add questions with no answer in the documents, each expecting not found.', correct: true, consequence: 'Three of the new questions fail. You add the not-found line to the frame, and the set now tests for it.' },
-    { text: 'Lower the temperature so the answers are less creative.', consequence: 'The Messages API reference says models released after Claude Opus 4.6 refuse any temperature except 1.0, and that even 0.0 doesn\'t make the results fully deterministic. On a model that takes the setting, the invented answers vary less, and the test set still can\'t see them.' },
+    { text: 'Lower the temperature so the answers are less creative.', consequence: 'The Claude Messages reference says models newer than Claude Opus 4.6 refuse any temperature except 1.0. Where the setting works, the invented answers vary less, and the test set still can\'t see them.' },
   ]}>
 
 The agent passes the whole test set and invents answers in production.
