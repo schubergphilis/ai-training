@@ -34,7 +34,8 @@ def platforms_without_checksum(lock_text: str) -> list[str]:
                 if not key.startswith("platforms."):
                     continue
                 table = cast("dict[str, object]", value) if isinstance(value, dict) else {}
-                if not table.get("checksum"):
+                checksum = table.get("checksum")
+                if not (isinstance(checksum, str) and checksum.strip()):
                     platform = key.removeprefix("platforms.")
                     missing.append(f"{tool}@{entry.get('version')} {platform}")
     return missing
@@ -79,8 +80,13 @@ def test_a_lock_with_checksums_passes() -> None:
 
 @pytest.mark.parametrize(
     "platform_body",
-    ['provenance = "github-attestations"', 'checksum = ""'],
-    ids=["no-checksum-key", "empty-checksum"],
+    [
+        'provenance = "github-attestations"',
+        'checksum = ""',
+        'checksum = " "',
+        "checksum = 1",
+    ],
+    ids=["no-checksum-key", "empty-checksum", "blank-checksum", "number-checksum"],
 )
 def test_a_platform_without_a_checksum_fails(platform_body: str) -> None:
     text = GOOD + f'\n[tools.zizmor."platforms.linux-x64-musl"]\n{platform_body}\n'
