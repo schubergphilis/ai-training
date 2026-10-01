@@ -41,7 +41,7 @@ of an exercise is a written answer.
 
 - Send the placement quiz and the setup instructions a week ahead.
 - Offer a 30-minute drop-in setup call. By its end, each person has the
-  agent installed and signed in, your fixture repository cloned, and one
+  agent installed and signed in, your fixture repositories cloned, and one
   command run in it.
 - Have one helper for every eight participants, and put most of them at
   table A.
@@ -52,9 +52,9 @@ of an exercise is a written answer.
 For Coding with agents, each lesson has its own fixture. Make your own
 copy of each fixture you use with the steps in [The
 fixture](/coding-with-agents/first-session/#the-fixture) section of the first
-lesson. Commit the start state and the finished state of every exercise in
-each copy. Then share the copies as repositories that the pairs clone at the
-setup call.
+lesson. Commit and tag the start state and the finished state of every
+exercise in each copy. Then push the copies with their tags to a place where
+the pairs clone them at the setup call.
 
 ## The placement quiz
 
@@ -78,10 +78,13 @@ own lessons. The example items below come from Coding with agents.
   then change, then tests.
 - **What does this print, one item.** A short piece of real code, as in the
   site's predict checkpoints. Example: in the first lesson's fixture, start
-  from an empty list with `export TODO_FILE=/tmp/quiz.json`, so nothing
-  writes to the fixture's `todos.json`. After `python3 todo.py add "Buy milk"` and `python3 todo.py add "Call Sam"`, what does
-  `python3 todo.py done 1` print? It prints `done #1: Call Sam`. This item
-  gives away the off-by-one bug that the first lesson teaches.
+  from an empty list in `/tmp/quiz.json`, so nothing writes to the
+  fixture's `todos.json`. After
+  `TODO_FILE=/tmp/quiz.json python3 todo.py add "Buy milk"` and
+  `TODO_FILE=/tmp/quiz.json python3 todo.py add "Call Sam"`, what does
+  `TODO_FILE=/tmp/quiz.json python3 todo.py done 1` print? It prints
+  `done #1: Call Sam`. This item gives away the off-by-one bug that the
+  first lesson teaches.
 - **Usage, one item.** "The last time you used an assistant, at what point
   did you first ask it for code?" Offer three answers: "at the start" (A),
   "after I described the task" (B), and "after I wrote a plan or a check"
@@ -144,8 +147,9 @@ below has the details.
 ## Exercise rules
 
 - Give each exercise a start state, a finished state, and a diff between
-  them. With both states committed in your shared fixture repositories, a
-  pair can reset to the start or check out the finished state.
+  them, as tags such as `ex1-start` and `ex1-done`. Pairs run
+  `git checkout -f ex1-start` to start or reset, which discards their
+  changes, and `git checkout -f ex1-done` to see the finished state.
 - Leave one thing for the pair to figure out, and build the rest for them in
   advance.
 - Always give the agent a check it can run, such as a test, or a command with
