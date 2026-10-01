@@ -23,3 +23,19 @@ This is a static documentation site. The main risks are in the build tooling
 and the GitHub Actions workflows, which are pinned and audited with zizmor.
 Interactive lesson content runs entirely in the browser and stores progress in
 local storage only, and it sends nothing to a server.
+
+The repository also holds an agent harness: the agent settings, hooks and
+skills in `.claude/`, the hook checks in `scripts/agent_hooks.py`, and the
+wave skill in `.claude/skills/wave/`. Public issue text is an input to the
+harness, because anyone can open or comment on an issue that an agent then
+reads.
+
+Agents that work on this repository run `gh` with the maintainer's GitHub
+token. Issue #350 plans a narrower token for agents.
+
+The tutor skill in `.claude/skills/ai-tutor/` runs in a learner's own agent.
+It fetches the tutor instructions (`data/tutor.md`) and a lesson bundle from
+the site, and the agent follows the fetched instructions. Site content becomes
+instructions in that agent. The skill fetches only from the two bases it lists: the published
+site at `https://schubergphilis.github.io/ai-training/` and a local build at
+`http://localhost:<port>/ai-training/`.
