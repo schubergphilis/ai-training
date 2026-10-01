@@ -127,7 +127,7 @@ DEFINITIONS = {
 
 <Predict id="which-tools-remain" objective="customizing-agents/configures-agent/sets-permissions"
   concepts={['subagents']}
-  context="A small Python function models how a coding agent resolves a subagent's tool list: without a tools field the subagent inherits the whole pool, a disallowedTools field removes tools from it, and a tools field keeps only the named ones. Three subagent definitions are resolved against a pool of six tools: Read, Grep, Glob, Bash, Edit and Write."
+  context="A small Python function models how a coding agent resolves a subagent's tool list: without a tools field the subagent inherits the whole pool, a disallowedTools field removes tools from it, and a tools field keeps only the named ones. Three subagent definitions are resolved against a pool of six tools: Read, Grep, Glob, Bash, Edit and Write. The definition named reviewer sets tools to Read, Grep and Glob, the one named no-writes sets disallowedTools to Write and Edit, and the one named helper sets neither field."
   title="Which tools does each subagent get?" hint="For each frontmatter, start from the pool, remove what disallowedTools names, then keep only what tools names if there is a tools field."
   answer={`reviewer: Read, Grep, Glob
   no-writes: Read, Grep, Glob, Bash

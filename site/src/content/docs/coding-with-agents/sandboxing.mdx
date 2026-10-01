@@ -198,8 +198,15 @@ command and applies the matching rules above.
   2. files.pythonhosted.org:443  blocked, no prompt (not on the list)
   3. collect.example.invalid:443  blocked, no prompt (not on the list)`} run="coding-with-agents/sandboxing/check_allowlist.py">
 Read the settings and the three commands above. For each command, decide
-whether the sandbox lets it through, asks you, or blocks it. Then run the
-script from the fixture's folder and compare.
+whether the sandbox lets it through, asks you, or blocks it. The script
+first prints `allowedDomains:`, `deniedDomains:` and `strictAllowlist:`,
+each followed by its value from the settings, with `(none)` for an empty
+list. Then it prints one numbered line per command, such as
+`1. host:443`, followed by two spaces and one of
+`allowed (matches <entry>)`, `blocked (deniedDomains has <entry>)`,
+`asks you (not on the list)` or `blocked, no prompt (not on the list)`.
+Write the output, then run the script from the fixture's folder and
+compare.
 
 ```sh
 python3 check_allowlist.py

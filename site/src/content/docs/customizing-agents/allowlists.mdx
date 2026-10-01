@@ -145,7 +145,7 @@ COMMANDS = ["git log", "git log --oneline main", "git push origin main"]
 
 <Predict id="how-wide-is-the-rule" objective="customizing-agents/configures-agent/sets-permissions"
   concepts={['allowlists']}
-  context="A small Python function models how a coding agent matches a Bash allow rule against a command: a rule without a wildcard matches one exact command, a trailing wildcard after a space matches the bare command and any continuation, and a wildcard elsewhere matches any text. Three rules are held against three git commands."
+  context="A small Python function models how a coding agent matches a Bash allow rule against a command: a rule without a wildcard matches one exact command, a trailing wildcard after a space matches the bare command and any continuation, and a wildcard elsewhere matches any text. The rules are Bash(git log), Bash(git log *) and Bash(git *), and the commands are git log, git log --oneline main and git push origin main."
   title="How wide is each rule?" hint="Take each command in turn and walk the three rules: is it the exact text, does it start with the prefix before the wildcard, or does it start with a bare git?"
   answer={`git log: 3
 git log --oneline main: 2
@@ -210,7 +210,7 @@ def unused(rules, prompted):
 
 <Predict id="prune-the-list" objective="customizing-agents/configures-agent/sets-permissions"
   concepts={['allowlists']}
-  context="A small Python function takes a list of Bash allow rules and the list of commands that stopped for a prompt during a run, and returns the rules that match none of those commands. The allowlist has a rule for the test command and two rules for read-only git commands, and the prompted commands are two runs of the test command."
+  context="A small Python function takes a list of Bash allow rules and the list of commands that stopped for a prompt during a run, and returns the rules that match none of those commands. The allowlist has three rules, Bash(python3 -m unittest *), Bash(git status *) and Bash(git diff *), and the prompted commands are two runs of python3 -m unittest -q."
   title="Which rules go?" hint="Which rules in ALLOW cover neither line of TALLY?"
   answer={`Bash(git status *)
 Bash(git diff *)`} run="customizing-agents/allowlists/prune.py">
