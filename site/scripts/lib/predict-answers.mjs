@@ -7,9 +7,11 @@
  *
  * - A graded `Predict` is an item of kind `predict` with a string `answer`
  *   (an honor-system Predict has none) that is `reviewable`, which the
- *   export sets false for `review={false}` and for a `practice` alternate.
- * - A word is a run of letters, digits, `_`, `-`, `.` and `/` with at least
- *   one letter. A run of digits and marks alone is skipped, because the
+ *   export sets false for `review={false}` and for a `phase="practice"`
+ *   alternate. A practice alternate is skipped on purpose, because the
+ *   review page never shows it.
+ * - A word is a run of Unicode letters and digits, `_`, `-`, `.` and `/`
+ *   with at least one letter (so `café` and `東京` are words). A run of digits and marks alone is skipped, because the
  *   learner may work a number out from the code.
  * - Leading and trailing dots and slashes are dropped from every word on
  *   both sides, so `ok.` at the end of a sentence matches `ok`, and the
@@ -17,8 +19,8 @@
  * - The comparison is case-sensitive, because the match is exact.
  */
 
-const WORD = /[A-Za-z0-9_./-]+/g;
-const LETTER = /[A-Za-z]/;
+const WORD = /[\p{L}\p{N}_./-]+/gu;
+const LETTER = /\p{L}/u;
 
 /** The words of `text` that have a letter, without leading and trailing dots and slashes, in order of first appearance. */
 export function answerWords(text) {
