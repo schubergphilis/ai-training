@@ -120,7 +120,7 @@ scope then stays the same whichever list the server uses.
 
 <Predict id="predict-the-refusal" objective="customizing-agents/connects-tools-safely/adds-a-tool"
   concepts={['server', 'mcp-security']}
-  context="The lesson's stand-in file-system server is scoped to one handbook directory and refuses a path outside it with a result whose text starts with Access denied and whose isError flag is set. The client prints the part of the text before the first colon, then the flag."
+  context="The lesson's stand-in file-system server is scoped to one handbook directory and refuses a path outside it with a result whose text starts with Access denied - path outside allowed directories, followed by a colon and the path, and whose isError flag is set. The client prints the part of the text before the first colon, then the flag as isError: True or isError: False."
   title="Predict the refusal" hint="The path is the handbook's parent directory. Is that inside the allowed list, and how does a tool report a failure?"
   answer={`Access denied - path outside allowed directories
   isError: True`} run="customizing-agents/mcp-first-server/outside_scope.py">

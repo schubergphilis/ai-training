@@ -221,16 +221,6 @@ fresh copy with the same edit. It runs the first four with only the
 lockfile changed, then makes the same version change in `package.json`
 and runs the fifth.
 
-```python
-LOCKFILE_ONLY = [
-    "git status",
-    'git commit -am "Bump version"',
-    'git commit --no-verify -am "Bump version"',
-    'git -C . commit -am "Bump version"',
-]
-BOTH_FILES = ['git commit -am "Bump version"']
-```
-
 <Predict id="four-commands" objective="customizing-agents/configures-agent/adds-a-hook"
   concepts={['hooks']}
   context="A Claude Code PreToolUse hook on the Bash tool exits with code 2 when a command is a git commit, with or without options between git and commit, and package-lock.json differs from the last commit while package.json doesn't. Otherwise it exits with code 0. It is run on five commands: four after a hand edit of package-lock.json alone, and one after the same edit in package.json as well."
@@ -244,6 +234,14 @@ BOTH_FILES = ['git commit -am "Bump version"']
 What does this print, one line per command?
 
 ```python
+LOCKFILE_ONLY = [
+    "git status",
+    'git commit -am "Bump version"',
+    'git commit --no-verify -am "Bump version"',
+    'git -C . commit -am "Bump version"',
+]
+BOTH_FILES = ['git commit -am "Bump version"']
+
 for command in LOCKFILE_ONLY:
     code, _ = run_hook(repo, command)
     print(f"lockfile only, {command}: exit {code}")

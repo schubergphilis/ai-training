@@ -70,7 +70,7 @@ hours, so it is already expired.
 
 <Predict id="predict-the-three-tokens" objective="customizing-agents/connects-tools-safely/hardens-a-connection"
   concepts={['mcp-security', 'permissions-and-least-privilege']}
-  context="The lesson's notes server checks a token on every tool call. It refuses a call when the token has expired, and it refuses share_note when the token's scope lacks share. It answers a refusal with text that starts with Refused, and the stand-in's share_note answers Sent without sending anything."
+  context="The lesson's notes server checks a token on every tool call. It refuses a call when the token has expired, and it refuses share_note when the token's scope lacks share. An expired token gets the answer Refused: token expired. A token without the scope a tool needs gets Refused: token scope is SCOPE, and TOOL needs SCOPE, with the token's scope, the tool's name and the scope the tool needs filled in. The stand-in's share_note answers Sent NAME to ADDRESS without sending anything."
   title="Predict the three tokens" hint="Which of the three tokens has the share scope, and which one is past its expiry?"
   answer={`read+share, 720 hours: Sent retro.md to archive@example.com
   read, 1 hour: Refused: token scope is read, and share_note needs share
@@ -79,6 +79,12 @@ What does this print? The server checks the expiry first and the scope
 second.
 
 ```python
+TOKENS = [
+    ("read+share, 720 hours", notes_token.issue("read+share", 720, "you")),
+    ("read, 1 hour", notes_token.issue("read", 1, "you")),
+    ("read, 0 hours", notes_token.issue("read", 0, "you")),
+]
+
 for label, token in TOKENS:
     session = client.Session(token)
     text, is_error = session.call("share_note", {"name": "retro.md", "to": "archive@example.com"})

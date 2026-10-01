@@ -84,7 +84,7 @@ skill in the fixture package, and `bad-skill/`, whose front matter is
 
 <Predict id="lint-two-skills" objective="customizing-agents/writes-skill/packages-a-procedure"
   concepts={['skill-spec']}
-  context="A lint script checks two SKILL.md files against the Agent Skills specification: name at most 64 lowercase letters, digits and single hyphens and equal to the directory name, and a non-empty description of at most 1024 characters. The first skill is a release skill in a directory named release. The second is in a directory named bad-skill, with name Release-Notes and an empty description."
+  context="A lint script checks two SKILL.md files against the Agent Skills specification: name at most 64 lowercase letters, digits and single hyphens and equal to the directory name, and a non-empty description of at most 1024 characters. The first skill is a release skill in a directory named release. The release skill's description is 108 characters long. The second is in a directory named bad-skill, with name Release-Notes and an empty description."
   title="What does the lint report?" hint="Check the name against each rule in turn, then the description. How many rules does Release-Notes in a directory called bad-skill break?"
   answer={`release: ok, description is 108 characters
   bad-skill: name has uppercase letters
@@ -92,7 +92,17 @@ skill in the fixture package, and `bad-skill/`, whose front matter is
   bad-skill: description is missing or empty`}
   run="customizing-agents/first-skill/skill_lint.py">
 Predict the four lines the lint prints, one for the release skill and one
-per broken rule for `bad-skill`.
+per broken rule for `bad-skill`. The release skill's description is 108
+characters long. A skill that passes gets the line
+`<directory>: ok, description is <length> characters`. A skill that fails
+gets one `<directory>: <problem>` line per broken rule, in this order:
+`name is missing`, `name is longer than 64 characters`,
+`name has uppercase letters`,
+`name has a character other than a-z, 0-9 and single hyphens`,
+`name does not match the directory '<directory>'`,
+`description is missing or empty` and
+`description is longer than 1024 characters`. The character check runs on
+the name in lowercase, so only the uppercase line reports a capital letter.
 
 ```sh
 python3 skill_lint.py
@@ -181,7 +191,11 @@ runs it again.
   after step 3: release 0.4.0: ok`}
   run="customizing-agents/first-skill/failing_step.py">
 Predict the two lines, one after the version bump and one after the
-changelog entry.
+changelog entry. Each line starts with `after step 2:` or `after step 3:`,
+followed by what the check prints: `release <version>: ok`, or one
+`release <version>: FAIL: <problem>` line per problem. The problems it can
+name are `version '<version>' is not three numbers`,
+`CHANGELOG.md has no '## <version>' heading` and `the tests fail`.
 
 ```sh
 python3 failing_step.py

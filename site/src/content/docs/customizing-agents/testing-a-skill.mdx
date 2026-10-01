@@ -67,7 +67,7 @@ and one change after it. The clean clone is the one you just made.
 
 <Predict id="what-step-3-sees" objective="customizing-agents/writes-skill/packages-a-procedure"
   concepts={['writing-a-good-skill']}
-  context="A release skill tells the agent to write one changelog bullet per change since the previous release, using git log. A script builds two repositories from the same package: the author's, with the release tagged v0.3.0 and one commit after it, and a clean clone with the package committed once as 'Import the notes package' and no tags. For each it prints the last release tag from git describe, and the commits since it, or the whole log when there is no tag."
+  context="A release skill tells the agent to write one changelog bullet per change since the previous release, using git log. A script builds two repositories from the same package: the author's, with the release tagged v0.3.0 and one commit after it, 'Document where notes are stored', and a clean clone with the package committed once as 'Import the notes package' and no tags. For each it prints the last release tag from git describe, and the commits since it, or the whole log when there is no tag."
   title="What does step 3 have to work with?" hint="Which of the two repositories has a tag for git describe to find? Without a tag, what is left in the log?"
   answer={`author's repository
     last release tag: v0.3.0
@@ -76,8 +76,12 @@ and one change after it. The clean clone is the one you just made.
     last release tag: none
     whole log: Import the notes package`}
   run="customizing-agents/testing-a-skill/fresh_clone.py">
-Predict the output for both repositories. The script prints `none` where
-`git describe --tags --abbrev=0` fails.
+Predict the output for both repositories. The script prints the heading
+`author's repository` or `clean clone`, and under it, indented by two
+spaces, `last release tag: <tag>` and `commits since it: <subjects>`.
+Where `git describe --tags --abbrev=0` fails, it prints
+`last release tag: none` and `whole log: <subjects>` instead. Commit
+subjects are joined with `; `.
 
 ```sh
 python3 fresh_clone.py
@@ -196,7 +200,7 @@ time.
 
 <Predict id="which-test-sees-the-tag" objective="customizing-agents/writes-skill/packages-a-procedure"
   concepts={['writing-a-good-skill']}
-  context="A script releases version 0.4.0 of a small package twice. The first time it runs git tag v0.4.0 before the release commit, and the second time after it. Each time it prints the package's release check, the output of git tag --list 'v*' joined on one line, and git describe --tags, which prints the tag alone when the current commit is tagged and adds the number of commits since the tag and a hash otherwise."
+  context="A script releases version 0.4.0 of a small package twice. The first time it runs git tag v0.4.0 before the release commit, and the second time after it. Each time it prints the package's release check, the output of git tag --list 'v*' joined on one line, and git describe --tags, which prints the tag alone when the current commit is tagged and otherwise adds a hyphen, the number of commits since the tag, a hyphen, the letter g and a hash. The repository already has the tag v0.3.0 from the previous release, and the release check prints release VERSION: ok when it passes."
   title="Which check tells the two releases apart?" hint="Does the release check or the tag list look at where the tag points? What does git describe add when the tag is on an older commit?"
   answer={`tag before the commit
     release_check.py: release 0.4.0: ok
@@ -207,8 +211,12 @@ time.
     git tag --list 'v*': v0.3.0 v0.4.0
     git describe --tags: v0.4.0`}
   run="customizing-agents/testing-a-skill/tag_placement.py">
-Predict the six lines under the two headings. The script replaces the
-commit hash that git appends with `<hash>`.
+Predict the six lines under the two headings, `tag before the commit` and
+`tag after the commit`. Under each heading, indented by two spaces, the
+script prints `release_check.py:`, `git tag --list 'v*':` and
+`git describe --tags:`, each followed by a space and what that check
+prints. The script replaces the commit hash that git appends with
+`<hash>`.
 
 ```sh
 python3 tag_placement.py
