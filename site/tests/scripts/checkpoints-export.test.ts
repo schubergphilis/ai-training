@@ -129,6 +129,29 @@ describe('checkCheckpoints', () => {
 	});
 });
 
+describe('checkCheckpoints answer words of a graded Predict', () => {
+	const page = `${PAGE}\n<Predict id="graded" objective="o" title="T" hint="h" concepts={['c1']} answer="Lisbon: sun">\nWhat does lookup("Lisbon") print?\n</Predict>\n`;
+	const graded = (answer: string) =>
+		item('graded', { kind: 'predict', stem: 'What does lookup("Lisbon") print?', options: null, answer });
+	it('warns on an answer word the page stem and the context lack, after the alternate warnings', () => {
+		const items = [item('one'), item('two', { kind: 'sort', stem: '' }), graded('Lisbon: sun')];
+		const { errors, warnings } = check(tree({ version: 1, items }, { 'content/a/x.mdx': page }));
+		expect(errors).toEqual([]);
+		expect(warnings.at(-1)).toBe(
+			'a/x#graded: the graded Predict\'s answer has words that are in neither its stem nor its context: "sun"',
+		);
+	});
+	it('passes the item when the context has the word', () => {
+		const items = [
+			item('one'),
+			item('two', { kind: 'sort', stem: '' }),
+			{ ...graded('Lisbon: sun'), context: 'lookup returns sun for Lisbon.' },
+		];
+		const { warnings } = check(tree({ version: 1, items }, { 'content/a/x.mdx': page }));
+		expect(warnings.filter((w) => w.includes('graded'))).toEqual([]);
+	});
+});
+
 describe('checkCheckpoints echo over cited stems', () => {
 	const CITED_PAGE = PAGE.replace('Stem.', 'Where does a subagent run (@Claude Code subagents)?');
 	const cited = item('one', {
