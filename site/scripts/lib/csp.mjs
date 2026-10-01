@@ -47,8 +47,9 @@
  *   applies the policy to both;
  * - has an inline event handler attribute (`onclick=` and the like) on a
  *   tag outside a script or style, which no hash in `script-src` allows;
- * - has a `<script src>` or a `<link rel="stylesheet">` whose URL names a
- *   scheme or a host, anywhere in the page.
+ * - has a `<script src>`, a `<base href>`, or a `<link href>` whose `rel`
+ *   makes the browser fetch it (`FETCHING_RELS`), whose URL does not resolve
+ *   to the site's origin, anywhere in the page (`offSite`).
  *
  * A policy in a `<meta>` applies only to the content after it, and Astro
  * writes the meta at the end of `<head>`, after Starlight's head tags and its
@@ -57,13 +58,27 @@
  * every inline script there must still be hashed, and no file there may come
  * from another site. The site's own URLs are root-relative (`/ai-training/...`).
  *
+ * `offSite` resolves a URL the way the browser does before it loads one. It
+ * decodes character references with the rule for attribute values in the
+ * HTML Standard (https://html.spec.whatwg.org/multipage/parsing.html#named-character-reference-state).
+ * A numeric reference counts without its `;` (`&#58`), and so does one of
+ * the legacy named ones such as `&amp`, except before `=` or a letter or
+ * digit. `decodeHTMLAttribute` of the `entities` package implements that. It then parses the value with `new URL` against `SITE_ROOT`.
+ * Node's `URL` follows the WHATWG URL Standard (https://url.spec.whatwg.org/#concept-basic-url-parser),
+ * as browsers do: it strips leading and trailing C0 controls and spaces,
+ * removes every tab and newline, and reads a `\` as a `/` in an `http:` or
+ * `https:` URL. So `/\evil.example/a.js`, `https&#58;//evil.example` and
+ * `ht<tab>tps://evil.example` all resolve to another site.
+ *
  * `scripts/check-bundles.mjs` runs it after the build, and
  * `tests/scripts/csp.test.ts` covers it.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
+import { decodeHTMLAttribute } from 'entities';
 import { walk } from './data.mjs';
+import { SITE_ROOT } from './site-address.mjs';
 
 /**
  * The directives beyond `script-src` and `style-src`: the policy issue #608 starts from, plus `base-uri` and
@@ -113,8 +128,62 @@ const TAG = /<([a-z][^\s/>]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/gi;
 const ATTR = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 /** The script types a browser does not run, and so the policy does not apply to: JSON data blocks. */
 const DATA_TYPE = /^application\/(ld\+)?json$/i;
-/** A URL that names a scheme or a host (`https:`, `data:`, `//host`), so it can point off the site. */
-const OFF_SITE = /^\s*([a-z][a-z0-9+.-]*:|\/\/|\\\\)/i;
+/**
+ * The `rel` tokens of a `<link>` that makes the browser request its `href`. They are the external resource
+ * link types of the HTML Standard (https://html.spec.whatwg.org/multipage/links.html#linkTypes) and
+ * three that browsers add: `apple-touch-icon` and `apple-touch-icon-precomposed`, which Safari fetches for
+ * the home screen (https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html),
+ * and `mask-icon`, its pinned tab icon (https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/pinnedTabs/pinnedTabs.html).
+ * `dns-prefetch` and `preconnect` fetch no file, but they contact the other server, which the site promises
+ * not to do (`SECURITY.md`).
+ */
+export const FETCHING_RELS = [
+	'stylesheet',
+	'icon',
+	'apple-touch-icon',
+	'apple-touch-icon-precomposed',
+	'mask-icon',
+	'manifest',
+	'preload',
+	'modulepreload',
+	'prefetch',
+	'dns-prefetch',
+	'preconnect',
+];
+
+const SITE_URL = new URL(SITE_ROOT);
+
+/**
+ * Where the browser loads `raw`, an attribute value as it stands in the HTML, from, when that is not the site:
+ * the resolved URL, or `undefined` when it is a site URL. A `data:` or `blob:` URL counts as off-site, because
+ * it is no file of the site. A value `new URL` cannot parse, such as `https://[::1`, passes: the browser
+ * fails to parse it too and loads nothing.
+ * @param {string} raw
+ * @returns {string | undefined}
+ */
+export function offSite(raw) {
+	let url;
+	try {
+		url = new URL(decodeHTMLAttribute(raw), SITE_ROOT);
+	} catch {
+		return undefined;
+	}
+	// A `blob:` URL has the origin of the URL inside it, so the scheme is compared too.
+	return url.protocol === SITE_URL.protocol && url.origin === SITE_URL.origin ? undefined : url.href;
+}
+
+/**
+ * The problem of a URL that `offSite` places on another site, naming the resolved URL when it differs.
+ * @param {string} what
+ * @param {string} raw
+ * @returns {string | undefined}
+ */
+function offSiteProblem(what, raw) {
+	const resolved = offSite(raw);
+	if (resolved === undefined) return undefined;
+	const shown = resolved === raw ? raw : `${raw} (resolves to ${resolved})`;
+	return `${what} loads an off-site file: ${shown}`;
+}
 
 /**
  * The attributes of a start tag's attribute text, name (lower case) to value (`''` when it has none).
@@ -194,12 +263,21 @@ export function pageProblems(html) {
 			if (/^on[a-z]+$/.test(attr)) problems.push(`inline event handler attribute ${attr}= on <${name}>`);
 		}
 		// Content before the meta is outside the policy, so an off-site file is rejected wherever it is.
-		const src = name === 'script' ? attrs.get('src') : undefined;
-		if (src !== undefined && OFF_SITE.test(src)) problems.push(`<script> loads an off-site file: ${src}`);
-		const rel = (attrs.get('rel') ?? '').toLowerCase().split(/\s+/);
-		const href = name === 'link' && rel.includes('stylesheet') ? attrs.get('href') : undefined;
-		if (href !== undefined && OFF_SITE.test(href))
-			problems.push(`<link rel="stylesheet"> loads an off-site file: ${href}`);
+		let problem;
+		const src = attrs.get('src');
+		if (name === 'script' && src !== undefined) problem = offSiteProblem('<script>', src);
+		const href = attrs.get('href');
+		// A `<base>` before the meta would send every relative URL after it to another site.
+		if (name === 'base' && href !== undefined) problem = offSiteProblem('<base>', href);
+		// `rel` is a set of space-separated tokens, compared ASCII case-insensitively
+		// (https://html.spec.whatwg.org/multipage/links.html#linkTypes).
+		const rel = decodeHTMLAttribute(attrs.get('rel') ?? '')
+			.toLowerCase()
+			.split(/[\t\n\f\r ]+/);
+		const fetching = rel.filter((token) => FETCHING_RELS.includes(token));
+		if (name === 'link' && href !== undefined && fetching.length > 0)
+			problem = offSiteProblem(`<link rel="${fetching.join(' ')}">`, href);
+		if (problem !== undefined) problems.push(problem);
 	}
 	return problems;
 }

@@ -2,7 +2,16 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { CSP, checkCsp, DIRECTIVES, pageProblems, parsePolicy, sha256 } from '../../scripts/lib/csp.mjs';
+import {
+	CSP,
+	checkCsp,
+	DIRECTIVES,
+	FETCHING_RELS,
+	offSite,
+	pageProblems,
+	parsePolicy,
+	sha256,
+} from '../../scripts/lib/csp.mjs';
 
 const roots: string[] = [];
 afterAll(() => {
@@ -149,7 +158,7 @@ describe('pageProblems', () => {
 		const html = `<html><head>${before}${meta(content)}</head><body>${after}</body></html>`;
 		expect(pageProblems(html)).toEqual([
 			'<script> loads an off-site file: https://cdn.example.com/a.js',
-			'<link rel="stylesheet"> loads an off-site file: //cdn.example.com/a.css',
+			'<link rel="stylesheet"> loads an off-site file: //cdn.example.com/a.css (resolves to https://cdn.example.com/a.css)',
 			'<script> loads an off-site file: data:text/javascript,alert(1)',
 		]);
 	});
@@ -159,6 +168,73 @@ describe('pageProblems', () => {
 			head: '<script src="/ai-training/_astro/a.js"></script><link rel="stylesheet" href="/ai-training/_astro/a.css"><link rel="canonical" href="https://schubergphilis.github.io/ai-training/">',
 		});
 		expect(pageProblems(html)).toEqual([]);
+	});
+
+	it('resolves a script URL as the browser does before it compares the origin', () => {
+		const srcs = [
+			'/\\evil.example/a.js',
+			'\\/evil.example/a.js',
+			'https&#58;//evil.example/a.js',
+			'https&colon;//evil.example/a.js',
+			'https&#x3A//evil.example/a.js',
+			'ht\ttps://evil.example/a.js',
+			'https:/\n/evil.example/a.js',
+			' \u0001https://evil.example/a.js',
+			'&#47;&#47;evil.example/a.js',
+			'HTTPS://EVIL.EXAMPLE/a.js',
+		];
+		const body = srcs.map((src) => `<script src="${src}"></script>`).join('');
+		const problems = pageProblems(page({ body }));
+		expect(problems).toHaveLength(srcs.length);
+		for (const [i, src] of srcs.entries())
+			expect(problems[i]).toBe(`<script> loads an off-site file: ${src} (resolves to https://evil.example/a.js)`);
+	});
+
+	it('rejects an off-site link of every fetching rel, in any case and among other tokens', () => {
+		const links = [
+			['icon', '<link rel="icon" href="https://evil.example/i.png">'],
+			['icon', '<link rel="shortcut icon" href="https://evil.example/i.png">'],
+			['icon', '<link rel="ICON" href="https://evil.example/i.png">'],
+			['icon', '<link rel=" Icon\t" href="https://evil.example/i.png">'],
+			['icon', '<link rel="ic&#111;n" href="https://evil.example/i.png">'],
+			['preload stylesheet', '<link rel="preload stylesheet" href="https://evil.example/i.png">'],
+			...FETCHING_RELS.map((rel) => [rel, `<link rel="${rel}" href="https://evil.example/i.png">`]),
+		];
+		const problems = pageProblems(page({ head: links.map(([, link]) => link).join('') }));
+		expect(problems).toEqual(
+			links.map(([rel]) => `<link rel="${rel}"> loads an off-site file: https://evil.example/i.png`),
+		);
+	});
+
+	it('rejects an off-site <base>, which would move every relative URL after it', () => {
+		const html = `<html><head><base href="https://evil.example/">${meta(policy(["'self'"], ["'self'"]))}</head></html>`;
+		expect(pageProblems(html)).toEqual(['<base> loads an off-site file: https://evil.example/']);
+		expect(pageProblems(page({ head: '<base href="/ai-training/">' }))).toEqual([]);
+	});
+
+	it('passes an off-site link whose rel fetches nothing, and a fetching link from the site', () => {
+		const head = [
+			'<link rel="alternate" href="https://evil.example/feed.xml">',
+			'<link rel="iconic" href="https://evil.example/x">',
+			'<link rel="icon" href="/ai-training/favicon.svg">',
+			'<link rel="preload" href="https://schubergphilis.github.io/ai-training/a.woff2">',
+		].join('');
+		expect(pageProblems(page({ head }))).toEqual([]);
+	});
+
+	it('rejects a protocol-relative, a data: and a blob: URL, and passes a URL the browser cannot parse', () => {
+		const body = [
+			'<script src="//evil.example/a.js"></script>',
+			'<script src="data:text/javascript,1"></script>',
+			'<script src="blob:https://schubergphilis.github.io/0-1"></script>',
+			// The browser loads nothing from a URL it cannot parse, so it is no request to another site.
+			'<script src="https://[::1/a.js"></script>',
+		].join('');
+		expect(pageProblems(page({ body }))).toEqual([
+			'<script> loads an off-site file: //evil.example/a.js (resolves to https://evil.example/a.js)',
+			'<script> loads an off-site file: data:text/javascript,1',
+			'<script> loads an off-site file: blob:https://schubergphilis.github.io/0-1',
+		]);
 	});
 
 	it('checks an import map, speculation rules and a data-type attribute, and skips only JSON data blocks', () => {
@@ -176,6 +252,27 @@ describe('pageProblems', () => {
 			`inline <script> not in script-src: '${sha256('{"prerender":[]}')}' "{"prerender":[]}"`,
 			`inline <script> not in script-src: '${sha256('alert(1)')}' "alert(1)"`,
 		]);
+	});
+});
+
+describe('offSite', () => {
+	it('gives the resolved URL of an off-site value and undefined for a site URL or one that does not parse', () => {
+		expect(offSite('/ai-training/a.js')).toBeUndefined();
+		expect(offSite('a.js')).toBeUndefined();
+		expect(offSite('../../a.js')).toBeUndefined();
+		expect(offSite('https://schubergphilis.github.io/a.js')).toBeUndefined();
+		expect(offSite('http://schubergphilis.github.io/a.js')).toBe('http://schubergphilis.github.io/a.js');
+		expect(offSite('https://schubergphilis.github.io.evil.example/a.js')).toBe(
+			'https://schubergphilis.github.io.evil.example/a.js',
+		);
+		expect(offSite('https://[::1')).toBeUndefined();
+	});
+
+	it('decodes a numeric reference without its semicolon, and a named one only when it may lack it', () => {
+		expect(offSite('/?a=1&amp;b=2')).toBeUndefined();
+		// `&colon` without `;` is no legacy reference, so it stays text and the URL is a relative path.
+		expect(offSite('https&colon//evil.example/')).toBeUndefined();
+		expect(offSite('https&#58//evil.example/')).toBe('https://evil.example/');
 	});
 });
 

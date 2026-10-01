@@ -26,8 +26,12 @@ images only from the site itself, plus images from `data:` URLs, and the
 page can connect and submit forms only to the site. A script runs only from
 a file of the site or as an inline script whose hash the policy lists.
 The tag comes near the end of `<head>`. For the start of `<head>`, the
-build check (`mise run bundles`) rejects a script or stylesheet from
-another site and an inline script whose hash the policy doesn't list.
+build check (`mise run bundles`) rejects an inline script whose hash the
+policy doesn't list. It also rejects a script, a stylesheet, a `<base>`, and
+a `<link>` that makes the browser contact the server it names (an icon, a
+preload or prefetch, a manifest, `preconnect` or `dns-prefetch`), when its
+URL leads to another site. The check resolves each URL the way the browser
+does first.
 
 ## Scope
 

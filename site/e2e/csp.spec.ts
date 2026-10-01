@@ -34,16 +34,38 @@ for (const path of builtPages()) {
 	});
 }
 
-test('search finds pages under the policy, and Enter in the box breaks nothing', async ({ page, errors }) => {
+/** What the listeners of the search test saw, on `window.searchEvents`. */
+type SearchEvents = { enter: number; enterCancelled: number; submits: number; submitsCancelled: number };
+
+test('search finds pages under the policy, and its form submits nothing', async ({ page, errors }) => {
 	await page.goto('');
 	await page.locator('button[data-open-modal]').click();
-	const box = page.getByRole('dialog', { name: 'Search' }).getByRole('textbox', { name: 'Search' });
+	const dialog = page.getByRole('dialog', { name: 'Search' });
+	const box = dialog.getByRole('textbox', { name: 'Search' });
 	await box.fill('agent');
 	await expect(page.locator('.pagefind-ui__result').first()).toBeVisible();
-	// Pagefind's form has `action="javascript:void(0);"`, which `script-src` would block if the submit went through.
+	// Pagefind's form has `action="javascript:void(0);"`, which `form-action 'self'` blocks if a submit goes through.
+	// Pagefind cancels the keydown of Enter in the box, so Enter submits nothing, and its submit handler
+	// cancels a submit. Listeners on the window run after Pagefind's in the bubble phase and count both.
+	await page.evaluate(() => {
+		const seen: SearchEvents = { enter: 0, enterCancelled: 0, submits: 0, submitsCancelled: 0 };
+		Object.assign(window, { searchEvents: seen });
+		window.addEventListener('keydown', (e) => {
+			if (e.key !== 'Enter') return;
+			seen.enter += 1;
+			if (e.defaultPrevented) seen.enterCancelled += 1;
+		});
+		window.addEventListener('submit', (e) => {
+			seen.submits += 1;
+			if (e.defaultPrevented) seen.submitsCancelled += 1;
+		});
+	});
+	const searchEvents = () => page.evaluate(() => (window as unknown as { searchEvents: SearchEvents }).searchEvents);
 	await box.press('Enter');
-	// A violation event is queued as a task, so give it time to arrive before the check.
-	await page.waitForTimeout(500);
-	expect(errors, 'no violation after Enter').toEqual([]);
+	await expect.poll(searchEvents).toEqual({ enter: 1, enterCancelled: 1, submits: 0, submitsCancelled: 0 });
+	// Submit the form directly, as a Pagefind that stopped cancelling Enter would.
+	await dialog.locator('form').evaluate((form: HTMLFormElement) => form.requestSubmit());
+	await expect.poll(searchEvents).toEqual({ enter: 1, enterCancelled: 1, submits: 1, submitsCancelled: 1 });
+	expect(errors, 'no violation after Enter or a submit').toEqual([]);
 	await expect(page.locator('.pagefind-ui__result').first()).toBeVisible();
 });
