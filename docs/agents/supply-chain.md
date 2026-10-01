@@ -69,7 +69,11 @@ nobody pushes fails a scheduled run. No advisory is ever ignored.
   `tests/test_mise_lock.py` fails on one without it. zizmor publishes no
   musl Linux binary, so `mise lock` writes its `linux-arm64-musl`,
   `linux-x64-musl` and `linux-x64-musl-baseline` entries with only
-  `provenance`. Delete those entries after a `mise lock` run.
+  `provenance`. The repository sets no `lockfile_platforms`, so without
+  `--platform` `mise lock` locks the platforms already in the lockfile
+  ([`mise lock`](https://mise.jdx.dev/cli/lock.html)), and the
+  other tools keep those three, so a bare `mise lock` writes the three
+  zizmor entries back. Delete them after every `mise lock` run.
 - CI pins the mise version and its checksum on every `mise-action` step.
   `docs/agents/mise-refresh.md` is the procedure for moving that pin, and
   `mise run mise-refresh <version>` does its download, verify and hash steps.
