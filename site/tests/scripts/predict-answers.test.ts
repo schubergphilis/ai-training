@@ -55,6 +55,10 @@ describe('missingAnswerWords', () => {
 	it('compares case-sensitively, because the match is exact', () => {
 		expect(missingAnswerWords('isError: False', 'print isError', 'it prints false')).toEqual(['False']);
 	});
+	it('counts accented and non-Latin letters as part of a word', () => {
+		expect(missingAnswerWords('Café: open', 'Is the cafe open?', '')).toEqual(['Café']);
+		expect(missingAnswerWords('東京: 晴れ', 'What does lookup("東京") print?', '')).toEqual(['晴れ']);
+	});
 	it('skips an answer of numbers only', () => {
 		expect(missingAnswerWords('3\n1133 0.004323 2.0', 'How many calls?', '')).toEqual([]);
 	});

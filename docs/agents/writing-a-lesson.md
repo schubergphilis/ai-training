@@ -206,10 +206,13 @@ A graded `Predict` is marked by exact match. Its answer, every literal
 string in it and its output format follow from the stem and its `context`
 alone, and the lesson page states the exact output format (#214, #439).
 An answer that needs numbers only the fixture prints makes the block an
-ungraded example (#167). `mise run checkpoints` warns on a graded,
-reviewed `Predict` when a word of its `answer` is in neither the stem
-(code blocks included) nor the `context`. A word has at least one
-letter, so numbers alone pass, and the match is case-sensitive. A word
+ungraded example (#167). `mise run checkpoints` warns on a graded
+`Predict` with `review` not `false` when a word of its `answer` is in
+neither the stem (code blocks included) nor the `context`. It skips a
+`phase="practice"` alternate, which the review page never shows. A word
+has at least one letter, so numbers alone pass, and the match is
+case-sensitive. Leading and trailing dots and slashes don't count, so
+check a path's `./` or leading `/` by hand. A word
 the learner derives, such as `EUR` from "euros" and a rule in the
 `context`, also warns, so read each warning before you change the item.
 
