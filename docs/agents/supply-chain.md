@@ -38,9 +38,12 @@ nobody pushes fails a scheduled run. No advisory is ever ignored.
   in place of its `postinstall`, and skips the scripts of `sharp` 0.33 and
   later, which loads its prebuilt `@img/*` package
   (<https://github.com/oven-sh/bun/blob/main/src/install/postinstall_optimizer.rs>).
+  The installed `sharp` 0.35 has no install script at all, so only the
+  `postinstall` of `esbuild` is affected today.
   To trust a package, run `bun pm untrusted` in `site/` after
   the install, add the name to the array in the same pull request as the
-  dependency, and say in it which script runs and why the build needs it.
+  dependency, and say in the pull request which script runs and why the
+  build needs it.
 - `uv.lock` is committed and must stay in the tree. `mise run ci` and CI
   install with `py-install-frozen`. The dev group in `pyproject.toml` is
   exact-pinned. Use `mise run py-install` when deliberately changing it,
