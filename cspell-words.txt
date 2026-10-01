@@ -279,3 +279,5 @@ llmstxt
 Marit
 Zandvliet
 Oosterhuis
+Carpentries
+Dodds
