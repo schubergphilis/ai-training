@@ -42,6 +42,9 @@ describe('setAsideCode', () => {
 		expect(text).toContain('answer={`Run \\`x\\` and \\`y\\`.`}');
 		expect(text).not.toContain('<Tag>');
 		expect(restore(text)).toBe(tag);
+		const { text: even } = setAsideCode('a \\\\`<x>` and `<y>`');
+		expect(even).toMatch(/^a \\\\\uE000\d+\uE001 and \uE000\d+\uE001$/);
+		expect(setAsideCode('a \\\\\\`<x>` b').text).toBe('a \\\\\\`<x>` b');
 		const { text: closed } = setAsideCode('A path `C:\\` here.');
 		expect(closed).toMatch(/^A path \uE000\d+\uE001 here\.$/);
 	});
