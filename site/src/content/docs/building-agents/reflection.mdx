@@ -107,7 +107,8 @@ nothing concrete to check: it always finds one more thing to change.
 The budget is the loop's last stop. At every critique, `reflect` adds
 the length of the question, the passage and the draft to `spent`, and
 after the revision it stops with `budget_spent` once `spent` is over
-2000 characters.
+2000 characters. For this draft a critique adds 286 characters, or 301
+when the draft starts with "Good question! ".
 
 ```python
 def critic_is_it_good(item: dict, draft: str) -> list[str]:
@@ -118,7 +119,7 @@ def critic_is_it_good(item: dict, draft: str) -> list[str]:
 
 <Predict id="predict-no-cap" objective="building-agents/orchestrates-agents/picks-a-pattern"
   concepts={['reflection']}
-  context="In the lesson, a fake critic whose only criterion is whether the answer is good asks Make it friendlier. when a draft does not start with Good question!, and Make it shorter. when it does. The loop has no round cap, and it stops only when the critic returns no requests or when a character budget of 2000 is spent. The draft about annual leave already passes the lesson's two concrete checks. It is the sentence You get 25 days per year. followed by a space and, in double quotes, the passage sentence Every employee accrues 25 days of annual leave per year. A fake reviser adds Good question! and a space in front of the draft for the first request, and removes them for the second. Each critique adds 286 characters to the budget count, or 301 when the draft starts with Good question!, and the loop checks the budget after each revision. The run prints draft: and the first draft, then per round a line round n: critic -> and the request list in Python notation, and a line revised: and the new draft. The last line is stop:, the stop reason (passed, max_rounds or budget_spent), after n rounds, and m model calls, where the first draft, each critique and each revision is one model call."
+  context="In the lesson, a fake critic whose only criterion is whether the answer is good asks Make it friendlier. when a draft does not start with Good question!, and Make it shorter. when it does. The loop has no round cap, and it stops only when the critic returns no requests or when a character budget of 2000 is spent. The draft about annual leave already passes the lesson's two concrete checks. It is the sentence You get 25 days per year. followed by a space and the passage sentence Every employee accrues 25 days of annual leave per year. in double quotes, with its full stop inside them. A fake reviser adds Good question! and a space in front of the draft for the first request, and removes them for the second. Each critique adds 286 characters to the budget count, or 301 when the draft starts with Good question!, and the loop checks the budget after each revision. The run prints draft: and the first draft, then per round a line such as round 1: critic -> ['Make it friendlier.'] and a line revised: and the new draft. The last line reads like stop: passed after 2 rounds, 4 model calls, with the stop reason passed, max_rounds or budget_spent, and the first draft, each critique and each revision count as one model call."
   title="Predict what happens without a cap"
   hint="Can this critic ever return an empty list, and which of the loop's stop rules is left?"
   answer={`draft: You get 25 days per year. "Every employee accrues 25 days of annual leave per year."
