@@ -9,6 +9,7 @@ import { remarkCheckpoints } from './plugins/remark-checkpoints.mjs';
 import { remarkCitations } from './plugins/remark-citations.mjs';
 import { remarkTerms } from './plugins/remark-terms.mjs';
 import { allLessons, allTopics, courseLessonIds, readAreaTree } from './scripts/lib/area-tree.mjs';
+import { CSP } from './scripts/lib/csp.mjs';
 import { BASE, SITE } from './scripts/lib/site-address.mjs';
 
 // This is a *project* site: it deploys under a subpath of
@@ -143,6 +144,12 @@ const bibliography = parseYaml(readFileSync(new URL('./src/data/bibliography.yam
 export default defineConfig({
 	site: SITE,
 	base,
+	// Content Security Policy (issue #608): Astro writes it as a <meta> into every
+	// page. The policy and why it has each source are in scripts/lib/csp.mjs.
+	security: { csp: CSP },
+	// No inline <style>: Astro 7.3 leaves the inline styles of components used in
+	// MDX out of `style-src`, so every style is a file under 'self' (#608).
+	build: { inlineStylesheets: 'never' },
 	markdown: {
 		// Checkpoint props first, read from the tree before any plugin rewrites
 		// it. Then first-mention terms, then citations `(@key)` (spec S03

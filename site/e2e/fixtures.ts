@@ -1,7 +1,9 @@
 /**
  * Shared test setup: every page blocks requests that leave the site under
  * test (web fonts and the like get an empty reply, so no spec waits on the
- * network), and any `pageerror` or console error fails the test. Specs
+ * network), and any `pageerror` or console error fails the test. A
+ * Content Security Policy violation is reported as a console error too, so a
+ * widget the policy (scripts/lib/csp.mjs) breaks fails its spec. Specs
  * import `test` and `expect` from here instead of `@playwright/test`.
  */
 import { join } from 'node:path';
@@ -112,6 +114,12 @@ export const test = base.extend<{
 				const url = route.request().url();
 				if (url.startsWith('http://localhost:')) return route.continue();
 				return route.fulfill({ status: 204, body: '' });
+			});
+			// Chromium logs most violations itself; the event also covers the ones it only reports.
+			await page.addInitScript(() => {
+				document.addEventListener('securitypolicyviolation', (e) => {
+					console.error(`CSP violation: ${e.violatedDirective} blocked ${e.blockedURI || 'inline'}`);
+				});
 			});
 			page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 			page.on('console', (m) => {

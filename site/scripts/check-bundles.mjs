@@ -20,15 +20,21 @@
  * alternate head hint points at the alternate of its own page, which exists,
  * and that every alternate has a page that hints at it
  * (scripts/lib/alternate-hints.mjs, covered by
- * tests/scripts/alternate-hints.test.ts). This file only reports.
+ * tests/scripts/alternate-hints.test.ts).
  *
  * It checks that every link in dist/llms.txt reaches a file in dist and that
  * every page links to llms.txt (scripts/lib/llms-txt.mjs, covered by
  * tests/scripts/llms-txt.test.ts).
+ *
+ * It also checks that every HTML page carries the Content Security Policy and
+ * that the policy allows each inline script and style on it
+ * (scripts/lib/csp.mjs, covered by tests/scripts/csp.test.ts). This file only
+ * reports.
  */
 import { join } from 'node:path';
 import { checkAlternateHints } from './lib/alternate-hints.mjs';
 import { checkBundles, checkDataFiles, checkDataIndex, checkExportCitations } from './lib/bundles.mjs';
+import { checkCsp } from './lib/csp.mjs';
 import { checkLlmsTxt } from './lib/llms-txt.mjs';
 import { checkRenderedCitations } from './lib/rendered-citations.mjs';
 import { SITE_ROOT } from './lib/site-address.mjs';
@@ -49,6 +55,8 @@ const alternates = checkAlternateHints(join(root, 'dist'), SITE_ROOT);
 errors.push(...alternates.errors);
 const llms = checkLlmsTxt(join(root, 'dist'), SITE_ROOT);
 errors.push(...llms.errors);
+const csp = checkCsp(join(root, 'dist'));
+errors.push(...csp.errors);
 
 if (errors.length) {
 	for (const e of errors) console.error(`bundles: ${e}`);
@@ -67,4 +75,7 @@ console.log(
 );
 console.log(
 	`bundles: llms.txt under dist, its ${llms.links} site link${llms.links === 1 ? '' : 's'} each reaching a file`,
+);
+console.log(
+	`bundles: ${csp.pages} HTML page${csp.pages === 1 ? '' : 's'} under dist, each with a Content Security Policy that allows its inline scripts and styles`,
 );
