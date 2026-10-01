@@ -1,8 +1,9 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { describeViolations, playwrightValueImports } from '../../scripts/lib/e2e-imports.mjs';
+import { describeViolations, playwrightValueImports, scriptKind } from '../../scripts/lib/e2e-imports.mjs';
 
 const E2E = fileURLToPath(new URL('../../e2e', import.meta.url));
 
@@ -26,6 +27,27 @@ describe('playwrightValueImports', () => {
 	it('flags a default or a namespace import', () => {
 		expect(found("import pw from '@playwright/test';\n")).toEqual(['the default import `pw`']);
 		expect(found("import * as pw from '@playwright/test';\n")).toEqual(['the namespace import `* as pw`']);
+	});
+
+	it('flags the default export by name, which is test', () => {
+		expect(found("import { default as test } from '@playwright/test';\n")).toEqual(['`default`']);
+		expect(found("export { default } from '@playwright/test';\n")).toEqual(['the re-export of `default`']);
+		expect(found("export { default as test } from '@playwright/test';\n")).toEqual(['the re-export of `default`']);
+	});
+
+	it('treats playwright/test as the same module', () => {
+		expect(found("import { test } from 'playwright/test';\n")).toEqual(['`test`']);
+		expect(found("export { expect } from 'playwright/test';\n")).toEqual(['the re-export of `expect`']);
+		expect(found("import type { Page } from 'playwright/test';\n")).toEqual([]);
+	});
+
+	it('parses JavaScript and JSX files by their extension', () => {
+		const js = "import { test } from '@playwright/test';\n";
+		expect(playwrightValueImports(js, 'a.spec.js')).toEqual([{ line: 1, what: '`test`' }]);
+		expect(playwrightValueImports(js, 'a.spec.mjs')).toEqual([{ line: 1, what: '`test`' }]);
+		// A .tsx file with an element in it. The scriptKind cases below pin which kind each extension gets.
+		const tsx = "import { test } from '@playwright/test';\nconst el = <div>{test.name}</div>;\n";
+		expect(playwrightValueImports(tsx, 'a.spec.tsx')).toEqual([{ line: 1, what: '`test`' }]);
 	});
 
 	it('flags a re-export of test or expect, and an export star', () => {
@@ -58,6 +80,18 @@ describe('playwrightValueImports', () => {
 	});
 });
 
+describe('scriptKind', () => {
+	it('picks the kind from the extension', () => {
+		expect(scriptKind('a.tsx')).toBe(ts.ScriptKind.TSX);
+		expect(scriptKind('a.jsx')).toBe(ts.ScriptKind.JSX);
+		expect(scriptKind('a.js')).toBe(ts.ScriptKind.JS);
+		expect(scriptKind('a.mjs')).toBe(ts.ScriptKind.JS);
+		expect(scriptKind('a.cjs')).toBe(ts.ScriptKind.JS);
+		expect(scriptKind('a.ts')).toBe(ts.ScriptKind.TS);
+		expect(scriptKind('a.mts')).toBe(ts.ScriptKind.TS);
+	});
+});
+
 describe('describeViolations', () => {
 	it('names ./fixtures in each line', () => {
 		const lines = describeViolations(
@@ -72,8 +106,9 @@ describe('describeViolations', () => {
 });
 
 describe('site/e2e', () => {
-	// Recursive, so a spec in a subdirectory is checked too.
-	const files = readdirSync(E2E, { recursive: true, encoding: 'utf8' }).filter((name) => name.endsWith('.ts'));
+	// Recursive, so a spec in a subdirectory is checked too. The pattern is every
+	// script extension Playwright's default testMatch can pick up.
+	const files = readdirSync(E2E, { recursive: true, encoding: 'utf8' }).filter((name) => /\.[cm]?[jt]sx?$/.test(name));
 
 	it('has specs to check', () => {
 		expect(files.filter((name) => name.endsWith('.spec.ts')).length).toBeGreaterThan(0);
@@ -84,6 +119,7 @@ describe('site/e2e', () => {
 		expect(found(readFileSync(join(E2E, 'fixtures.ts'), 'utf8'))).toContain('`test`');
 	});
 
+	// Only the top-level fixtures.ts is exempt: `sub/fixtures.ts` is checked like a spec.
 	it('takes test and expect from ./fixtures in every other file', () => {
 		const problems = files
 			.filter((name) => name !== 'fixtures.ts')
