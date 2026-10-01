@@ -200,7 +200,7 @@ time.
 
 <Predict id="which-test-sees-the-tag" objective="customizing-agents/writes-skill/packages-a-procedure"
   concepts={['writing-a-good-skill']}
-  context="A script releases version 0.4.0 of a small package twice. The first time it runs git tag v0.4.0 before the release commit, and the second time after it. Each time it prints the package's release check, the output of git tag --list 'v*' joined on one line, and git describe --tags, which prints the tag alone when the current commit is tagged and otherwise adds a hyphen, the number of commits since the tag, a hyphen, the letter g and a hash. The repository already has the tag v0.3.0 from the previous release, and the release check prints release VERSION: ok when it passes."
+  context="A script releases version 0.4.0 of a small package twice. The first time it runs git tag v0.4.0 before the release commit, and the second time after it. Each time it prints the package's release check, the output of git tag --list 'v*' joined on one line with spaces, and git describe --tags, which prints the tag alone when the current commit is tagged and otherwise adds a hyphen, the number of commits since the tag, a hyphen, the letter g and a hash. The repository already has the tag v0.3.0 from the previous release, and the release check prints release VERSION: ok when it passes."
   title="Which check tells the two releases apart?" hint="Does the release check or the tag list look at where the tag points? What does git describe add when the tag is on an older commit?"
   answer={`tag before the commit
     release_check.py: release 0.4.0: ok

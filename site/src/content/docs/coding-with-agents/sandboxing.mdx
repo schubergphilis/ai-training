@@ -189,7 +189,7 @@ command and applies the matching rules above.
 
 <Predict id="which-commands-get-out" objective="coding-with-agents/ships-with-agent/runs-a-session"
   concepts={['sandbox', 'trust-boundary']}
-  context="A Claude Code sandbox settings file allows only pypi.org, with strictAllowlist set to true. Three curl commands try to reach pypi.org, files.pythonhosted.org and collect.example.invalid. A script prints, for each command, whether the sandbox lets its host through."
+  context="A Claude Code sandbox settings file allows only pypi.org, with strictAllowlist set to true. Three curl commands try to reach https addresses on pypi.org, files.pythonhosted.org and collect.example.invalid. A script prints, for each command, whether the sandbox lets its host through."
   title="Which commands get out?" hint="For each host, is it on the list exactly as written, and what does strictAllowlist do with a host that isn't?"
   answer={`allowedDomains: pypi.org
   deniedDomains: (none)

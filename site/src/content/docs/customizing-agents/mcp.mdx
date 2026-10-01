@@ -248,7 +248,7 @@ class WriteCap:
 
 <Predict id="predict-the-cap" objective="customizing-agents/connects-tools-safely/hardens-a-connection"
   concepts={['mcp-security', 'server']}
-  context="WriteCap is a small proxy class from the lesson that counts write calls per user per minute and refuses those over the limit. allow() returns ok, or for a write over the limit the message refused: TOOL is write call COUNT of LIMIT allowed this minute, with the tool name and the two numbers filled in. Reads are not counted."
+  context="WriteCap is a small proxy class from the lesson that counts write calls per user per minute and refuses those over the limit. allow() returns ok. For a write over the limit it returns the message refused: TOOL is write call COUNT of LIMIT allowed this minute, with the tool name and the two numbers filled in. Reads are not counted."
   title="Predict the cap" hint="Reads don't count. Which write call is the first one over the limit, and what happens when the minute changes?"
   answer={`ok
 ok
