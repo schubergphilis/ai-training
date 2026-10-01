@@ -11,6 +11,7 @@ import {
 	pageProblems,
 	parsePolicy,
 	sha256,
+	srcsetUrls,
 } from '../../scripts/lib/csp.mjs';
 
 const roots: string[] = [];
@@ -206,9 +207,29 @@ describe('pageProblems', () => {
 		);
 	});
 
+	it('checks every imagesrcset candidate of a fetching link, with or without an href', () => {
+		const head = [
+			'<link rel="preload" as="image" imagesrcset="/ai-training/a.png 1x, https://evil.example/b.png 2x">',
+			'<link rel="preload" as="image" href="/ai-training/a.png" imagesrcset="//evil.example/c.png 100w">',
+			'<link rel="alternate" imagesrcset="https://evil.example/d.png">',
+		].join('');
+		expect(pageProblems(page({ head }))).toEqual([
+			'<link rel="preload"> imagesrcset loads an off-site file: https://evil.example/b.png',
+			'<link rel="preload"> imagesrcset loads an off-site file: //evil.example/c.png (resolves to https://evil.example/c.png)',
+		]);
+	});
+
+	it('finds an off-site file in an uppercase or unquoted tag', () => {
+		const body = "<SCRIPT SRC=https://evil.example/a.js></SCRIPT><LINK REL=ICON HREF='https://evil.example/i.png'>";
+		expect(pageProblems(page({ body }))).toEqual([
+			'<script> loads an off-site file: https://evil.example/a.js',
+			'<link rel="icon"> loads an off-site file: https://evil.example/i.png',
+		]);
+	});
+
 	it('rejects an off-site <base>, which would move every relative URL after it', () => {
 		const html = `<html><head><base href="https://evil.example/">${meta(policy(["'self'"], ["'self'"]))}</head></html>`;
-		expect(pageProblems(html)).toEqual(['<base> loads an off-site file: https://evil.example/']);
+		expect(pageProblems(html)).toEqual(['<base> points off the site: https://evil.example/']);
 		expect(pageProblems(page({ head: '<base href="/ai-training/">' }))).toEqual([]);
 	});
 
@@ -273,6 +294,22 @@ describe('offSite', () => {
 		// `&colon` without `;` is no legacy reference, so it stays text and the URL is a relative path.
 		expect(offSite('https&colon//evil.example/')).toBeUndefined();
 		expect(offSite('https&#58//evil.example/')).toBe('https://evil.example/');
+		// The browser decodes once, so `&amp;#58;` becomes the text `&#58;` and the URL is a relative path.
+		expect(offSite('https&amp;#58;//evil.example/')).toBeUndefined();
+	});
+});
+
+describe('srcsetUrls', () => {
+	it('splits candidates on commas between them and keeps a comma inside a URL', () => {
+		expect(srcsetUrls('a.png 1x, b.png 2x')).toEqual(['a.png', 'b.png']);
+		// A comma without whitespace after it stays in the URL, as the browser reads it; trailing commas end it.
+		expect(srcsetUrls(' a.png,b.png,, c.png')).toEqual(['a.png,b.png', 'c.png']);
+		expect(srcsetUrls('data:image/png,AAA 1x,https://evil.example/x.png 2x')).toEqual([
+			'data:image/png,AAA',
+			'https://evil.example/x.png',
+		]);
+		expect(srcsetUrls('a.png (x, y) 1x, b.png')).toEqual(['a.png', 'b.png']);
+		expect(srcsetUrls('')).toEqual([]);
 	});
 });
 
