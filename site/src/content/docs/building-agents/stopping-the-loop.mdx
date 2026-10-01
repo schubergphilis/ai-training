@@ -104,7 +104,7 @@ names a new path. `max_steps` is 4 in this fixture.
 
 <Predict id="predict-never-answers" objective="building-agents/builds-agent-loop/implements-the-loop"
   concepts={['stop-conditions']}
-  context="In the lesson, a hand-written agent loop has a step limit of four, an error budget of two errors in a row, a repeated-round check and a character budget. A fake model asks to read notes/1.md, notes/2.md and so on, one new file per round, and never answers. Every read succeeds. The fixture prints the question, one line per round with the tool call and its result, then the stop reason."
+  context="In the lesson, a hand-written agent loop has a step limit of four, an error budget of two errors in a row, a repeated-round check and a character budget. A fake model asks to read notes/1.md, then notes/2.md, notes/3.md, notes/4.md and so on, one new file per round, and never answers. Every read succeeds: read_file returns the dict {'ok': True, 'text': 'contents of notes/1.md'} for notes/1.md, and the same with the other path for every other file. The stop reasons are end_turn, max_steps, too_many_errors, repeated_state, budget_spent and interrupted. The fixture prints user: and the question in Python notation, then per round a line round n: read_file(path=...) -> and the result dict, with the path and the dict in Python notation, then stop: and the stop reason."
   title="Predict which rule fires" hint="Which of the checks can see a difference between this round and the last one, and which counter reaches its limit?"
   answer={`user: 'Summarize the notes.'
 round 1: read_file(path='notes/1.md') -> {'ok': True, 'text': 'contents of notes/1.md'}
