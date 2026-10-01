@@ -14,8 +14,8 @@
  *   this is the check that it did;
  * - an ungraded example of the page (a `<Predict>` without `objective`, spec
  *   S03 "Examples") has no `Output:` line in `prose` followed by a `text`
- *   fenced block that holds its `answer`, trimmed, as the MDX tree reads it
- *   (`exampleAnswers`). The page shows that output, and no other bundle field
+ *   fenced block of its own that holds its `answer`, trimmed, as the MDX
+ *   tree reads it (`exampleAnswers`, `missingExampleOutputs`). The page shows that output, and no other bundle field
  *   holds it;
  * - a `(@` is in `prose`, a behavior's `claim`, `why` or `example`
  *   (`objectives[].behaviors[]`) or a checkpoint `stem` outside a fenced block or an inline code span,
@@ -163,18 +163,40 @@ export function exampleAnswers(src, where) {
 }
 
 /**
- * Whether `prose` holds `answer` as an example output: an `Output:` line, a
- * blank line, and a `text` fenced block (any fence length) whose body is the
- * answer, trimmed.
+ * The bodies of the example outputs in `prose`, in prose order: each `text`
+ * fenced block (any fence length) right after an `Output:` line and a blank
+ * line, without its fences.
  */
-export function hasExampleOutput(prose, answer) {
-	const body = answer.trim();
-	return fencedBlocks(prose).some((block) => {
+export function exampleOutputBodies(prose) {
+	const out = [];
+	let from = 0;
+	for (const block of fencedBlocks(prose)) {
+		const at = prose.indexOf(block, from);
+		from = at + block.length;
 		const lines = block.split('\n');
-		if (lines.length < 3 || !/^(`{3,}|~{3,})text$/.test(lines[0] ?? '')) return false;
-		if (lines.slice(1, -1).join('\n') !== body) return false;
-		return prose.includes(`Output:\n\n${block}`);
-	});
+		if (lines.length < 3 || !/^(`{3,}|~{3,})text$/.test(lines[0] ?? '')) continue;
+		if (!prose.slice(0, at).endsWith('Output:\n\n')) continue;
+		out.push(lines.slice(1, -1).join('\n'));
+	}
+	return out;
+}
+
+/**
+ * The ids of the examples in `examples` (`exampleAnswers`, source order) whose
+ * output is not in `prose`. Each example uses up its own output block, the
+ * first one after the block the example before it used whose body is its
+ * answer, trimmed, so two examples with the same answer need two blocks.
+ */
+export function missingExampleOutputs(prose, examples) {
+	const bodies = exampleOutputBodies(prose);
+	const missing = [];
+	let next = 0;
+	for (const { id, answer } of examples) {
+		const at = bodies.indexOf(answer.trim(), next);
+		if (at < 0) missing.push(id);
+		else next = at + 1;
+	}
+	return missing;
 }
 
 /** `<area>/<lesson>` for every `.json` under `bundlesDir`. */
@@ -234,9 +256,8 @@ export function checkBundle(id, file, src) {
 				errors.push(`${id}: the fenced block starting ${JSON.stringify(first)} is not in prose unchanged`);
 			}
 		}
-		for (const { id: example, answer } of exampleAnswers(src, id)) {
-			if (!hasExampleOutput(bundle.prose, answer))
-				errors.push(`${id}: the output of example #${example} is not in prose after an Output: line`);
+		for (const example of missingExampleOutputs(bundle.prose, exampleAnswers(src, id))) {
+			errors.push(`${id}: the output of example #${example} is not in prose after an Output: line`);
 		}
 		for (const line of citationsOutsideCode(bundle.prose)) {
 			errors.push(`${id}: prose keeps a raw citation token outside code: ${JSON.stringify(line)}`);

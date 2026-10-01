@@ -13,8 +13,8 @@ import {
 	dataTreeSources,
 	exampleAnswers,
 	fencedBlocks,
-	hasExampleOutput,
 	isLessonUrl,
+	missingExampleOutputs,
 	publishedDataPaths,
 	withoutNotes,
 } from '../../scripts/lib/bundles.mjs';
@@ -212,8 +212,23 @@ describe('checkBundles', () => {
 			'a/x #e: answer of an example <Predict> must be a string',
 		);
 		expect(() => exampleAnswers('<Predict id="e">\nno end\n', 'a/x')).toThrow(/^a\/x: /);
-		expect(hasExampleOutput('Output:\n\n````text\n```\nx\n```\n````\n', '```\nx\n```\n')).toBe(true);
-		expect(hasExampleOutput('```text\nx\n```\n', 'x')).toBe(false);
+		const one = [{ id: 'e', answer: '```\nx\n```\n' }];
+		expect(missingExampleOutputs('Output:\n\n````text\n```\nx\n```\n````\n', one)).toEqual([]);
+		expect(missingExampleOutputs('```text\nx\n```\n', [{ id: 'e', answer: 'x' }])).toEqual(['e']);
+	});
+	it('needs one output block per example, in source order, when two examples share an answer', () => {
+		const twins = [
+			{ id: 'a', answer: '42' },
+			{ id: 'b', answer: '42\n' },
+		];
+		const block = 'Output:\n\n```text\n42\n```\n';
+		expect(missingExampleOutputs(`${block}\n${block}`, twins)).toEqual([]);
+		expect(missingExampleOutputs(block, twins)).toEqual(['b']);
+		const page =
+			'<Predict id="a" title="A" answer="42">\nX.\n</Predict>\n\n<Predict id="b" title="B" answer="42">\nY.\n</Predict>\n';
+		expect(check(tree({ 'a/x': bundle({ prose: block }) }, { 'content/a/x.mdx': page })).errors).toEqual([
+			'a/x: the output of example #b is not in prose after an Output: line',
+		]);
 	});
 	it('checks one bundle file against its page source', () => {
 		const root = tree();
