@@ -59,17 +59,17 @@ same on every press:
 
 <Choice id="ten-runs-at-zero" phase="review" objective="concepts/explains-models/explains-generation"
   concepts={['sampling-and-temperature', 'non-determinism']}
-  context="The lesson shows that a model scores its candidate answers and that temperature decides how the pick is drawn from those scores."
+  context="The lesson shows that a model scores its candidate answers and that temperature decides how the pick is drawn from those scores. The question is about the lesson's toy model, whose temperature slider goes down to 0."
   title="Ten runs at temperature 0" hint="At temperature 0, which candidate gets all of the probability?"
   options={[
     { text: 'Ten different answers, because each run picks at random from all of the candidates.', why: 'That describes a high temperature. At 0, the probability is on one candidate.' },
     { text: 'The same answer on all or almost all of the runs, because each takes the top candidate.', correct: true },
-    { text: 'An error, because a model needs some randomness before it can write anything.', why: 'A model can always take the top candidate. Temperature 0 is a normal setting.' },
+    { text: 'An error, because a model needs some randomness before it can write anything.', why: 'A model can always take the top candidate, and the toy model\'s slider accepts 0.' },
     { text: 'The same answer that any other model gives at temperature 0 for this prompt.', why: 'Another model has other scores, so its top candidate can be a different answer.' },
   ]}>
 
-You set the temperature to 0 and send one prompt ten times. What do you
-expect?
+You set the toy model to temperature 0 and run its one prompt ten
+times. What do you expect?
 
 </Choice>
 
@@ -151,9 +151,17 @@ their first sentence and part ways after it. The Messages API reference
 says the same about the real thing: even at a temperature of 0 the results
 aren't fully deterministic (@Claude docs messages).
 
+On some current models you can't make the setting at all. The same
+reference marks temperature as deprecated: Claude models newer than Opus
+4.6 refuse a request that asks for any temperature except the default of
+1.0 (@Claude docs messages). That default is the top of the range the
+reference gives, so a workflow on such a model always runs at the highest
+temperature it has.
+
 Put the two results together. At temperature 1 a run can pick a wrong
 answer that has a few percent of the probability. At temperature 0 a run
-can still differ from the run before it. So one run tells you which
+can still differ from the run before it, and some models don't offer
+temperature 0. So one run tells you which
 answer came up once. It tells you nothing about how often that answer
 comes up. A prompt that gave the right answer once has been tested zero
 times for what a workflow needs from it: a usable answer every time it
@@ -177,7 +185,7 @@ reliable as the check that runs after it, on every run.
   hint="What did the one run measure, and what does a paying process need to know about every run?"
   options={[
     { text: 'Yes. The prompt gave the right total, and the model is deterministic enough for a fixed email.', consequence: 'The process runs the prompt on hundreds of emails and some totals come back as text, in another currency, or with a second number appended. Nobody notices until the payments are compared with the bank statement.' },
-    { text: 'Yes, if the temperature is set to 0, because then every run gives the same answer and the process never sees a different total.', consequence: 'The runs are more consistent and still differ now and then, and a wrong total at temperature 0 is as wrong as at temperature 1. The process pays it.' },
+    { text: 'Yes, if the temperature is set to 0, because then every run gives the same answer and the process never sees a different total.', consequence: 'If the process uses one of the newer models that accept only the default temperature, the setting is refused. On a model that accepts it, the runs are more consistent and still differ now and then, and a wrong total at temperature 0 is as wrong as at temperature 1. The process pays it.' },
     { text: 'Not yet. Run it on a set of emails with known totals, count the answers that are right and in the right form, and add a check that rejects an answer that fails either.', correct: true, consequence: 'The trial run shows the failure rate and the forms a bad answer takes, and the check turns each of those into a rejected item instead of a payment.' },
     { text: 'Not yet. Ask the model whether it is confident in the total, and only pay when it says yes. A model usually knows when it is unsure.', consequence: 'The confidence statement is more predicted text and it varies between runs like the total does. The check now has two answers to trust instead of one.' },
   ]}>
@@ -247,7 +255,7 @@ a hundred times without anyone reading a hundred answers.
   options={[
     { text: 'Compare each answer with the answer the prompt gave in testing, and reject any that differ.', why: 'Wording varies between runs without the queue being wrong, so this rejects correct answers, and it accepts a wrong queue whenever testing happened to produce that same wrong queue.' },
     { text: 'Strip whitespace and case, and accept the answer when it is exactly one of the four queue names.', correct: true },
-    { text: 'Set the temperature to 0 and skip the check, because the answers no longer vary.', why: 'Answers at temperature 0 vary less and still vary. The invented fifth queue arrives less often and still arrives, and nothing catches it.' },
+    { text: 'Set the temperature to 0 and skip the check, because the answers no longer vary.', why: 'Some current models refuse a temperature of 0, so the workflow may not have the setting. On a model that has it, answers at temperature 0 vary less and still vary. The invented fifth queue arrives less often and still arrives, and nothing catches it.' },
     { text: 'Accept any answer that contains one of the four queue names somewhere in the text.', why: 'A sentence of explanation that mentions two queues passes, and the ticket system gets a paragraph where it expected one word.' },
   ]}>
 
@@ -278,7 +286,7 @@ job?
     { text: 'The right answer can come up for this prompt and this email.', correct: true },
     { text: 'The prompt is ready to go into the process that handles orders.', why: 'One run can\'t show how often the prompt fails. A process sees the bad runs as well.' },
     { text: 'The run doesn\'t show what share of runs gives the right answer.', correct: true },
-    { text: 'At temperature 0 the same email would give this answer on every run.', why: 'Temperature 0 removes most of the variation and not all of it, because near ties can still swap.' },
+    { text: 'At temperature 0 the same email would give this answer on every run.', why: 'Temperature 0 removes most of the variation and not all of it, because near ties can still swap. Some current models also refuse a temperature of 0.' },
   ]}>
 
 The prompt gave the right order number on its one run. Which two of these
@@ -317,7 +325,8 @@ told you?
    most of the variation. It doesn't remove it all, because a real model
    computes its scores in batches with other requests, the rounding
    follows the order of the arithmetic in the batch, and a near tie can
-   swap.
+   swap. Some current models refuse any temperature except their
+   default, so a workflow can't count on the setting.
 3. One good run is a sample of size one. It shows that an answer can
    come up, and says nothing about how often it does or what a bad run
    looks like.
