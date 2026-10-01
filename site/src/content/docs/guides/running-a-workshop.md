@@ -8,37 +8,40 @@ description: Plan and run a one-day, face-to-face workshop on one area of this s
 This guide is for a trainer who runs one area's course as a face-to-face
 workshop. The room holds 6 to 20 people with their own laptops, and one
 trainer works with a few helpers. The site is the reference for everything
-taught. The
-worked example is the [Coding with agents](/coding-with-agents/) course, and
-the same plan works for any other area.
+taught. The worked example is the [Coding with agents](/coding-with-agents/)
+course. The plan works for the other areas too, with the changes for the
+Foundations areas that the next section names.
 
 ## Three tables
 
 The room has three tables, one per level. People sit at the table that fits
 how they learn best on the day, and the placement quiz suggests which one.
 
-- **(A) Clear-instruction.** For people who can't reasonably learn this
-  material from the site on their own. The trainer gives them the most
-  time: a demonstration first, then the same task done together, then
-  alone. Who finishes early repeats the exercise without the worked example.
-  This level is for the workshop only and has no site setting.
+- **(A) Clear-instruction.** A workshop level with no site setting, for
+  people who can't reasonably learn this material from the site on their
+  own. The trainer gives them the most time: a demonstration first, then the
+  same task done together, then alone. People who finish early repeat the
+  exercise without the worked example.
 - **(B) Less comfortable.** The site's `less` comfort level. People here
   can work from the site with hints, so they try the exercise first and
-  discuss it after. Who finishes early takes the stretch goal.
+  discuss it after. People who finish early take the stretch goal.
 - **(C) More comfortable.** The site's `more` comfort level. People here
-  work ahead and time their own work against a forecast. Who finishes early
-  helps table B.
+  work ahead and time their own work against a forecast. People who finish
+  early help table B.
 
 Learners set their comfort level on the [settings](/settings/) page, so ask
 B and C to set theirs at the start of the day. Table C helps table B, and
 never table A, because table A needs a slower pace and a fixed method.
-Anyone may move to another table after the first block.
+Anyone may move to another table after the first block. The Foundations
+areas (Concepts, Safety, Using agents) have no comfort levels on the site.
+In those workshops B and C are workshop levels too, and the finished state
+of an exercise is a written answer.
 
 ## Before the day
 
 - Send the placement quiz and the setup instructions a week ahead.
 - Offer a 30-minute drop-in setup call. By its end, each person has the
-  agent installed and signed in, the fixture repository copied, and one
+  agent installed and signed in, your fixture repository cloned, and one
   command run in it.
 - Have one helper for every eight participants, and put most of them at
   table A.
@@ -46,14 +49,16 @@ Anyone may move to another table after the first block.
 - Bring two colors of sticky notes for each person.
 - Set the date of the follow-up session.
 
-For Coding with agents, the setup instructions are the steps in [The
+For Coding with agents, each lesson has its own fixture. Make your own
+copy of each fixture you use with the steps in [The
 fixture](/coding-with-agents/first-session/#the-fixture) section of the first
-lesson. They clone the course repository and copy one lesson's fixture into
-the home directory as a new git repository.
+lesson. Commit the start state and the finished state of every exercise in
+each copy. Then share the copies as repositories that the pairs clone at the
+setup call.
 
 ## The placement quiz
 
-The quiz takes ten minutes. Present it as the first exercise of the day.
+The quiz takes ten minutes. Present it as the first exercise of the workshop.
 You grade no answers, and nobody sees a score. Take every item from the area's
 own lessons. The example items below come from Coding with agents.
 
@@ -65,23 +70,28 @@ own lessons. The example items below come from Coding with agents.
 - **What do you do next, two items.** Each item shows a task and part of an
   agent's output, with four options. Each option marks a level. Example: the
   agent says it fixed the off-by-one error in `done()` and shows a diff
-  without test output. The options are "commit it" (A), "read the diff" (B),
-  "run the tests yourself" (C), and "ask it to explain the diff" (B).
+  without test output. The options are "commit it" (A), "ask it to explain
+  the diff" (A), "read the diff" (B), and "run the tests yourself" (C).
 - **Ordering, one item.** The steps of a change, shuffled, to put back in
-  order. Example: "let the agent make the change", "run the tests", "ask the
-  agent for a plan and read it". The order is plan, then change, then tests.
+  order. Example: "let the agent make the change", "run the tests to check
+  the change", "ask the agent for a plan and read it". The order is plan,
+  then change, then tests.
 - **What does this print, one item.** A short piece of real code, as in the
-  site's predict checkpoints. Example: in the first lesson's fixture, after
-  `python3 todo.py add "Buy milk"` and `python3 todo.py add "Call Sam"`,
-  what does `python3 todo.py done 1` print? It prints `done #1: Call Sam`.
+  site's predict checkpoints. Example: in the first lesson's fixture, start
+  from an empty list with `export TODO_FILE=/tmp/quiz.json`, so nothing
+  writes to the fixture's `todos.json`. After `python3 todo.py add "Buy milk"` and `python3 todo.py add "Call Sam"`, what does
+  `python3 todo.py done 1` print? It prints `done #1: Call Sam`. This item
+  gives away the off-by-one bug that the first lesson teaches.
 - **Usage, one item.** "The last time you used an assistant, at what point
-  did you first ask it for code?"
+  did you first ask it for code?" Offer three answers: "at the start" (A),
+  "after I described the task" (B), and "after I wrote a plan or a check"
+  (C).
 
-To score, count the answers marked A, B, and C for each person. The person
-starts at the table with the highest count, and a tie goes to the lower
-table. This quiz is
-untested, so record each person's answers next to the table where they
-ended the day.
+A wrong ordering or print answer counts as A, and a right one counts as
+C. To score, count the answers marked A, B, and C for each person. The
+person starts at the table with the highest count. A tie goes to the table
+with more support, so A before B and B before C. This quiz is untested, so
+record each person's answers next to the table where they ended the day.
 
 ## The day
 
@@ -108,8 +118,8 @@ like this:
 
 | Block | Table A                                                                                            | Table B                                                                                                  | Table C                                                                                                           |
 | ----- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 1     | [Your first session with a coding agent](/coding-with-agents/first-session/), with a demonstration | The same lesson                                                                                          | The same lesson, then [Keeping API keys out of the agent's reach](/coding-with-agents/keys-and-secrets/)          |
-| 2     | [Keeping API keys out of the agent's reach](/coding-with-agents/keys-and-secrets/)                 | The same lesson, then [Deciding whether to build it at all](/coding-with-agents/deciding-what-to-build/) | [Splitting the work into components the agent can build one at a time](/coding-with-agents/decomposing-the-work/) |
+| 1     | [Your first session with a coding agent](/coding-with-agents/first-session/), with a demonstration | Same as table A                                                                                          | Same as table A, then [Keeping API keys out of the agent's reach](/coding-with-agents/keys-and-secrets/)          |
+| 2     | [Keeping API keys out of the agent's reach](/coding-with-agents/keys-and-secrets/)                 | Same as table A, then [Deciding whether to build it at all](/coding-with-agents/deciding-what-to-build/) | [Splitting the work into components the agent can build one at a time](/coding-with-agents/decomposing-the-work/) |
 
 **Shared opening.** Everyone sits together for the puzzle and the reasons
 for three tables. Then each person writes down a confidence number from 1
@@ -134,8 +144,8 @@ below has the details.
 ## Exercise rules
 
 - Give each exercise a start state, a finished state, and a diff between
-  them. In your copy of the fixture, commit the finished state of each
-  exercise, so a pair can reset to the start or jump ahead.
+  them. With both states committed in your shared fixture repositories, a
+  pair can reset to the start or check out the finished state.
 - Leave one thing for the pair to figure out, and build the rest for them in
   advance.
 - Always give the agent a check it can run, such as a test, or a command with
@@ -158,15 +168,17 @@ below has the details.
   one open question, and you use them to re-seat people.
 - Never teach alone. A second person keeps the room moving while you help
   one pair.
-- Let advanced participants help others, and keep them off the microphone.
+- Let advanced participants help at table B, and keep them off the
+  microphone.
 - Start and end breaks on time, and keep a workshop to two days at most.
 
 ## Per table
 
 **Table A.** Demonstrate the exercise with a deliberate mistake, run it,
 and let the room see it fail. Then do the exercise together, and then let
-pairs do it alone. Use the [tutor](/guides/tutor/) as the assistant here.
-It gives hints and keeps the answers back. After a wrong answer it asks a
+pairs do it alone. Give each pair the [tutor](/guides/tutor/) in a second
+session, next to the coding agent, for questions about the lesson. It gives
+hints and keeps the answers back. After a wrong answer it asks a
 question, and after the next one it points to the section that teaches the
 idea.
 
@@ -198,7 +210,7 @@ to the agent, and why.
 - Table C's time forecasts next to the actual times.
 - Both confidence numbers for each person.
 
-The timings above and the quiz cut-offs get corrected from these records,
+The timings above and the quiz scoring get corrected from these records,
 so keep them for every workshop.
 
 ## Further reading
