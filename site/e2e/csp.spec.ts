@@ -34,9 +34,16 @@ for (const path of builtPages()) {
 	});
 }
 
-test('search finds pages under the policy', async ({ page }) => {
+test('search finds pages under the policy, and Enter in the box breaks nothing', async ({ page, errors }) => {
 	await page.goto('');
 	await page.locator('button[data-open-modal]').click();
-	await page.getByRole('dialog', { name: 'Search' }).getByRole('textbox', { name: 'Search' }).fill('agent');
+	const box = page.getByRole('dialog', { name: 'Search' }).getByRole('textbox', { name: 'Search' });
+	await box.fill('agent');
+	await expect(page.locator('.pagefind-ui__result').first()).toBeVisible();
+	// Pagefind's form has `action="javascript:void(0);"`, which `script-src` would block if the submit went through.
+	await box.press('Enter');
+	// A violation event is queued as a task, so give it time to arrive before the check.
+	await page.waitForTimeout(500);
+	expect(errors, 'no violation after Enter').toEqual([]);
 	await expect(page.locator('.pagefind-ui__result').first()).toBeVisible();
 });

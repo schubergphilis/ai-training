@@ -39,11 +39,23 @@
  * - has a policy without one of the `DIRECTIVES`, with `'unsafe-inline'`
  *   or `'unsafe-eval'` in `script-src`, or with `'unsafe-inline'` in
  *   `style-src`;
- * - has an inline `<script>` (no `src`, and not a JSON data block) whose
- *   SHA-256 hash is not in its `script-src`, or an inline `<style>` whose
- *   hash is not in its `style-src`;
+ * - has an inline `<script>` whose SHA-256 hash is not in its `script-src`,
+ *   or an inline `<style>` whose hash is not in its `style-src`. A script
+ *   with a `src` is skipped, and so is an `application/json` or
+ *   `application/ld+json` data block, which the browser does not run. An
+ *   import map or speculation rules script is checked, because the browser
+ *   applies the policy to both;
  * - has an inline event handler attribute (`onclick=` and the like) on a
- *   tag outside a script or style, which no hash in `script-src` allows.
+ *   tag outside a script or style, which no hash in `script-src` allows;
+ * - has a `<script src>` or a `<link rel="stylesheet">` whose URL names a
+ *   scheme or a host, anywhere in the page.
+ *
+ * A policy in a `<meta>` applies only to the content after it, and Astro
+ * writes the meta at the end of `<head>`, after Starlight's head tags and its
+ * theme script. Neither the Astro configuration reference nor Starlight's
+ * `head` option can move it. So this check covers the start of `<head>`:
+ * every inline script there must still be hashed, and no file there may come
+ * from another site. The site's own URLs are root-relative (`/ai-training/...`).
  *
  * `scripts/check-bundles.mjs` runs it after the build, and
  * `tests/scripts/csp.test.ts` covers it.
@@ -94,9 +106,29 @@ export const CSP = {
 };
 
 const META = /<meta\s+http-equiv="content-security-policy"\s+content="([^"]*)"\s*\/?>/gi;
-const INLINE = /<(script|style)\b([^>]*)>([\s\S]*?)<\/\1\s*>/gi;
-const HANDLER = /<[a-z][^>]*?\s(on[a-z]+)\s*=/gi;
-const DATA_TYPES = /\btype\s*=\s*["']?(application\/(ld\+)?json|importmap|speculationrules)\b/i;
+const INLINE = /<(script|style)\b((?:"[^"]*"|'[^']*'|[^'">])*)>([\s\S]*?)<\/\1\s*>/gi;
+/** A start tag: its name and its attribute text, where a quoted value may hold a `>`. */
+const TAG = /<([a-z][^\s/>]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/gi;
+/** One attribute of a start tag's attribute text: its name and its value, quoted or bare, if any. */
+const ATTR = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+/** The script types a browser does not run, and so the policy does not apply to: JSON data blocks. */
+const DATA_TYPE = /^application\/(ld\+)?json$/i;
+/** A URL that names a scheme or a host (`https:`, `data:`, `//host`), so it can point off the site. */
+const OFF_SITE = /^\s*([a-z][a-z0-9+.-]*:|\/\/|\\\\)/i;
+
+/**
+ * The attributes of a start tag's attribute text, name (lower case) to value (`''` when it has none).
+ * @param {string} text
+ * @returns {Map<string, string>}
+ */
+export function attributes(text) {
+	const found = new Map();
+	for (const [, name, double, single, bare] of text.matchAll(ATTR)) {
+		const key = name.toLowerCase();
+		if (!found.has(key)) found.set(key, double ?? single ?? bare ?? '');
+	}
+	return found;
+}
 
 /** The `sha256-` source of `text`, as a CSP hash names it. */
 export function sha256(text) {
@@ -142,9 +174,10 @@ export function pageProblems(html) {
 	}
 	const styleSrc = policy.get('style-src') ?? [];
 	if (styleSrc.includes("'unsafe-inline'")) problems.push("style-src allows 'unsafe-inline'");
-	for (const [, tag, attrs, body] of html.matchAll(INLINE)) {
+	for (const [, tag, attrText, body] of html.matchAll(INLINE)) {
 		const kind = tag.toLowerCase();
-		if (kind === 'script' && (/\ssrc\s*=/i.test(` ${attrs}`) || DATA_TYPES.test(attrs))) continue;
+		const attrs = attributes(attrText);
+		if (kind === 'script' && (attrs.has('src') || DATA_TYPE.test((attrs.get('type') ?? '').trim()))) continue;
 		const hash = sha256(body);
 		const allowed = kind === 'script' ? scriptSrc : styleSrc;
 		if (!allowed.includes(`'${hash}'`)) {
@@ -152,9 +185,22 @@ export function pageProblems(html) {
 			problems.push(`inline <${kind}> not in ${kind}-src: '${hash}' "${start}"`);
 		}
 	}
-	// The text of a script or style may hold markup in a string, which is no attribute.
-	const markup = html.replace(INLINE, '<$1>');
-	for (const [, name] of markup.matchAll(HANDLER)) problems.push(`inline event handler attribute ${name}=`);
+	// The text of a script or style may hold markup in a string, which is no tag.
+	const markup = html.replace(INLINE, '<$1$2>');
+	for (const [, tag, attrText] of markup.matchAll(TAG)) {
+		const name = tag.toLowerCase();
+		const attrs = attributes(attrText);
+		for (const attr of attrs.keys()) {
+			if (/^on[a-z]+$/.test(attr)) problems.push(`inline event handler attribute ${attr}= on <${name}>`);
+		}
+		// Content before the meta is outside the policy, so an off-site file is rejected wherever it is.
+		const src = name === 'script' ? attrs.get('src') : undefined;
+		if (src !== undefined && OFF_SITE.test(src)) problems.push(`<script> loads an off-site file: ${src}`);
+		const rel = (attrs.get('rel') ?? '').toLowerCase().split(/\s+/);
+		const href = name === 'link' && rel.includes('stylesheet') ? attrs.get('href') : undefined;
+		if (href !== undefined && OFF_SITE.test(href))
+			problems.push(`<link rel="stylesheet"> loads an off-site file: ${href}`);
+	}
 	return problems;
 }
 

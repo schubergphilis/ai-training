@@ -122,10 +122,60 @@ describe('pageProblems', () => {
 
 	it('rejects an inline event handler attribute, and not markup in a script string', () => {
 		expect(pageProblems(page({ body: '<button onclick="go()">Go</button>' }))).toEqual([
-			'inline event handler attribute onclick=',
+			'inline event handler attribute onclick= on <button>',
 		]);
 		const content = policy(["'self'", `'${sha256("x='<a onclick=y>'")}'`], ["'self'"]);
 		expect(pageProblems(page({ content, body: "<script>x='<a onclick=y>'</script>" }))).toEqual([]);
+	});
+
+	it('finds a handler after a quoted attribute value that holds a >', () => {
+		expect(pageProblems(page({ body: `<a title="a>b" onclick="x">x</a><b data-x='>' onmouseover=y>` }))).toEqual([
+			'inline event handler attribute onclick= on <a>',
+			'inline event handler attribute onmouseover= on <b>',
+		]);
+	});
+
+	it('checks an inline script that comes before the meta, which the policy does not cover in the browser', () => {
+		const content = policy(["'self'"], ["'self'"]);
+		const html = `<html><head><script>${SCRIPT}</script>${meta(content)}</head><body></body></html>`;
+		expect(pageProblems(html)).toEqual([`inline <script> not in script-src: '${sha256(SCRIPT)}' "${SCRIPT}"`]);
+	});
+
+	it('rejects an off-site script or stylesheet anywhere in the page, before the meta too', () => {
+		const content = policy(["'self'"], ["'self'"]);
+		const before =
+			'<script src="https://cdn.example.com/a.js"></script><link rel="stylesheet" href="//cdn.example.com/a.css">';
+		const after = '<script type="module" src="data:text/javascript,alert(1)"></script>';
+		const html = `<html><head>${before}${meta(content)}</head><body>${after}</body></html>`;
+		expect(pageProblems(html)).toEqual([
+			'<script> loads an off-site file: https://cdn.example.com/a.js',
+			'<link rel="stylesheet"> loads an off-site file: //cdn.example.com/a.css',
+			'<script> loads an off-site file: data:text/javascript,alert(1)',
+		]);
+	});
+
+	it('passes a site script, a site stylesheet and an off-site link that is no stylesheet', () => {
+		const html = page({
+			head: '<script src="/ai-training/_astro/a.js"></script><link rel="stylesheet" href="/ai-training/_astro/a.css"><link rel="canonical" href="https://schubergphilis.github.io/ai-training/">',
+		});
+		expect(pageProblems(html)).toEqual([]);
+	});
+
+	it('checks an import map, speculation rules and a data-type attribute, and skips only JSON data blocks', () => {
+		const html = page({
+			body: [
+				'<script type="importmap">{"imports":{}}</script>',
+				'<script type="speculationrules">{"prerender":[]}</script>',
+				'<script data-type="application/json">alert(1)</script>',
+				'<script type="application/json">{"a":1}</script>',
+				'<script type=\'application/ld+json\'>{"@context":"x"}</script>',
+			].join(''),
+		});
+		expect(pageProblems(html)).toEqual([
+			`inline <script> not in script-src: '${sha256('{"imports":{}}')}' "{"imports":{}}"`,
+			`inline <script> not in script-src: '${sha256('{"prerender":[]}')}' "{"prerender":[]}"`,
+			`inline <script> not in script-src: '${sha256('alert(1)')}' "alert(1)"`,
+		]);
 	});
 });
 
