@@ -298,8 +298,9 @@ hold each course page and live lesson alternate exactly once in course
 order.
 
 After `site-build`, `mise run bundles` fails when a link in `llms.txt`
-points at no file in `dist`, or when a page lacks its `describedby`
-link.
+other than the two license links isn't an absolute URL under the site
+root or points at no file in `dist`, when either file doesn't start with
+an H1, or when a page or the 404 page lacks its `describedby` link.
 
 ## Data tree as JSON
 
