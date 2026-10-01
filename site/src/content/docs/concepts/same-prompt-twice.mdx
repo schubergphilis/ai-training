@@ -151,21 +151,18 @@ their first sentence and part ways after it. The Messages API reference
 says the same about the real thing: even at a temperature of 0 the results
 aren't fully deterministic (@Claude docs messages).
 
-On some current models you can't make the setting at all. The same
+On some current models you can't change the setting at all. The same
 reference marks temperature as deprecated: Claude models newer than Opus
 4.6 refuse a request that asks for any temperature except the default of
-1.0 (@Claude docs messages). That default is the top of the range the
-reference gives, so a workflow on such a model always runs at the highest
-temperature it has.
+1.0 (@Claude docs messages).
 
 Put the two results together. At temperature 1 a run can pick a wrong
 answer that has a few percent of the probability. At temperature 0 a run
 can still differ from the run before it, and some models don't offer
-temperature 0. So one run tells you which
-answer came up once. It tells you nothing about how often that answer
-comes up. A prompt that gave the right answer once has been tested zero
-times for what a workflow needs from it: a usable answer every time it
-runs.
+temperature 0. So one run tells you which answer came up once. It tells
+you nothing about how often that answer comes up. A prompt that gave
+the right answer once has been tested zero times for what a workflow
+needs from it: a usable answer every time it runs.
 
 <Pitfall title="Reliable after one run">
 A team writes a prompt that classifies incoming support tickets into one
