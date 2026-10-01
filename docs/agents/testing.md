@@ -295,7 +295,11 @@ machine don't collide. To run one
 file: `cd site && bunx playwright test e2e/review.spec.ts`. On a failure the
 trace is under `site/test-results/`, and `bunx playwright show-trace <zip>`
 opens it. Every spec blocks requests that leave `localhost` and fails on a
-`pageerror` or console error (`site/e2e/fixtures.ts`).
+`pageerror` or console error (`site/e2e/fixtures.ts`). Those checks run
+only in a spec that takes `test` and `expect` from `./fixtures`, so
+`site/tests/scripts/e2e-imports.test.ts` fails when a file in `site/e2e/`
+other than `fixtures.ts` imports either value from `@playwright/test`.
+A type-only import such as `import type { Page }` is allowed.
 
 ## When the browser suite runs
 
