@@ -5,7 +5,8 @@
  * every lesson page with valid concept ids (spec S03 "Checkpoint export"),
  * no choice item is guessable from a cue, and the alternates follow their
  * rules (S03 "Checkpoints"). A reviewable checkpoint without a review
- * alternate is a warning, printed and not failed.
+ * alternate is a warning, printed and not failed, and so is a graded Predict
+ * whose answer has a word its stem and context lack.
  * The logic and the list of what it rejects are in scripts/lib/checkpoints.mjs,
  * which tests/scripts/checkpoints-export.test.ts covers; this file only reports.
  */
