@@ -56,7 +56,7 @@ person scores both 1 on Complete and 2 on Quoted.
 
 <Predict id="predict-the-preference" objective="building-agents/evaluates-agents/writes-a-rubric"
   concepts={['llm-as-judge']}
-  context="A judge stands in for a model and scores answers of a handbook assistant with a two-criterion rubric: Complete (0-1-2, every part of the question answered) and Quoted (0-1-2, a sentence of the passage quoted word for word). Two answers to the question about leave days and the carry-over date give the same content, 25 days with the same quoted sentence and no carry-over date. Answer A is two sentences. Answer B adds a thank-you, restates the answer at more length and closes with a wish. A person scores both answers Complete 1 and Quoted 2."
+  context="A judge stands in for a model and scores answers of a handbook assistant with a two-criterion rubric: Complete (0-1-2, every part of the question answered) and Quoted (0-1-2, a sentence of the passage quoted word for word). The question is: How many days of annual leave do I get, and until when can I carry them over? Two answers to it give the same content, 25 days with the same quoted sentence and no carry-over date. Answer A is two sentences, 16 words. Answer B adds a thank-you, restates the answer at more length and closes with a wish, 58 words. A person scores both answers Complete 1 and Quoted 2. The output prints the question after question:, then one line per answer in the form answer A (16 words): Complete n, Quoted n, and last judge prefers: and the answer."
   title="Which answer does the judge prefer?"
   hint="What differs between the two answers, if the content doesn't? What do model judges tend to reward that a person scoring with the rubric doesn't?"
   answer={`question: How many days of annual leave do I get, and until when can I carry them over?
@@ -65,7 +65,9 @@ person scores both 1 on Complete and 2 on Quoted.
   judge prefers: answer B`} run="building-agents/llm-as-judge/prefer.py">
 
 Predict the scores the judge gives each answer, and which one it
-prefers. Then run it.
+prefers. The output repeats the question, gives each answer's length in
+words and its two scores, and names the answer the judge prefers. Then
+run it.
 
 ```sh
 python3 grade.py prefer
