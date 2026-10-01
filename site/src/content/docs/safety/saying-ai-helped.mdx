@@ -10,8 +10,8 @@ needs a line saying that AI helped? The
 so when the reader would judge the work differently knowing it. In this
 lesson we write that line for the contract and for the function, one part
 at a time. A comparer on the page then shows how much of the function came
-from a library, and the last section looks up the disclosure rule of the place a
-piece of work goes to.
+from a library, and the last section looks up the disclosure rule of the
+place a piece of work goes to.
 
 The comparer runs in your browser and sends your text nowhere. The library
 in the example, and its author, are invented.
@@ -165,7 +165,7 @@ def truncate_words(text, limit, marker="..."):
 
 <Choice id="how-much-was-copied" objective="safety/handles-data-safely/respects-licenses"
   concepts={['licensing-and-attribution']}
-  context="An assistant returned a ten-line function, shorten, with a one-line description and two comments. A search finds a library file with a three-line license header and a function, truncate_words, whose description, two comments and code lines are word for word the same as those of shorten. Only the line that names the function is different. A comparer counts how many of the ten lines of the generated function are also a line of the library file, ignoring the spaces around each line."
+  context="An assistant returned a ten-line function, shorten, with a one-line description and two comments. A search finds a library file with a three-line license header and a function, truncate_words, whose description, two comments and code lines are word for word the same as those of shorten, while its first line gives the function a different name. A comparer counts how many of the ten lines of the generated function are also a line of the library file, ignoring the spaces around each line."
   title="How many lines match?" hint="Which line of the generated function has no twin in the library file?"
   options={[
     { text: '10 of 10. The two functions are the same.', why: 'The generated function is called shorten and the library function is called truncate_words, so the line that names the function differs.' },
@@ -197,16 +197,16 @@ lines not in truncate.py:
 Nine of ten lines. The one difference is the function name. This is what
 the [first lesson](/safety/responsible-use/) meant by output that
 reproduces a source. The likeliest explanation is that the model saw this
-file, or a copy of it, in training and gave it back nearly whole. The license of the original travels with
-the copy. The header says MIT, and the MIT license lets anyone use the
+file, or a copy of it, in training and gave it back nearly whole. The
+license of the original travels with the copy. The header says MIT, and the MIT license lets anyone use the
 code on one condition, that the copyright line and the full permission
 notice stay with every copy. The one-line header in the example stands in
 for that notice, and a real library ships the full text in its `LICENSE`
 file. So the function may go into the pull request with the copyright line
 and the license text above it, and a line in the pull request description
-that says where it came from. The tool's own terms don't change this. They govern your use of
-the tool, and they can't grant rights to code the model took from someone
-else.
+that says where it came from. The tool's own terms don't change this. They
+govern your use of the tool, and they can't grant rights to code the model
+took from someone else.
 
 Under a different license the answer changes. A copyleft license (one
 that requires a program using the code to be shared under the same
