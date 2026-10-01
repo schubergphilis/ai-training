@@ -136,8 +136,9 @@ const DATA_TYPE = /^application\/(ld\+)?json$/i;
  * (https://html.spec.whatwg.org/multipage/links.html#linkTypes), and five that browsers add. Chromium
  * fetches `prerender` as a NoState Prefetch (https://developer.chrome.com/docs/web-platform/prerender-pages)
  * and `compression-dictionary` as a shared compression dictionary
- * (https://developer.chrome.com/blog/shared-dictionary-compression). Safari fetches `apple-touch-icon` and `apple-touch-icon-precomposed`, which Safari fetches for
- * the home screen (https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html),
+ * (https://developer.chrome.com/blog/shared-dictionary-compression). Safari fetches `apple-touch-icon` and
+ * `apple-touch-icon-precomposed` for the home screen
+ * (https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html),
  * and `mask-icon`, its pinned tab icon (https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/pinnedTabs/pinnedTabs.html).
  * `dns-prefetch` and `preconnect` fetch no file, but they still contact the server.
  */
