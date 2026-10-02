@@ -1,0 +1,23 @@
+id: coding-with-agents/agent-interviews-you
+title: Let the agent interview you
+mode: tutorial
+covers: coding-with-agents/specification
+serves: [coding-with-agents/specifies-work/is-interviewed-before-planning]
+introduces: [design-interview, shared-vocabulary]
+assumes:
+  - objective: coding-with-agents/specifies-work/defines-success
+    lesson: coding-with-agents/deciding-what-to-build
+extends-to: []
+after: [coding-with-agents/deciding-what-to-build]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Ask an agent to interview you about a small feature until the two of you agree on the design,
+    then write down the terms you settled on and check that the plan it writes uses them.
+sources: [Claude Code best practices, Evans 2003, Evans DDD Reference]
+minutes: 15
+notes: >-
+  The interview comes before decomposing-the-work: it settles what the feature is, and the next
+  lesson cuts it into components. The shared vocabulary is the list of terms the interview fixes,
+  in plain words, without the rest of domain-driven design.

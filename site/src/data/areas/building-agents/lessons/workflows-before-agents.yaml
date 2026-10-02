@@ -1,0 +1,22 @@
+id: building-agents/workflows-before-agents
+title: Workflows before agents
+mode: explanation
+covers: building-agents/patterns
+serves: [building-agents/orchestrates-agents/picks-a-pattern]
+introduces: [workflow-patterns]
+assumes:
+  - objective: building-agents/builds-agent-loop/implements-the-loop
+    lesson: building-agents/stopping-the-loop
+extends-to: []
+after: [building-agents/stopping-the-loop, building-agents/rubrics]
+shorts: []
+exercise:
+  kind: judge
+  brief: >-
+    For four tasks, decide whether fixed code can call the model in a chain, a route or in parallel,
+    or whether the task needs an agent that chooses its own steps.
+sources: [Anthropic effective agents]
+minutes: 12
+notes: >-
+  Opens the patterns part, before react. Workflow patterns are model calls inside one task with the
+  steps fixed in code. Coordinating several agents stays in the orchestration part.

@@ -1,0 +1,24 @@
+id: customizing-agents/adopting-a-skill-set
+title: Adopting a published skill set
+mode: tutorial
+covers: customizing-agents/skills
+serves: [customizing-agents/adopts-a-skill-set/vets-a-skill-set, customizing-agents/adopts-a-skill-set/adopts-skills-gradually]
+introduces: [published-skill-sets]
+assumes:
+  - objective: customizing-agents/writes-skill/evaluates-a-plugin
+    lesson: customizing-agents/plugins
+  - objective: customizing-agents/writes-skill/discloses-progressively
+    lesson: customizing-agents/progressive-disclosure
+extends-to: []
+after: [customizing-agents/plugins]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Vet one public skill set as you would a library, install two of its skills, and compare what
+    they change in a session against what they add to the context.
+sources: [Claude Code skills, Claude Code plugins, anthropics skills]
+minutes: 15
+notes: >-
+  The lesson the adopts-a-skill-set competency's notes ask for. It names no single skill set as the
+  one to use, and the exercise lets the learner pick one.

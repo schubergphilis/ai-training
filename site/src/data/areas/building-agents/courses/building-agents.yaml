@@ -12,6 +12,7 @@ parts:
       - building-agents/agent-loop
       - building-agents/tool-schemas
       - building-agents/tool-errors
+      - building-agents/approving-a-tool-call
       - building-agents/parallel-tool-calls
   - title: The agent loop and harness
     lessons: [building-agents/stopping-the-loop, building-agents/loop-on-an-sdk]
@@ -26,6 +27,7 @@ parts:
       - building-agents/llm-as-judge
   - title: Design patterns
     lessons:
+      - building-agents/workflows-before-agents
       - building-agents/react
       - building-agents/reflection
       - building-agents/planning
@@ -37,5 +39,6 @@ parts:
       - building-agents/agent-attack-surface
       - building-agents/guardrails-in-layers
       - building-agents/eval-gated-deploys
+      - building-agents/evals-from-traces
       - building-agents/cost-and-provider-operations
       - building-agents/agent-protocols

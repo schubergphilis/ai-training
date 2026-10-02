@@ -1,0 +1,23 @@
+id: customizing-agents/load-point-prune
+title: Load it, point at it, or cut it
+mode: tutorial
+covers: customizing-agents/instructions
+serves: [customizing-agents/configures-agent/chooses-load-or-point, customizing-agents/configures-agent/prunes-instructions]
+introduces: [loading-versus-pointing, pruning-instructions]
+assumes:
+  - objective: customizing-agents/configures-agent/writes-project-instructions
+    lesson: customizing-agents/instructions
+extends-to: []
+after: [customizing-agents/instructions]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Go through a long instruction file line by line, keep what the agent needs in every session,
+    move the rest into files the instructions point at, and delete what the agent can work out from
+    the code.
+sources: [Claude Code memory, Claude Code best practices, Anthropic context engineering]
+minutes: 15
+notes: >-
+  Pruning is the expert objective, so the lesson ends on it. Instruction dilution
+  (concepts/what-tokens-cost) is the reason short files work better, and the lesson links back to it.

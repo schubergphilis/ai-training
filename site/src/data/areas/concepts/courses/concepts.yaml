@@ -3,7 +3,7 @@ area: concepts
 plan-issue: 30
 notes: >-
   Order follows the prerequisite edges in spec S02: how-models-work, then prompting and limits, then
-  what-is-an-agent, then grounding.
+  what-is-an-agent, then tokens-and-cost, then grounding.
 parts:
   - title: How language models work
     notes: >-
@@ -18,15 +18,25 @@ parts:
       - concepts/system-prompt
       - concepts/iterating-on-a-prompt
   - title: Capabilities and limits
-    notes: "Six concepts: four lessons."
+    notes: "Seven concepts: five lessons."
     lessons:
       - concepts/thin-path
       - concepts/same-prompt-twice
       - concepts/straight-answer
+      - concepts/wrong-about-the-world
       - concepts/what-tokens-cost
   - title: What an agent is
-    notes: "Five concepts: three lessons; hub for five topics in other areas."
-    lessons: [concepts/agent-loop, concepts/assistant-or-agent, concepts/autonomy-scale]
+    notes: "Eight concepts: four lessons; hub for six topics in other areas."
+    lessons:
+      - concepts/agent-loop
+      - concepts/one-prompt-many-requests
+      - concepts/assistant-or-agent
+      - concepts/autonomy-scale
+  - title: Tokens, cost and effort
+    notes: >-
+      Four concepts: two lessons. They come after the agent part because growing session cost rests on
+      the stateless model that one-prompt-many-requests introduces.
+    lessons: [concepts/reading-token-counts, concepts/caching-and-effort]
   - title: Grounding and memory
     notes: "Four concepts: two lessons."
     lessons: [concepts/retrieval, concepts/memory]

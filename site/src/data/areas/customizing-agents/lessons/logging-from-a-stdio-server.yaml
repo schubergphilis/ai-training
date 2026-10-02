@@ -1,0 +1,22 @@
+id: customizing-agents/logging-from-a-stdio-server
+title: Logging from a stdio server
+mode: tutorial
+covers: customizing-agents/mcp
+serves: [customizing-agents/connects-tools-safely/adds-a-tool]
+introduces: [stdio-logging]
+assumes:
+  - objective: customizing-agents/connects-tools-safely/adds-a-tool
+    lesson: customizing-agents/mcp-first-server
+extends-to: []
+after: [customizing-agents/mcp-first-server]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Find why a stdio server breaks when it prints a debug line, move its logging to standard error,
+    and read the log while the agent calls it.
+sources: [MCP specification]
+minutes: 10
+notes: >-
+  Short on purpose. It could also become a section of mcp-first-server, which the lesson's issue
+  decides.

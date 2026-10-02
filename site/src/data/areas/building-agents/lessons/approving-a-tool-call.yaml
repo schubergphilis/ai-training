@@ -1,0 +1,24 @@
+id: building-agents/approving-a-tool-call
+title: Approving a risky tool call
+mode: tutorial
+covers: building-agents/tool-use
+serves: [building-agents/builds-agent-loop/gates-risky-tools]
+introduces: [tool-approval]
+assumes:
+  - objective: building-agents/builds-agent-loop/implements-the-loop
+    lesson: building-agents/agent-loop
+  - objective: safety/judges-agent-risk/chooses-human-in-loop
+    lesson: safety/agent-risk
+extends-to: []
+after: [building-agents/tool-errors]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Add an approval step to the loop for the one tool that changes data, show the person the call
+    and its arguments, and send a refusal back to the model as a tool result.
+sources: [Claude Code agent sdk permissions, Claude Code agent sdk user input]
+minutes: 15
+notes: >-
+  Runs against the fake model with a fixture under site/examples/building-agents/, like the other
+  lessons of the course.

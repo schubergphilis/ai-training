@@ -1,0 +1,25 @@
+id: coding-with-agents/prototype-to-throw-away
+title: A prototype you throw away
+mode: tutorial
+covers: coding-with-agents/specification
+serves: [coding-with-agents/specifies-work/settles-with-a-prototype]
+introduces: [throwaway-prototype]
+assumes:
+  - objective: coding-with-agents/specifies-work/is-interviewed-before-planning
+    lesson: coding-with-agents/agent-interviews-you
+  - objective: coding-with-agents/specifies-work/decomposes-into-components
+    lesson: coding-with-agents/decomposing-the-work
+extends-to: []
+after: [coding-with-agents/decomposing-the-work, coding-with-agents/agent-interviews-you]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Write down one design question the interview left open, have the agent build the smallest
+    program that answers it, record the answer in the specification and delete the program.
+sources: [Thomas 2019, Artima tracer bullets, Brooks 1995]
+minutes: 15
+notes: >-
+  Expert lesson. The prototype answers one question and is deleted. Brooks later retracted "plan to
+  throw one away" for whole systems, so the lesson keeps the prototype small and the question named
+  before it is built.

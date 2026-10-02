@@ -1,0 +1,24 @@
+id: coding-with-agents/what-a-phase-starts-with
+title: What each phase starts with
+mode: explanation
+covers: coding-with-agents/context
+serves: [coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with]
+introduces: [starting-context, deciding-at-a-phase-boundary]
+assumes:
+  - objective: coding-with-agents/ships-with-agent/gives-the-right-context
+    lesson: coding-with-agents/scoping-and-referencing
+  - objective: customizing-agents/configures-agent/manages-memory
+extends-to: []
+after: [coding-with-agents/project-instructions]
+shorts: []
+exercise:
+  kind: judge
+  brief: >-
+    For a session that has finished planning, decide whether implementation continues in it, starts
+    fresh from the written plan, or starts after compaction, and say what the new phase loses.
+sources: [Claude Code context window, Claude Code best practices, Anthropic context engineering, Claude Code costs]
+minutes: 15
+notes: >-
+  Expert lesson. It comes before keeping-understanding, which closes the part. No source gives a
+  decision guide for the phase boundary, so the lesson lays out the options the sources describe
+  (continue, clear and start from a written plan, compact) and what each one keeps.

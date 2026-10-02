@@ -1,0 +1,22 @@
+id: concepts/caching-and-effort
+title: Caching and effort
+mode: explanation
+covers: concepts/tokens-and-cost
+serves: [concepts/reasons-about-cost/chooses-effort-level, concepts/reasons-about-cost/explains-prompt-caching]
+introduces: [prompt-caching, effort-level]
+assumes:
+  - objective: concepts/reasons-about-cost/explains-growing-cost
+    lesson: concepts/reading-token-counts
+extends-to: []
+after: [concepts/reading-token-counts]
+shorts: []
+exercise:
+  kind: judge
+  brief: >-
+    For three tasks, choose an effort level and say what it changes, then say which part of a long
+    session prompt caching makes cheaper and which part it leaves alone.
+sources: [Claude docs effort, Claude docs prompt-caching, Claude Code costs]
+minutes: 12
+notes: >-
+  Effort governs all output, not only reasoning, per the Effort page. Prompt caching is the expert
+  objective, so the lesson can end on it.

@@ -2,36 +2,44 @@ id: customizing-agents
 area: customizing-agents
 plan-issue: 34
 notes: >-
-  Order: instructions, skills, mcp, hooks-permissions, memory. That follows the prerequisite edges
+  Order: instructions, skills, mcp, inspecting-the-agent, hooks-permissions, memory. That follows the prerequisite edges
   in spec S02: skills and mcp need instructions, hooks-permissions needs instructions and
-  safety/agent-risk, memory needs skills. Memory comes last because its closing lesson sends
+  safety/agent-risk, memory needs skills. Inspecting the agent follows mcp because its lesson
+  measures what a connected tool adds to each request. Memory comes last because its closing lesson sends
   repeated work into instructions, skills and hooks.
 parts:
   - title: Project instructions
-    lessons: [customizing-agents/instructions]
+    lessons: [customizing-agents/instructions, customizing-agents/load-point-prune]
   - title: Agent skills
     lessons:
       - customizing-agents/skill-or-tool-or-instruction
       - customizing-agents/first-skill
+      - customizing-agents/who-invokes-a-skill
       - customizing-agents/testing-a-skill
       - customizing-agents/progressive-disclosure
       - customizing-agents/plugins
+      - customizing-agents/adopting-a-skill-set
   - title: Connecting tools with MCP
     lessons:
       - customizing-agents/mcp
       - customizing-agents/mcp-first-server
+      - customizing-agents/logging-from-a-stdio-server
       - customizing-agents/mcp-tool-cost
       - customizing-agents/mcp-hardening
+  - title: Inspecting the agent
+    lessons: [customizing-agents/seeing-what-the-agent-sends]
   - title: Hooks, permissions, settings
     lessons:
       - customizing-agents/permission-modes
       - customizing-agents/allowlists
       - customizing-agents/settings-layering
       - customizing-agents/first-hook
+      - customizing-agents/project-stays-in-charge
       - customizing-agents/subagents
   - title: Memory and session context
     lessons:
       - customizing-agents/memory-review
+      - customizing-agents/notes-that-go-stale
       - customizing-agents/compaction
       - customizing-agents/session-handoff
       - customizing-agents/repeated-work

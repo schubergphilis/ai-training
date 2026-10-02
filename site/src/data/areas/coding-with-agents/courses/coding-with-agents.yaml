@@ -9,7 +9,11 @@ parts:
   - title: Running a coding agent
     lessons: [coding-with-agents/first-session, coding-with-agents/keys-and-secrets]
   - title: Deciding and specifying
-    lessons: [coding-with-agents/deciding-what-to-build, coding-with-agents/decomposing-the-work]
+    lessons:
+      - coding-with-agents/deciding-what-to-build
+      - coding-with-agents/agent-interviews-you
+      - coding-with-agents/decomposing-the-work
+      - coding-with-agents/prototype-to-throw-away
   - title: Plan, implement, verify
     lessons:
       - coding-with-agents/plan-then-test
@@ -22,15 +26,18 @@ parts:
     lessons:
       - coding-with-agents/scoping-and-referencing
       - coding-with-agents/project-instructions
+      - coding-with-agents/what-a-phase-starts-with
       - coding-with-agents/keeping-understanding
   - title: Verifying agent work
     lessons:
       - coding-with-agents/reviewing-the-diff
+      - coding-with-agents/review-in-a-fresh-session
       - coding-with-agents/observing-and-debugging
       - coding-with-agents/self-checking-loops
   - title: Quality with agents
     lessons:
       - coding-with-agents/tests-and-docs-that-hold
+      - coding-with-agents/deep-modules
       - coding-with-agents/dependency-review
       - coding-with-agents/security-review
   - title: Sandboxing and red-teaming
@@ -43,5 +50,6 @@ parts:
     lessons:
       - coding-with-agents/attribution-and-review-norms
       - coding-with-agents/ci-and-hooks
+      - coding-with-agents/backlog-and-standards
       - coding-with-agents/parallel-sessions
       - coding-with-agents/team-practice

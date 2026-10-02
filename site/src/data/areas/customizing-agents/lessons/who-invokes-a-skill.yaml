@@ -1,0 +1,19 @@
+id: customizing-agents/who-invokes-a-skill
+title: Who invokes a skill, and where it lives
+mode: explanation
+covers: customizing-agents/skills
+serves: [customizing-agents/writes-skill/chooses-invocation-and-scope]
+introduces: [invocation-mode, skill-scope]
+assumes:
+  - objective: customizing-agents/writes-skill/packages-a-procedure
+    lesson: customizing-agents/first-skill
+extends-to: []
+after: [customizing-agents/first-skill]
+shorts: []
+exercise:
+  kind: judge
+  brief: >-
+    For four skills, decide whether the agent may start each one on its own or only a person may,
+    and whether it belongs to the project or to the user.
+sources: [Claude Code skills, Agent Skills spec]
+minutes: 10

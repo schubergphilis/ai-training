@@ -1,0 +1,24 @@
+id: coding-with-agents/backlog-and-standards
+title: A backlog and standards the agent can read
+mode: tutorial
+covers: coding-with-agents/team
+serves: [coding-with-agents/works-in-team/keeps-the-backlog-reachable, coding-with-agents/works-in-team/turns-findings-into-rules]
+introduces: [agent-reachable-backlog, standards-file]
+assumes:
+  - objective: coding-with-agents/works-in-team/follows-team-norms
+    lesson: coding-with-agents/attribution-and-review-norms
+  - objective: customizing-agents/configures-agent/writes-project-instructions
+    lesson: customizing-agents/instructions
+extends-to: []
+after: [coding-with-agents/ci-and-hooks]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Move one specification into the issue tracker where the agent reads it through the command-line
+    tool, then turn a finding that came up in two reviews into a line in the standards file or a check.
+sources: [Claude Code best practices, Claude Code memory, GitHub docs creating-issue-dependencies, Google eng-practices]
+minutes: 15
+notes: >-
+  Comes after ci-and-hooks, so a recurring finding can become an automated check as well as a
+  written rule.

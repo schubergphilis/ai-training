@@ -1,0 +1,25 @@
+id: concepts/reading-token-counts
+title: Reading the token counts
+mode: tutorial
+covers: concepts/tokens-and-cost
+serves: [concepts/reasons-about-cost/reads-token-counts, concepts/reasons-about-cost/explains-growing-cost]
+introduces: [input-and-output-tokens, growing-session-cost]
+assumes:
+  - objective: concepts/explains-models/explains-generation
+    lesson: concepts/what-tokens-cost
+  - objective: concepts/recognizes-agents/follows-one-prompt
+    lesson: concepts/one-prompt-many-requests
+extends-to: []
+after: [concepts/what-tokens-cost, concepts/one-prompt-many-requests]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Read the input and output token counts of each request in a short session, and explain why the
+    last question cost more than the first.
+sources: [Claude docs messages, Claude Code costs, Claude docs pricing]
+minutes: 15
+notes: >-
+  A foundations lesson, so the counts are shown as a usage screen or a table, never a terminal. The
+  model-family-and-size and cost-and-latency concepts stay in concepts/what-tokens-cost, and this
+  lesson builds on them.

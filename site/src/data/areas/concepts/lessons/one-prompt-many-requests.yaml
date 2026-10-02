@@ -1,0 +1,23 @@
+id: concepts/one-prompt-many-requests
+title: One prompt, many requests
+mode: explanation
+covers: concepts/what-is-an-agent
+serves: [concepts/recognizes-agents/follows-one-prompt]
+introduces: [environment, model-request, stateless-model]
+assumes:
+  - objective: concepts/recognizes-agents/names-the-loop
+    lesson: concepts/agent-loop
+extends-to: []
+after: [concepts/agent-loop]
+shorts: []
+exercise:
+  kind: judge
+  brief: >-
+    Follow one prompt to an agent through its log, count the model requests it caused, and say for
+    each request what the harness sent and what came back from the environment.
+sources: [Claude Code agent loop, Claude docs messages]
+minutes: 12
+notes: >-
+  Picks up the loop where concepts/agent-loop leaves it and slows it down to single requests, so the
+  tokens-and-cost lessons can rely on the model being stateless. "Turn" keeps the meaning the live
+  lessons give it, one round trip inside the loop.

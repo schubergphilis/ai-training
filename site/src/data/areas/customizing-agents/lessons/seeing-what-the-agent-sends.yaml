@@ -1,0 +1,24 @@
+id: customizing-agents/seeing-what-the-agent-sends
+title: Seeing what the agent sends
+mode: tutorial
+covers: customizing-agents/inspecting-the-agent
+serves: [customizing-agents/connects-tools-safely/inspects-requests]
+introduces: [context-meter, session-record, request-logging]
+assumes:
+  - objective: concepts/recognizes-agents/follows-one-prompt
+    lesson: concepts/one-prompt-many-requests
+  - objective: customizing-agents/connects-tools-safely/weighs-tool-cost
+    lesson: customizing-agents/mcp-tool-cost
+extends-to: []
+after: [customizing-agents/mcp-tool-cost]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Watch the context meter while you connect one more tool, find the same session in its record on
+    disk, and log the requests locally to see what the tool definitions add to each one.
+sources: [Claude Code context window, Claude Code statusline, Claude Code claude directory, Claude Code monitoring, Claude Code llm gateway]
+minutes: 20
+notes: >-
+  Its own part, after the MCP part, because inspects-requests asks what tools cost. The request log
+  stays on the learner's machine: it holds the whole prompt, including file contents.

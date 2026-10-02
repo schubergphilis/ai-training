@@ -1,0 +1,21 @@
+id: building-agents/evals-from-traces
+title: Growing the evaluation set from traces
+mode: tutorial
+covers: building-agents/production
+serves: [building-agents/evaluates-agents/grows-the-set-from-use]
+introduces: [trace-driven-evaluation]
+assumes:
+  - objective: building-agents/evaluates-agents/prioritizes-fixes
+    lesson: building-agents/error-analysis
+  - objective: building-agents/runs-in-production/gates-on-evals
+    lesson: building-agents/eval-gated-deploys
+extends-to: []
+after: [building-agents/eval-gated-deploys]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Read a batch of production traces, label the failures, and add the new kinds of failure as cases
+    to the golden set the deploy gate runs.
+sources: [Husain 2024]
+minutes: 15

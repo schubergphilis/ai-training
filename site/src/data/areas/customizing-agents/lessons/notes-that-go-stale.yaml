@@ -1,0 +1,22 @@
+id: customizing-agents/notes-that-go-stale
+title: Notes that go stale
+mode: explanation
+covers: customizing-agents/memory
+serves: [customizing-agents/configures-agent/manages-memory]
+introduces: [primary-and-secondary-sources]
+assumes:
+  - objective: customizing-agents/configures-agent/manages-memory
+    lesson: customizing-agents/memory-review
+extends-to: []
+after: [customizing-agents/memory-review]
+shorts: []
+exercise:
+  kind: judge
+  brief: >-
+    For five memory entries, say which source each one summarizes and whether to trust it, check it
+    against that source, or delete it.
+sources: [Claude Code memory]
+minutes: 10
+notes: >-
+  "Check a note against the code before acting on it" is our wording. The memory page supports
+  that notes go stale, and has no rule of its own for it.

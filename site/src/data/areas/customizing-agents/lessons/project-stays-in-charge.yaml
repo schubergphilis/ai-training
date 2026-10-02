@@ -1,0 +1,25 @@
+id: customizing-agents/project-stays-in-charge
+title: Keeping the project in charge
+mode: tutorial
+covers: customizing-agents/hooks-permissions
+serves: [customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge]
+introduces: [steering-by-rejection]
+assumes:
+  - objective: customizing-agents/configures-agent/adds-a-hook
+    lesson: customizing-agents/first-hook
+  - objective: customizing-agents/adopts-a-skill-set/adopts-skills-gradually
+    lesson: customizing-agents/adopting-a-skill-set
+extends-to: []
+after: [customizing-agents/first-hook, customizing-agents/adopting-a-skill-set]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    When an installed skill asks for something the project forbids, write a hook or permission rule
+    that refuses it with a reason, and check that the agent changes its approach.
+sources: [Claude Code hooks, Claude Code permissions]
+minutes: 15
+notes: >-
+  Comes before subagents, which closes the part. The sources say a deny reason reaches the model.
+  That a bare refusal invites workarounds is inferred from the documented limits of Bash rules, and
+  the lesson says so.

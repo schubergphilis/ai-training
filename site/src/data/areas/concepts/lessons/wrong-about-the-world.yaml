@@ -1,0 +1,24 @@
+id: concepts/wrong-about-the-world
+title: Wrong about the world, or wrong about the text
+mode: explanation
+covers: concepts/limits
+serves: [concepts/explains-models/names-failure-modes]
+introduces: [factuality-and-faithfulness]
+assumes:
+  - objective: concepts/explains-models/names-failure-modes
+    lesson: concepts/how-models-work
+extends-to: []
+after: [concepts/straight-answer]
+shorts: []
+exercise:
+  kind: judge
+  brief: >-
+    Sort five wrong answers into ones that are wrong about the world and ones that misstate the text
+    they were given, and name the check that finds each kind.
+sources: [Huang 2025]
+minutes: 10
+notes: >-
+  Safety/spotting-hallucination teaches how to catch invented specifics. This lesson adds the
+  distinction between the two kinds and which check finds each: an outside source for factuality,
+  the input itself for faithfulness. The survey groups remedies by cause, so the lesson doesn't
+  pair a remedy with each kind.

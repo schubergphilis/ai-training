@@ -1,0 +1,19 @@
+id: coding-with-agents/review-in-a-fresh-session
+title: A review from a fresh session
+mode: tutorial
+covers: coding-with-agents/verification
+serves: [coding-with-agents/verifies-agent-work/uses-a-fresh-review]
+introduces: [fresh-context-review]
+assumes:
+  - objective: coding-with-agents/verifies-agent-work/reviews-others-code
+    lesson: coding-with-agents/reviewing-the-diff
+extends-to: []
+after: [coding-with-agents/reviewing-the-diff]
+shorts: []
+exercise:
+  kind: do
+  brief: >-
+    Have a new session review a change the first session wrote, against the specification, and sort
+    its findings into ones to fix, ones to reject and ones to turn into a rule.
+sources: [Claude Code best practices]
+minutes: 12
