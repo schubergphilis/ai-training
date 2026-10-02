@@ -44,20 +44,26 @@ notes: >-
   test to 4.95, and the_change.py raises the free-shipping threshold to 60.00 and greps the three
   documentation places the shop's AGENTS.md names. The page doesn't say "the previous lesson",
   because self-checking-loops serves automates-the-check, which this lesson also serves; the git
-  tag steps are repeated on the page instead. The first checkpoints on reviews-others-code test two
-  ideas (tests that mirror the code, and documentation left stale), so a review alternate on one idea
-  can be asked in place of a sibling on the other. The mismatch is accepted for now, as in
-  self-checking-loops (issue #408), because the plan gives the lesson these two objectives.
+  tag steps are repeated on the page instead. The first checkpoints on reviews-others-code test three
+  ideas (tests that mirror the code, documentation left stale, and deep modules), so a review
+  alternate on one idea can be asked in place of a sibling on another. Each idea has at least one
+  review alternate: a-test-that-passed-the-break and proves-or-mirrors, docs-left-out-of-the-diff,
+  and the Sort kept-inside-or-leaked. The mismatch is accepted for now, as in
+  self-checking-loops (issue #408), because the plan gives the lesson these two objectives
+  and deep modules has no objective of its own.
   shop/.gitignore keeps __pycache__ out of the learner's git add -A after running the tests.
   Deep modules (Ousterhout 2021) was folded into this lesson on 2026-10-02 instead of getting a
   lesson of its own, because no objective fits it on its own. Issue #693 added the section "Test
-  through a small interface" and its checkpoint new-parameters-for-total on reviews-others-code.
-  Ousterhout 2021 is a proprietary book: the page uses two of its ideas in our own words (a module's
-  interface as what callers learn against what the module does for them, deep against shallow
-  modules; and information leakage, one design decision known in several modules), with no text
-  copied. The claim that a deep module needs less context in a later agent session follows from the
+  through a small interface", its checkpoint new-parameters-for-total and the review alternate
+  kept-inside-or-leaked, both on reviews-others-code. Ousterhout 2021 is a proprietary book: the
+  page uses two of its ideas in our own words (a module's interface as what callers learn against
+  what the module does for them, deep against shallow modules; and the name information leakage,
+  described on the page by its effect, a price written into several modules that a change has to
+  edit in each), with no text copied. The page treats total(lines) as the interface and subtotal and
+  shipping as public helpers, and says that the rewritten shipping test pins the right price but
+  still calls a helper. The claim that a deep module needs less context in a later agent session follows from the
   concept definition in the quality topic and isn't cited to the book. The shop fixture is
   reused unchanged, and the section's test line is the key of rewrite-the-total-test.
-  The section raises the estimate for reading and checkpoints from about 16.5 to 19.6 minutes, so
-  minutes is 20. The three other sources were checked again on 2026-10-02 and still state what the
+  The section raises the estimate for reading and checkpoints from about 16.5 to 20.0 minutes
+  (review alternates don't count), so minutes is 20. The three other sources were checked again on 2026-10-02 and still state what the
   page cites.

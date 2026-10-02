@@ -4,9 +4,9 @@ A coding agent writes tests quickly, and they pass. That tells you the
 tests agree with the code, and it doesn't tell you they would notice if
 the code were wrong. In this lesson you break a small program on
 purpose and run the tests an agent wrote for it. Some of them still
-pass, and you rewrite one of them so it checks what the program must do.
-You see why a test that uses only the small interface of a module keeps
-working when an agent changes the inside. Then you review a change the agent made to the same program, and find
+pass, and you rewrite one of them so it checks what the program must
+do. You see why a test through the small interface of a module keeps
+passing after a correct change inside it. Then you review a change the agent made to the same program, and find
 the docs it left out of date.
 
 The program is `shop/`, a pricing module for a small web shop, in the
@@ -252,16 +252,17 @@ discount code. What do you do?
 
 **Deep modules** do a lot behind a small interface. John Ousterhout
 describes the interface of a module as what its callers have to learn,
-and the code behind it as what they get in return. He argues that a
-good module gives its callers a lot for a little (@Ousterhout 2021). A
-shallow module has an interface nearly as large as its code, so its
-callers have to know how it works inside.
+and what the module does for them as what they get in return. He argues
+that a good module asks little of its callers and does a lot for them
+(@Ousterhout 2021). A shallow module has an interface nearly as large as
+its code, so its callers have to know how it works inside.
 
 The shop's interface for a price is `total(lines)`. A caller passes the
-lines of an order and gets the amount to pay. It doesn't need to know
-the threshold, the shipping price or where the rounding happens. The
-rewrite of `test_total_adds_shipping` that catches a wrong price uses
-only that interface:
+lines of an order and gets the amount to pay, without knowing the
+threshold, the shipping price or the rounding. `subtotal` and `shipping`
+are public as well, but they are helpers that `total` calls. The rewrite
+of `test_total_adds_shipping` that catches a wrong price uses only
+`total`:
 
 ```python
 assert total([(1, 30.00)]) == 34.95
@@ -269,27 +270,32 @@ assert total([(1, 30.00)]) == 34.95
 
 It fails when the price is wrong, and it keeps passing when an agent
 changes the inside of `pricing.py` correctly, for example by storing the
-prices in cents. Both tests that mirrored the code reached past `total`:
-one compared with `SHIPPING`, and the other called the helper functions
-that `total` calls. A test that depends on the inside of a module has
-to change when the inside changes, and it can agree with a wrong value
-there.
+prices in cents. The test you rewrote earlier, `assert shipping(10.00)
+== 4.95`, also states the right price, but it calls a helper. A correct
+change to what `shipping` takes or returns makes that test change too,
+and the `total` test stays as it is.
+
+The two tests that mirrored the code had a different problem: they took
+their expected value from the code, so they agreed with a wrong price. A
+test through the interface, with a value from the spec, has neither
+problem.
 
 A deep module also helps the next session. An agent that changes the
 shipping rule edits `pricing.py` and its tests and no other code,
-because no caller knows the rule. The next section shows that the
-documentation still needs the same change. An agent that only calls the
-module needs to read the interface. Ousterhout calls it information
-leakage when one design decision, such as the shipping price, is known
-in several modules (@Ousterhout 2021). An agent can leak a decision in a change
-that passes every test, so review the interface in a diff as closely as
-the code. When a function gets new parameters, ask what each caller now
-has to know.
+because no caller knows the rule. An agent that only calls the module
+needs to read only its interface. Ousterhout calls the opposite of
+hiding a decision information leakage. When the shipping price is
+written into the code of several modules, a change to the price has to
+change each of them (@Ousterhout 2021). An agent can leak a decision in
+a change that passes every test, so review the interface in a diff. When
+a function gets new parameters, ask what each caller now has to know.
+The README and `docs/pricing.md` also state the price, and the next
+section reviews them.
 
 <Choice id="new-parameters-for-total" objective="coding-with-agents/verifies-agent-work/reviews-others-code"
   concepts={['deep-modules']}
-  context="A pricing module has one public function, total(lines), which adds up an order and adds shipping: 4.95 EUR below 50.00 EUR, from two constants inside the module. Twelve places in the shop call total. The shop has one shipping price and one threshold."
-  title="The function got two new parameters" hint="After this change, which code has to know the shipping price and the threshold?"
+  context="A pricing module gives callers the price of an order through total(lines), which adds up the order and adds shipping: 4.95 EUR below 50.00 EUR, from two constants inside the module. Twelve places in the shop call total, and none of them knows the shipping price or the threshold. The shop has one of each."
+  title="The function got two new parameters" hint="After this change, where does the shipping rule live?"
   options={[
     { text: 'Approve it, because a function that takes its values as parameters is easier to test with other prices.', why: 'Tests can already check total with known orders. With the parameters, a test can pass in any values, and every caller has to pass the right ones.' },
     { text: 'Approve it, because the tests pass and the agent updated all twelve callers in the same change.', why: 'The callers agree with the code today. The next change to the threshold edits twelve files, and a missed one charges the old price.' },
@@ -445,6 +451,19 @@ What does that tell you about the test?
   ]}>
 What do you check before you approve the change?
 </Choice>
+
+<Sort id="kept-inside-or-leaked" phase="review" objective="coding-with-agents/verifies-agent-work/reviews-others-code"
+  concepts={['deep-modules']}
+  context="A reviewer reads changes an agent made to a shop. The shop's tax module gives callers the tax on an order through one function, tax_for(order), and keeps the tax rates inside the module. The reviewer sorts each change by whether the callers still don't need to know a rate."
+  title="Kept inside, or leaked to the callers?" hint="After the change, does a caller need to know a tax rate to get the right result?"
+  buckets={['Keeps the rates inside the module', 'Makes callers know a rate']}
+  items={[
+    { text: 'The rates move from constants to a table inside the module, and tax_for(order) stays the same', bucket: 0 },
+    { text: 'tax_for gets a new rate parameter, and every caller passes 0.21', bucket: 1 },
+    { text: 'The checkout page works out the tax itself as 21 percent of the subtotal', bucket: 1 },
+    { text: 'A fix to how the module rounds the tax, with no change to tax_for(order)', bucket: 0 },
+    { text: 'The order form imports the RATE constant from the tax module to add tax to each line', bucket: 1 },
+  ]} />
 
 <MultiChoice id="lines-that-keep-tests-honest" phase="review" objective="coding-with-agents/verifies-agent-work/automates-the-check"
   concepts={['testing']}
