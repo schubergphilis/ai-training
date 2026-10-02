@@ -11,7 +11,7 @@ serves: [coding-with-agents/works-in-team/runs-parallel-work]
 introduces: [parallel-sessions, worktrees]
 assumes: []
 extends-to:
-  - label: "I'm using claude --worktree for everything now (AI Hero video, 8 minutes)"
+  - label: "I'm using claude --worktree for everything now (AI Hero on YouTube, 8 minutes)"
     href: https://www.youtube.com/watch?v=yv8VZpov8bk
 after: [coding-with-agents/ci-and-hooks]
 shorts:
