@@ -34,8 +34,6 @@ Brindlewick
 Stenberg
 Hamel
 Husain
-Pocock
-Pocock's
 Venners
 Ousterhout
 
@@ -76,7 +74,6 @@ schubergphilis
 opencode
 ICMJE
 agentskills
-mattpocock
 hamel
 Artima
 Yaknyam

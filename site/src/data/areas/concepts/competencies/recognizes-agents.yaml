@@ -81,7 +81,7 @@ objectives:
           the shared drive returned three files."'
       - claim: The learner explains that the model remembers earlier steps only because the harness sends
           them again with each request.
-        why: The model keeps nothing between requests, so anything the harness leaves out is gone for the
-          model (@Claude docs messages).
+        why: The model is stateless, so anything the harness leaves out is gone for the model (@Claude
+          docs messages).
         example: Asked how the agent knew what was in a file it read two steps earlier, the learner says
           the file's text was part of the history in the next request.

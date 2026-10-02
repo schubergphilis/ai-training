@@ -1392,13 +1392,6 @@ anthropics skills:
   author: Anthropic
   license: Apache-2.0 and source-available, per skill
   url: https://github.com/anthropics/skills
-mattpocock skills:
-  type: reference
-  title: Skills (the mattpocock/skills repository)
-  container: GitHub
-  author: Matt Pocock
-  license: MIT
-  url: https://github.com/mattpocock/skills
 Husain 2024:
   type: reference
   title: Your AI Product Needs Evals

@@ -21,7 +21,7 @@ concepts:
   - id: growing-session-cost
     name: Growing session cost
     definition: >-
-      Because the model keeps nothing between requests, each request in a
+      Because the model is stateless, each request in a
       session sends the whole conversation again, and an agent sends a new
       request after every batch of tool results. So each request carries
       everything before it, and a question late in a long session costs more

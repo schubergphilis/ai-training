@@ -28,7 +28,7 @@ objectives:
     behaviors:
       - claim: The learner explains that the tool sends the whole conversation with every request, so each
           request carries all the text before it.
-        why: The model keeps nothing between requests, and a long history is paid for again on every one
+        why: The model is stateless, so a long history is paid for again on every request
           (@Claude Code costs).
         example: Asked why a one-line question late in a long chat used so many tokens, the learner says
           the question was sent together with an hour of history.

@@ -78,8 +78,8 @@ concepts:
     name: Published skill sets
     definition: >-
       Collections of skills that a vendor or a developer maintains for others
-      to install, often as a plugin. Anthropic's example skills and Matt
-      Pocock's engineering skills are two of many. A set like this is a
+      to install, often as a plugin. Model vendors, tool makers and
+      individual developers all publish them. A set like this is a
       dependency: it runs in your sessions, it changes when its author
       updates it, and its license can differ from one skill to the next.
       Judge it as you would a library, by who maintains it, how active it is,
@@ -88,4 +88,4 @@ links:
   prerequisites: [customizing-agents/instructions]
   related: []
   specializations: []
-sources: [AEC-17, DLAI-10, Academy introduction-to-agent-skills, Academy claude-code-in-action, Academy ai-native-sdlc-playbook, Claude Code skills, Agent Skills spec, Claude Code plugins, anthropics skills, mattpocock skills]
+sources: [AEC-17, DLAI-10, Academy introduction-to-agent-skills, Academy claude-code-in-action, Academy ai-native-sdlc-playbook, Claude Code skills, Agent Skills spec, Claude Code plugins, anthropics skills]

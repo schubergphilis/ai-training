@@ -64,18 +64,8 @@ concepts:
       change, link the specification and state what was verified and how.
       Good commit boundaries make review and revert possible; a PR that
       describes the agent's role lets reviewers calibrate their attention.
-  - id: vertical-slices
-    name: Vertical slices
-    definition: >-
-      Cutting work into tickets that each run a thin path through every
-      layer, from the interface down to the storage, instead of one ticket
-      per layer. Each slice delivers one small behavior a person can try, so
-      it can be tested and reviewed as a whole, and an agent briefed on it
-      knows when it is done. A ticket for "the database part" leaves nothing
-      to check until the other layers exist. The first slice can be a bare
-      skeleton that later slices fill in.
 links:
   prerequisites: [coding-with-agents/first-session, coding-with-agents/specification]
   related: []
   specializations: []
-sources: [DLAI-5, DLAI-6, Brilliant INC, Academy claude-code-101, Academy ai-native-sdlc-playbook, Thomas 2019, Artima tracer bullets]
+sources: [DLAI-5, DLAI-6, Brilliant INC, Academy claude-code-101, Academy ai-native-sdlc-playbook]
