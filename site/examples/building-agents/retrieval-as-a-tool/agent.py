@@ -173,7 +173,7 @@ def answer_basic(question: str, min_shared: int = MIN_SHARED) -> dict:
 # The loop: the agent reads the result, judges it, and searches again.
 
 
-def answer_with_loop(question: str, max_rounds: int = 3) -> dict:
+def answer_with_loop(question: str, max_rounds: int = 3, quiet: bool = False) -> dict:
     query = question
     read: list[str] = []
     for round_number in range(1, max_rounds + 1):
@@ -182,7 +182,8 @@ def answer_with_loop(question: str, max_rounds: int = 3) -> dict:
             return {"name": None, "answer": "not found", "rounds": round_number}
         read.append(result["name"])
         sentence = best_sentence(query, result["passage"])
-        print(f"round {round_number}: search_docs(query={query!r}) -> {result['name']}")
+        if not quiet:
+            print(f"round {round_number}: search_docs(query={query!r}) -> {result['name']}")
         if is_pointer(sentence):
             # Follow the pointer: keep the question's words and add the sentence's.
             query = " ".join(keywords(question + " " + sentence))
@@ -255,8 +256,7 @@ def step_multi_hop_basic() -> None:
 
 
 def step_multi_hop_loop() -> None:
-    result = answer_with_loop(MULTI_HOP)
-    show(7, MULTI_HOP, result)
+    result = answer_with_loop(MULTI_HOP, quiet=True)
     print(f"rounds: {result['rounds']}")
 
 

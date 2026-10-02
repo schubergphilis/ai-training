@@ -209,7 +209,7 @@ Question seven is a multi-hop question, where the first result says what
 to search for next, and that's the case the loop is for.
 
 ```python
-def answer_with_loop(question: str, max_rounds: int = 3) -> dict:
+def answer_with_loop(question: str, max_rounds: int = 3, quiet: bool = False) -> dict:
     query = question
     read: list[str] = []
     for round_number in range(1, max_rounds + 1):
@@ -218,7 +218,8 @@ def answer_with_loop(question: str, max_rounds: int = 3) -> dict:
             return {"name": None, "answer": "not found", "rounds": round_number}
         read.append(result["name"])
         sentence = best_sentence(query, result["passage"])
-        print(f"round {round_number}: search_docs(query={query!r}) -> {result['name']}")
+        if not quiet:
+            print(f"round {round_number}: search_docs(query={query!r}) -> {result['name']}")
         if is_pointer(sentence):
             # Follow the pointer: keep the question's words and add the sentence's.
             query = " ".join(keywords(question + " " + sentence))
@@ -239,31 +240,28 @@ this course has a step limit.
 
 <Predict id="predict-loop-rounds" objective="building-agents/builds-agent-loop/adds-retrieval"
   concepts={['agentic-rag-loop']}
-  context="The lesson's fixture has a retrieval loop of at most three rounds. Each round searches a twelve-document handbook, skips documents already read, and follows a sentence that points at another page by adding its keywords to the query. Question seven is: Who approves a replacement laptop for the payments team? The first query is the question itself. The laptops text, laptops.txt, holds the pointer sentence The cost center owner of your team approves a replacement laptop before that, see the team pages. Following it gives the query approves center cost laptop owner pages payments replacement team, the sorted keywords of the question and that sentence. The payments team text, payments-team.txt, holds the sentence The cost center owner of the payments team is Maria Duarte, head of platform. Each round prints round n: search_docs(query=...) -> and the document it returned, with the query in Python notation. Then show prints 7. and the question, and on the next line the document, a colon and the answer sentence. The last line is rounds: and the number of rounds."
+  context="The lesson's fixture has a retrieval loop of at most three rounds. Each round searches a twelve-document handbook for one document, skips documents already read, and judges the best sentence of the document it returned. A sentence that points at another page makes the loop add that sentence's keywords to the query and search again. A sentence that answers the query ends the loop, which returns the number of the round it ended in. Question seven is: Who approves a replacement laptop for the payments team? The first search, with the question as its query, returns the laptops text, whose best sentence says the cost center owner of your team approves it and points at the team pages. The search with the new query returns the payments team text, which names the cost center owner of the payments team. The fixture calls the loop with quiet=True, which turns off the line per round, and prints one line: rounds: and the number of rounds."
   title="Predict the search rounds"
   hint="How many documents hold a piece of the answer, and does the loop ever read the same one twice?"
-  answer={`round 1: search_docs(query='Who approves a replacement laptop for the payments team?') -> laptops.txt
-  round 2: search_docs(query='approves center cost laptop owner pages payments replacement team') -> payments-team.txt
-  7. Who approves a replacement laptop for the payments team?
-     payments-team.txt: The cost center owner of the payments team is Maria Duarte, head of platform.
-  rounds: 2`} run="building-agents/retrieval-as-a-tool/multi_hop_loop.py">
+  answer={`rounds: 2`} run="building-agents/retrieval-as-a-tool/multi_hop_loop.py">
 
-Predict what this prints: one `round` line per search, the question and
-the answer with its document, and the `rounds` line. Then run it.
+Predict the number on the `rounds` line, and write the line as the
+fixture prints it. With `quiet=True` the loop prints nothing, so the
+`rounds` line is the whole output. Then run it.
 
 ```python
-result = answer_with_loop(MULTI_HOP)
-show(7, MULTI_HOP, result)
+result = answer_with_loop(MULTI_HOP, quiet=True)
 print(f"rounds: {result['rounds']}")
 ```
 
 </Predict>
 
-Two rounds, and the second query is the question plus the words of the
-pointer. The data team's text also names a cost center owner, and it
-scores four on that second query against five for the payments team's
-text. The word `payments`, carried over from the question, is the
-difference. A real loop costs a model call per round on top of the search, so this
+Two rounds. Call `answer_with_loop(MULTI_HOP)` without `quiet` and it
+prints a line per round, and the second line shows that the second query
+is the question plus the words of the pointer. The data team's text
+also names a cost center owner, and it scores four on that second query
+against five for the payments team's text. The word `payments`, carried
+over from the question, is the difference. A real loop costs a model call per round on top of the search, so this
 question costs about twice what a basic question does.
 
 ## A question the handbook doesn't answer
