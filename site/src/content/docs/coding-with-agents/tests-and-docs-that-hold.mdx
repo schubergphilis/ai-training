@@ -6,8 +6,8 @@ the code were wrong. In this lesson you break a small program on
 purpose and run the tests an agent wrote for it. Some of them still
 pass, and you rewrite one of them so it checks what the program must
 do. You see why a test through the small interface of a module keeps
-passing after a correct change inside it. Then you review a change the agent made to the same program, and find
-the docs it left out of date.
+passing after a correct change inside it. Then you review a change the
+agent made to the same program, and find the docs it left out of date.
 
 The program is `shop/`, a pricing module for a small web shop, in the
 course repository. It adds up the lines of an order and adds shipping:
@@ -283,8 +283,8 @@ problem.
 A deep module also helps the next session. An agent that changes the
 shipping rule edits `pricing.py` and its tests and no other code,
 because no caller knows the rule. An agent that only calls the module
-needs to read only its interface. Ousterhout calls the opposite of
-hiding a decision information leakage. When the shipping price is
+needs to read only its interface. Ousterhout's name for the opposite of
+hiding a decision is information leakage. When the shipping price is
 written into the code of several modules, a change to the price has to
 change each of them (@Ousterhout 2021). An agent can leak a decision in
 a change that passes every test, so review the interface in a diff. When
@@ -454,7 +454,7 @@ What do you check before you approve the change?
 
 <Sort id="kept-inside-or-leaked" phase="review" objective="coding-with-agents/verifies-agent-work/reviews-others-code"
   concepts={['deep-modules']}
-  context="A reviewer reads changes an agent made to a shop. The shop's tax module gives callers the tax on an order through one function, tax_for(order), and keeps the tax rates inside the module. The reviewer sorts each change by whether the callers still don't need to know a rate."
+  context="A reviewer reads changes an agent made to a shop. The shop's tax module gives callers the tax on an order through one function, tax_for(order), and keeps the tax rates inside the module. The reviewer sorts each change by whether the callers still get the right tax without knowing a rate."
   title="Kept inside, or leaked to the callers?" hint="After the change, does a caller need to know a tax rate to get the right result?"
   buckets={['Keeps the rates inside the module', 'Makes callers know a rate']}
   items={[

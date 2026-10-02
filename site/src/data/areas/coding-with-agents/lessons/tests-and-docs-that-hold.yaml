@@ -61,9 +61,9 @@ notes: >-
   described on the page by its effect, a price written into several modules that a change has to
   edit in each), with no text copied. The page treats total(lines) as the interface and subtotal and
   shipping as public helpers, and says that the rewritten shipping test pins the right price but
-  still calls a helper. The claim that a deep module needs less context in a later agent session follows from the
-  concept definition in the quality topic and isn't cited to the book. The shop fixture is
-  reused unchanged, and the section's test line is the key of rewrite-the-total-test.
-  The section raises the estimate for reading and checkpoints from about 16.5 to 20.0 minutes
-  (review alternates don't count), so minutes is 20. The three other sources were checked again on 2026-10-02 and still state what the
-  page cites.
+  still calls a helper. The claim that a deep module needs less context in a later agent session
+  follows from the concept definition in the quality topic and isn't cited to the book. The shop
+  fixture is reused unchanged, and the section's test line is the key of rewrite-the-total-test. The
+  section raises the estimate for reading and checkpoints from about 16.5 to 20.0 minutes (review
+  alternates don't count), so minutes is 20. The three other sources were checked again on
+  2026-10-02 and still state what the page cites.
