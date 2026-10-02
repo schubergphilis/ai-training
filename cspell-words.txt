@@ -296,3 +296,4 @@ Carpentries
 Dodds
 Pocock
 aihero
+Vercel

@@ -16,6 +16,8 @@ assumes:
 extends-to:
   - label: Design patterns
     href: /building-agents/patterns/
+  - label: Build your first agent with Vercel's AI SDK
+    href: https://www.aihero.dev/agents-with-vercel-ai-sdk
 after: []
 shorts: []
 exercise:

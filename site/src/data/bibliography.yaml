@@ -1549,3 +1549,38 @@ AI Hero video yv8VZpov8bk:
   author: Matt Pocock
   license: Proprietary
   url: https://www.youtube.com/watch?v=yv8VZpov8bk
+AI Hero video 3CSi8QAoN-s:
+  type: video
+  title: "How to actually force Claude Code to use the right CLI (don't use CLAUDE.md)"
+  container: YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=3CSi8QAoN-s
+AI Hero how-to-kill-the-bloat-in-claude-codes-system-prompt:
+  type: reference
+  title: "How To Kill The Bloat In Claude Code's System Prompt"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/how-to-kill-the-bloat-in-claude-codes-system-prompt
+AI Hero model-context-protocol-tutorial:
+  type: reference
+  title: Model Context Protocol Tutorial
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/model-context-protocol-tutorial
+AI Hero agents-with-vercel-ai-sdk:
+  type: reference
+  title: "Build Your First Agent With Vercel's AI SDK"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/agents-with-vercel-ai-sdk
+AI Hero what-are-evals:
+  type: reference
+  title: Your App Is Only As Good As Its Evals
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/what-are-evals
