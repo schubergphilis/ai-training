@@ -12,6 +12,11 @@ assumes:
   - objective: coding-with-agents/specifies-work/defines-success
     lesson: coding-with-agents/deciding-what-to-build
     section: writing-down-what-success-requires
+extends-to:
+  - label: Building a real feature with Claude Code (AI Hero video, 44 minutes)
+    href: https://www.youtube.com/watch?v=hX7yG1KVYhI
+  - label: My 7 phases of AI development (AI Hero)
+    href: https://www.aihero.dev/my-7-phases-of-ai-development
 after: [coding-with-agents/plan-then-test]
 shorts: [the thin end-to-end path]
 exercise:

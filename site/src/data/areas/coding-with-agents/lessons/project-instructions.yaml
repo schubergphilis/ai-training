@@ -19,6 +19,11 @@ assumes:
     section: what-belongs-in-it
 sources-checked: 2026-09-25
 review-by: 2027-03-25
+extends-to:
+  - label: A complete guide to AGENTS.md (AI Hero)
+    href: https://www.aihero.dev/a-complete-guide-to-agents-md
+  - label: Never run claude /init (AI Hero video, 11 minutes)
+    href: https://www.youtube.com/watch?v=9tmsq-Gvx6g
 after: [coding-with-agents/scoping-and-referencing]
 shorts:
   - long instruction files are followed less reliably than short ones. When the agent drifts,

@@ -20,6 +20,9 @@ assumes:
   - objective: coding-with-agents/verifies-agent-work/prefers-gates-to-opinions
     lesson: coding-with-agents/self-checking-loops
     section: gates-and-second-opinions
+extends-to:
+  - label: How to use Claude Code hooks to enforce the right CLI (AI Hero)
+    href: https://www.aihero.dev/how-to-use-claude-code-hooks-to-enforce-the-right-cli
 after: [coding-with-agents/self-checking-loops]
 shorts:
   - an agent review pass in CI with a security lane, evals in CI (a pointer to

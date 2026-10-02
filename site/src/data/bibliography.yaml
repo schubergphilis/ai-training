@@ -2,8 +2,11 @@
 # type is per spec S01 "Source" (book, course, paper, reference or video). url is a
 # public URL only where the licensing rules in AGENTS.md allow a link to the
 # source (agent-engineer-course, DeepLearning.AI, Claude Academy, CS50,
-# Diátaxis, Fuchsia, OpenSSF); otherwise null. Academy keys are
+# Diátaxis, Fuchsia, OpenSSF, AI Hero); otherwise null. Academy keys are
 # `Academy <slug>`, one per cited course, and link to the public course page.
+# AI Hero keys are `AI Hero <slug>` for a post at aihero.dev, where the slug
+# is the URL's path segment, and `AI Hero video <id>` for a video on Matt
+# Pocock's YouTube channel, where the id is the YouTube video id.
 # A `paper` entry follows spec S03 "Citations and terms" (key, author,
 # container and url rules).
 AEC-01:
@@ -1455,3 +1458,94 @@ Ousterhout 2021:
   author: John Ousterhout
   license: Proprietary
   url: null
+AI Hero tracer-bullets:
+  type: reference
+  title: "Tracer Bullets: Keeping AI Slop Under Control"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/tracer-bullets
+AI Hero my-7-phases-of-ai-development:
+  type: reference
+  title: "My 7 Phases Of AI Development"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/my-7-phases-of-ai-development
+AI Hero a-complete-guide-to-agents-md:
+  type: reference
+  title: "A Complete Guide To AGENTS.md"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/a-complete-guide-to-agents-md
+AI Hero essential-ai-coding-feedback-loops-for-type-script-projects:
+  type: reference
+  title: "Essential AI Coding Feedback Loops For TypeScript Projects"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/essential-ai-coding-feedback-loops-for-type-script-projects
+AI Hero how-to-make-codebases-ai-agents-love:
+  type: reference
+  title: "How To Make Codebases AI Agents Love"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/how-to-make-codebases-ai-agents-love
+AI Hero how-to-use-claude-code-hooks-to-enforce-the-right-cli:
+  type: reference
+  title: "How To Use Claude Code Hooks To Enforce The Right CLI"
+  container: AI Hero
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.aihero.dev/how-to-use-claude-code-hooks-to-enforce-the-right-cli
+AI Hero video hX7yG1KVYhI:
+  type: video
+  title: "Building a REAL feature with Claude Code: every step explained"
+  container: Matt Pocock on YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=hX7yG1KVYhI
+AI Hero video WNx-s-RxVxk:
+  type: video
+  title: "I was an AI skeptic. Then I tried plan mode"
+  container: Matt Pocock on YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=WNx-s-RxVxk
+AI Hero video hYZdIwFIy-c:
+  type: video
+  title: "Red Green Refactor is OP With Claude Code"
+  container: Matt Pocock on YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=hYZdIwFIy-c
+AI Hero video 9tmsq-Gvx6g:
+  type: video
+  title: "Never Run claude /init"
+  container: Matt Pocock on YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=9tmsq-Gvx6g
+AI Hero video pSritFeoYFo:
+  type: video
+  title: "Frontend is HARDER for AI than backend (here's how to fix it)"
+  container: Matt Pocock on YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=pSritFeoYFo
+AI Hero video uC44zFz7JSM:
+  type: video
+  title: "Your codebase is NOT ready for AI (here's how to fix it)"
+  container: Matt Pocock on YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=uC44zFz7JSM
+AI Hero video yv8VZpov8bk:
+  type: video
+  title: "I'm using claude --worktree for everything now"
+  container: Matt Pocock on YouTube
+  author: Matt Pocock
+  license: Proprietary
+  url: https://www.youtube.com/watch?v=yv8VZpov8bk
