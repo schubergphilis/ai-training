@@ -100,3 +100,25 @@ objectives:
         why: An agent that read a `.env` file to solve a problem may paste its contents into a fixture.
         example: The pull request's test fixtures contain a real-looking API key, so the learner rotates it
           and adds the file to the secret scanner.
+  - id: coding-with-agents/verifies-agent-work/uses-a-fresh-review
+    statement: Has a change reviewed in a fresh session and weighs the findings
+    level: base
+    behaviors:
+      - claim: The learner gives the review to a session that did not write the change, together with the
+          diff, the specification and the criteria to check.
+        why: A fresh session judges the result without the reasoning that produced it, so it does not
+          defend the choices made (@Claude Code best practices).
+        example: The learner has a subagent review the diff against `PLAN.md` and check that every listed
+          edge case has a test.
+      - claim: The learner tells the reviewer to report only what affects correctness or the stated
+          requirements.
+        why: A reviewer asked for gaps reports some even in sound work, and chasing all of them adds code
+          nobody needs.
+        example: The review prompt ends with "report gaps against the spec, not style preferences", and
+          the review comes back with two findings instead of fifteen.
+      - claim: The learner decides on each finding to fix it, reject it or file it, and the gates still
+          decide the merge.
+        why: A review finding is a model's judgment, and only a deterministic gate can block a change on
+          its own.
+        example: The learner fixes the missing null check, rejects a suggested extra abstraction, and
+          waits for CI before merging.

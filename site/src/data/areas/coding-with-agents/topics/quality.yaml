@@ -50,8 +50,18 @@ concepts:
       flaw. Agents increase exposure by suggesting names from memory. Verify
       that packages exist and are the intended ones, pin to exact versions,
       and audit regularly.
+  - id: deep-modules
+    name: Deep modules
+    definition: >-
+      Modules whose interface is small compared with what they do: a few
+      operations that hide a large implementation. A shallow module has an
+      interface almost as complex as its code, so its callers have to
+      understand the inside anyway. Deep modules help an agent change code
+      safely, because a change inside one stays inside, and the agent needs
+      to read only the interface to use it. A brief that asks to keep modules
+      deep limits how far a change spreads.
 links:
   prerequisites: [coding-with-agents/verification, safety/agent-risk]
   related: []
   specializations: []
-sources: [DLAI-7, Brilliant SEC, Fuchsia review, OpenSSF Scorecard, Academy ai-native-sdlc-playbook, Academy claude-code-in-action, Pearce 2022]
+sources: [DLAI-7, Brilliant SEC, Fuchsia review, OpenSSF Scorecard, Academy ai-native-sdlc-playbook, Academy claude-code-in-action, Pearce 2022, Ousterhout 2021]

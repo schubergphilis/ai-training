@@ -75,3 +75,39 @@ objectives:
         why: Agents optimize for the check they see, and a check that passes on a stub passes on a stub.
         example: The test for the email sender uses a fake mailbox and asserts the message arrived, where a
           check on the send function's return value would pass on a stub.
+  - id: coding-with-agents/specifies-work/is-interviewed-before-planning
+    statement: Reaches a shared design by having the agent interview them before planning
+    level: base
+    behaviors:
+      - claim: For a larger feature, the learner asks the agent to interview them about the design before
+          any plan is written.
+        why: The questions bring out decisions the learner had not made yet, while changing them is still
+          free (@Claude Code best practices).
+        example: The learner writes "I want a CSV export. Interview me about it before you plan
+          anything", and gets questions about encodings and very large files they had not considered.
+      - claim: The learner answers with decisions, and says "not decided yet" when there is none.
+        why: An answer made up to move on becomes a requirement the agent builds.
+        example: Asked which time zone the export uses, the learner says it is undecided, and the spec
+          lists it as an open question.
+      - claim: The interview ends in a written spec, and the work starts from that file in a fresh session.
+        why: The file holds the outcome of the interview, and a fresh session has room for the work
+          (@Claude Code best practices).
+        example: The agent writes `SPEC.md`, the learner reads and corrects it, and opens a new session
+          with "implement `SPEC.md`".
+  - id: coding-with-agents/specifies-work/settles-with-a-prototype
+    statement: Settles a design question with a throwaway prototype
+    level: expert
+    behaviors:
+      - claim: The learner states the one question a prototype must answer before asking for it.
+        why: A prototype without a question grows into a first version of the system (@Thomas 2019).
+        example: '"Can the library read the 2 GB export in under a minute?" and the agent writes a short
+          script that times exactly that.'
+      - claim: The prototype leaves out everything the question does not need.
+        why: Its value is the answer, so tests, error handling and structure are effort spent on code
+          that is deleted.
+        example: The timing script has a hard-coded path and no tests, and the learner does not ask for
+          either.
+      - claim: The learner writes the answer into the specification and deletes the prototype.
+        why: Code built without structure brings its shortcuts into the system when it is kept.
+        example: The spec gains "the parser must stream, because the library loads the whole file into
+          memory", and the prototype branch is deleted.

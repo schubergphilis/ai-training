@@ -52,8 +52,38 @@ concepts:
       precise, gives the agent a target it can run itself, and keeps
       verification from being replaced by a glance at a diff that looks
       right.
+  - id: design-interview
+    name: Design interview
+    definition: >-
+      Having the agent question the engineer about a feature before any plan
+      is written. The agent asks about the implementation, edge cases,
+      concerns and trade-offs, skips the obvious, and keeps going until the
+      open points are settled, then writes the result down as a
+      specification. The questions bring out decisions the engineer had not
+      made yet, while changing them costs nothing. The written spec lets a
+      fresh session build the design without the interview in its context.
+  - id: throwaway-prototype
+    name: Throwaway prototype
+    definition: >-
+      A small program built only to answer one design question, such as
+      whether a library can handle the data or which of two interfaces reads
+      better, and deleted once the question is answered. It skips error
+      handling, tests and structure, because none of its code is kept. With an
+      agent a prototype is cheap, so trying an idea can replace a long
+      discussion of it. The answer goes into the specification, and the
+      prototype's code stays out of the real system.
+  - id: shared-vocabulary
+    name: Shared vocabulary
+    definition: >-
+      One agreed meaning for each term of the problem domain, used the same
+      way by domain experts, engineers, specifications, code and agent
+      instructions. When the spec says "account" and the code says
+      "customer" for the same thing, an agent has to guess whether the two
+      differ, and some of its guesses are wrong. A short glossary the agent
+      reads keeps the terms aligned, and renaming a term is a change to the
+      design.
 links:
   prerequisites: [coding-with-agents/first-session, using-agents/decomposition]
   related: []
   specializations: []
-sources: [Brilliant TAS, Brilliant SPC, Academy ai-native-sdlc-playbook, Academy ai-fluency-for-builders]
+sources: [Brilliant TAS, Brilliant SPC, Academy ai-native-sdlc-playbook, Academy ai-fluency-for-builders, Claude Code best practices, Thomas 2019, Artima tracer bullets, Brooks 1995, Evans 2003, Evans DDD Reference]

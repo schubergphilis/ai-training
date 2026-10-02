@@ -40,8 +40,28 @@ concepts:
       instead of raw logs, fresh sessions for new work, and no pasting of
       whole files it can read itself. When answers drift or earlier rules get
       ignored, the context is full; compact or restart rather than push on.
+  - id: starting-context
+    name: Starting context
+    definition: >-
+      Everything in the context window before the first message: the
+      harness's system prompt and tool descriptions, connected servers,
+      skill descriptions, instruction files and saved memory. It is sent
+      again with every request, so it costs tokens each time and leaves less
+      room for the task. A context command shows its size by category.
+      Moving rarely needed guidance into skills or rules that load on demand,
+      and disconnecting unused servers, makes it smaller.
+  - id: deciding-at-a-phase-boundary
+    name: Deciding at a phase boundary
+    definition: >-
+      Choosing what the next phase of work starts with when one phase ends,
+      such as after planning. The options are to
+      carry on in the same session, clear the context, compact it into a
+      summary, write a handoff for a fresh session, or delegate the next part
+      to a subagent. The choice follows what the next phase needs: the full
+      history when it continues the same problem, and a written spec in a
+      clean window when it starts a new one.
 links:
   prerequisites: [coding-with-agents/workflow, concepts/grounding]
   related: [customizing-agents/instructions]
   specializations: []
-sources: [AEC-15, Academy claude-code-101, Academy claude-code-in-action]
+sources: [AEC-15, Academy claude-code-101, Academy claude-code-in-action, Claude Code context window, Claude Code best practices, Anthropic context engineering]

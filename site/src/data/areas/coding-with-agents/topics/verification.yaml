@@ -70,8 +70,18 @@ concepts:
       learn what it does under pressure, in a sandbox where nothing real can
       be damaged. What you find becomes a permission change, an instruction
       or a gate.
+  - id: fresh-context-review
+    name: Fresh-context review
+    definition: >-
+      A review by an agent session that did not write the change. It gets
+      the diff, the specification and the criteria to check, and none of the
+      reasoning that produced the change, so it judges the result on its own
+      terms. A reviewer asked for gaps finds some even in sound work, so it is
+      told to report only what affects correctness or the stated
+      requirements. Its findings are advice a person weighs, next to the
+      deterministic gates that decide whether a change merges.
 links:
   prerequisites: [coding-with-agents/workflow, safety/verification]
   related: []
   specializations: []
-sources: [Brilliant VER, Academy ai-fluency-for-builders, Academy claude-code-in-action]
+sources: [Brilliant VER, Academy ai-fluency-for-builders, Academy claude-code-in-action, Claude Code best practices]

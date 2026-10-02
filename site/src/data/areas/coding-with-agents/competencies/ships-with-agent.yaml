@@ -99,3 +99,23 @@ objectives:
         why: A decision that is only in someone's head gets contradicted by the next session.
         example: The project's `docs/decisions/` folder records why the queue is in-process, and the project
           instructions point the agent at it.
+  - id: coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with
+    statement: Chooses deliberately what each phase of work starts with, including the starting context
+    level: expert
+    behaviors:
+      - claim: At the end of a phase the learner decides whether to carry on, clear, compact, hand off or
+          delegate, and can say why.
+        why: The next phase needs either the history or a clean window, and carrying on by default keeps
+          everything whether it helps or not (@Claude Code best practices).
+        example: After the design interview produces a spec, the learner starts a fresh session with the
+          spec file instead of implementing in the long planning session.
+      - claim: The learner checks a project's starting context with the context command and removes what
+          does not earn its place.
+        why: The starting context is sent with every request and leaves less room for the task (@Claude
+          Code context window).
+        example: The breakdown shows three servers nobody uses and a 400-line instruction file, so the
+          learner disconnects the servers and moves two sections into skills.
+      - claim: Before clearing or compacting, the learner writes down what the next phase must keep.
+        why: Compaction keeps a summary and drops the detail, and clearing drops everything.
+        example: The learner has the agent write the changed files and the open decisions into a handoff
+          file, reads it, and then clears the session.

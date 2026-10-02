@@ -42,6 +42,48 @@ objectives:
           rejects.
         example: The instructions say "no new dependencies without an issue", so the learner opens the issue
           first.
+  - id: coding-with-agents/works-in-team/keeps-the-backlog-reachable
+    statement: Keeps specs and tickets where the team and the agent can both reach them
+    level: base
+    behaviors:
+      - claim: Specs and tickets go into the team's tracker, and the learner keeps none of them only in a
+          private note or a chat.
+        why: Work that is only in one person's notes is invisible to the rest of the team and to every
+          agent session.
+        example: The learner turns the plan from a chat into three tickets, each linking the spec, before
+          any agent starts on them.
+      - claim: The learner records which ticket blocks which with the tracker's own links.
+        why: The tracker then marks blocked tickets, so a person or an agent picking up work can skip them
+          (@GitHub docs creating-issue-dependencies).
+        example: The ticket for the login page is marked as blocked by the token ticket, and the agent
+          asked for the next open ticket takes the token one.
+      - claim: The agent reaches the tracker through a command-line tool with credentials that allow only
+          what it needs.
+        why: A command-line tool costs little context, and narrow credentials limit what a wrong command
+          can do (@Claude Code best practices).
+        example: The agent's token can read tickets and add comments, and it cannot delete tickets or
+          change the project's settings.
+  - id: coding-with-agents/works-in-team/turns-findings-into-rules
+    statement: Turns recurring review findings into written standards or automated checks
+    level: base
+    behaviors:
+      - claim: When the same review finding comes up again, the learner adds it to the team's standards
+          file.
+        why: A rule written down once is read by every reviewer and every agent, and a finding repeated in
+          comments is forgotten (@Claude Code memory).
+        example: After the third comment about logging personal data, the learner adds the rule to the
+          standards file with an example of what to log instead.
+      - claim: A rule that a linter or a hook can check moves out of the file and into the check.
+        why: A written rule is advice the agent may miss, and a check runs on every change (@Claude Code
+          best practices).
+        example: The rule "no print statements in library code" becomes a lint rule, and the line in the
+          standards file is deleted.
+      - claim: Reviewers block a change only for a rule in the file or a failed check, and mark other
+          points as suggestions.
+        why: A review that blocks on personal preference makes the standard unclear and the rules in the
+          file worth less (@Google eng-practices).
+        example: 'A reviewer writes "Nit: I would name this differently" and approves, because naming is
+          not covered by the file.'
   - id: coding-with-agents/works-in-team/runs-parallel-work
     statement: Runs several agent sessions without losing coherence
     level: expert
