@@ -239,7 +239,7 @@ read. `max_rounds` bounds the loop, for the same reason every loop in
 this course has a step limit.
 
 <Predict id="predict-loop-rounds" objective="building-agents/builds-agent-loop/adds-retrieval"
-  concepts={['agentic-rag-loop']}
+  concepts={['agentic-rag-loop']} revision={2}
   context="The lesson's fixture has a retrieval loop of at most three rounds. Each round searches a twelve-document handbook for one document, skips documents already read, and judges the best sentence of the document it returned. A sentence that points at another page makes the loop add that sentence's keywords to the query and search again. A sentence that answers the query ends the loop, which returns the number of the round it ended in. Question seven is: Who approves a replacement laptop for the payments team? The first search, with the question as its query, returns the laptops text, whose best sentence says the cost center owner of your team approves it and points at the team pages. The search with the new query returns the payments team text, which names the cost center owner of the payments team. The fixture calls the loop with quiet=True, which turns off the line per round, and prints one line: rounds: and the number of rounds."
   title="Predict the search rounds"
   hint="How many documents hold a piece of the answer, and does the loop ever read the same one twice?"
@@ -256,13 +256,15 @@ print(f"rounds: {result['rounds']}")
 
 </Predict>
 
-Two rounds. Call `answer_with_loop(MULTI_HOP)` without `quiet` and it
-prints a line per round, and the second line shows that the second query
-is the question plus the words of the pointer. The data team's text
+The loop takes two rounds. Call `answer_with_loop(MULTI_HOP)` without
+`quiet` and it prints a line per round. The second line shows the second
+query, `approves center cost laptop owner pages payments replacement team`,
+which is the question's keywords plus the pointer's. The data team's text
 also names a cost center owner, and it scores four on that second query
 against five for the payments team's text. The word `payments`, carried
-over from the question, is the difference. A real loop costs a model call per round on top of the search, so this
-question costs about twice what a basic question does.
+over from the question, is the difference. A real loop costs a model call
+per round on top of the search, so this question costs about twice what a
+basic question does.
 
 ## A question the handbook doesn't answer
 
