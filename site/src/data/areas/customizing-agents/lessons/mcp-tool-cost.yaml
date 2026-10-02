@@ -15,7 +15,7 @@ assumes:
     lesson: customizing-agents/mcp-first-server
     section: connect-the-real-server
 extends-to:
-  - label: "How to kill the bloat in Claude Code's system prompt"
+  - label: How to kill the bloat in Claude Code's system prompt (AI Hero)
     href: https://www.aihero.dev/how-to-kill-the-bloat-in-claude-codes-system-prompt
 sources-checked: 2026-09-26
 review-by: 2027-03-26

@@ -14,7 +14,7 @@ assumes:
     lesson: building-agents/golden-sets
     section: hold-some-back-and-add-past-failures
 extends-to:
-  - label: Your app is only as good as its evals
+  - label: Your app is only as good as its evals (AI Hero)
     href: https://www.aihero.dev/what-are-evals
 after: [building-agents/rubrics, building-agents/golden-sets]
 shorts: [Judge biases and calibration]
