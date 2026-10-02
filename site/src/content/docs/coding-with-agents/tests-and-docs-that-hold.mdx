@@ -5,7 +5,8 @@ tests agree with the code, and it doesn't tell you they would notice if
 the code were wrong. In this lesson you break a small program on
 purpose and run the tests an agent wrote for it. Some of them still
 pass, and you rewrite one of them so it checks what the program must do.
-Then you review a change the agent made to the same program, and find
+You see why a test that uses only the small interface of a module keeps
+working when an agent changes the inside. Then you review a change the agent made to the same program, and find
 the docs it left out of date.
 
 The program is `shop/`, a pricing module for a small web shop, in the
@@ -247,6 +248,60 @@ The brief didn't ask for a change to the total of an order without a
 discount code. What do you do?
 </Scenario>
 
+## Test through a small interface
+
+**Deep modules** do a lot behind a small interface. John Ousterhout
+describes the interface of a module as what its callers have to learn,
+and the code behind it as what they get in return. He argues that a
+good module gives its callers a lot for a little (@Ousterhout 2021). A
+shallow module has an interface nearly as large as its code, so its
+callers have to know how it works inside.
+
+The shop's interface for a price is `total(lines)`. A caller passes the
+lines of an order and gets the amount to pay. It doesn't need to know
+the threshold, the shipping price or where the rounding happens. The
+rewrite of `test_total_adds_shipping` that catches a wrong price uses
+only that interface:
+
+```python
+assert total([(1, 30.00)]) == 34.95
+```
+
+It fails when the price is wrong, and it keeps passing when an agent
+changes the inside of `pricing.py` correctly, for example by storing the
+prices in cents. Both tests that mirrored the code reached past `total`:
+one compared with `SHIPPING`, and the other called the helper functions
+that `total` calls. A test that depends on the inside of a module has
+to change when the inside changes, and it can agree with a wrong value
+there.
+
+A deep module also helps the next session. An agent that changes the
+shipping rule edits `pricing.py` and its tests and no other code,
+because no caller knows the rule. The next section shows that the
+documentation still needs the same change. An agent that only calls the
+module needs to read the interface. Ousterhout calls it information
+leakage when one design decision, such as the shipping price, is known
+in several modules (@Ousterhout 2021). An agent can leak a decision in a change
+that passes every test, so review the interface in a diff as closely as
+the code. When a function gets new parameters, ask what each caller now
+has to know.
+
+<Choice id="new-parameters-for-total" objective="coding-with-agents/verifies-agent-work/reviews-others-code"
+  concepts={['deep-modules']}
+  context="A pricing module has one public function, total(lines), which adds up an order and adds shipping: 4.95 EUR below 50.00 EUR, from two constants inside the module. Twelve places in the shop call total. The shop has one shipping price and one threshold."
+  title="The function got two new parameters" hint="After this change, which code has to know the shipping price and the threshold?"
+  options={[
+    { text: 'Approve it, because a function that takes its values as parameters is easier to test with other prices.', why: 'Tests can already check total with known orders. With the parameters, a test can pass in any values, and every caller has to pass the right ones.' },
+    { text: 'Approve it, because the tests pass and the agent updated all twelve callers in the same change.', why: 'The callers agree with the code today. The next change to the threshold edits twelve files, and a missed one charges the old price.' },
+    { text: 'Ask the agent to keep the interface `total(lines)`, with the price and threshold inside the module.', correct: true },
+    { text: 'Ask the agent to document the two new parameters in the docstring, and then approve it.', why: 'The docstring describes the larger interface. Every caller still has to know the shipping rule.' },
+  ]}>
+An agent was asked to fix how `total` rounds. Its diff changes
+`total(lines)` to `total(lines, free_from, shipping_cost)` and edits all
+twelve callers to pass `50.00` and `4.95`. The tests pass. What do you
+do?
+</Choice>
+
 ## Documentation is part of the change
 
 **Documentation** is the written explanation of how a system behaves:
@@ -470,7 +525,8 @@ test in your own project would you break first, and why that one?
 1. Review an agent's test by making the code wrong on purpose and running it. A test that still passes either gives the code an input that never reaches the broken line, or takes its expected value from the code it tests, so it mirrors the implementation. Rewrite it with an input that reaches the line and the value the program must produce, from the spec or worked out by hand.
 2. Give the agent the fast tests for the part it changes to run in its loop (@Claude Code best practices), and run the full suite before the merge. The agent never deletes, skips or loosens a test to make a change pass. When a test looks wrong, it stops and says why.
 3. A rule in the instructions file is context for the agent, and nothing enforces it (@Claude Code memory). Read the diff of the test files to confirm that no test was deleted, skipped or loosened.
-4. Documentation is part of the change. The brief names what to update, the instructions say where the docs are, and the review searches those places for what the change made stale.
+4. Deep modules do a lot behind a small interface (@Ousterhout 2021). Test them through that interface, and review an agent's diff for a change that makes callers know what the module used to hide.
+5. Documentation is part of the change. The brief names what to update, the instructions say where the docs are, and the review searches those places for what the change made stale.
 </Recap>
 
 <Habit id="break-one-line-first">
