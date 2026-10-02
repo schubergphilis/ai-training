@@ -24,11 +24,11 @@ exercise:
   brief: >-
     Break the fixture on purpose and run its agent-written tests, keep the ones that fail, rewrite
     one that passed, and check which documentation the change left stale.
-sources: [Academy ai-native-sdlc-playbook, Claude Code best practices, Claude Code memory]
+sources: [Academy ai-native-sdlc-playbook, Claude Code best practices, Claude Code memory, Ousterhout 2021]
 issue: 176
-minutes: 15
-sources-checked: 2026-09-25
-review-by: 2027-03-25
+minutes: 20
+sources-checked: 2026-10-02
+review-by: 2027-04-02
 notes: >-
   The plan named the topic safety/agent-risk as assumed; taken as the objective
   safety/judges-agent-risk/names-blast-radius, used where an agent that may edit the tests widens
@@ -50,5 +50,14 @@ notes: >-
   self-checking-loops (issue #408), because the plan gives the lesson these two objectives.
   shop/.gitignore keeps __pycache__ out of the learner's git add -A after running the tests.
   Deep modules (Ousterhout 2021) was folded into this lesson on 2026-10-02 instead of getting a
-  lesson of its own, because no objective fits it on its own. The page doesn't teach it yet: its
-  issue (#693) adds a section and Ousterhout 2021 to sources.
+  lesson of its own, because no objective fits it on its own. Issue #693 added the section "Test
+  through a small interface" and its checkpoint new-parameters-for-total on reviews-others-code.
+  Ousterhout 2021 is a proprietary book: the page uses two of its ideas in our own words (a module's
+  interface as what callers learn against what the module does for them, deep against shallow
+  modules; and information leakage, one design decision known in several modules), with no text
+  copied. The claim that a deep module needs less context in a later agent session follows from the
+  concept definition in the quality topic and isn't cited to the book. The shop fixture is
+  reused unchanged, and the section's test line is the key of rewrite-the-total-test.
+  The section raises the estimate for reading and checkpoints from about 16.5 to 19.6 minutes, so
+  minutes is 20. The three other sources were checked again on 2026-10-02 and still state what the
+  page cites.
