@@ -48,8 +48,35 @@ concepts:
       management and the stop rules. Two agents using the same model can
       behave very differently because their harnesses differ. When an agent
       misbehaves, the fix is usually in the harness, not the model.
+  - id: environment
+    name: Environment
+    definition: >-
+      The files, programs, services and data that an agent's tools act on.
+      The model chooses an action and the harness carries it out, and the
+      effect lands in the environment: a file changes, a command runs, a
+      message goes out. The environment is the third part of an agent, next
+      to the model and the harness. What it contains decides what the agent
+      can reach and what a mistake can damage, so a test copy limits both.
+  - id: model-request
+    name: Model request
+    definition: >-
+      One call from the harness to the model, carrying the instructions, the
+      tool descriptions and the history so far, and answered by one
+      response. A single prompt from a person often leads to many requests.
+      The model asks for a tool, the harness runs it and sends the result in
+      a new request, and this repeats until the model answers without asking
+      for a tool. Each of these round trips is one turn of the agent loop.
+  - id: stateless-model
+    name: Stateless model
+    definition: >-
+      The model keeps nothing from one request to the next. Each request has
+      to carry everything the model should take into account, so the harness
+      sends the whole conversation again every time. What feels like the
+      agent's memory is text the harness stores and sends again, or notes it
+      writes to files and reads back later. Clearing or shortening that text
+      changes what the model knows at once.
 links:
   prerequisites: [concepts/prompting, concepts/limits]
   related: []
   specializations: []
-sources: [AEC-01, DLAI-11, Academy claude-platform-101]
+sources: [AEC-01, DLAI-11, Academy claude-platform-101, Claude Code agent loop, Claude docs messages]

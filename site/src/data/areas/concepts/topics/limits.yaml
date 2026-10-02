@@ -58,8 +58,18 @@ concepts:
       file the model follows some rules and quietly drops others. Dilution is
       why short instruction files work better than long ones and why a rule
       that must always hold belongs in a mechanical check, not in prose.
+  - id: factuality-and-faithfulness
+    name: Factuality and faithfulness
+    definition: >-
+      Two kinds of hallucination that research on the subject separates. A
+      factuality error is wrong about the world, such as an invented date or
+      a citation that does not exist. A faithfulness error departs from what
+      the person gave the model: it ignores an instruction, contradicts the
+      document it was handed or contradicts itself. The first is found by
+      checking an outside source, and the second by comparing the output
+      with the input.
 links:
   prerequisites: [concepts/how-models-work]
   related: []
   specializations: []
-sources: [DLAI-3, Academy ai-capabilities-and-limitations, Academy ai-fluency-framework-foundations, Sharma 2023]
+sources: [DLAI-3, Academy ai-capabilities-and-limitations, Academy ai-fluency-framework-foundations, Sharma 2023, Huang 2025]

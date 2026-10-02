@@ -64,3 +64,24 @@ objectives:
           follow-up.'
         example: An agent that ends with a half-written file and no summary hit a limit, so the learner
           checks the log rather than trusting the output.
+  - id: concepts/recognizes-agents/follows-one-prompt
+    statement: Follows one prompt through its model requests and names the part of the agent behind each step
+    level: base
+    behaviors:
+      - claim: The learner splits the handling of one prompt into model requests, a new one after each tool
+          result, and says where each request ends.
+        why: Each request is a full call to the model with the whole history, and one prompt to an agent is
+          often many of them (@Claude Code agent loop).
+        example: For "find last month's invoices and total them", the learner lists a request that asks
+          for a search, one that asks to open two files, and a last one that writes the answer.
+      - claim: The learner says for each step whether the model, the harness or the environment did it.
+        why: The three parts fail in different ways, so knowing which part did a step shows where to look
+          when the step goes wrong.
+        example: '"The model chose to search, the harness checked the permission and ran the search, and
+          the shared drive returned three files."'
+      - claim: The learner explains that the model remembers earlier steps only because the harness sends
+          them again with each request.
+        why: The model keeps nothing between requests, so anything the harness leaves out is gone for the
+          model (@Claude docs messages).
+        example: Asked how the agent knew what was in a file it read two steps earlier, the learner says
+          the file's text was part of the history in the next request.

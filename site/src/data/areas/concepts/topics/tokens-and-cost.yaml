@@ -1,0 +1,55 @@
+id: concepts/tokens-and-cost
+area: concepts
+name: Tokens, cost and effort
+definition: >-
+  Every request to a model is counted and billed in tokens. This topic covers
+  the counts a request reports, why each request in a long session costs more
+  than the one before, how prompt caching makes an unchanged start of a
+  request cheap, and how an effort setting trades thoroughness against
+  tokens.
+concepts:
+  - id: input-and-output-tokens
+    name: Input and output tokens
+    definition: >-
+      The two counts every response reports. Input tokens are everything the
+      request sent: instructions, tool descriptions, the history and the new
+      message. Output tokens are what the model wrote, including tool
+      requests and any thinking, and each one costs several times as much as
+      an input token. With prompt caching, the input count is split further
+      into tokens written to the cache, tokens read from it and the rest.
+      Reading these counts shows where the cost of a request comes from.
+  - id: growing-session-cost
+    name: Growing session cost
+    definition: >-
+      Because the model keeps nothing between requests, each request in a
+      session sends the whole conversation again, and an agent sends a new
+      request after every batch of tool results. So each request carries
+      everything before it, and a question late in a long session costs more
+      than the same question in a new one. Starting fresh for an unrelated
+      task resets the history, and compacting shrinks it at the price of one
+      large summary request.
+  - id: prompt-caching
+    name: Prompt caching
+    definition: >-
+      Reusing the processing of the opening part of a request when a later
+      request starts with exactly the same tokens. The reused part is billed
+      at a small fraction of the normal input price. The opening part is
+      built in a fixed order: tool descriptions, then the system prompt, then
+      the messages. A change at any point invalidates the cache from there
+      on, so editing an early instruction makes the next request pay full
+      price. An unused cache also expires after a few minutes.
+  - id: effort-level
+    name: Effort level
+    definition: >-
+      A setting that tells the model how many tokens to spend on a response,
+      from low to max. Higher effort gives more thinking, more thorough tool
+      use and longer answers, and costs more tokens and time. Lower effort is
+      faster and cheaper and suits simple, well-defined work. The setting
+      guides the model and is no strict budget. Changing it between requests
+      in one conversation can invalidate the prompt cache, so it is chosen
+      per kind of work and kept for the session.
+links:
+  prerequisites: [concepts/how-models-work]
+  related: [concepts/limits, using-agents/choosing-tools]
+  specializations: []
+sources: [Claude docs prompt-caching, Claude Code costs, Claude docs effort, Claude docs messages, Claude docs pricing]

@@ -1,0 +1,86 @@
+id: concepts/reasons-about-cost
+area: concepts
+statement: Reasons about what a model request costs and why
+topics: [concepts/tokens-and-cost, concepts/what-is-an-agent]
+objectives:
+  - id: concepts/reasons-about-cost/reads-token-counts
+    statement: Reads the token counts of a request and says where its cost comes from
+    level: base
+    behaviors:
+      - claim: The learner tells the input tokens from the output tokens in a usage report and knows that an
+          output token costs more.
+        why: The two kinds are priced differently, so the same total can mean very different bills
+          (@Claude docs pricing).
+        example: A summary job reports 40,000 input and 500 output tokens, and the learner sees that the
+          long document, and not the short summary, is most of the cost.
+      - claim: The learner finds the part of the input that was read from the cache.
+        why: Input read from the cache is billed at a small fraction of the normal price, so the input
+          count alone overstates the cost (@Claude docs prompt-caching).
+        example: A report shows 30,000 tokens read from the cache and 800 new input tokens, and the learner
+          explains that most of the request was the same as the one before.
+      - claim: The learner looks at the counts before guessing why a task was expensive.
+        why: The counts show which part of the request grew, and a guess usually blames the wrong part.
+        example: The learner expected the long answers to be the problem, and the counts show the cost is
+          a large document attached to every message.
+  - id: concepts/reasons-about-cost/explains-growing-cost
+    statement: Explains why a session costs more per request as it grows
+    level: base
+    behaviors:
+      - claim: The learner explains that the tool sends the whole conversation with every request, so each
+          request carries all the text before it.
+        why: The model keeps nothing between requests, and a long history is paid for again on every one
+          (@Claude Code costs).
+        example: Asked why a one-line question late in a long chat used so many tokens, the learner says
+          the question was sent together with an hour of history.
+      - claim: The learner starts a new conversation for an unrelated task.
+        why: The old history adds to the cost of every new request and does not help with the new task.
+        example: After finishing the report, the learner opens a new chat for the unrelated email instead
+          of continuing in the long one.
+      - claim: The learner counts the requests an agent sends, which is more than the prompts they typed.
+        why: An agent sends a new request after each tool result, and each of those carries the history
+          (@Claude Code agent loop).
+        example: The learner sees one instruction lead to a dozen tool calls and expects about a dozen
+          requests in the usage report.
+  - id: concepts/reasons-about-cost/chooses-effort-level
+    statement: Chooses an effort level for a kind of work and keeps it fixed
+    level: base
+    behaviors:
+      - claim: The learner picks a low effort level for simple, well-defined work and a higher one for hard
+          or open problems.
+        why: Higher effort spends more tokens on thinking and on tool use, and simple work gains nothing
+          from that (@Claude docs effort).
+        example: Reformatting a list of addresses runs at low effort, and comparing the terms of two
+          contracts runs at high effort.
+      - claim: The learner tries a level on a few real examples of the work before settling on it.
+        why: The right level depends on the task, and the vendor's own advice is to test on your own
+          work.
+        example: The learner runs three typical requests at medium and at high effort, sees no difference
+          in quality, and keeps medium.
+      - claim: The learner keeps the level fixed within one conversation and changes it only between kinds
+          of work.
+        why: Changing the effort level between requests can invalidate the prompt cache, so the next
+          request pays the full price for the whole history (@Claude docs effort).
+        example: The learner sets the level when starting the review session and leaves it there, and uses
+          another level in a separate drafting session.
+  - id: concepts/reasons-about-cost/explains-prompt-caching
+    statement: Explains what prompt caching saves and what breaks it
+    level: expert
+    behaviors:
+      - claim: The learner explains that a request reuses the cache only when it starts with exactly the
+          same tokens as a recent request.
+        why: The cache stores the opening part of a request, and any difference ends the match at that
+          point (@Claude docs prompt-caching).
+        example: The learner explains why two requests with the same long document but a different
+          first instruction both pay the full price.
+      - claim: The learner puts content that stays the same at the start of a request and content that
+          changes at the end.
+        why: A change invalidates the cache from that point on, so changing text near the start wastes
+          everything after it.
+        example: The learner puts the shared reference document before the question, so the next
+          question reuses the document from the cache.
+      - claim: "The learner names what breaks the cache: changed instructions or tools, a changed setting
+          such as the effort level, and a pause longer than the cache lifetime."
+        why: Each of these makes the next request pay again for everything before the change
+          (@Claude Code costs).
+        example: After a long lunch break, the first message in the old session costs much more than
+          the one before the break, and the learner knows why.
