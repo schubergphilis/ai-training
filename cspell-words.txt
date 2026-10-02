@@ -32,6 +32,12 @@ Varga
 Tervonen
 Brindlewick
 Stenberg
+Hamel
+Husain
+Pocock
+Pocock's
+Venners
+Ousterhout
 
 # Products, tools, projects
 Adwaita
@@ -70,6 +76,11 @@ schubergphilis
 opencode
 ICMJE
 agentskills
+mattpocock
+hamel
+Artima
+Yaknyam
+statusline
 
 # Course and certification codes
 CCAO
@@ -220,6 +231,11 @@ Nordholm
 stdio
 npx
 modelcontextprotocol
+Weijiang
+Weitao
+Prithvi
+Rajasekaran
+Hadfield
 
 # Animal names for dispatcher runs (.claude/skills/wave/run-names.txt)
 Xerus

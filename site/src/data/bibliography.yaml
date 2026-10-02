@@ -1329,3 +1329,136 @@ AGENTS.md format:
   author: AGENTS.md contributors
   license: MIT
   url: https://agents.md/
+Claude docs effort:
+  type: reference
+  title: Effort
+  container: Claude Platform documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://platform.claude.com/docs/en/build-with-claude/effort
+Huang 2025:
+  type: paper
+  title: "A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions"
+  container: ACM Transactions on Information Systems 43(2), Article 42, 2025, arXiv preprint 2311.05232
+  author: Lei Huang, Weijiang Yu, Weitao Ma and 8 others
+  license: arXiv.org perpetual, non-exclusive license 1.0
+  url: https://doi.org/10.1145/3703155
+Anthropic context engineering:
+  type: reference
+  title: Effective context engineering for AI agents
+  container: Anthropic Engineering
+  author: Prithvi Rajasekaran, Ethan Dixon, Carly Ryan, Jeremy Hadfield
+  license: Proprietary
+  url: https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+Claude Code statusline:
+  type: reference
+  title: Customize your status line
+  container: Claude Code documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://code.claude.com/docs/en/statusline
+Claude Code llm gateway:
+  type: reference
+  title: Other LLM gateways
+  container: Claude Code documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://code.claude.com/docs/en/llm-gateway
+Claude Code claude directory:
+  type: reference
+  title: Explore the .claude directory
+  container: Claude Code documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://code.claude.com/docs/en/claude-directory
+Claude Code agent sdk permissions:
+  type: reference
+  title: Configure permissions (Agent SDK)
+  container: Claude Code documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://code.claude.com/docs/en/agent-sdk/permissions
+Claude Code agent sdk user input:
+  type: reference
+  title: Handle approvals and user input
+  container: Claude Code documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://code.claude.com/docs/en/agent-sdk/user-input
+anthropics skills:
+  type: reference
+  title: Agent Skills (the anthropics/skills repository)
+  container: GitHub
+  author: Anthropic
+  license: Apache-2.0 and source-available, per skill
+  url: https://github.com/anthropics/skills
+mattpocock skills:
+  type: reference
+  title: Skills (the mattpocock/skills repository)
+  container: GitHub
+  author: Matt Pocock
+  license: MIT
+  url: https://github.com/mattpocock/skills
+Husain 2024:
+  type: reference
+  title: Your AI Product Needs Evals
+  container: hamel.dev
+  author: Hamel Husain
+  license: Proprietary
+  url: https://hamel.dev/blog/posts/evals/
+Google eng-practices:
+  type: reference
+  title: Code Review Developer Guide
+  container: Google Engineering Practices Documentation
+  author: Google
+  license: CC BY 3.0
+  url: https://google.github.io/eng-practices/review/
+GitHub docs creating-issue-dependencies:
+  type: reference
+  title: Creating issue dependencies
+  container: GitHub documentation
+  author: GitHub
+  license: CC BY 4.0
+  url: https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-issue-dependencies
+Thomas 2019:
+  type: book
+  title: "The Pragmatic Programmer: Your Journey to Mastery, 20th Anniversary Edition"
+  container: Addison-Wesley, 2019
+  author: David Thomas, Andrew Hunt
+  license: Proprietary
+  url: null
+Artima tracer bullets:
+  type: reference
+  title: "Tracer Bullets and Prototypes: A Conversation with Andy Hunt and Dave Thomas, Part VIII"
+  container: Artima Developer, 2003
+  author: Bill Venners
+  license: Proprietary
+  url: https://www.artima.com/articles/tracer-bullets-and-prototypes
+Brooks 1995:
+  type: book
+  title: "The Mythical Man-Month: Essays on Software Engineering, Anniversary Edition"
+  container: Addison-Wesley, 1995
+  author: Frederick P. Brooks, Jr.
+  license: Proprietary
+  url: null
+Evans 2003:
+  type: book
+  title: "Domain-Driven Design: Tackling Complexity in the Heart of Software"
+  container: Addison-Wesley, 2003
+  author: Eric Evans
+  license: Proprietary
+  url: null
+Evans DDD Reference:
+  type: reference
+  title: "Domain-Driven Design Reference: Definitions and Pattern Summaries"
+  container: Domain Language, 2015
+  author: Eric Evans
+  license: CC BY 4.0
+  url: https://www.domainlanguage.com/ddd/reference/
+Ousterhout 2021:
+  type: book
+  title: A Philosophy of Software Design, 2nd Edition
+  container: Yaknyam Press, 2021
+  author: John Ousterhout
+  license: Proprietary
+  url: null
