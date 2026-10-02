@@ -57,6 +57,26 @@ objectives:
         why: A hook that has never fired may not work, and the first real mistake is a bad time to find out.
         example: The learner writes a commit with the forbidden pattern and checks that the hook rejects it,
           before relying on it.
+  - id: customizing-agents/configures-agent/chooses-load-or-point
+    statement: Decides for each piece of guidance whether to load it or point at it
+    level: base
+    behaviors:
+      - claim: The learner keeps in the instruction file only what nearly every task needs, and replaces
+          the rest with a line that says where it is.
+        why: Everything in the file is in context for every task, and a pointer costs one line until a
+          task needs the detail (@Claude Code memory).
+        example: The release procedure moves from the instruction file into a skill, and the file keeps
+          "to cut a release, use the release skill".
+      - claim: The learner writes a pointer that says when to follow it as well as where it goes.
+        why: The agent decides from the pointer alone whether to open the file, so a bare path is often
+          skipped (@Anthropic context engineering).
+        example: '"Before changing the database schema, read `docs/migrations.md`" instead of "see also
+          `docs/`".'
+      - claim: The learner knows that an import which pulls a file in at start-up still loads it.
+        why: An import makes the file shorter to read and leaves the context just as full (@Claude Code
+          memory).
+        example: The learner moves a 300-line style guide behind a path-scoped rule that loads only for
+          the files it covers, instead of importing it.
   - id: customizing-agents/configures-agent/manages-memory
     statement: Manages what the agent carries between sessions
     level: expert
@@ -82,3 +102,27 @@ objectives:
         why: Repeated work in memory is a symptom, and the cure is a reusable procedure.
         example: After three sessions each worked out how to regenerate the API client, the steps become a
           skill.
+  - id: customizing-agents/configures-agent/prunes-instructions
+    statement: Prunes instruction files line by line
+    level: expert
+    behaviors:
+      - claim: For each line the learner asks whether removing it would cause a mistake, and removes it
+          when it would not.
+        why: Rules in a long file get ignored, so every line that does nothing weakens the ones that
+          matter (@Claude Code best practices).
+        example: '"Write clean, readable code" goes, because the agent behaves the same without it.'
+      - claim: The learner removes lines the agent can work out from the code, and lines about problems
+          that have gone away.
+        why: Those lines cost context in every session and can go stale while the code changes.
+        example: A paragraph describing the folder layout goes, and so does a warning about a build bug
+          that was fixed last year.
+      - claim: The learner resolves conflicting lines, including lines in different instruction files that
+          contradict each other.
+        why: When two instructions conflict, the agent may follow either one (@Claude Code memory).
+        example: The root file says "use tabs" and a package file says "use spaces", so the learner keeps
+          the package rule and adds the reason for the exception.
+      - claim: After a pruning pass the learner watches a few sessions to confirm that nothing broke.
+        why: Testing a change to the instructions means watching the agent's behavior, as with any change
+          to a prompt.
+        example: The learner runs the usual tasks after the cut and adds back the one line whose removal
+          made the agent skip the formatter.

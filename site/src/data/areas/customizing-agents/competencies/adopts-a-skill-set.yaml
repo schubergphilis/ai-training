@@ -1,0 +1,74 @@
+id: customizing-agents/adopts-a-skill-set
+area: customizing-agents
+statement: Adopts a published skill set without giving up control of the project
+topics: [customizing-agents/skills, customizing-agents/instructions, customizing-agents/hooks-permissions]
+notes: >-
+  A later lesson on picking and taking up a skills framework would serve this
+  competency.
+objectives:
+  - id: customizing-agents/adopts-a-skill-set/vets-a-skill-set
+    statement: Vets a published skill set before installing it, as they would a dependency
+    level: base
+    behaviors:
+      - claim: The learner checks the license of the set and of each skill they plan to use.
+        why: One collection can mix licenses, with open-source skills next to skills that are only
+          source-available (@anthropics skills).
+        example: The learner finds that the document skills in a collection are source-available and uses
+          only the Apache-licensed ones in the team's repository.
+      - claim: The learner looks at who maintains the set, how recently it changed and how its changes are
+          released.
+        why: A skill set is code that runs in every session, and one that nobody maintains drifts away
+          from the agent it was written for.
+        example: The learner sees regular releases with a changelog and an open issue tracker, and notes
+          the version they reviewed.
+      - claim: The learner reads every skill, script and hook in the set before installing it.
+        why: A plugin's hooks and scripts run in the learner's sessions with the session's permissions
+          (@Claude Code plugins).
+        example: One skill runs a setup script that writes to the home directory, so the learner reads
+          the script before deciding.
+      - claim: The learner compares the set with the alternatives, including writing the few skills they
+          need.
+        why: A set of thirty skills brings thirty descriptions and thirty things to keep up to date, and
+          the team may need three of them.
+        example: The learner writes their own review skill from the two ideas they liked, and does not
+          install the whole collection.
+  - id: customizing-agents/adopts-a-skill-set/adopts-skills-gradually
+    statement: Adopts a few skills at a time and checks each one's effect and context cost
+    level: base
+    behaviors:
+      - claim: The learner turns on one or two skills at a time and uses them on real work before adding
+          more.
+        why: With one change at a time, a better or worse result can be traced to the skill that caused
+          it.
+        example: The learner uses the planning skill for a week of tickets before trying the review skill
+          from the same set.
+      - claim: The learner checks how much context the installed skills add to every session.
+        why: The description of every model-invoked skill loads in every session, whether or not the
+          skill is used (@Claude Code skills).
+        example: The context breakdown shows the skill descriptions growing after the install, so the
+          learner makes two rarely used skills user-invoked.
+      - claim: The learner removes a skill that did not change the results.
+        why: A skill with no effect still costs context and still has to be kept up to date.
+        example: After two weeks the commit-message skill produced the same messages as before, so the
+          learner uninstalls it.
+  - id: customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge
+    statement: Keeps the project's own instructions, hooks and permissions in charge when a skill set disagrees
+    level: base
+    behaviors:
+      - claim: When a skill contradicts the project's instructions, the learner changes or drops the skill
+          and leaves the instructions as they are.
+        why: When two instructions conflict, the agent may follow either one, so the conflict must be
+          removed (@Claude Code memory).
+        example: A skill says to commit after every change, the project says to commit once per task, and
+          the learner removes that step from their copy of the skill.
+      - claim: The learner keeps enforcement in the project's hooks and permissions, and no skill widens
+          them.
+        why: A skill is text the agent reads, and only hooks and permission rules enforce anything (@Claude
+          Code best practices).
+        example: A skill asks for permission to run any shell command, and the learner keeps the narrow
+          allowlist and adds only the one command the skill needs.
+      - claim: The learner pins the version of the set and reviews each update before taking it.
+        why: An update changes what runs in every session, and a pinned version changes only when someone
+          decides it should (@Claude Code plugin install).
+        example: The team turns off automatic updates for the marketplace and reads the changes of each
+          new release before moving the pin.

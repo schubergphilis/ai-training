@@ -1,0 +1,44 @@
+id: customizing-agents/inspecting-the-agent
+area: customizing-agents
+name: Inspecting what the agent sends
+definition: >-
+  What an agent sends to the model is hidden by default. This topic covers
+  watching how full the context is while working, reading the record a
+  harness keeps of each session, and logging the exact requests the agent
+  sends to the model provider, along with why each of these records holds
+  sensitive data.
+concepts:
+  - id: context-meter
+    name: Context meter
+    definition: >-
+      A live view of how much of the context window a session uses. A status
+      line can show the share in use and the tokens so far as the session
+      runs, and a context command breaks the use down by category, such as
+      instructions, tools, memory and messages. Watching it shows when a
+      session is getting full and which tools or files are expensive, so the
+      learner can compact or start fresh before the agent starts dropping
+      instructions.
+  - id: session-record
+    name: Session record
+    definition: >-
+      The file in which a harness saves a session, with every message, tool
+      call and tool result, so the session can be resumed later. It is the
+      most complete account of what the agent saw and did, and the place to
+      find where a run went wrong. It is also plain text on disk, kept for a
+      set number of days, and it holds whatever passed through a tool,
+      including file contents and any secret the agent printed.
+  - id: request-logging
+    name: Request logging
+    definition: >-
+      Recording the exact requests an agent sends to the model provider and
+      the responses it gets back. The agent can be pointed at a gateway
+      between it and the provider that logs every request, or a monitoring
+      export can be set to include full request bodies, which it leaves out
+      by default. The log shows what each tool description, file and
+      instruction costs. It holds everything the agent read, so it stays on
+      systems the team controls.
+links:
+  prerequisites: [concepts/what-is-an-agent, coding-with-agents/first-session]
+  related: [customizing-agents/mcp, coding-with-agents/context]
+  specializations: []
+sources: [Claude Code context window, Claude Code statusline, Claude Code claude directory, Claude Code monitoring, Claude Code llm gateway]

@@ -54,8 +54,38 @@ concepts:
       Installing a plugin lets its hooks run in your sessions and gives its
       servers the access you grant, so treat it like any other dependency
       and read what it contains.
+  - id: invocation-mode
+    name: Invocation mode
+    definition: >-
+      Who may start a skill: the model, when a request matches the skill's
+      description, or only the person, by typing its name. A model-invoked
+      skill applies itself when it fits, and its description takes up context
+      in every session. A user-invoked skill costs no context until it is
+      called and runs only when the person decides, which suits procedures
+      with side effects such as a deploy. A skill can also be hidden from the
+      person and kept for the model.
+  - id: skill-scope
+    name: Skill scope
+    definition: >-
+      Where a skill is installed decides who has it. A personal skill is in
+      the user's own configuration and follows that person into every
+      project. A project skill is committed to the repository, so everyone
+      who works there gets the same version and can review changes to it. An
+      organization can also install skills for all its users. When two skills
+      share a name, a fixed order decides which one wins, and a personal skill
+      hides a project skill of the same name.
+  - id: published-skill-sets
+    name: Published skill sets
+    definition: >-
+      Collections of skills that a vendor or a developer maintains for others
+      to install, often as a plugin. Anthropic's example skills and Matt
+      Pocock's engineering skills are two of many. A set like this is a
+      dependency: it runs in your sessions, it changes when its author
+      updates it, and its license can differ from one skill to the next.
+      Judge it as you would a library, by who maintains it, how active it is,
+      what it contains and what dropping it would cost.
 links:
   prerequisites: [customizing-agents/instructions]
   related: []
   specializations: []
-sources: [AEC-17, DLAI-10, Academy introduction-to-agent-skills, Academy claude-code-in-action, Academy ai-native-sdlc-playbook]
+sources: [AEC-17, DLAI-10, Academy introduction-to-agent-skills, Academy claude-code-in-action, Academy ai-native-sdlc-playbook, Claude Code skills, Agent Skills spec, Claude Code plugins, anthropics skills, mattpocock skills]

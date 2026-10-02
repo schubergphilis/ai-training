@@ -80,3 +80,23 @@ objectives:
           enabled.
         example: The team wants only the release skill, so the learner copies it into the project's
           `.claude/skills/` and doesn't install the plugin.
+  - id: customizing-agents/writes-skill/chooses-invocation-and-scope
+    statement: Chooses who invokes a skill and where it is installed
+    level: base
+    behaviors:
+      - claim: The learner makes a skill with side effects invocable by the user only.
+        why: A deploy or a message to other people should run when a person decides, and a skill the model
+          may start can run when its description happens to match (@Claude Code skills).
+        example: 'The deploy skill sets `disable-model-invocation: true`, and the coding-conventions skill
+          stays available to the model.'
+      - claim: The learner weighs the context a model-invoked skill costs against how often it helps.
+        why: The description of every model-invoked skill is in context in every session (@Claude Code
+          skills).
+        example: The learner makes a rarely used report skill user-invoked, so its description no longer
+          loads in every session.
+      - claim: The learner installs a skill the team needs in the project and keeps a personal skill in
+          their own configuration.
+        why: A project skill is shared and reviewed with the code, and a personal one follows only its
+          owner.
+        example: The release skill is committed to `.claude/skills/`, and the learner's own note-taking
+          skill stays in their home directory.

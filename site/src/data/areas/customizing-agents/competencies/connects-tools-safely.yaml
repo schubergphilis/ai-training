@@ -1,7 +1,7 @@
 id: customizing-agents/connects-tools-safely
 area: customizing-agents
 statement: Connects an agent to tools and data safely
-topics: [customizing-agents/mcp, customizing-agents/hooks-permissions, safety/agent-risk]
+topics: [customizing-agents/mcp, customizing-agents/hooks-permissions, safety/agent-risk, customizing-agents/inspecting-the-agent]
 objectives:
   - id: customizing-agents/connects-tools-safely/adds-a-tool
     statement: Adds a tool via MCP or CLI with least privilege
@@ -64,3 +64,25 @@ objectives:
         why: Injection shows up as a call that made no sense for the task, and only a log shows it.
         example: The log shows the agent tried to fetch a URL containing a file's contents, and the learner
           traces it to a planted comment in a README.
+  - id: customizing-agents/connects-tools-safely/inspects-requests
+    statement: Inspects the requests to see what tools and context cost, and keeps request logs local
+    level: expert
+    behaviors:
+      - claim: The learner logs the requests of a session and measures what each tool description, file and
+          instruction adds.
+        why: A guess at what fills the context is often wrong, and the logged request shows it exactly
+          (@Claude Code llm gateway).
+        example: The log shows that one server's tool descriptions are a fifth of every request, so the
+          learner disconnects it in projects that do not use it.
+      - claim: The learner keeps request logs and session records on machines the team controls and
+          deletes them when they are no longer needed.
+        why: They hold everything the agent read, including file contents and any secret it printed
+          (@Claude Code claude directory).
+        example: The learner runs the logging gateway on their own machine, and clears its logs at the
+          end of the investigation.
+      - claim: The learner turns on full request logging only for the investigation and turns it off
+          afterwards.
+        why: Monitoring leaves out prompt and request content by default for this reason (@Claude Code
+          monitoring).
+        example: The learner sets the variable that exports raw request bodies for one afternoon and
+          removes it from their settings that evening.

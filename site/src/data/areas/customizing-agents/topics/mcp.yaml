@@ -74,6 +74,15 @@ concepts:
       Connect a server with your own identity, never with a shared service
       account, so it can do only what you may do and its actions trace back
       to you.
+  - id: stdio-logging
+    name: Stdio logging
+    definition: >-
+      On the transport over standard input and output, the server's standard
+      output carries protocol messages only, and the specification forbids
+      writing anything else there. A stray print statement or a library's log
+      line corrupts the message stream, and the client fails in ways that are
+      hard to trace. Logs go to standard error, which the client may capture,
+      show or ignore, and which it does not treat as a sign of failure.
 links:
   prerequisites: [customizing-agents/instructions, concepts/what-is-an-agent]
   related: []

@@ -48,8 +48,18 @@ concepts:
       project instructions, a procedure into a skill, a check into a hook, an
       example into a context file. Each move removes a future explanation and
       a future mistake. It is the compounding part of working with agents.
+  - id: primary-and-secondary-sources
+    name: Primary and secondary sources
+    definition: >-
+      The code, the tests and the history of a repository are the primary
+      source for what is true about a project now. Notes, handoffs, plans and
+      saved memories are secondary: each records what someone believed at one
+      moment, and it goes stale as the code moves on. An agent treats a
+      secondary source as a lead and checks it against the primary one before
+      acting on it. When the two disagree, the code wins and the note is
+      corrected or deleted.
 links:
   prerequisites: [customizing-agents/skills, concepts/grounding]
   related: []
   specializations: []
-sources: [AEC-05, Brilliant MEM, Academy claude-code-101, Academy claude-code-in-action]
+sources: [AEC-05, Brilliant MEM, Academy claude-code-101, Academy claude-code-in-action, Claude Code memory]

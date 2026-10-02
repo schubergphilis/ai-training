@@ -49,8 +49,18 @@ concepts:
       committed, and flags for one session. Knowing the order explains why a
       setting seems ignored and lets a team ship safe defaults while people
       keep personal preferences.
+  - id: steering-by-rejection
+    name: Steering by rejection
+    definition: >-
+      Using a refusal to change what the agent does next. When a hook or a
+      person blocks an action and gives a reason, the reason goes back to the
+      model, which can adjust and continue. A reason that names the allowed
+      alternative, such as "run the test task", points it at the right path.
+      A bare refusal leaves it guessing, and since a rule on one command does
+      not cover other commands with the same effect, a guess can reach the
+      blocked result another way.
 links:
   prerequisites: [customizing-agents/instructions, safety/agent-risk]
   related: []
   specializations: []
-sources: [Academy claude-code-101, Academy claude-code-in-action, Academy introduction-to-subagents, Academy ai-native-sdlc-playbook]
+sources: [Academy claude-code-101, Academy claude-code-in-action, Academy introduction-to-subagents, Academy ai-native-sdlc-playbook, Claude Code hooks, Claude Code permissions]

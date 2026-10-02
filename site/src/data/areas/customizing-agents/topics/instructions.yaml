@@ -42,8 +42,26 @@ concepts:
       never committing secrets or always running the formatter, belongs in a
       hook or a permission setting that enforces it mechanically. A capability
       the agent lacks belongs in a tool or a skill, not in a longer paragraph.
+  - id: loading-versus-pointing
+    name: Loading versus pointing
+    definition: >-
+      Two ways to give an agent guidance. Loading puts the text in the
+      instruction file, so it is in the context of every session whether the
+      task needs it or not. Pointing puts one line there that says where the
+      detail is, such as a file path or a skill, and the agent reads it when a
+      task calls for it. Load what nearly every task needs and point at the
+      rest. An import that pulls a file in at start-up still loads it.
+  - id: pruning-instructions
+    name: Pruning instructions
+    definition: >-
+      Removing the lines of an instruction file that no longer earn their
+      place: a rule the agent already follows without being told, a fact it
+      can work out from the code, a line that conflicts with another, a rule
+      for a problem that has gone away. The test for each line is whether
+      removing it would cause a mistake. Rules in a long file get ignored, so
+      pruning makes the remaining rules work better.
 links:
   prerequisites: []
   related: [coding-with-agents/context]
   specializations: []
-sources: [AEC-15, Academy claude-code-101, Academy claude-code-in-action]
+sources: [AEC-15, Academy claude-code-101, Academy claude-code-in-action, Claude Code memory, Claude Code best practices, Anthropic context engineering]
