@@ -16,7 +16,7 @@ assumes:
     lesson: coding-with-agents/first-session
     section: start-the-agent-and-ask-it-to-explain
 extends-to:
-  - label: Model Context Protocol tutorial
+  - label: Model Context Protocol tutorial (AI Hero)
     href: https://www.aihero.dev/model-context-protocol-tutorial
 sources-checked: 2026-09-26
 review-by: 2027-03-26
