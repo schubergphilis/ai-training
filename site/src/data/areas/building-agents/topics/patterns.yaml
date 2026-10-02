@@ -51,6 +51,16 @@ concepts:
       detail. It keeps any one context small and focused and maps well onto
       decomposed specifications, at the cost of coordination and of
       information lost between levels.
+  - id: workflow-patterns
+    name: Workflow patterns
+    definition: >-
+      Fixed arrangements of model calls that code controls, for tasks whose
+      steps are known in advance. Chaining runs calls in order, each working
+      on the output of the one before. Routing classifies an input and sends it
+      to a specialized prompt. Parallel calls split a task into parts, or ask
+      the same question several times and combine the answers. A
+      draft-and-critique loop has one call write and another judge the draft
+      against criteria until it passes.
 links:
   prerequisites: [building-agents/agent-loop]
   related: []

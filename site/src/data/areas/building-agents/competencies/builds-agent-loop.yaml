@@ -75,6 +75,26 @@ objectives:
         why: Retrieved text without a frame is treated as instructions or as the model's own knowledge.
         example: The prompt says "The passages below were retrieved for this question. Answer only from
           them, and say if they do not cover it."
+  - id: building-agents/builds-agent-loop/gates-risky-tools
+    statement: Decides which tools must wait for a person's approval and what that person is shown
+    level: base
+    behaviors:
+      - claim: The learner sorts the agent's tools by what a wrong call can do, and requires approval for
+          the ones with side effects that are hard to undo.
+        why: An approval step on every call trains people to click through, and none on a payment tool
+          lets one bad call through (@Claude Code best practices).
+        example: Searching and reading files run freely, and sending an email or issuing a refund waits
+          for a person.
+      - claim: The person approving sees the tool name and the exact arguments, in a form they can check.
+        why: An approval is only as good as what the person can see, and "send email?" hides the
+          recipient and the text.
+        example: The approval screen shows the recipient, the subject and the full body of the email,
+          and the amount and account of the refund.
+      - claim: A denial goes back to the model as the tool's result, with a reason it can act on.
+        why: The model can then adjust and continue, where an error or a silent stop ends the run
+          (@Claude Code agent sdk user input).
+        example: The reviewer denies the refund with "the order is over 90 days old, offer store credit",
+          and the agent drafts the store-credit reply.
   - id: building-agents/builds-agent-loop/uses-an-sdk
     statement: Rebuilds the loop on an agent SDK and explains what the SDK took over
     level: expert

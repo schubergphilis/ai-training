@@ -1,7 +1,7 @@
 id: building-agents/evaluates-agents
 area: building-agents
 statement: Evaluates an agent's quality systematically
-topics: [building-agents/evaluation]
+topics: [building-agents/evaluation, building-agents/production]
 objectives:
   - id: building-agents/evaluates-agents/writes-a-rubric
     statement: Turns "good" into scorable criteria
@@ -107,3 +107,24 @@ objectives:
         why: Output metrics measure the agent's behavior, and the goal is the user's result.
         example: '"Ticket resolved without reopening within seven days" replaces "response contains the
           policy link".'
+  - id: building-agents/evaluates-agents/grows-the-set-from-use
+    statement: Grows the evaluation set from what goes wrong in real use
+    level: expert
+    behaviors:
+      - claim: The learner logs the traces of real use from the first release and reads a sample of them
+          on a schedule.
+        why: Failures that matter appear in real traces before anyone thinks to test for them, and only
+          someone reading the traces finds them (@Husain 2024).
+        example: Every Friday the learner reads thirty traces from the week, and tags each failure with
+          what went wrong.
+      - claim: Each failure found in use becomes a case in the evaluation set, with the expected quality
+          written down.
+        why: A case taken from real use measures a problem users actually have, and keeps the fix from
+          regressing.
+        example: A trace where the agent quoted an expired price becomes a test case that checks the
+          price against the current list.
+      - claim: The learner removes personal and confidential data from a trace before it goes into the set.
+        why: An evaluation set is shared, versioned and kept for a long time, and a production trace can
+          hold customer data.
+        example: The learner replaces the customer's name and address with made-up values and keeps the
+          structure of the request.

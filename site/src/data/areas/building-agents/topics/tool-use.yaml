@@ -52,8 +52,17 @@ concepts:
       files. Calls that depend on each other's results must stay sequential,
       and side-effecting tools need care because concurrent execution can
       reorder them.
+  - id: tool-approval
+    name: Tool approval
+    definition: >-
+      Pausing before chosen tools run so a person can approve each call with
+      its exact arguments. The harness applies its own rules first, and a call
+      that no rule settles goes to an approval step, which can allow it, allow
+      it with changed arguments, or deny it with a message. The message goes
+      back to the model, so the model can adjust and continue. Approval
+      belongs on tools with side effects, where a wrong call is costly.
 links:
   prerequisites: [concepts/what-is-an-agent]
   related: []
   specializations: []
-sources: [AEC-03, Academy claude-platform-101, Academy building-with-the-claude-api, Academy introduction-to-model-context-protocol]
+sources: [AEC-03, Academy claude-platform-101, Academy building-with-the-claude-api, Academy introduction-to-model-context-protocol, Claude Code agent sdk permissions, Claude Code agent sdk user input]

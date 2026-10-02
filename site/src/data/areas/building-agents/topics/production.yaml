@@ -75,8 +75,18 @@ concepts:
       to and exchanges results with another across organizations. Shared
       protocols reduce integration work and also widen the attack surface,
       so each connection is a trust decision.
+  - id: trace-driven-evaluation
+    name: Trace-driven evaluation
+    definition: >-
+      The cycle in which the traces of a running agent feed its evaluation.
+      Real use is logged, people read the traces, failures found there become
+      new evaluation cases, and the next change is tested against them. Each
+      round brings the evaluation set closer to what users actually do, so
+      each improvement is measured on problems that users really have. It
+      needs logging from the start and a habit of reading the traces
+      themselves as well as the scores.
 links:
   prerequisites: [building-agents/evaluation, safety/governance, customizing-agents/mcp]
   related: []
   specializations: []
-sources: [AEC-10, AEC-11, AEC-14, Brilliant SEC, Academy model-context-protocol-advanced-topics, Academy claude-platform-101, Hardy 1988]
+sources: [AEC-10, AEC-11, AEC-14, Brilliant SEC, Academy model-context-protocol-advanced-topics, Academy claude-platform-101, Hardy 1988, Husain 2024]
