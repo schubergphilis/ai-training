@@ -16,7 +16,7 @@ assumes:
     lesson: customizing-agents/allowlists
     section: run-two-write-the-allowlist
 extends-to:
-  - label: "How to actually force Claude Code to use the right CLI (don't use CLAUDE.md) (AI Hero video, 7 minutes)"
+  - label: "How to actually force Claude Code to use the right CLI (don't use CLAUDE.md) (AI Hero on YouTube, 7 minutes)"
     href: https://www.youtube.com/watch?v=3CSi8QAoN-s
 sources-checked: 2026-09-25
 review-by: 2027-03-25
