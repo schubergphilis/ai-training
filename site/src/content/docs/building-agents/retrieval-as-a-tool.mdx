@@ -246,8 +246,8 @@ this course has a step limit.
   answer={`rounds: 2`} run="building-agents/retrieval-as-a-tool/multi_hop_loop.py">
 
 Predict the number on the `rounds` line, and write the line as the
-fixture prints it. With `quiet=True` the loop prints nothing, so the
-`rounds` line is the whole output. Then run it.
+fixture prints it. With `quiet=True` the loop doesn't print its round
+lines, so the `rounds` line is the whole output. Then run it.
 
 ```python
 result = answer_with_loop(MULTI_HOP, quiet=True)
