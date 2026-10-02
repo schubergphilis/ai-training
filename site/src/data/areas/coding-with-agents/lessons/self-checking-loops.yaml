@@ -18,6 +18,9 @@ assumes:
   - objective: coding-with-agents/verifies-agent-work/observes-and-debugs
     lesson: coding-with-agents/observing-and-debugging
     section: reproduce-it-first
+extends-to:
+  - label: Essential AI coding feedback loops for TypeScript projects (AI Hero)
+    href: https://www.aihero.dev/essential-ai-coding-feedback-loops-for-type-script-projects
 after: [coding-with-agents/observing-and-debugging]
 shorts: [why a second model's review never replaces a test]
 exercise:

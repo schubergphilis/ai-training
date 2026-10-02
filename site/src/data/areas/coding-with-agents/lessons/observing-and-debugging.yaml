@@ -10,6 +10,9 @@ covers: coding-with-agents/verification
 serves: [coding-with-agents/verifies-agent-work/observes-and-debugs]
 introduces: [observing-a-running-system, isolating-a-fault]
 assumes: []
+extends-to:
+  - label: Frontend is harder for AI than backend (AI Hero video, 5 minutes)
+    href: https://www.youtube.com/watch?v=pSritFeoYFo
 after: [coding-with-agents/reviewing-the-diff]
 shorts: [bisecting a change with the agent as a pair]
 exercise:

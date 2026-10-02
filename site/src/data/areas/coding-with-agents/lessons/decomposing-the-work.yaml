@@ -14,6 +14,9 @@ assumes:
   - objective: using-agents/delegates-and-checks/adjusts-mid-task
     lesson: using-agents/adjusting-the-brief
     section: changing-a-limit-between-runs
+extends-to:
+  - label: "Tracer bullets: keeping AI slop under control (AI Hero)"
+    href: https://www.aihero.dev/tracer-bullets
 after: [coding-with-agents/deciding-what-to-build]
 shorts: [a check that would fail on a stub]
 exercise:

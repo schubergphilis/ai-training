@@ -30,6 +30,12 @@
       "ignoreRegExpList": [
         "/^\\s*section: [a-z0-9-]+$/gm"
       ]
+    },
+    {
+      "filename": "site/src/data/bibliography.yaml",
+      "ignoreRegExpList": [
+        "/^AI Hero video [A-Za-z0-9_-]{11}:$/gm"
+      ]
     }
   ],
   "languageSettings": [
