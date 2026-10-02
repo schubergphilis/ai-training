@@ -47,7 +47,7 @@ a claim it can't find, it prints `NO SOURCE`.
 
 <MultiChoice id="predict-the-missing-claims" objective="safety/verifies-output/checks-claims"
   concepts={['hallucination-in-practice']} revision={2}
-  context="A chat assistant wrote a one-paragraph summary of a council report on cycle parking at a station, and the learner compares its details with the report and the minutes of the meeting. The report says that on a weekday morning in March the team counted 890 bicycles against 640 racks. It says that Article 7(3) of the Cycle Parking Ordinance sets a minimum of one rack per 100 boarding passengers, and that the rail operator counts 7,200 boarding passengers on an average weekday. It says that reported theft fell by roughly a third between 2022 and 2024, and that the team recommends adding 300 racks, of which 120 covered. The minutes say that the chair, Rhea Dunmore, said: We need racks before we need another car park. The summary says 890 bicycles against 640 racks, one rack per 50 passengers under Article 7(3), a 38 percent fall in theft between 2022 and 2024, 300 racks of which 120 covered, about 9,000 passengers a day, and the chair saying: Racks before car parks, every time."
+  context="A chat assistant wrote a one-paragraph summary of a council report on cycle parking at a station, and the learner compares its details with the report and the minutes of the meeting. On the lesson page a checker shows these report and minutes sentences, one per line, and has a Check button that looks up each detail. The report says that on a weekday morning in March the team counted 890 bicycles against 640 racks. It says that Article 7(3) of the Cycle Parking Ordinance sets a minimum of one rack per 100 boarding passengers, and that the rail operator counts 7,200 boarding passengers on an average weekday. It says that reported theft fell by roughly a third between 2022 and 2024, and that the team recommends adding 300 racks, of which 120 covered. The minutes say that the chair, Rhea Dunmore, said: We need racks before we need another car park. The summary says 890 bicycles against 640 racks, one rack per 50 passengers under Article 7(3), a 38 percent fall in theft between 2022 and 2024, 300 racks of which 120 covered, about 9,000 passengers a day, and the chair saying: Racks before car parks, every time."
   title="Which details have no source?"
   hint="For each detail, find the sentence in the report or the minutes that gives it. Does that sentence give the same figure or the same words?"
   options={[
@@ -61,7 +61,7 @@ a claim it can't find, it prints `NO SOURCE`.
     { text: 'The chair saying "Racks before car parks, every time."', correct: true },
   ]}>
 The checker above shows the report and the minutes, one sentence per
-line. Before you press Check, compare each detail of the summary with
+line. Before you press Check in the checker, compare each detail of the summary with
 those sentences. A detail has a source when a sentence gives the same
 figure or the same words. Which of these details appear in neither the
 report nor the minutes?
