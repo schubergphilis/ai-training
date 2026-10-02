@@ -16,4 +16,5 @@ exercise:
     Have a new session review a change the first session wrote, against the specification, and sort
     its findings into ones to fix, ones to reject and ones to turn into a rule.
 sources: [Claude Code best practices]
+issue: 680
 minutes: 12

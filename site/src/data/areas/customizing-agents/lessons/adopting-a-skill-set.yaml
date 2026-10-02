@@ -18,6 +18,7 @@ exercise:
     Vet one public skill set as you would a library, install two of its skills, and compare what
     they change in a session against what they add to the context.
 sources: [Claude Code skills, Claude Code plugins, anthropics skills]
+issue: 685
 minutes: 15
 notes: >-
   The lesson the adopts-a-skill-set competency's notes ask for. It names no single skill set as the

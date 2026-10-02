@@ -17,6 +17,7 @@ exercise:
     move the rest into files the instructions point at, and delete what the agent can work out from
     the code.
 sources: [Claude Code memory, Claude Code best practices, Anthropic context engineering]
+issue: 686
 minutes: 15
 notes: >-
   Pruning is the expert objective, so the lesson ends on it. Instruction dilution

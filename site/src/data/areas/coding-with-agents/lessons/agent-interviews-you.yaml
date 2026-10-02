@@ -16,6 +16,7 @@ exercise:
     Ask an agent to interview you about a small feature until the two of you agree on the design,
     then write down the terms you settled on and check that the plan it writes uses them.
 sources: [Claude Code best practices, Evans 2003, Evans DDD Reference]
+issue: 677
 minutes: 15
 notes: >-
   The interview comes before decomposing-the-work: it settles what the feature is, and the next

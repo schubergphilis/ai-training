@@ -16,6 +16,7 @@ exercise:
     Sort five wrong answers into ones that are wrong about the world and ones that misstate the text
     they were given, and name the check that finds each kind.
 sources: [Huang 2025]
+issue: 684
 minutes: 10
 notes: >-
   Safety/spotting-hallucination teaches how to catch invented specifics. This lesson adds the

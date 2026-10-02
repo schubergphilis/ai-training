@@ -9,7 +9,7 @@ covers: coding-with-agents/quality
 serves:
   - coding-with-agents/verifies-agent-work/reviews-others-code
   - coding-with-agents/verifies-agent-work/automates-the-check
-introduces: [testing, documentation]
+introduces: [testing, documentation, deep-modules]
 assumes:
   - objective: safety/judges-agent-risk/names-blast-radius
     lesson: safety/agent-risk
@@ -49,3 +49,6 @@ notes: >-
   can be asked in place of a sibling on the other. The mismatch is accepted for now, as in
   self-checking-loops (issue #408), because the plan gives the lesson these two objectives.
   shop/.gitignore keeps __pycache__ out of the learner's git add -A after running the tests.
+  Deep modules (Ousterhout 2021) was folded into this lesson on 2026-10-02 instead of getting a
+  lesson of its own, because no objective fits it on its own. The page doesn't teach it yet: its
+  issue (#693) adds a section and Ousterhout 2021 to sources.

@@ -16,6 +16,7 @@ exercise:
     For three tasks, choose an effort level and say what it changes, then say which part of a long
     session prompt caching makes cheaper and which part it leaves alone.
 sources: [Claude docs effort, Claude docs prompt-caching, Claude Code costs]
+issue: 692
 minutes: 12
 notes: >-
   Effort governs all output, not only reasoning, per the Effort page. Prompt caching is the expert

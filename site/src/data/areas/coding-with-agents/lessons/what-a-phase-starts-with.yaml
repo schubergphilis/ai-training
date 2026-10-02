@@ -17,6 +17,7 @@ exercise:
     For a session that has finished planning, decide whether implementation continues in it, starts
     fresh from the written plan, or starts after compaction, and say what the new phase loses.
 sources: [Claude Code context window, Claude Code best practices, Anthropic context engineering, Claude Code costs]
+issue: 681
 minutes: 15
 notes: >-
   Expert lesson. It comes before keeping-understanding, which closes the part. No source gives a

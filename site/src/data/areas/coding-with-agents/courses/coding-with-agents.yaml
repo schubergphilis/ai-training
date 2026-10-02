@@ -37,7 +37,6 @@ parts:
   - title: Quality with agents
     lessons:
       - coding-with-agents/tests-and-docs-that-hold
-      - coding-with-agents/deep-modules
       - coding-with-agents/dependency-review
       - coding-with-agents/security-review
   - title: Sandboxing and red-teaming

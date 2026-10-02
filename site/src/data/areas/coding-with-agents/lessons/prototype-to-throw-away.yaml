@@ -18,6 +18,7 @@ exercise:
     Write down one design question the interview left open, have the agent build the smallest
     program that answers it, record the answer in the specification and delete the program.
 sources: [Thomas 2019, Artima tracer bullets, Brooks 1995]
+issue: 679
 minutes: 15
 notes: >-
   Expert lesson. The prototype answers one question and is deleted. Brooks later retracted "plan to

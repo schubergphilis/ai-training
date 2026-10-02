@@ -18,6 +18,7 @@ exercise:
     Read the input and output token counts of each request in a short session, and explain why the
     last question cost more than the first.
 sources: [Claude docs messages, Claude Code costs, Claude docs pricing]
+issue: 683
 minutes: 15
 notes: >-
   A foundations lesson, so the counts are shown as a usage screen or a table, never a terminal. The

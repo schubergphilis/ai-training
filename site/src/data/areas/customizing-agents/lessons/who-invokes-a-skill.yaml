@@ -16,4 +16,5 @@ exercise:
     For four skills, decide whether the agent may start each one on its own or only a person may,
     and whether it belongs to the project or to the user.
 sources: [Claude Code skills, Agent Skills spec]
+issue: 691
 minutes: 10

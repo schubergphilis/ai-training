@@ -18,6 +18,7 @@ exercise:
     Add an approval step to the loop for the one tool that changes data, show the person the call
     and its arguments, and send a refusal back to the model as a tool result.
 sources: [Claude Code agent sdk permissions, Claude Code agent sdk user input]
+issue: 674
 minutes: 15
 notes: >-
   Runs against the fake model with a fixture under site/examples/building-agents/, like the other

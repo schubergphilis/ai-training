@@ -16,6 +16,7 @@ exercise:
     Follow one prompt to an agent through its log, count the model requests it caused, and say for
     each request what the harness sent and what came back from the environment.
 sources: [Claude Code agent loop, Claude docs messages]
+issue: 682
 minutes: 12
 notes: >-
   Picks up the loop where concepts/agent-loop leaves it and slows it down to single requests, so the

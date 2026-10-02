@@ -18,6 +18,7 @@ exercise:
     Watch the context meter while you connect one more tool, find the same session in its record on
     disk, and log the requests locally to see what the tool definitions add to each one.
 sources: [Claude Code context window, Claude Code statusline, Claude Code claude directory, Claude Code monitoring, Claude Code llm gateway]
+issue: 690
 minutes: 20
 notes: >-
   Its own part, after the MCP part, because inspects-requests asks what tools cost. The request log

@@ -18,6 +18,7 @@ exercise:
     When an installed skill asks for something the project forbids, write a hook or permission rule
     that refuses it with a reason, and check that the agent changes its approach.
 sources: [Claude Code hooks, Claude Code permissions]
+issue: 689
 minutes: 15
 notes: >-
   Comes before subagents, which closes the part. The sources say a deny reason reaches the model.

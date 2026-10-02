@@ -16,6 +16,7 @@ exercise:
     Find why a stdio server breaks when it prints a debug line, move its logging to standard error,
     and read the log while the agent calls it.
 sources: [MCP specification]
+issue: 687
 minutes: 10
 notes: >-
   Short on purpose. It could also become a section of mcp-first-server, which the lesson's issue

@@ -16,6 +16,7 @@ exercise:
     For four tasks, decide whether fixed code can call the model in a chain, a route or in parallel,
     or whether the task needs an agent that chooses its own steps.
 sources: [Anthropic effective agents]
+issue: 676
 minutes: 12
 notes: >-
   Opens the patterns part, before react. Workflow patterns are model calls inside one task with the
