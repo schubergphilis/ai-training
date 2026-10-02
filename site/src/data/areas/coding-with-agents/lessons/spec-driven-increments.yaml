@@ -13,7 +13,7 @@ assumes:
     lesson: coding-with-agents/deciding-what-to-build
     section: writing-down-what-success-requires
 extends-to:
-  - label: Building a real feature with Claude Code (AI Hero video, 44 minutes)
+  - label: Building a real feature with Claude Code (AI Hero on YouTube, 44 minutes)
     href: https://www.youtube.com/watch?v=hX7yG1KVYhI
   - label: My 7 phases of AI development (AI Hero)
     href: https://www.aihero.dev/my-7-phases-of-ai-development

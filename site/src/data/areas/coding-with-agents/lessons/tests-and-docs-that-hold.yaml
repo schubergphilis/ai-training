@@ -19,7 +19,7 @@ extends-to:
     href: /coding-with-agents/dependency-review/
   - label: How to make codebases AI agents love (AI Hero)
     href: https://www.aihero.dev/how-to-make-codebases-ai-agents-love
-  - label: Your codebase is not ready for AI (AI Hero video, 9 minutes)
+  - label: Your codebase is not ready for AI (AI Hero on YouTube, 9 minutes)
     href: https://www.youtube.com/watch?v=uC44zFz7JSM
 after: [coding-with-agents/self-checking-loops]
 shorts: [a test that mirrors the implementation]
