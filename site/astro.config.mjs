@@ -211,11 +211,18 @@ export default defineConfig({
 			// Inter is self-hosted from its package, so a page load sends no request to a font service (spec S14).
 			customCss: ['@fontsource-variable/inter', './src/styles/custom.css', './src/styles/lesson.css'],
 			sidebar: [
-				{ slug: 'progress', label: 'Your progress' },
-				{ slug: 'reference', label: 'Your reference' },
-				{ slug: 'settings', label: 'Settings' },
-				{ slug: 'guides/tutor', label: 'Study with the tutor' },
-				{ slug: 'guides/running-a-workshop', label: 'Run a workshop' },
+				// Ordered by what a learner needs first. "Your data" holds the tutor guide
+				// too, so it is near the top, but collapsed until the learner opens it.
+				{
+					label: 'Your data',
+					collapsed: true,
+					items: [
+						{ slug: 'progress', label: 'Your progress' },
+						{ slug: 'reference', label: 'Your reference' },
+						{ slug: 'settings', label: 'Your settings' },
+						{ slug: 'guides/tutor', label: 'Study with the tutor' },
+					],
+				},
 				// The Foundations and Engineering groups come from the data tree; see courseSidebar().
 				...courseSidebar(),
 				{
@@ -247,6 +254,7 @@ export default defineConfig({
 						{ slug: 'guides/writing-pages', label: 'Writing pages' },
 					],
 				},
+				{ slug: 'guides/running-a-workshop', label: 'Run a workshop' },
 			],
 			components: {
 				// Lesson frame: routing cards, finish/skip, checkpoint script.
