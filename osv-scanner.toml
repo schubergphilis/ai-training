@@ -1,11 +1,11 @@
-# Maintainer overrides for `mise run vuln` (docs/agents/supply-chain.md).
+# Advisory overrides for `mise run vuln` (docs/agents/supply-chain.md).
 #
-# Only the maintainer adds an entry here, to merge and release while an
-# advisory has no fix. Agents never edit this file. Each entry names one
-# advisory, expires at most 30 days after it is added, and its reason
-# starts with the issue that tracks the fix. tests/test_osv_ignores.py
-# checks that. When an entry expires the scan fails again, and the
-# maintainer either removes the entry or extends it on purpose.
+# An entry lets a change merge and release while an advisory has no fix.
+# Each entry names one advisory, expires at most 30 days after it is
+# added, and its reason starts with the issue that tracks the fix.
+# tests/test_osv_ignores.py checks that. Agents may edit this file, and
+# every edit asks the maintainer first. When an entry expires the scan
+# fails again, and the entry is removed or extended on purpose.
 
 [[IgnoredVulns]]
 id = "GHSA-vfj7-8cjw-p6xm"

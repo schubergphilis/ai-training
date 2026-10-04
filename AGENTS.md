@@ -112,9 +112,9 @@ has nothing to say.
 - `site/bun.lock` and `uv.lock` are committed, and `ci` installs from them.
 - Every dependency in `site/package.json` and the `pyproject.toml` dev
   group is an exact version. An upgrade is a deliberate change.
-- `mise run site-audit` and `mise run vuln` are clean. Only the maintainer
-  overrides an advisory, with an expiring entry in `osv-scanner.toml`.
-  Agents never edit that file.
+- `mise run site-audit` and `mise run vuln` are clean. An advisory
+  without a fix gets an expiring entry in `osv-scanner.toml`, and every
+  edit to that file asks the maintainer first.
 - GitHub Actions are pinned to full commit SHAs, `.mise.toml` tools and the
   mise pin in CI to exact versions, and `prek.toml` hooks by commit SHA
   with their full dependency tree.

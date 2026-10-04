@@ -14,8 +14,9 @@ Run them now and then. `mise run vuln` (osv-scanner over `uv.lock` and
 workflow runs it in its own `vuln` job, so a known advisory against a
 pinned version fails the pull request. `.github/workflows/vuln.yml` runs
 the same scan on `main` every Monday, so an advisory published while
-nobody pushes fails a scheduled run. Only the maintainer overrides an
-advisory, with an expiring entry in `osv-scanner.toml` (below).
+nobody pushes fails a scheduled run. An advisory without a fix gets an
+expiring entry in `osv-scanner.toml` (below), which the maintainer
+approves.
 
 ## Rules and procedures
 
@@ -69,16 +70,17 @@ advisory, with an expiring entry in `osv-scanner.toml` (below).
   cue to re-enable it there, and a quiet quarter isn't a sign that the
   scan is passing. Every advisory the scanner
   reports counts. An advisory without a fix keeps the scan red until a
-  fix ships, the dependency is replaced, or the maintainer overrides it.
+  fix ships, the dependency is replaced, or it gets an override.
   The override is an `[[IgnoredVulns]]` entry in the root
   `osv-scanner.toml`, which the task passes with `--config`. Each entry
   names one advisory, has an `ignoreUntil` date at most 30 days ahead,
   and has a `reason` that starts with the issue tracking the fix (`#702: ...`). `tests/test_osv_ignores.py` checks the format. When the date
-  passes, the scan fails again and the maintainer removes or extends the
-  entry. Agents never add, extend or remove an entry: the Bash guard and
-  a deny rule in `.claude/settings.json` reject an edit to the file, and
-  an agent that finds the scan red files an issue and asks the
-  maintainer. Fix a Python advisory by editing the `==` pin in
+  passes, the scan fails again. An agent may add, extend or remove an
+  entry, after it checks that no fixed version exists and files the
+  issue. Each edit to the file asks the maintainer first: an `ask` rule
+  for `Edit` and `Write` in `.claude/settings.json`, and the Bash guard
+  answers `ask` for a shell write to it. Remove an entry once its fix
+  ships. Fix a Python advisory by editing the `==` pin in
   the `dev` group of `pyproject.toml` and running `mise run py-install`
   (and moving the `ruff-pre-commit` rev in `prek.toml` when it is ruff, see
   the `uv.lock` bullet above). For a transitive package, add a
