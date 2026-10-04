@@ -1881,10 +1881,16 @@ def local_zone(zone: str) -> Generator[None]:
         "git rm osv-scanner.toml",
     ],
 )
-def test_a_write_to_the_osv_config_is_rejected(command: str) -> None:
-    reason = check(command)
-    assert reason is not None, command
-    assert "maintainer" in reason
+def test_a_write_to_the_osv_config_asks_the_maintainer(
+    command: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert check(command) is None, command
+    event = json.dumps({"tool_input": {"command": command}, "cwd": WORKTREE})
+    assert agent_hooks.main(["agent_hooks.py", "guard-bash"], event, {}) == 0
+    output = json.loads(capsys.readouterr().out)["hookSpecificOutput"]
+    assert output["hookEventName"] == "PreToolUse"
+    assert output["permissionDecision"] == "ask"
+    assert "30 days" in output["permissionDecisionReason"]
 
 
 @pytest.mark.parametrize(
@@ -1900,8 +1906,13 @@ def test_a_write_to_the_osv_config_is_rejected(command: str) -> None:
         "cat osv-scanner.toml > .scratch/osv.toml",
     ],
 )
-def test_reading_or_naming_the_osv_config_passes(command: str) -> None:
+def test_reading_or_naming_the_osv_config_passes_without_asking(
+    command: str, capsys: pytest.CaptureFixture[str]
+) -> None:
     assert check(command) is None, command
+    event = json.dumps({"tool_input": {"command": command}, "cwd": WORKTREE})
+    assert agent_hooks.main(["agent_hooks.py", "guard-bash"], event, {}) == 0
+    assert capsys.readouterr().out == ""
 
 
 def test_an_empty_argument_does_not_split_the_command() -> None:

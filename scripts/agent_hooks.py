@@ -45,8 +45,10 @@ polling (a `gh` loop, or a `sleep` before `tail`, `cat`, `ls`, `head`,
 `grep` or `wc`, #422),
 `--no-verify`, deletes on GitHub, and an `rm` that leaves `.scratch/`
 (#391).
-It rejects a write to `osv-scanner.toml`, the maintainer's advisory
-overrides (docs/agents/supply-chain.md).
+A write to `osv-scanner.toml`, the advisory overrides, isn't rejected:
+the hook prints a PreToolUse `permissionDecision` of `ask`, so the
+maintainer approves it, the same as the `ask` rule for `Edit` and `Write`
+in `.claude/settings.json` (docs/agents/supply-chain.md).
 It also rejects the other ways to skip the git hooks (`SKIP`, `PREK_SKIP`,
 `core.hooksPath`, `--no-verify` on `git merge`, `pull` and `rebase`), every
 `gh <noun> delete`, a `gh api graphql` delete mutation, and a push that
@@ -647,7 +649,7 @@ def names_osv_config(word: str) -> bool:
 
 
 def writes_osv_config(words: Sequence[str]) -> bool:
-    """True when a simple command writes `osv-scanner.toml`, which only the maintainer edits.
+    """True when a simple command writes `osv-scanner.toml`, which the maintainer approves.
 
     It matches a redirect into the file, a file command (`tee`, `cp`, `mv`,
     `rm`, ...) or an in-place `sed -i`, `perl -i` or `ruby -i` that names it,
@@ -769,12 +771,6 @@ def check_segment(
             "maintainer asked to merge. Report the pull request as ready instead. A role "
             f"that may merge prefixes the command with `{ROLE_VAR}=<role>`."
         )
-    if writes_osv_config(words):
-        return (
-            f"`{OSV_CONFIG}` holds the maintainer's advisory overrides, and agents never "
-            "edit it (docs/agents/supply-chain.md). File an issue for the advisory and ask "
-            "the maintainer whether to add, extend or remove an entry."
-        )
     if runs_branch_cleanup(words):
         return (
             "`mise run branch-cleanup` (scripts/branch_cleanup.py) is for human maintainers "
@@ -873,6 +869,39 @@ def guard_bash(event: Mapping[str, Any], env: Mapping[str, str]) -> tuple[int, s
     if reason:
         return 2, f"Blocked by .claude/hooks/guard-bash.sh: {reason}"
     return 0, ""
+
+
+def asks_osv_config(event: Mapping[str, Any]) -> str:
+    """The PreToolUse `ask` output for a command that writes `osv-scanner.toml`, or "".
+
+    Claude Code reads `permissionDecision` from the JSON a hook prints on
+    exit 0 (https://code.claude.com/docs/en/hooks, "PreToolUse decision
+    control"), and `ask` shows the maintainer the reason with the prompt.
+    """
+    tool_input: Mapping[str, Any] = event.get("tool_input") or {}
+    command = tool_input.get("command")
+    if not isinstance(command, str):
+        return ""
+    cwd = event.get("cwd")
+    try:
+        segments = split_segments(command, cwd if isinstance(cwd, str) else str(Path.cwd()))
+    except UnknownHomeError, ValueError:
+        return ""
+    if not any(writes_osv_config(segment.words) for segment in segments):
+        return ""
+    reason = (
+        f"`{OSV_CONFIG}` holds the advisory overrides (docs/agents/supply-chain.md). "
+        "Approve this write only for an entry you want: one advisory, at most 30 days "
+        "ahead, with its issue in the reason."
+    )
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "ask",
+            "permissionDecisionReason": reason,
+        }
+    }
+    return json.dumps(output)
 
 
 REVIEW_COMMANDS = (
@@ -1761,6 +1790,9 @@ def main(argv: Sequence[str], stdin: str, env: Mapping[str, str]) -> int:
         code, message = review_bash(event, SECURITY_REVIEW)
     else:
         code, message = guard_bash(event, env)
+        ask = asks_osv_config(event) if code == 0 else ""
+        if ask:
+            print(ask)
     if message:
         print(message, file=sys.stderr)
     return code
