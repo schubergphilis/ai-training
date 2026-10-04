@@ -1862,3 +1862,49 @@ def local_zone(zone: str) -> Generator[None]:
         else:
             os.environ["TZ"] = old
         time.tzset()
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "echo x > osv-scanner.toml",
+        "echo x >>osv-scanner.toml",
+        "cat a 1> ./osv-scanner.toml",
+        "printf x | tee -a osv-scanner.toml",
+        "cp /tmp/x osv-scanner.toml",
+        "rm osv-scanner.toml",
+        "sed -i '' 's/11-03/12-03/' osv-scanner.toml",
+        "sed -Ei 's/11-03/12-03/' osv-scanner.toml",
+        "perl -pi -e 's/a/b/' ../ai-training/osv-scanner.toml",
+        "git checkout main -- osv-scanner.toml",
+        "git restore osv-scanner.toml",
+        "git rm osv-scanner.toml",
+    ],
+)
+def test_a_write_to_the_osv_config_is_rejected(command: str) -> None:
+    reason = check(command)
+    assert reason is not None, command
+    assert "maintainer" in reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "cat osv-scanner.toml",
+        "sed -n 1,20p osv-scanner.toml",
+        "git diff osv-scanner.toml",
+        "git add osv-scanner.toml",
+        "osv-scanner scan source --config osv-scanner.toml -L uv.lock",
+        "git commit -m 'docs: say why osv-scanner.toml has an entry'",
+        "gh issue create --title x --body 'see osv-scanner.toml'",
+        "cat osv-scanner.toml > .scratch/osv.toml",
+    ],
+)
+def test_reading_or_naming_the_osv_config_passes(command: str) -> None:
+    assert check(command) is None, command
+
+
+def test_an_empty_argument_does_not_split_the_command() -> None:
+    reason = check("git push '' --force")
+    assert reason is not None
+    assert "--force-with-lease" in reason

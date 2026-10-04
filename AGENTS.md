@@ -105,15 +105,16 @@ has nothing to say.
   action, dropping a `prek.toml` hook, excluding a really broken URL in
   `.lychee.toml`, lowering a coverage floor, deleting a test, a rule
   disable without its reason on the same line, and an `osv-scanner.toml`
-  ignore for an advisory.
+  entry for an advisory.
 
 **Supply chain** (the procedures are in `docs/agents/supply-chain.md`):
 
 - `site/bun.lock` and `uv.lock` are committed, and `ci` installs from them.
 - Every dependency in `site/package.json` and the `pyproject.toml` dev
   group is an exact version. An upgrade is a deliberate change.
-- `mise run site-audit` and `mise run vuln` are clean, and no advisory is
-  ever ignored.
+- `mise run site-audit` and `mise run vuln` are clean. Only the maintainer
+  overrides an advisory, with an expiring entry in `osv-scanner.toml`.
+  Agents never edit that file.
 - GitHub Actions are pinned to full commit SHAs, `.mise.toml` tools and the
   mise pin in CI to exact versions, and `prek.toml` hooks by commit SHA
   with their full dependency tree.

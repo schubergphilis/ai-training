@@ -659,6 +659,12 @@ zizmor --strict-collection .
 # lockfile to the glob list here. A lockfile that parses to zero packages
 # prints a warning and passes: the scanner gives no exit code for it, and
 # an empty dependency group is a real state, not an error.
+#
+# `--config` names the root `osv-scanner.toml` for every lockfile. Without
+# it the scanner looks for a config next to each lockfile, so the file
+# would not apply to `site/bun.lock`. The file holds the maintainer's
+# expiring overrides (docs/agents/supply-chain.md), and the scanner prints
+# each advisory it leaves out, with the reason.
 [tasks.vuln]
 description = "osv-scanner audit of every committed lockfile (uv.lock, site/bun.lock) against the OSV database (network; not part of `ci`)"
 run = """
@@ -674,7 +680,7 @@ for lock in $locks; do
 done
 status=0
 # shellcheck disable=SC2086
-out=$(osv-scanner scan source $args 2>&1) || status=$?
+out=$(osv-scanner scan source --config osv-scanner.toml $args 2>&1) || status=$?
 echo "$out"
 for lock in $locks; do
   case "$out" in

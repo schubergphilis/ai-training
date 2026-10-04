@@ -1,0 +1,18 @@
+# Maintainer overrides for `mise run vuln` (docs/agents/supply-chain.md).
+#
+# Only the maintainer adds an entry here, to merge and release while an
+# advisory has no fix. Agents never edit this file. Each entry names one
+# advisory, expires at most 30 days after it is added, and its reason
+# starts with the issue that tracks the fix. tests/test_osv_ignores.py
+# checks that. When an entry expires the scan fails again, and the
+# maintainer either removes the entry or extends it on purpose.
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2026-11-03
+reason = "#702: no fixed braces release yet. Through micromatch, from markdownlint-cli2 and fast-glob."
+
+[[IgnoredVulns]]
+id = "GHSA-ch52-4w7c-c8xp"
+ignoreUntil = 2026-11-03
+reason = "#702: no fixed http-cache-semantics release yet. Through astro."
