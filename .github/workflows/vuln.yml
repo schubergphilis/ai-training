@@ -9,11 +9,11 @@ name: Weekly vulnerability scan
 # `package.json` and not `site/bun.lock`, so it sees a few dozen of the
 # several hundred npm packages the scanner reads.
 #
-# There is no ignore list (no `osv-scanner.toml`) and no notifier. GitHub
-# emails the person who last changed the `cron` line below when a
-# scheduled run fails, and an advisory without a fix keeps the run red
-# until a fix ships or the dependency is replaced (AGENTS.md, Supply
-# chain).
+# There is no notifier. GitHub emails the person who last changed the
+# `cron` line below when a scheduled run fails, and an advisory without a
+# fix keeps the run red until a fix ships, the dependency is replaced, or
+# the maintainer adds an expiring entry to `osv-scanner.toml` (AGENTS.md,
+# Supply chain).
 #
 # In a public repository GitHub disables a scheduled workflow after 60
 # days without repository activity. That is the same quiet period this

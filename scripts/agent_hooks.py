@@ -45,6 +45,8 @@ polling (a `gh` loop, or a `sleep` before `tail`, `cat`, `ls`, `head`,
 `grep` or `wc`, #422),
 `--no-verify`, deletes on GitHub, and an `rm` that leaves `.scratch/`
 (#391).
+It rejects a write to `osv-scanner.toml`, the maintainer's advisory
+overrides (docs/agents/supply-chain.md).
 It also rejects the other ways to skip the git hooks (`SKIP`, `PREK_SKIP`,
 `core.hooksPath`, `--no-verify` on `git merge`, `pull` and `rebase`), every
 `gh <noun> delete`, a `gh api graphql` delete mutation, and a push that
@@ -176,7 +178,9 @@ def split_segments(
     here = cwd
     current: list[str] = []
     for token in [*tokens(command, strict), ";"]:
-        if token not in OPERATORS and not set(token) <= set(";&|\n"):
+        # An empty word (`''`) is an argument: its empty set of characters
+        # would otherwise pass as an operator and split the command.
+        if token not in OPERATORS and (token == "" or not set(token) <= set(";&|\n")):
             current.append(token)
             continue
         words = current
@@ -630,6 +634,49 @@ def rm_leaves_scratch(words: Sequence[str], cwd: str) -> str | None:
     return None
 
 
+OSV_CONFIG = "osv-scanner.toml"
+REDIRECT = re.compile(r"^(?:\d|&)?>>?\|?(.*)$")
+FILE_WRITERS = frozenset({"tee", "cp", "mv", "rm", "touch", "truncate", "ln", "install"})
+IN_PLACE_EDITORS = frozenset({"sed", "perl", "ruby"})
+GIT_FILE_WRITERS = frozenset({"checkout", "restore", "rm", "mv"})
+
+
+def names_osv_config(word: str) -> bool:
+    """True when a shell word is a path to `osv-scanner.toml`."""
+    return word == OSV_CONFIG or word.endswith("/" + OSV_CONFIG)
+
+
+def writes_osv_config(words: Sequence[str]) -> bool:
+    """True when a simple command writes `osv-scanner.toml`, which only the maintainer edits.
+
+    It matches a redirect into the file, a file command (`tee`, `cp`, `mv`,
+    `rm`, ...) or an in-place `sed -i`, `perl -i` or `ruby -i` that names it,
+    and `git checkout`, `restore`, `rm` or `mv` of it. Reading the file,
+    passing it to `osv-scanner`, and a commit message or issue body that
+    mentions it all pass.
+    """
+    for index, word in enumerate(words):
+        match = REDIRECT.match(word)
+        if match is None:
+            continue
+        target = match.group(1) or (words[index + 1] if index + 1 < len(words) else "")
+        if names_osv_config(target):
+            return True
+    if not any(names_osv_config(w) for w in words[1:]):
+        return False
+    command = Path(words[0]).name
+    if command in FILE_WRITERS:
+        return True
+    if command in IN_PLACE_EDITORS:
+        # `-i` alone or in a cluster such as `perl -pi` or `sed -Ei`.
+        return any(
+            w.startswith("--in-place")
+            or (w.startswith("-") and not w.startswith("--") and "i" in w[1:])
+            for w in words[1:]
+        )
+    return command == "git" and any(w in GIT_FILE_WRITERS for w in words[1:])
+
+
 BRANCH_CLEANUP_SCRIPT = "branch_cleanup.py"
 BRANCH_CLEANUP_TASK = "branch-cleanup"
 PYTHON = re.compile(r"^python[0-9.]*$")
@@ -721,6 +768,12 @@ def check_segment(
             "`gh pr merge` is for the wave lead, the dispatcher, or a coordinator the "
             "maintainer asked to merge. Report the pull request as ready instead. A role "
             f"that may merge prefixes the command with `{ROLE_VAR}=<role>`."
+        )
+    if writes_osv_config(words):
+        return (
+            f"`{OSV_CONFIG}` holds the maintainer's advisory overrides, and agents never "
+            "edit it (docs/agents/supply-chain.md). File an issue for the advisory and ask "
+            "the maintainer whether to add, extend or remove an entry."
         )
     if runs_branch_cleanup(words):
         return (
