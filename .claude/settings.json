@@ -36,6 +36,9 @@
       "Bash(rm -rf .scratch)",
       "Bash(rm -rf .scratch/*)"
     ],
+    "ask": [
+      "Edit(./osv-scanner.toml)"
+    ],
     "deny": [
       "Edit(./.claude/settings.json)",
       "Bash(gh repo delete*)",
