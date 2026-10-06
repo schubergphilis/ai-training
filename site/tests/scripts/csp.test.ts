@@ -10,8 +10,10 @@ import {
 	offSite,
 	pageProblems,
 	parsePolicy,
+	readTag,
 	sha256,
 	srcsetUrls,
+	tags,
 } from '../../scripts/lib/csp.mjs';
 
 const roots: string[] = [];
@@ -273,6 +275,89 @@ describe('pageProblems', () => {
 			`inline <script> not in script-src: '${sha256('{"prerender":[]}')}' "{"prerender":[]}"`,
 			`inline <script> not in script-src: '${sha256('alert(1)')}' "alert(1)"`,
 		]);
+	});
+});
+
+describe('pageProblems reads tags as the HTML tokenizer does', () => {
+	it('ends a tag at the > after an unquoted value with a quote in it, and checks the script after it', () => {
+		// The example of issue #651.
+		const body = `<script src=x' ></script><script src="https://evil.example/a.js"></script><i title='>`;
+		expect(pageProblems(page({ body }))).toEqual(['<script> loads an off-site file: https://evil.example/a.js']);
+	});
+
+	it('checks the hash of an inline script after a tag with a quote in an unquoted value', () => {
+		const body = `<script src=x' ></script><script>alert(1)</script><i title='></i><script src="/ai-training/a.js"></script>`;
+		expect(pageProblems(page({ body }))).toEqual([
+			`inline <script> not in script-src: '${sha256('alert(1)')}' "alert(1)"`,
+		]);
+	});
+
+	it('reads a quote in an attribute name as a letter of the name', () => {
+		const body = `<a b'c>a</a><script src=//evil.example/a.js></script><i title='>`;
+		expect(pageProblems(page({ body }))).toEqual([
+			'<script> loads an off-site file: //evil.example/a.js (resolves to https://evil.example/a.js)',
+		]);
+	});
+
+	it('ends a script at an end tag with attributes, and checks the markup after it', () => {
+		const body = '<script>a</script x><script src=//evil.example/a.js></script>';
+		expect(pageProblems(page({ body }))).toEqual([
+			`inline <script> not in script-src: '${sha256('a')}' "a"`,
+			'<script> loads an off-site file: //evil.example/a.js (resolves to https://evil.example/a.js)',
+		]);
+	});
+
+	it('finds the meta in any attribute order and case, and not in a script string', () => {
+		const content = policy(["'self'"], ["'self'"]);
+		const html = `<html><HEAD><META CONTENT="${content}" HTTP-EQUIV=Content-Security-Policy></head><body><script src="/ai-training/a.js">x='${meta(content)}'</script></body></html>`;
+		expect(pageProblems(html)).toEqual([]);
+	});
+});
+
+describe('readTag', () => {
+	const attrs = (html: string) => Object.fromEntries(readTag(html, 0)?.attrs ?? []);
+
+	it('reads quoted, unquoted and bare values, with whitespace around the =', () => {
+		expect(attrs(`<a b = "1>" c='2' d=3 e>`)).toEqual({ b: '1>', c: '2', d: '3', e: '' });
+	});
+
+	it('keeps quotes, < and = inside an unquoted value, and ends it at whitespace or >', () => {
+		expect(attrs(`<a b=x'y c=d"e f=g<h=i>`)).toEqual({ b: "x'y", c: 'd"e', f: 'g<h=i' });
+	});
+
+	it('starts a new attribute right after a quoted value, and after a /', () => {
+		expect(attrs('<a b="1"c=2/d=3>')).toEqual({ b: '1', c: '2/d=3' });
+		expect(attrs('<br/onclick=x>')).toEqual({ onclick: 'x' });
+		expect(attrs("<a b='1'/c>")).toEqual({ b: '1', c: '' });
+	});
+
+	it('reads a leading = as part of the name, lowercases names and keeps the first of a repeated one', () => {
+		expect(attrs('<a =b C=1 c=2>')).toEqual({ '=b': '', c: '1' });
+		expect(readTag('<DIV>', 0)?.name).toBe('div');
+	});
+
+	it('reads an end tag, and no tag where no letter follows or the page ends inside it', () => {
+		expect(readTag("</p title='>'>", 0)).toMatchObject({ name: 'p', end: true, close: 14 });
+		expect(readTag('< a>', 0)).toBeUndefined();
+		expect(readTag('<!-- x -->', 0)).toBeUndefined();
+		expect(readTag('<a title="x>', 0)).toBeUndefined();
+	});
+});
+
+describe('tags', () => {
+	it('gives a script or style its text up to its end tag, and to the end of the page without one', () => {
+		const found = [...tags('<style>a</STYLE><script>b<i>"</script>c<script>d')];
+		expect(found.map((t) => [t.name, t.end, t.body])).toEqual([
+			['style', false, 'a'],
+			['style', true, undefined],
+			['script', false, 'b<i>"'],
+			['script', true, undefined],
+			['script', false, 'd'],
+		]);
+	});
+
+	it('does not end a script at a longer tag name', () => {
+		expect([...tags('<script>a</scripts>b</script>')][0].body).toBe('a</scripts>b');
 	});
 });
 

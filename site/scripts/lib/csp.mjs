@@ -72,6 +72,12 @@
  * `https:` URL. So `/\evil.example/a.js`, `https&#58;//evil.example` and
  * `ht<tab>tps://evil.example` all resolve to another site.
  *
+ * The check reads tags the way the HTML tokenizer does (`readTag`, which
+ * names the tokenizer states it copies), so a quote inside an unquoted
+ * attribute value is a literal character. In
+ * `<script src=x' ></script><script src="https://evil.example/a.js">` the
+ * first tag ends at its first `>`, and the second script is checked.
+ *
  * `scripts/check-bundles.mjs` runs it after the build, and
  * `tests/scripts/csp.test.ts` covers it.
  */
@@ -122,12 +128,6 @@ export const CSP = {
 	styleDirective: { resources: ["'self'", { resource: "'unsafe-inline'", kind: 'attribute' }] },
 };
 
-const META = /<meta\s+http-equiv="content-security-policy"\s+content="([^"]*)"\s*\/?>/gi;
-const INLINE = /<(script|style)\b((?:"[^"]*"|'[^']*'|[^'">])*)>([\s\S]*?)<\/\1\s*>/gi;
-/** A start tag: its name and its attribute text, where a quoted value may hold a `>`. */
-const TAG = /<([a-z][^\s/>]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/gi;
-/** One attribute of a start tag's attribute text: its name and its value, quoted or bare, if any. */
-const ATTR = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 /** The script types a browser does not run, and so the policy does not apply to: JSON data blocks. */
 const DATA_TYPE = /^application\/(ld\+)?json$/i;
 /**
@@ -236,18 +236,177 @@ function offSiteProblem(what, shown, resolved, verb = 'loads an off-site file') 
 	return `${what} ${verb}: ${resolved === shown ? shown : `${shown} (resolves to ${resolved})`}`;
 }
 
+/** The characters the HTML tokenizer reads as whitespace in a tag. A CR is one too, since the browser turns it into an LF first. */
+const SPACE = /[\t\n\f\r ]/;
+const ALPHA = /[A-Za-z]/;
+
+/** The text elements whose content the browser reads as text up to their end tag, with no tags in it. */
+const RAW_TEXT = ['script', 'style'];
+
 /**
- * The attributes of a start tag's attribute text, name (lower case) to value (`''` when it has none).
+ * `text` with its ASCII capitals in lower case, as the tokenizer lowercases tag and attribute names.
  * @param {string} text
- * @returns {Map<string, string>}
  */
-export function attributes(text) {
-	const found = new Map();
-	for (const [, name, double, single, bare] of text.matchAll(ATTR)) {
-		const key = name.toLowerCase();
-		if (!found.has(key)) found.set(key, double ?? single ?? bare ?? '');
+function asciiLower(text) {
+	return text.replace(/[A-Z]/g, (c) => c.toLowerCase());
+}
+
+/**
+ * @typedef {{ name: string, end: boolean, attrs: Map<string, string>, start: number, close: number }} Tag
+ * A tag as the browser reads it: its name and its attributes in lower case, name to raw value (`''` when it
+ * has none, character references not decoded, the first of a repeated name), whether it is an end tag, the
+ * index of its `<` and the index after its `>`.
+ */
+
+/**
+ * The tag that starts at `html[start]`, read with the tag states of the HTML tokenizer
+ * (https://html.spec.whatwg.org/multipage/parsing.html#tag-open-state and the states after it). Each case
+ * below names the state it copies. A quote starts a quoted value only in the "before attribute value"
+ * state, right after `=` and optional whitespace. Inside an unquoted value or an attribute name a quote is
+ * a literal character, and an unquoted value ends at whitespace or `>`. `undefined` when no tag starts there
+ * (`<` without a letter or `/` and a letter after it) or the page ends inside the tag, which the browser
+ * then drops.
+ * @param {string} html
+ * @param {number} start
+ * @returns {Tag | undefined}
+ */
+export function readTag(html, start) {
+	let pos = start + 1;
+	// Tag open state, and end tag open state after a `/`.
+	const end = html[pos] === '/';
+	if (end) pos += 1;
+	if (!ALPHA.test(html[pos] ?? '')) return undefined;
+	/** @type {[string, string][]} */
+	const list = [];
+	/** The attribute being read. Every state that writes to it comes after one that sets it. */
+	/** @type {[string, string]} */
+	let attr = ['', ''];
+	let name = '';
+	let state = 'tag name';
+	for (; pos < html.length; pos += 1) {
+		const c = html[pos];
+		switch (state) {
+			case 'tag name':
+				if (SPACE.test(c)) state = 'before attribute name';
+				else if (c === '/') state = 'self-closing start tag';
+				else if (c === '>') return emit();
+				else name += c;
+				break;
+			case 'before attribute name':
+				if (SPACE.test(c)) break;
+				if (c === '/' || c === '>') {
+					state = 'after attribute name';
+					pos -= 1;
+				} else {
+					// A `=` here starts the attribute's name.
+					attr = [c === '=' ? '=' : '', ''];
+					list.push(attr);
+					state = 'attribute name';
+					if (c !== '=') pos -= 1;
+				}
+				break;
+			case 'attribute name':
+				if (SPACE.test(c) || c === '/' || c === '>') {
+					state = 'after attribute name';
+					pos -= 1;
+				} else if (c === '=') state = 'before attribute value';
+				else attr[0] += c;
+				break;
+			case 'after attribute name':
+				if (SPACE.test(c)) break;
+				if (c === '/') state = 'self-closing start tag';
+				else if (c === '=') state = 'before attribute value';
+				else if (c === '>') return emit();
+				else {
+					attr = ['', ''];
+					list.push(attr);
+					state = 'attribute name';
+					pos -= 1;
+				}
+				break;
+			case 'before attribute value':
+				if (SPACE.test(c)) break;
+				if (c === '"') state = 'attribute value (double-quoted)';
+				else if (c === "'") state = 'attribute value (single-quoted)';
+				else if (c === '>') return emit();
+				else {
+					state = 'attribute value (unquoted)';
+					pos -= 1;
+				}
+				break;
+			case 'attribute value (double-quoted)':
+				if (c === '"') state = 'after attribute value (quoted)';
+				else attr[1] += c;
+				break;
+			case 'attribute value (single-quoted)':
+				if (c === "'") state = 'after attribute value (quoted)';
+				else attr[1] += c;
+				break;
+			case 'attribute value (unquoted)':
+				if (SPACE.test(c)) state = 'before attribute name';
+				else if (c === '>') return emit();
+				else attr[1] += c;
+				break;
+			case 'after attribute value (quoted)':
+				if (SPACE.test(c)) state = 'before attribute name';
+				else if (c === '/') state = 'self-closing start tag';
+				else if (c === '>') return emit();
+				else {
+					state = 'before attribute name';
+					pos -= 1;
+				}
+				break;
+			case 'self-closing start tag':
+				if (c === '>') return emit();
+				state = 'before attribute name';
+				pos -= 1;
+				break;
+		}
 	}
-	return found;
+	return undefined;
+
+	/** The tag that ends at `html[pos]`, a `>`. The first attribute of a name wins, as in the browser. */
+	function emit() {
+		const attrs = new Map();
+		for (const [key, value] of list) if (!attrs.has(asciiLower(key))) attrs.set(asciiLower(key), value);
+		return { name: asciiLower(name), end, attrs, start, close: pos + 1 };
+	}
+}
+
+/**
+ * The tags of a page in order, each start tag of a `RAW_TEXT` element with the `body` text up to its end
+ * tag. That text holds no tags: the browser ends a script or style at the first `</script` or `</style`
+ * followed by whitespace, `/` or `>` (https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-name-state).
+ * When the end tag is missing, the body runs to the end of the page. The escape states of script data are
+ * left out: in them `<!--<script>` makes the browser read a script on past the next `</script>`, so the check
+ * reads part of that script as markup. A `<` where no tag starts is skipped, so the text of a comment, and of
+ * a `title` or `textarea`, is read as markup too. A quoted value in a tag there can cover markup after the
+ * comment or element ends, which issue #708 is about.
+ * @param {string} html
+ * @returns {Generator<Tag & { body?: string }>}
+ */
+export function* tags(html) {
+	let pos = 0;
+	while (pos < html.length) {
+		const start = html.indexOf('<', pos);
+		if (start === -1) return;
+		const tag = readTag(html, start);
+		if (tag === undefined) {
+			pos = start + 1;
+			continue;
+		}
+		pos = tag.close;
+		if (tag.end || !RAW_TEXT.includes(tag.name)) {
+			yield tag;
+			continue;
+		}
+		const close = new RegExp(`</${tag.name}[\\t\\n\\f\\r />]`, 'gi');
+		close.lastIndex = tag.close;
+		const found = close.exec(html);
+		const bodyEnd = found ? found.index : html.length;
+		yield { ...tag, body: html.slice(tag.close, bodyEnd) };
+		pos = bodyEnd;
+	}
 }
 
 /** The `sha256-` source of `text`, as a CSP hash names it. */
@@ -276,13 +435,18 @@ export function parsePolicy(policy) {
  */
 export function pageProblems(html) {
 	const problems = [];
-	const headEnd = html.search(/<\/head\s*>/i);
-	const metas = [...html.matchAll(META)];
+	const all = [...tags(html)];
+	const headEnd = all.find((tag) => tag.end && tag.name === 'head')?.start ?? -1;
+	const metas = all.filter(
+		(tag) =>
+			!tag.end &&
+			tag.name === 'meta' &&
+			asciiLower(decodeHTMLAttribute(tag.attrs.get('http-equiv') ?? '')) === 'content-security-policy',
+	);
 	if (metas.length === 0) return ['no Content Security Policy <meta>'];
 	if (metas.length > 1) problems.push(`${metas.length} Content Security Policy <meta> tags, expected one`);
-	if (headEnd === -1 || (metas[0].index ?? 0) > headEnd)
-		problems.push('the Content Security Policy <meta> is not in <head>');
-	const policy = parsePolicy(metas[0][1].replaceAll('&#39;', "'").replaceAll('&quot;', '"'));
+	if (headEnd === -1 || metas[0].start > headEnd) problems.push('the Content Security Policy <meta> is not in <head>');
+	const policy = parsePolicy(decodeHTMLAttribute(metas[0].attrs.get('content') ?? ''));
 	for (const directive of DIRECTIVES) {
 		const [name, ...sources] = directive.split(' ');
 		const have = policy.get(name) ?? [];
@@ -294,9 +458,8 @@ export function pageProblems(html) {
 	}
 	const styleSrc = policy.get('style-src') ?? [];
 	if (styleSrc.includes("'unsafe-inline'")) problems.push("style-src allows 'unsafe-inline'");
-	for (const [, tag, attrText, body] of html.matchAll(INLINE)) {
-		const kind = tag.toLowerCase();
-		const attrs = attributes(attrText);
+	for (const { name: kind, attrs, body } of all) {
+		if (body === undefined) continue;
 		if (kind === 'script' && (attrs.has('src') || DATA_TYPE.test((attrs.get('type') ?? '').trim()))) continue;
 		const hash = sha256(body);
 		const allowed = kind === 'script' ? scriptSrc : styleSrc;
@@ -305,11 +468,9 @@ export function pageProblems(html) {
 			problems.push(`inline <${kind}> not in ${kind}-src: '${hash}' "${start}"`);
 		}
 	}
-	// The text of a script or style may hold markup in a string, which is no tag.
-	const markup = html.replace(INLINE, '<$1$2>');
-	for (const [, tag, attrText] of markup.matchAll(TAG)) {
-		const name = tag.toLowerCase();
-		const attrs = attributes(attrText);
+	// The text of a script or style may hold markup in a string, which `tags` does not read as a tag.
+	for (const { name, end, attrs } of all) {
+		if (end) continue;
 		for (const attr of attrs.keys()) {
 			if (/^on[a-z]+$/.test(attr)) problems.push(`inline event handler attribute ${attr}= on <${name}>`);
 		}
