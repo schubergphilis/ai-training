@@ -5,6 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import {
 	CSP,
 	checkCsp,
+	commentEnd,
 	DIRECTIVES,
 	FETCHING_RELS,
 	offSite,
@@ -314,6 +315,68 @@ describe('pageProblems reads tags as the HTML tokenizer does', () => {
 	});
 });
 
+describe('pageProblems skips comments and the text of text elements as the browser does', () => {
+	const ALERT = `inline <script> not in script-src: '${sha256('alert(1)')}' "alert(1)"`;
+
+	it('checks an inline script after a comment that holds a quote', () => {
+		const body = `<!-- <i title=' --><script>alert(1)</script><p>it's</p>`;
+		expect(pageProblems(page({ body }))).toEqual([ALERT]);
+	});
+
+	it('checks an inline script after a bogus comment that holds a quote', () => {
+		const body = `</ <i title='><script>alert(1)</script><p>it's</p>`;
+		expect(pageProblems(page({ body }))).toEqual([ALERT]);
+	});
+
+	it('checks an inline script after a title or noscript that holds a quote', () => {
+		for (const name of ['title', 'noscript']) {
+			const body = `<${name}><i title='</${name}><script>alert(1)</script><p>it's</p>`;
+			expect(pageProblems(page({ body }))).toEqual([ALERT]);
+		}
+	});
+
+	it('reads the content of a title inside svg as markup, where a script runs', () => {
+		expect(pageProblems(page({ body: '<svg><title><script>alert(1)</script></title></svg>' }))).toEqual([ALERT]);
+		// A self-closing <svg/> starts no foreign content, so the title after it is text again.
+		const body = `<svg/><title><i title='</title><script>alert(1)</script><p>it's</p>`;
+		expect(pageProblems(page({ body }))).toEqual([ALERT]);
+	});
+
+	it('hashes a script inside svg and reads the markup in it', () => {
+		expect(pageProblems(page({ body: '<svg><script><a onclick=x></a></script></svg>' }))).toEqual([
+			`inline <script> not in script-src: '${sha256('<a onclick=x></a>')}' "<a onclick=x></a>"`,
+			'inline event handler attribute onclick= on <a>',
+		]);
+	});
+
+	it('hashes a script with CRLF and CR line ends as the browser does, with LF', () => {
+		const content = policy(["'self'", `'${sha256('a\nb\nc')}'`], ["'self'"]);
+		expect(pageProblems(page({ content, body: '<script>a\r\nb\rc</script>' }))).toEqual([]);
+	});
+});
+
+describe('commentEnd', () => {
+	it('ends a comment at -->, --!> or right away, and a bogus comment at the next >', () => {
+		expect(commentEnd('<!-- a -->b', 0, false)).toBe(10);
+		expect(commentEnd('<!-- a --!>b', 0, false)).toBe(11);
+		expect(commentEnd('<!-->b', 0, false)).toBe(5);
+		expect(commentEnd('<!--->b', 0, false)).toBe(6);
+		expect(commentEnd('<!DOCTYPE html>b', 0, false)).toBe(15);
+		expect(commentEnd('<?x a>b', 0, false)).toBe(6);
+		expect(commentEnd('</>b', 0, false)).toBe(3);
+		expect(commentEnd('<![CDATA[>]]>b', 0, false)).toBe(10);
+		expect(commentEnd('<![CDATA[>]]>b', 0, true)).toBe(13);
+	});
+
+	it('gives undefined where no comment starts and null when it runs to the end of the page', () => {
+		expect(commentEnd('<a>', 0, false)).toBeUndefined();
+		expect(commentEnd('</a>', 0, false)).toBeUndefined();
+		expect(commentEnd('</', 0, false)).toBeUndefined();
+		expect(commentEnd('<!-- a', 0, false)).toBeNull();
+		expect(commentEnd('<? a', 0, false)).toBeNull();
+	});
+});
+
 describe('readTag', () => {
 	const attrs = (html: string) => Object.fromEntries(readTag(html, 0)?.attrs ?? []);
 
@@ -340,7 +403,7 @@ describe('readTag', () => {
 		expect(readTag("</p title='>'>", 0)).toMatchObject({ name: 'p', end: true, close: 14 });
 		expect(readTag('< a>', 0)).toBeUndefined();
 		expect(readTag('<!-- x -->', 0)).toBeUndefined();
-		expect(readTag('<a title="x>', 0)).toBeUndefined();
+		expect(readTag('<a title="x>', 0)).toBeNull();
 	});
 });
 
@@ -354,6 +417,11 @@ describe('tags', () => {
 			['script', true, undefined],
 			['script', false, 'd'],
 		]);
+	});
+
+	it('stops at a tag the page ends inside, and reads no tags in plaintext', () => {
+		expect([...tags('<b><a title="x <i> <p>')].map((t) => t.name)).toEqual(['b']);
+		expect([...tags('<plaintext><script>alert(1)</script>')].map((t) => t.name)).toEqual(['plaintext']);
 	});
 
 	it('does not end a script at a longer tag name', () => {

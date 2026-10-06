@@ -240,8 +240,18 @@ function offSiteProblem(what, shown, resolved, verb = 'loads an off-site file') 
 const SPACE = /[\t\n\f\r ]/;
 const ALPHA = /[A-Za-z]/;
 
-/** The text elements whose content the browser reads as text up to their end tag, with no tags in it. */
-const RAW_TEXT = ['script', 'style'];
+/**
+ * The elements whose content the browser reads as text up to their end tag, with no tags in it, in HTML
+ * content: script data, the RCDATA elements `title` and `textarea`, and the raw text elements, `noscript`
+ * among them because the check reads a page with scripting on
+ * (https://html.spec.whatwg.org/multipage/parsing.html#parsing-html-fragments lists the tokenizer state of each).
+ * Inside `<svg>` or `<math>` the browser reads their content as markup.
+ */
+const TEXT_ELEMENTS = ['script', 'style', 'title', 'textarea', 'xmp', 'iframe', 'noembed', 'noframes', 'noscript'];
+/** The elements whose text the policy must hash. */
+const HASHED = ['script', 'style'];
+/** The elements that start foreign content, where no element's content is text. */
+const FOREIGN = ['svg', 'math'];
 
 /**
  * `text` with its ASCII capitals in lower case, as the tokenizer lowercases tag and attribute names.
@@ -252,10 +262,10 @@ function asciiLower(text) {
 }
 
 /**
- * @typedef {{ name: string, end: boolean, attrs: Map<string, string>, start: number, close: number }} Tag
+ * @typedef {{ name: string, end: boolean, selfClosing: boolean, attrs: Map<string, string>, start: number, close: number }} Tag
  * A tag as the browser reads it: its name and its attributes in lower case, name to raw value (`''` when it
- * has none, character references not decoded, the first of a repeated name), whether it is an end tag, the
- * index of its `<` and the index after its `>`.
+ * has none, character references not decoded, the first of a repeated name), whether it is an end tag,
+ * whether it ends in `/>`, the index of its `<` and the index after its `>`.
  */
 
 /**
@@ -264,11 +274,11 @@ function asciiLower(text) {
  * below names the state it copies. A quote starts a quoted value only in the "before attribute value"
  * state, right after `=` and optional whitespace. Inside an unquoted value or an attribute name a quote is
  * a literal character, and an unquoted value ends at whitespace or `>`. `undefined` when no tag starts there
- * (`<` without a letter or `/` and a letter after it) or the page ends inside the tag, which the browser
- * then drops.
+ * (`<` without a letter or `/` and a letter after it), and `null` when the page ends inside the tag, which
+ * the browser then drops with the rest of the page.
  * @param {string} html
  * @param {number} start
- * @returns {Tag | undefined}
+ * @returns {Tag | undefined | null}
  */
 export function readTag(html, start) {
 	let pos = start + 1;
@@ -357,47 +367,104 @@ export function readTag(html, start) {
 				}
 				break;
 			case 'self-closing start tag':
-				if (c === '>') return emit();
+				if (c === '>') return emit(true);
 				state = 'before attribute name';
 				pos -= 1;
 				break;
 		}
 	}
-	return undefined;
+	return null;
 
-	/** The tag that ends at `html[pos]`, a `>`. The first attribute of a name wins, as in the browser. */
-	function emit() {
+	/**
+	 * The tag that ends at `html[pos]`, a `>`. The first attribute of a name wins, as in the browser.
+	 * @param {boolean} selfClosing
+	 */
+	function emit(selfClosing = false) {
 		const attrs = new Map();
 		for (const [key, value] of list) if (!attrs.has(asciiLower(key))) attrs.set(asciiLower(key), value);
-		return { name: asciiLower(name), end, attrs, start, close: pos + 1 };
+		return { name: asciiLower(name), end, selfClosing, attrs, start, close: pos + 1 };
 	}
 }
 
 /**
- * The tags of a page in order, each start tag of a `RAW_TEXT` element with the `body` text up to its end
- * tag. That text holds no tags: the browser ends a script or style at the first `</script` or `</style`
- * followed by whitespace, `/` or `>` (https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-name-state).
- * When the end tag is missing, the body runs to the end of the page. The escape states of script data are
- * left out: in them `<!--<script>` makes the browser read a script on past the next `</script>`, so the check
- * reads part of that script as markup. A `<` where no tag starts is skipped, so the text of a comment, and of
- * a `title` or `textarea`, is read as markup too. A quoted value in a tag there can cover markup after the
- * comment or element ends, which issue #708 is about.
+ * Where the comment or other markup declaration at `html[start]` ends: the index after it, `undefined` when no
+ * comment starts there, and `null` when it runs to the end of the page. It follows the markup declaration
+ * open state and the comment states of the HTML tokenizer
+ * (https://html.spec.whatwg.org/multipage/parsing.html#markup-declaration-open-state). A comment `<!--` ends
+ * at `-->` or `--!>`, or right away as `<!-->` or `<!--->`. A CDATA section, only in foreign content, ends at
+ * `]]>`. Any other `<!` (a doctype too) or a `</` without a letter after it opens a bogus comment, which ends
+ * at the next `>`. A `<?` opens a processing instruction or a bogus comment, and both end at the next `>`.
+ * @param {string} html
+ * @param {number} start
+ * @param {boolean} foreign whether the `<` is inside `<svg>` or `<math>`
+ * @returns {number | undefined | null}
+ */
+export function commentEnd(html, start, foreign) {
+	/** The index after the first `marker` from `from`, or `null` at the end of the page. */
+	const after = (/** @type {string} */ marker, /** @type {number} */ from) => {
+		const at = html.indexOf(marker, from);
+		return at === -1 ? null : at + marker.length;
+	};
+	if (html.startsWith('<!--', start)) {
+		const body = start + 4;
+		// Comment start state, and comment start dash state.
+		if (html[body] === '>') return body + 1;
+		if (html.startsWith('->', body)) return body + 2;
+		// Comment state up to the comment end state or the comment end bang state.
+		const ends = [after('-->', body), after('--!>', body)].filter((end) => end !== null);
+		return ends.length === 0 ? null : Math.min(...ends);
+	}
+	if (foreign && html.startsWith('<![CDATA[', start)) return after(']]>', start + 9);
+	const next = html[start + 1];
+	const bogus =
+		next === '!' || next === '?' || (next === '/' && start + 2 < html.length && !ALPHA.test(html[start + 2]));
+	return bogus ? after('>', start + 2) : undefined;
+}
+
+/**
+ * The tags of a page in order. Comments are skipped (`commentEnd`). The start tag of a `TEXT_ELEMENTS`
+ * element in HTML content comes with the `body` text up to its end tag, and the check reads no tags in that
+ * text: the browser ends it at the first `</` and its name followed by whitespace, `/` or `>`
+ * (https://html.spec.whatwg.org/multipage/parsing.html#rcdata-end-tag-name-state, and the same states for
+ * raw text and script data). Inside `<svg>` or `<math>`, a `script` or `style` still comes with its `body`,
+ * so that its hash is checked, and the check reads on inside it, as the browser does. A body without an end
+ * tag runs to the end of the page. So does the content of `plaintext`, and the rest of a page that ends
+ * inside a tag or a comment, which the browser reads as no tag at all.
+ *
+ * Two simplifications remain. The escape states of script data are left out: in them `<!--<script>` makes
+ * the browser read a script on past the next `</script>`, so the check reads part of that script as markup
+ * (issue #708). And foreign content is counted by `<svg>` and `<math>` tags only, so an HTML element that
+ * closes it early, such as a `<p>` inside `<svg>`, leaves the check reading HTML as foreign content.
  * @param {string} html
  * @returns {Generator<Tag & { body?: string }>}
  */
 export function* tags(html) {
 	let pos = 0;
+	let foreign = 0;
 	while (pos < html.length) {
 		const start = html.indexOf('<', pos);
 		if (start === -1) return;
+		const comment = commentEnd(html, start, foreign > 0);
+		if (comment === null) return;
+		if (comment !== undefined) {
+			pos = comment;
+			continue;
+		}
 		const tag = readTag(html, start);
+		if (tag === null) return;
 		if (tag === undefined) {
 			pos = start + 1;
 			continue;
 		}
 		pos = tag.close;
-		if (tag.end || !RAW_TEXT.includes(tag.name)) {
+		if (FOREIGN.includes(tag.name)) {
+			if (tag.end) foreign = Math.max(0, foreign - 1);
+			else if (!tag.selfClosing) foreign += 1;
+		}
+		const text = foreign > 0 ? HASHED.includes(tag.name) : TEXT_ELEMENTS.includes(tag.name);
+		if (tag.end || !text) {
 			yield tag;
+			if (!tag.end && tag.name === 'plaintext' && foreign === 0) return;
 			continue;
 		}
 		const close = new RegExp(`</${tag.name}[\\t\\n\\f\\r />]`, 'gi');
@@ -405,7 +472,7 @@ export function* tags(html) {
 		const found = close.exec(html);
 		const bodyEnd = found ? found.index : html.length;
 		yield { ...tag, body: html.slice(tag.close, bodyEnd) };
-		pos = bodyEnd;
+		if (foreign === 0) pos = bodyEnd;
 	}
 }
 
@@ -458,9 +525,12 @@ export function pageProblems(html) {
 	}
 	const styleSrc = policy.get('style-src') ?? [];
 	if (styleSrc.includes("'unsafe-inline'")) problems.push("style-src allows 'unsafe-inline'");
-	for (const { name: kind, attrs, body } of all) {
-		if (body === undefined) continue;
+	for (const { name: kind, attrs, body: raw } of all) {
+		if (raw === undefined || !HASHED.includes(kind)) continue;
 		if (kind === 'script' && (attrs.has('src') || DATA_TYPE.test((attrs.get('type') ?? '').trim()))) continue;
+		// The browser turns each CRLF and lone CR into LF before it parses the page, and hashes the result
+		// (https://html.spec.whatwg.org/multipage/parsing.html#preprocessing-the-input-stream).
+		const body = raw.replace(/\r\n?/g, '\n');
 		const hash = sha256(body);
 		const allowed = kind === 'script' ? scriptSrc : styleSrc;
 		if (!allowed.includes(`'${hash}'`)) {
