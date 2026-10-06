@@ -3,9 +3,10 @@
  * file"). Two forms are allowed: a root-relative path to a page of this
  * site, and an `https://` URL under the `url` of an entry in
  * `site/src/data/bibliography.yaml` (see `isUnderUrl`), so the "You are
- * ahead" card can only name a source the project already lists. The MarkdownContent override
- * fails the build on any other value. The same rule serves other fields
- * that name a source by URL; `field` names the field in the error.
+ * ahead" card can only name a source the project already lists. The
+ * MarkdownContent override fails the build on any other value. The same rule
+ * serves other fields that name a source by URL; `field` names the field in
+ * the error.
  */
 
 export type ExtendsToHref =
