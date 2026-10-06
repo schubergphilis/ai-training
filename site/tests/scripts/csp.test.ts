@@ -357,7 +357,7 @@ describe('tags', () => {
 	});
 
 	it('does not end a script at a longer tag name', () => {
-		expect([...tags('<script>a</scripts>b</script>')][0].body).toBe('a</scripts>b');
+		expect([...tags('<script>a</scripts>b</script>')][0]?.body).toBe('a</scripts>b');
 	});
 });
 
