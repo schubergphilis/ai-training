@@ -154,6 +154,19 @@ maintainer to type. A new session can also start with its name:
 Wave `k` of run Capybara is on the branch `wave/capybara-<k>`, and reports
 call it `CAPYBARA wave <k>`. The count starts at 1 in every run.
 
+A run picks only issues that existed when it started (#653). The cutoff
+is the `createdAt` of the run issue. An issue created at or after it is
+never a candidate in that run, whoever filed it: the run's own waves,
+another run and a person alike. It waits for the next run, which the
+maintainer starts by hand. This rule gives a run a fixed amount of work,
+and a run with a fixed amount of work reaches the empty wave that ends
+it. It also means the maintainer reads each new issue before any run
+builds it. `--no-filing` stops only the run's own filing and can't do
+this alone. A resumed run reads the same `createdAt`, and the cutoff
+doesn't move. The open `Cosmetic nits` issue is the exception. The
+dispatcher adds it by title even when it was opened during the run,
+because its lines come from merged waves the maintainer has seen.
+
 ## Concurrent runs
 
 More than one run may be open at once, for example a lessons run and a
@@ -212,8 +225,14 @@ One tick:
    finds it. A last line `wave <k>: awaiting approval, PR #<n>` is a
    merge question the maintainer hasn't answered yet ("Standing
    approval"), and the dispatcher asks it again before any new wave.
-4. **Pick.** Run `mise run next-wave -- --size 6`, with `--kind` and the
-   remaining whitelist as `--only`. The picker is
+4. **Pick.** Run `mise run next-wave -- --size 6`, with `--kind`, the
+   remaining whitelist as `--only` and the run issue's `createdAt` as
+   `--created-before` (`gh issue view <run> --json createdAt`), on every
+   pick and for every kind. The picker leaves out an issue created at or
+   after that time and lists it under `Filed after the run started` with
+   its `createdAt`, an `--only` number too ("Runs and run issues" says
+   why).
+   The picker is
    `scripts/next_wave.py`, and it reads the lessons of the checkout as
    the JSON that `mise run lesson-plan` (`site/scripts/lesson-plan.mjs`)
    prints. For a lessons wave it lists the planned lessons whose issue

@@ -3,7 +3,8 @@
 "The loop", step 1): which issues the next wave of builders should take on.
 
 Usage: mise run next-wave -- [--size N] [--kind lessons|content|code|harness]
-       [--only N,N,...] [--unblockers-first] [--json]
+       [--only N,N,...] [--unblockers-first] [--created-before TIMESTAMP]
+       [--json]
 
 `main` reads the lessons of this checkout from `bun scripts/lesson-plan.mjs`
 in site/ (the picker's one boundary with the site, #492) and the kind's
@@ -103,6 +104,24 @@ number that did not make the wave is reported under `notPicked` with the
 reason, so an unattended run never drops a number silently. A number
 outside the fetched set is looked up to tell `no such open issue` (closed,
 or a pull request) from `not ready-for-agent`.
+
+`created_before` (`--created-before`, an ISO-8601 UTC timestamp such as
+`2026-09-30T22:24:46Z`, #653) is the `createdAt` of the run issue: a run
+picks only issues that existed when it started, so it has a fixed amount
+of work and the maintainer reads a new issue before any run builds it
+(docs/agents/meta-orchestration.md, "Runs and run issues"). Every kind
+leaves out an issue whose `createdAt` is at or after the cutoff, and
+lists it under `filedAfterStart` with its `createdAt`, whoever filed it.
+In an issue wave the check comes after the silent rules (another kind,
+a planned lesson's issue, a nits issue), `only` and the kind label
+error, and in a lessons wave after `only` and the readiness check. In
+both it comes ahead of the assigned and dependency checks. A number under `only` that
+the cutoff leaves out gets the reason `filed after the run started`
+under `notPicked`. The markdown prints the section `Filed after the run
+started` after Blocked whenever the cutoff is given, also when it is
+empty, so the reader sees that the cutoff applied, and the JSON has the
+keys `createdBefore` and `filedAfterStart` last, only then. Without the
+option the output is as it was before it.
 """
 
 import json
@@ -135,6 +154,8 @@ NITS_TITLE = re.compile(r"(nits|cosmetic nits)\b", re.ASCII | re.IGNORECASE)
 # The command-line values, matched whole with `fullmatch`.
 POSITIVE_INTEGER = re.compile(r"[1-9][0-9]*", re.ASCII)
 ISSUE_LIST = re.compile(r"[1-9][0-9]*(,[1-9][0-9]*)*", re.ASCII)
+# An ISO-8601 UTC timestamp to the second, the form of gh's `createdAt`.
+TIMESTAMP = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", re.ASCII)
 
 # A lone UTF-16 surrogate, which JSON.stringify writes as a `\uXXXX` escape.
 LONE_SURROGATE = re.compile("[\ud800-\udfff]")
@@ -199,6 +220,8 @@ class ReadyIssue(TypedDict):
     blockedBy: list[int]
     # The open ones in another repository, as `owner/repo#N`.
     foreignBlockedBy: list[str]
+    # When it was filed, as an ISO-8601 UTC timestamp (`TIMESTAMP`).
+    createdAt: str
 
 
 class IssueState(TypedDict):
@@ -286,6 +309,16 @@ class NotPickedEntry(TypedDict):
     reason: str
 
 
+class FiledLateEntry(TypedDict):
+    """An issue filed at or after the `created_before` cutoff (#653)."""
+
+    issue: int
+    # The lesson id, in a lessons wave.
+    id: NotRequired[str]
+    title: object
+    createdAt: str
+
+
 class LessonsWave(TypedDict):
     kind: Literal["lessons"]
     size: int
@@ -296,6 +329,9 @@ class LessonsWave(TypedDict):
     skipped: list[SkippedEntry]
     waiting: list[WaitingArea]
     notPicked: list[NotPickedEntry]
+    # Last and only with a cutoff, so the output without one is as it was.
+    createdBefore: NotRequired[str]
+    filedAfterStart: NotRequired[list[FiledLateEntry]]
 
 
 class ContentEntry(TypedDict):
@@ -325,6 +361,9 @@ class ContentWave(TypedDict):
     notPicked: list[NotPickedEntry]
     # Last, so the keys before it keep the order they had without it.
     blocked: list[ContentBlockedEntry]
+    # After it, and only with a cutoff, so the output without one is as it was.
+    createdBefore: NotRequired[str]
+    filedAfterStart: NotRequired[list[FiledLateEntry]]
 
 
 type Wave = LessonsWave | ContentWave
@@ -335,12 +374,49 @@ class Args(TypedDict):
     kind: Kind
     only: list[int] | None
     unblockersFirst: bool
+    # The `--created-before` timestamp as given, in the `TIMESTAMP` form.
+    createdBefore: str | None
     json: bool
 
 
 def today_utc() -> date:
     """Today's date in UTC, the one clock a `Not before` line is read by."""
     return datetime.now(UTC).date()
+
+
+def read_timestamp(value: str) -> datetime | None:
+    """The UTC time of a `TIMESTAMP`, or None when the text isn't that form
+    whole or names a time that doesn't exist. Python reads `24:00:00` as the
+    next day, so a time that doesn't print back as the same text is
+    rejected too."""
+    if not TIMESTAMP.fullmatch(value):
+        return None
+    try:
+        when = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return when if timestamp_text(when) == value else None
+
+
+def timestamp_text(when: datetime) -> str:
+    """A UTC time in the `TIMESTAMP` form."""
+    return when.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def filed_late(created_at: str, created_before: datetime | None) -> bool:
+    """Whether an issue created at `created_at` (a `TIMESTAMP`) is at or
+    after the cutoff, and so not a candidate (#653). Never without one."""
+    if created_before is None:
+        return False
+    created = read_timestamp(created_at)
+    if created is None:
+        raise ValueError(f"next-wave: unreadable createdAt {created_at!r}")
+    return created >= created_before
+
+
+def filed_late_text(entry: FiledLateEntry) -> str:
+    """The `notPicked` reason of an issue the cutoff leaves out."""
+    return f"filed after the run started (created {entry['createdAt']})"
 
 
 def no_lookup(number: int) -> IssueState:
@@ -490,22 +566,26 @@ def pick_wave(
     only: Iterable[int] | None = None,
     unblockers_first: bool = False,
     today: date | None = None,
+    created_before: datetime | None = None,
 ) -> Wave:
     """Pick the next wave of the given `kind`.
 
     `ready_issues` is what `main` fetched for the kind (every one is open),
     and `lookup` gives the state of any other issue that a `Blocked by`
     line or `only` names. `size` defaults to the kind's `DEFAULT_SIZE`, and
-    `today` to `today_utc()`.
+    `today` to `today_utc()`. `created_before`, a time with its time zone,
+    is the cutoff: no issue created at or after it is a candidate.
     """
     day = today if today is not None else today_utc()
     if kind == "content" or kind == "code" or kind == "harness":
         n = size if size is not None else DEFAULT_SIZE[kind]
-        return pick_issue_wave(kind, lessons, ready_issues, lookup, n, only, day)
+        return pick_issue_wave(kind, lessons, ready_issues, lookup, n, only, day, created_before)
     if kind != "lessons":
         raise ValueError(f"next-wave: unknown kind {json.dumps(kind, ensure_ascii=False)}")
     n = size if size is not None else DEFAULT_SIZE["lessons"]
-    return pick_lessons_wave(lessons, ready_issues, lookup, n, only, unblockers_first, day)
+    return pick_lessons_wave(
+        lessons, ready_issues, lookup, n, only, unblockers_first, day, created_before
+    )
 
 
 def pick_lessons_wave(
@@ -516,6 +596,7 @@ def pick_lessons_wave(
     only: Iterable[int] | None = None,
     unblockers_first: bool = False,
     today: date | None = None,
+    created_before: datetime | None = None,
 ) -> LessonsWave:
     """Pick the next lessons wave.
 
@@ -529,7 +610,9 @@ def pick_lessons_wave(
     of the four lists: `wave`, `blocked` (it assumes an objective no live
     lesson serves, or its issue's dependencies hold it), `skipped` (the
     issue is not ready, is assigned, or is not in `only`) or `waiting` (fit
-    for a wave, but this one is full), grouped by area.
+    for a wave, but this one is full), grouped by area. With
+    `created_before`, a fifth list, `filedAfterStart`, takes a ready lesson
+    whose issue was created at or after it, ahead of the assigned check.
     """
     day = today if today is not None else today_utc()
     live = {lesson["id"] for lesson in lessons if lesson["live"]}
@@ -556,6 +639,7 @@ def pick_lessons_wave(
     candidate_serves: dict[str, list[str]] = {}
     blocked: list[BlockedEntry] = []
     skipped: list[SkippedEntry] = []
+    late: list[FiledLateEntry] = []
 
     for lesson in lessons:
         candidates = per_area.setdefault(lesson["area"], [])
@@ -573,6 +657,12 @@ def pick_lessons_wave(
         if issue is None:
             skipped.append(
                 {"issue": number, "id": lesson_id, "reason": "issue is not ready-for-agent"}
+            )
+            continue
+        if filed_late(issue["createdAt"], created_before):
+            title = lesson["title"] if lesson["title"] is not None else issue["title"]
+            late.append(
+                {"issue": number, "id": lesson_id, "title": title, "createdAt": issue["createdAt"]}
             )
             continue
         if issue["assignees"]:
@@ -647,6 +737,7 @@ def pick_lessons_wave(
         lesson_id = planned_issues.get(n)
         b = next((x for x in blocked if x["issue"] == n), None)
         s = next((x for x in skipped if x["issue"] == n), None)
+        f = next((x for x in late if x["issue"] == n), None)
         if lesson_id is None:
             state = None if n in ready else lookup(n)
             if state is not None and not is_open_issue(state):
@@ -659,6 +750,8 @@ def pick_lessons_wave(
                 reason = not_a_lesson_text(labels)
         elif lesson_id in live:
             reason = f"lesson {lesson_id} is live"
+        elif f is not None:
+            reason = filed_late_text(f)
         elif b is not None:
             reason = blocked_by_text(b)
         elif s is not None:
@@ -668,7 +761,7 @@ def pick_lessons_wave(
         else:
             reason = "waiting (wave full)"
         not_picked.append({"issue": n, "reason": reason})
-    return {
+    result: LessonsWave = {
         "kind": "lessons",
         "size": size,
         "only": only_list,
@@ -679,6 +772,10 @@ def pick_lessons_wave(
         "waiting": waiting,
         "notPicked": not_picked,
     }
+    if created_before is not None:
+        result["createdBefore"] = timestamp_text(created_before)
+        result["filedAfterStart"] = late
+    return result
 
 
 def not_a_lesson_text(labels: Iterable[str]) -> str:
@@ -726,9 +823,12 @@ def pick_content_wave(
     size: int = 6,
     only: Iterable[int] | None = None,
     today: date | None = None,
+    created_before: datetime | None = None,
 ) -> ContentWave:
     """Pick the next content wave (`pick_issue_wave` with kind `content`)."""
-    return pick_issue_wave("content", lessons, ready_issues, lookup, size, only, today)
+    return pick_issue_wave(
+        "content", lessons, ready_issues, lookup, size, only, today, created_before
+    )
 
 
 def pick_code_wave(
@@ -738,9 +838,10 @@ def pick_code_wave(
     size: int = 6,
     only: Iterable[int] | None = None,
     today: date | None = None,
+    created_before: datetime | None = None,
 ) -> ContentWave:
     """Pick the next code wave (`pick_issue_wave` with kind `code`)."""
-    return pick_issue_wave("code", lessons, ready_issues, lookup, size, only, today)
+    return pick_issue_wave("code", lessons, ready_issues, lookup, size, only, today, created_before)
 
 
 def pick_harness_wave(
@@ -750,9 +851,12 @@ def pick_harness_wave(
     size: int = DEFAULT_SIZE["harness"],
     only: Iterable[int] | None = None,
     today: date | None = None,
+    created_before: datetime | None = None,
 ) -> ContentWave:
     """Pick the next harness wave (`pick_issue_wave` with kind `harness`)."""
-    return pick_issue_wave("harness", lessons, ready_issues, lookup, size, only, today)
+    return pick_issue_wave(
+        "harness", lessons, ready_issues, lookup, size, only, today, created_before
+    )
 
 
 def issue_order(kind: IssueKind) -> Callable[[ReadyIssue], tuple[int, int]]:
@@ -777,6 +881,7 @@ def pick_issue_wave(
     size: int = 6,
     only: Iterable[int] | None = None,
     today: date | None = None,
+    created_before: datetime | None = None,
 ) -> ContentWave:
     """Pick the next wave of issues with the label `kind`.
 
@@ -785,7 +890,8 @@ def pick_issue_wave(
     issue with more than one kind label is skipped, ahead of the planned
     and nits rules. The first `size` are the wave and the rest wait. An
     assigned issue, or one outside `only`, is skipped with the reason. One
-    that its dependencies hold is blocked.
+    created at or after `created_before` is filed late, and one that its
+    dependencies hold is blocked.
     """
     day = today if today is not None else today_utc()
     ready = {i["number"]: i for i in ready_issues}
@@ -797,6 +903,7 @@ def pick_issue_wave(
     planned = {lesson["issue"] for lesson in lessons if lesson["issue"] is not None}
     skipped: list[SkippedEntry] = []
     blocked: list[ContentBlockedEntry] = []
+    late: list[FiledLateEntry] = []
     candidates: list[ContentEntry] = []
     for i in sorted(ready_issues, key=issue_order(kind)):
         labels = i["labels"]
@@ -811,6 +918,9 @@ def pick_issue_wave(
             continue
         if many:
             skipped.append({"issue": i["number"], "reason": MANY_KINDS})
+            continue
+        if filed_late(i["createdAt"], created_before):
+            late.append({"issue": i["number"], "title": i["title"], "createdAt": i["createdAt"]})
             continue
         if i["assignees"]:
             reason = f"issue is assigned to {', '.join(i['assignees'])}"
@@ -841,6 +951,8 @@ def pick_issue_wave(
             reason = f"not a {kind} issue"
         elif NITS_TITLE.match(issue["title"]):
             reason = "a nits issue (the dispatcher adds it as the nits row)"
+        elif (f := next((x for x in late if x["issue"] == n), None)) is not None:
+            reason = filed_late_text(f)
         elif issue["assignees"]:
             reason = "assigned"
         elif (b := next((x for x in blocked if x["issue"] == n), None)) is not None:
@@ -848,7 +960,7 @@ def pick_issue_wave(
         else:
             reason = "waiting (wave full)"
         not_picked.append({"issue": n, "reason": reason})
-    return {
+    result: ContentWave = {
         "kind": kind,
         "size": size,
         "only": only_list,
@@ -858,6 +970,10 @@ def pick_issue_wave(
         "notPicked": not_picked,
         "blocked": blocked,
     }
+    if created_before is not None:
+        result["createdBefore"] = timestamp_text(created_before)
+        result["filedAfterStart"] = late
+    return result
 
 
 def has_many_kinds(labels: Iterable[str]) -> bool:
@@ -910,7 +1026,8 @@ def format_wave(result: Wave) -> str:
     A lessons wave is a table (with an `Unblocks` column under
     `unblockersFirst`), then the blocked, skipped and waiting lists. A
     content, code or harness wave is a table of issue, title and labels, then the
-    skipped and waiting lists. Lesson ids are in code spans, so cspell
+    skipped and waiting lists. With a cutoff, the filed-late list comes
+    after the blocked list in both. Lesson ids are in code spans, so cspell
     skips them.
     """
     if result["kind"] != "lessons":
@@ -945,6 +1062,7 @@ def format_wave(result: Wave) -> str:
         reasons = [f"assumes {'; '.join(why)}"] if why else []
         reasons += dependency_reasons(b)
         lines.append(f"- #{b['issue']} {code(b['id'])}: {'; '.join(reasons)}")
+    lines += filed_late_lines(result)
     lines += ["", f"## Skipped ({len(result['skipped'])})", "", *skipped_lines(result["skipped"])]
     count = sum(len(w["lessons"]) for w in result["waiting"])
     lines += ["", f"## Waiting for a later wave ({count})", ""]
@@ -964,6 +1082,19 @@ def not_picked_lines(result: Wave) -> list[str]:
     return lines
 
 
+def filed_late_lines(result: Wave) -> list[str]:
+    """The `Filed after the run started` section, present whenever a cutoff
+    was given, also when it is empty, so the reader sees it applied."""
+    if "filedAfterStart" not in result:
+        return []
+    late = result["filedAfterStart"]
+    lines = ["", f"## Filed after the run started ({len(late)})", ""]
+    for f in late:
+        name = code(f["id"]) if "id" in f else str(f["title"])
+        lines.append(f"- #{f['issue']} {name}: created {f['createdAt']}")
+    return lines
+
+
 def format_content_wave(result: ContentWave) -> str:
     lines = [f"## Wave ({len(result['wave'])} of {result['size']}, {result['kind']})", ""]
     lines += ["| Issue | Title | Labels |", "| ----- | ----- | ------ |"]
@@ -976,6 +1107,7 @@ def format_content_wave(result: ContentWave) -> str:
         lines += ["", f"## Blocked ({len(result['blocked'])})", ""]
         for b in result["blocked"]:
             lines.append(f"- #{b['issue']} {b['title']}: {'; '.join(dependency_reasons(b))}")
+    lines += filed_late_lines(result)
     lines += ["", f"## Skipped ({len(result['skipped'])})", "", *skipped_lines(result["skipped"])]
     lines += ["", f"## Waiting for a later wave ({len(result['waiting'])})", ""]
     for w in result["waiting"]:
@@ -996,14 +1128,17 @@ def parse_args(argv: Sequence[str]) -> Args | str:
     `DEFAULT_SIZE`: 4 for `harness` and 6 for the others), `--kind`
     (`lessons`, the default, `content`, `code` or `harness`), `--only N,N,...` (issue numbers,
     the whitelist), `--unblockers-first` (rank a lesson that unblocks other
-    candidates ahead of the course order within its area) and `--json`. A
-    flag that takes a value and comes last gets the empty string.
+    candidates ahead of the course order within its area),
+    `--created-before TIMESTAMP` (the cutoff, an ISO-8601 UTC timestamp to
+    the second such as `2026-09-30T22:24:46Z`) and `--json`. A flag that
+    takes a value and comes last gets the empty string.
     """
     args: Args = {
         "size": 6,
         "kind": "lessons",
         "only": None,
         "unblockersFirst": False,
+        "createdBefore": None,
         "json": False,
     }
     size_given = False
@@ -1014,7 +1149,7 @@ def parse_args(argv: Sequence[str]) -> Args | str:
             args["json"] = True
         elif arg == "--unblockers-first":
             args["unblockersFirst"] = True
-        elif arg in ("--size", "--kind", "--only"):
+        elif arg in ("--size", "--kind", "--only", "--created-before"):
             i += 1
             raw = argv[i] if i < len(argv) else ""
             if arg == "--size":
@@ -1027,6 +1162,13 @@ def parse_args(argv: Sequence[str]) -> Args | str:
                 if kind is None:
                     return f"next-wave: --kind is {kinds_text()}, got {_quote(raw)}"
                 args["kind"] = kind
+            elif arg == "--created-before":
+                if read_timestamp(raw) is None:
+                    return (
+                        "next-wave: --created-before needs an ISO-8601 UTC timestamp"
+                        f" such as 2026-09-30T22:24:46Z, got {_quote(raw)}"
+                    )
+                args["createdBefore"] = raw
             else:
                 if not ISSUE_LIST.fullmatch(raw):
                     return (
@@ -1186,9 +1328,10 @@ def native_blockers(raw: dict[str, object]) -> tuple[list[int], list[str]]:
 
 
 def parse_issues(output: str) -> list[ReadyIssue]:
-    """The issues from `gh issue list --json number,title,assignees,labels,body,blockedBy`
-    output, with assignees as login names, labels as names and `blockedBy`
-    as its open issues."""
+    """The issues from `gh issue list --json
+    number,title,assignees,labels,body,blockedBy,createdAt` output, with
+    assignees as login names, labels as names, `blockedBy` as its open
+    issues and `createdAt` as given, which must be a `TIMESTAMP`."""
     issues: list[ReadyIssue] = []
     for raw in cast("list[dict[str, object]]", json.loads(output)):
         assignees = cast("list[dict[str, str]]", raw.get("assignees") or [])
@@ -1197,6 +1340,9 @@ def parse_issues(output: str) -> list[ReadyIssue]:
         if not isinstance(body, str):
             raise TypeError(f"issue #{raw['number']} has body {body!r}")
         local, foreign = native_blockers(raw)
+        created_at = raw["createdAt"]
+        if not isinstance(created_at, str) or read_timestamp(created_at) is None:
+            raise ValueError(f"issue #{raw['number']} has createdAt {created_at!r}")
         issues.append(
             {
                 "number": cast("int", raw["number"]),
@@ -1206,6 +1352,7 @@ def parse_issues(output: str) -> list[ReadyIssue]:
                 "body": body,
                 "blockedBy": local,
                 "foreignBlockedBy": foreign,
+                "createdAt": created_at,
             }
         )
     return issues
@@ -1258,7 +1405,7 @@ def issue_list_command(kind: Kind) -> list[str]:
         "-L",
         str(ISSUE_LIMIT),
         "--json",
-        "number,title,assignees,labels,body,blockedBy",
+        "number,title,assignees,labels,body,blockedBy,createdAt",
     ]
 
 
@@ -1330,6 +1477,9 @@ def main(argv: Sequence[str]) -> int:
     if isinstance(args, str):
         print(args, file=sys.stderr)
         return 2
+    created_before = (
+        read_timestamp(args["createdBefore"]) if args["createdBefore"] is not None else None
+    )
     lessons = read_json(LESSON_PLAN, parse_lesson_plan, cwd=SITE)
     ready = fetch_issues(args["kind"])
     result = pick_wave(
@@ -1341,6 +1491,7 @@ def main(argv: Sequence[str]) -> int:
         only=args["only"],
         unblockers_first=args["unblockersFirst"],
         today=today_utc(),
+        created_before=created_before,
     )
     out = to_json(result) if args["json"] else to_markdown(result)
     sys.stdout.buffer.write(out.encode("utf-8"))
