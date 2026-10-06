@@ -410,8 +410,8 @@ describe('extends-to and covered-by hrefs', () => {
 			}),
 		);
 		expect(errors).toEqual([
-			'src/data/areas/a/lessons/x.yaml: extends-to href https://other.example/page does not start with the url of any entry in bibliography.yaml',
-			'src/data/areas/a/lessons/x.yaml: covered-by href https://example.com.evil/x does not start with the url of any entry in bibliography.yaml',
+			'src/data/areas/a/lessons/x.yaml: extends-to href https://other.example/page is not under the url of any entry in bibliography.yaml',
+			'src/data/areas/a/lessons/x.yaml: covered-by href https://example.com.evil/x is not under the url of any entry in bibliography.yaml',
 		]);
 	});
 	it('fails a covered-by page path and an extends-to href that is neither form', () => {

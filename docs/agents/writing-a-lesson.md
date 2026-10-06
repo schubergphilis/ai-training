@@ -574,8 +574,8 @@ it states none, so state a time only where it is true.
 button. Don't write those by hand. Where to go next is the page footer's
 previous/next, which follows the sidebar order. `extends-to` only feeds the
 "You are ahead" card. An `extends-to` href may also be an `https://` URL
-that starts with the `url` of a bibliography entry, for example a Claude
-Academy course, and the card renders it as a plain link marked "(external
+under the `url` of a bibliography entry (with the same query values, if the
+url has a query), and the card renders it as a plain link marked "(external
 link)". `covered-by` names one external course that covers each objective
 the lesson serves, and the page then shows a tip next to the menu, "If you
 have followed <label>, you can skip this lesson", with a skip button that

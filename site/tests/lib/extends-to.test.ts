@@ -57,6 +57,38 @@ describe('isUnderUrl', () => {
 	});
 });
 
+describe('isUnderUrl with a query in the url', () => {
+	const video = 'https://www.youtube.com/watch?v=abc';
+	it('rejects a YouTube href with another v', () => {
+		expect(isUnderUrl('https://www.youtube.com/watch?v=xyz', video)).toBe(false);
+	});
+	it('accepts a YouTube href with the same v and an extra t, in either order', () => {
+		expect(isUnderUrl('https://www.youtube.com/watch?v=abc&t=30', video)).toBe(true);
+		expect(isUnderUrl('https://www.youtube.com/watch?t=30&v=abc', video)).toBe(true);
+	});
+	it('rejects an href without the query, or with the parameter but no value', () => {
+		expect(isUnderUrl('https://www.youtube.com/watch', video)).toBe(false);
+		expect(isUnderUrl('https://www.youtube.com/watch?v=', video)).toBe(false);
+		expect(isUnderUrl('https://www.youtube.com/watch?V=abc', video)).toBe(false);
+	});
+	it('rejects a parameter repeated with another value on either side', () => {
+		expect(isUnderUrl('https://www.youtube.com/watch?v=abc&v=xyz', video)).toBe(false);
+		expect(isUnderUrl('https://www.youtube.com/watch?v=abc', 'https://www.youtube.com/watch?v=abc&v=xyz')).toBe(false);
+		expect(isUnderUrl('https://www.youtube.com/watch?v=xyz&v=abc', 'https://www.youtube.com/watch?v=abc&v=xyz')).toBe(
+			true,
+		);
+	});
+	it('compares values after percent-decoding', () => {
+		expect(isUnderUrl('https://www.youtube.com/watch?v=%61bc', video)).toBe(true);
+		expect(isUnderUrl('https://example.com/s?q=a+b', 'https://example.com/s?q=a%20b')).toBe(true);
+	});
+	it('ignores the fragment and still applies the path rule', () => {
+		expect(isUnderUrl('https://www.youtube.com/watch?v=abc#t=30', video)).toBe(true);
+		expect(isUnderUrl('https://www.youtube.com/watch#v=abc', video)).toBe(false);
+		expect(isUnderUrl('https://www.youtube.com/watchlater?v=abc', video)).toBe(false);
+	});
+});
+
 describe('checkExtendsToHref', () => {
 	it('accepts a root-relative path without looking at the bibliography', () => {
 		expect(checkExtendsToHref('/safety/agent-risk/', [])).toEqual({ kind: 'internal' });
