@@ -611,9 +611,13 @@ key fails the build with the file name and the key, and so does a citation
 inside a heading or a link. Citations work inside components too (a
 `Recap` takeaway, a checkpoint stem), and the reference link is
 page-absolute so it still resolves where a review page clones the
-checkpoint. Cite the way S03 asks: concept definitions, recaps, and
-behaviors cite papers and vendor documentation by key, never as a bare
-inline URL.
+checkpoint. A citation in a component prop, such as a checkpoint's
+`hint`, `context` or `rationale` or an option's `why` or `consequence`,
+shows as literal text, so `mise run data` rejects it (a `Predict` answer
+and a `Repair` artifact are shown as code and exempt). Put the citation in
+the stem or in the prose around the checkpoint. Cite the way S03 asks:
+concept definitions, recaps, and behaviors cite papers and vendor
+documentation by key, never as a bare inline URL.
 
 ```mdx
 The model never runs anything. Your loop does (@AEC-13).

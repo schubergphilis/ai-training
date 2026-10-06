@@ -350,6 +350,39 @@ describe('citations in component props', () => {
 			propCitationMessage('src/content/docs/a/index.mdx', { line: 1, tag: 'Recap', prop: 'hint', token: '(@AEC-01)' }),
 		]);
 	});
+	it('fails a token in each checkpoint string prop: consequence, why, context, hint and rationale', () => {
+		const src = [
+			'<Scenario id="s" hint="Think (@AEC-01)." context="After (@AEC-02)."', // 1
+			'  options={[', // 2
+			"    { text: 'A', correct: true, consequence: 'It works (@AEC-03).' },", // 3
+			"    { text: 'B', consequence: 'It fails.', why: 'Because (@AEC-04).' },", // 4
+			'  ]}>', // 5
+			'Stem?', // 6
+			'</Scenario>', // 7
+			'', // 8
+			"<Match id=\"m\" rationale=\"See (@AEC-05).\" options={['b']} rows={[{ text: 'a', answer: 'b' }]}>", // 9
+			'Stem?', // 10
+			'</Match>', // 11
+			'',
+		].join('\n');
+		expect(propCitations(src, 'p')).toEqual([
+			{ line: 1, tag: 'Scenario', prop: 'hint', token: '(@AEC-01)' },
+			{ line: 1, tag: 'Scenario', prop: 'context', token: '(@AEC-02)' },
+			{ line: 2, tag: 'Scenario', prop: 'options[0].consequence', token: '(@AEC-03)' },
+			{ line: 2, tag: 'Scenario', prop: 'options[1].why', token: '(@AEC-04)' },
+			{ line: 9, tag: 'Match', prop: 'rationale', token: '(@AEC-05)' },
+		]);
+		const { errors } = check(tree({ 'content/a/x.mdx': src }));
+		expect(errors).toContain(
+			propCitationMessage('src/content/docs/a/x.mdx', {
+				line: 2,
+				tag: 'Scenario',
+				prop: 'options[0].consequence',
+				token: '(@AEC-03)',
+			}),
+		);
+		expect(errors.filter((e) => e.includes('which the page shows as literal text'))).toHaveLength(5);
+	});
 	it('passes clean props, a token in a code span, a Predict answer, a non-literal prop and a tag inside a fence', () => {
 		expect(propCitations(choice('Wrong, as the vendor page says. More.'), 'p')).toEqual([]);
 		expect(check(tree({ 'content/a/x.mdx': choice('Wrong, as the vendor page says.') })).errors).toEqual([]);
