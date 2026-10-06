@@ -12,7 +12,7 @@ import json
 import re
 import subprocess
 from collections.abc import Mapping, Sequence
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import NotRequired, TypedDict, cast
 
 import next_wave as nw
@@ -76,6 +76,7 @@ def issue(
     body: str = "",
     blocked_by: Sequence[int] = (),
     foreign: Sequence[str] = (),
+    created_at: str = "2026-01-01T00:00:00Z",
 ) -> ReadyIssue:
     return {
         "number": number,
@@ -85,6 +86,7 @@ def issue(
         "body": body,
         "blockedBy": list(blocked_by),
         "foreignBlockedBy": list(foreign),
+        "createdAt": created_at,
     }
 
 
@@ -678,6 +680,7 @@ def titled(number: int, title: str, labels: Sequence[str] = ("content",)) -> Rea
         "body": "",
         "blockedBy": [],
         "foreignBlockedBy": [],
+        "createdAt": "2026-01-01T00:00:00Z",
     }
 
 
@@ -1290,6 +1293,7 @@ def test_parse_args_defaults() -> None:
         "kind": "lessons",
         "only": None,
         "unblockersFirst": False,
+        "createdBefore": None,
         "json": False,
     }
 
@@ -1312,12 +1316,24 @@ def test_parse_args_defaults_the_size_by_kind_unless_size_is_given(
 
 
 def test_parse_args_reads_every_flag() -> None:
-    argv = ["--size", "3", "--kind", "content", "--only", "1,22", "--unblockers-first", "--json"]
+    argv = [
+        "--size",
+        "3",
+        "--kind",
+        "content",
+        "--only",
+        "1,22",
+        "--unblockers-first",
+        "--created-before",
+        "2026-09-30T22:24:46Z",
+        "--json",
+    ]
     assert parse_args(argv) == {
         "size": 3,
         "kind": "content",
         "only": [1, 22],
         "unblockersFirst": True,
+        "createdBefore": "2026-09-30T22:24:46Z",
         "json": True,
     }
 
@@ -1371,15 +1387,17 @@ class FakeCommands:
 
 
 BUN = "bun scripts/lesson-plan.mjs"
+# The `createdAt` of an issue filed long before any cutoff the tests give.
+EARLY = "2026-01-01T00:00:00Z"
 # The `blockedBy` field of an issue with no `blocked by` relationship, as gh gives it.
 NO_BLOCKERS: dict[str, object] = {"nodes": [], "totalCount": 0}
 GH = (
     "gh issue list -R schubergphilis/ai-training -s open -l ready-for-agent -L 1000"
-    " --json number,title,assignees,labels,body,blockedBy"
+    " --json number,title,assignees,labels,body,blockedBy,createdAt"
 )
 GH_CONTENT = (
     "gh issue list -R schubergphilis/ai-training -s open -l ready-for-agent -l content -L 1000"
-    " --json number,title,assignees,labels,body,blockedBy"
+    " --json number,title,assignees,labels,body,blockedBy,createdAt"
 )
 
 
@@ -1438,6 +1456,7 @@ GH_JSON = json.dumps(
             "assignees": [],
             "labels": [{"name": "ready-for-agent"}],
             "body": "",
+            "createdAt": EARLY,
             "blockedBy": NO_BLOCKERS,
         },
         {
@@ -1446,6 +1465,7 @@ GH_JSON = json.dumps(
             "assignees": [{"login": "someone"}],
             "labels": [{"name": "ready-for-agent"}],
             "body": "Blocked by #99",
+            "createdAt": EARLY,
             "blockedBy": NO_BLOCKERS,
         },
     ]
@@ -1616,6 +1636,7 @@ def test_main_writes_a_lone_surrogate_in_the_markdown_as_u_fffd_as_javascript_di
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "content"}],
                 "body": "",
+                "createdAt": EARLY,
                 "blockedBy": NO_BLOCKERS,
             }
         ]
@@ -1901,6 +1922,7 @@ def test_parse_issues_keeps_only_the_open_native_blockers() -> None:
             "assignees": [],
             "labels": [],
             "body": "",
+            "createdAt": EARLY,
             "blockedBy": blocked_by_field(
                 blocker_node(40, "CLOSED"), blocker_node(41), blocker_node(42, "CLOSED")
             ),
@@ -1948,6 +1970,7 @@ def native_list(state_of_40: str) -> str:
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "harness"}],
                 "body": "",
+                "createdAt": EARLY,
                 "blockedBy": blocked_by_field(blocker_node(40, state_of_40)),
             }
         ]
@@ -2178,6 +2201,7 @@ def test_main_fetches_a_content_wave_with_both_labels_and_looks_up_a_blocker_onc
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "content"}],
                 "body": "Blocked by #90",
+                "createdAt": EARLY,
                 "blockedBy": NO_BLOCKERS,
             }
             for n in (30, 31)
@@ -2207,6 +2231,7 @@ def test_main_fetches_a_code_wave_with_the_code_label(
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "code"}, *extra],
                 "body": "",
+                "createdAt": EARLY,
                 "blockedBy": NO_BLOCKERS,
             }
             for n, extra in ((30, []), (31, [{"name": "bug"}]))
@@ -2236,6 +2261,7 @@ def test_main_fetches_a_harness_wave_with_the_harness_label_and_a_size_of_four(
                 "assignees": [],
                 "labels": [{"name": "ready-for-agent"}, {"name": "harness"}],
                 "body": "",
+                "createdAt": EARLY,
                 "blockedBy": NO_BLOCKERS,
             }
             for n in range(30, 36)
@@ -2281,6 +2307,7 @@ def test_main_exits_1_when_the_list_reaches_the_limit(
                 "assignees": [],
                 "labels": [],
                 "body": "",
+                "createdAt": EARLY,
                 "blockedBy": NO_BLOCKERS,
             }
             for n in (1, 2)
@@ -2294,3 +2321,245 @@ def test_main_exits_1_when_the_list_reaches_the_limit(
         "next-wave: gh issue list failed: 2 issues reach the -L limit,"
         " so the list may be cut short\n"
     )
+
+
+# The `--created-before` cutoff (#653): a run picks only issues that existed
+# when it started.
+
+CUTOFF_TEXT = "2026-09-30T22:24:46Z"
+CUTOFF = datetime(2026, 9, 30, 22, 24, 46, tzinfo=UTC)
+BEFORE = "2026-09-30T22:24:45Z"
+AT = CUTOFF_TEXT
+AFTER = "2026-10-01T08:00:00Z"
+
+
+def kind_issue(
+    number: int, kind: str, created_at: str, assignees: Sequence[str] = ()
+) -> ReadyIssue:
+    return issue(number, assignees, [kind, "ready-for-agent"], created_at=created_at)
+
+
+@pytest.mark.parametrize("kind", ["content", "code", "harness"])
+def test_an_issue_at_or_after_the_cutoff_is_filed_late_and_one_before_it_is_picked(
+    kind: str,
+) -> None:
+    ready = [kind_issue(1, kind, BEFORE), kind_issue(2, kind, AT), kind_issue(3, kind, AFTER)]
+    r = pick_wave([], ready, kind=kind, today=TODAY, created_before=CUTOFF)
+    assert r["kind"] == kind
+    assert [w["issue"] for w in r["wave"]] == [1]
+    assert r.get("createdBefore") == CUTOFF_TEXT
+    assert r.get("filedAfterStart") == [
+        {"issue": 2, "title": "Lesson #2", "createdAt": AT},
+        {"issue": 3, "title": "Lesson #3", "createdAt": AFTER},
+    ]
+    assert r["skipped"] == []
+    assert r["waiting"] == []
+    # The two keys come last, so the keys before them keep their order.
+    assert list(r)[-2:] == ["createdBefore", "filedAfterStart"]
+
+
+def test_without_a_cutoff_a_late_issue_is_picked_and_the_keys_are_absent() -> None:
+    ready = [kind_issue(1, "content", BEFORE), kind_issue(3, "content", AFTER)]
+    r = content_wave([], ready, today=TODAY)
+    assert [w["issue"] for w in r["wave"]] == [1, 3]
+    assert "createdBefore" not in r
+    assert "filedAfterStart" not in r
+    assert "## Filed after the run started" not in format_wave(r)
+
+
+def test_the_cutoff_applies_ahead_of_assigned_and_blocked_but_after_the_silent_rules() -> None:
+    ready = [
+        kind_issue(30, "content", AFTER, ["someone"]),
+        issue(31, [], ["content"], body="Blocked by #40", created_at=AFTER),
+        titled(32, "Cosmetic nits"),
+        issue(10, [], ["content"], created_at=AFTER),
+        issue(33, [], ["content", "code"], created_at=AFTER),
+    ]
+    ready[2]["createdAt"] = AFTER
+    r = content_wave(plan_lessons(), ready, Lookups({}), today=TODAY, created_before=CUTOFF)
+    # The nits issue and the planned lesson's issue stay silent, and the
+    # kind label error is still reported.
+    assert [f["issue"] for f in r.get("filedAfterStart", [])] == [30, 31]
+    assert r["skipped"] == [{"issue": 33, "reason": nw.MANY_KINDS}]
+    assert r["blocked"] == []
+
+
+def test_with_only_a_late_number_is_not_picked_with_the_reason() -> None:
+    ready = [
+        kind_issue(1, "content", BEFORE),
+        kind_issue(2, "content", AFTER),
+        kind_issue(3, "content", AFTER),
+    ]
+    r = content_wave([], ready, only=[1, 2], today=TODAY, created_before=CUTOFF)
+    assert [w["issue"] for w in r["wave"]] == [1]
+    assert r["skipped"] == [{"issue": 3, "reason": NOT_IN_ONLY}]
+    assert r.get("filedAfterStart") == [{"issue": 2, "title": "Lesson #2", "createdAt": AFTER}]
+    reason = f"filed after the run started (created {AFTER})"
+    assert r["notPicked"] == [{"issue": 2, "reason": reason}]
+
+
+def test_a_lessons_wave_leaves_out_a_lesson_whose_issue_was_filed_late() -> None:
+    lessons = plan(
+        [
+            {
+                "dir": "a",
+                "course": ["a/1", "a/2", "a/3"],
+                "lessons": [
+                    {"id": "a/1", "title": "One", "issue": 1},
+                    {"id": "a/2", "title": "Two", "issue": 2},
+                    {"id": "a/3", "issue": 3},
+                ],
+            }
+        ]
+    )
+    ready = [
+        issue(1, created_at=BEFORE),
+        issue(2, created_at=AT),
+        issue(3, ["someone"], created_at=AFTER),
+    ]
+    r = lessons_wave(lessons, ready, only=[1, 2, 3], today=TODAY, created_before=CUTOFF)
+    assert ids(r["wave"]) == ["a/1"]
+    assert r["skipped"] == []
+    assert r.get("filedAfterStart") == [
+        {"issue": 2, "id": "a/2", "title": "Two", "createdAt": AT},
+        {"issue": 3, "id": "a/3", "title": "Lesson #3", "createdAt": AFTER},
+    ]
+    assert r["notPicked"] == [
+        {"issue": 2, "reason": f"filed after the run started (created {AT})"},
+        {"issue": 3, "reason": f"filed after the run started (created {AFTER})"},
+    ]
+    assert list(r)[-2:] == ["createdBefore", "filedAfterStart"]
+    assert pick_wave(lessons, ready, today=TODAY, created_before=CUTOFF) == {
+        **lessons_wave(lessons, ready, today=TODAY, created_before=CUTOFF)
+    }
+
+
+def test_format_prints_the_filed_late_section_after_blocked_whenever_a_cutoff_is_given() -> None:
+    late = [kind_issue(2, "content", AFTER)]
+    content = format_wave(content_wave([], late, today=TODAY, created_before=CUTOFF))
+    assert content == "\n".join(
+        [
+            "## Wave (0 of 6, content)",
+            "",
+            "| Issue | Title | Labels |",
+            "| ----- | ----- | ------ |",
+            "",
+            "## Filed after the run started (1)",
+            "",
+            f"- #2 Lesson #2: created {AFTER}",
+            "",
+            "## Skipped (0)",
+            "",
+            "",
+            "## Waiting for a later wave (0)",
+            "",
+            "",
+        ]
+    )
+    empty = format_wave(content_wave([], [], today=TODAY, created_before=CUTOFF))
+    assert "## Filed after the run started (0)" in empty
+    lessons = plan([{"dir": "a", "course": ["a/1"], "lessons": [{"id": "a/1", "issue": 2}]}])
+    text = format_wave(
+        lessons_wave(lessons, [issue(2, created_at=AFTER)], today=TODAY, created_before=CUTOFF)
+    )
+    blocked = text.index("## Blocked (0)")
+    filed = text.index("## Filed after the run started (1)")
+    assert blocked < filed < text.index("## Skipped (0)")
+    assert f"- #2 `a/1`: created {AFTER}" in text
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "",
+        "2026-09-30",
+        "2026-09-30T22:24:46",
+        "2026-09-30T22:24:46+00:00",
+        "2026-09-30T22:24:46.000Z",
+        "2026-09-30 22:24:46Z",
+        "2026-09-30T22:24:46z",
+        "2026-09-30T22:24:46Z\n",
+        "2026-02-30T22:24:46Z",
+        "2026-09-30T24:00:00Z",
+        "٢٠٢٦-09-30T22:24:46Z",
+    ],
+)
+def test_parse_args_rejects_a_cutoff_that_is_not_an_iso_8601_utc_timestamp(raw: str) -> None:
+    assert parse_args(["--created-before", raw]) == (
+        "next-wave: --created-before needs an ISO-8601 UTC timestamp"
+        f" such as 2026-09-30T22:24:46Z, got {json.dumps(raw, ensure_ascii=False)}"
+    )
+
+
+def test_parse_args_rejects_a_cutoff_flag_without_a_value() -> None:
+    assert isinstance(parse_args(["--created-before"]), str)
+
+
+def test_filed_late_rejects_an_unreadable_created_at() -> None:
+    with pytest.raises(ValueError, match="unreadable createdAt"):
+        nw.filed_late("yesterday", CUTOFF)
+    assert nw.filed_late("yesterday", None) is False
+
+
+@pytest.mark.parametrize("created_at", [None, "2026-10-01", 7])
+def test_parse_issues_rejects_a_created_at_it_cannot_read(created_at: object) -> None:
+    raw: list[dict[str, object]] = [
+        {
+            "number": 30,
+            "title": "t",
+            "assignees": [],
+            "labels": [],
+            "body": "",
+            "blockedBy": NO_BLOCKERS,
+            "createdAt": created_at,
+        }
+    ]
+    with pytest.raises(ValueError, match="createdAt"):
+        nw.parse_issues(json.dumps(raw))
+
+
+def test_parse_issues_needs_the_created_at_field() -> None:
+    raw = [{"number": 30, "title": "t", "body": "", "blockedBy": NO_BLOCKERS}]
+    with pytest.raises(KeyError, match="createdAt"):
+        nw.parse_issues(json.dumps(raw))
+
+
+def test_main_passes_the_cutoff_and_prints_the_late_issue_and_its_json_keys(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    gh = json.dumps(
+        [
+            {
+                "number": n,
+                "title": f"Issue {n}",
+                "assignees": [],
+                "labels": [{"name": "ready-for-agent"}, {"name": "content"}],
+                "body": "",
+                "blockedBy": NO_BLOCKERS,
+                "createdAt": created_at,
+            }
+            for n, created_at in ((30, BEFORE), (31, AFTER))
+        ]
+    )
+    monkeypatch.setattr(nw, "today_utc", lambda: TODAY)
+    outputs: dict[str, str | int | OSError] = {BUN: PLAN_JSON, GH_CONTENT: gh}
+    argv = ["--kind", "content", "--created-before", CUTOFF_TEXT]
+    code, out, _ = run_main(monkeypatch, capsys, argv, outputs)
+    assert code == 0
+    assert "| #30 | Issue 30 |" in out.stdout
+    assert f"## Filed after the run started (1)\n\n- #31 Issue 31: created {AFTER}\n" in out.stdout
+    code, out, _ = run_main(monkeypatch, capsys, [*argv, "--json"], outputs)
+    assert code == 0
+    data = json.loads(out.stdout)
+    assert data["createdBefore"] == CUTOFF_TEXT
+    assert data["filedAfterStart"] == [{"issue": 31, "title": "Issue 31", "createdAt": AFTER}]
+
+
+def test_main_exits_2_on_a_bad_cutoff_before_running_anything(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, out, fake = run_main(monkeypatch, capsys, ["--created-before", "2026-09-30"], {})
+    assert code == 2
+    assert out.stdout == ""
+    assert out.stderr.startswith("next-wave: --created-before needs an ISO-8601 UTC timestamp")
+    assert fake.calls == []

@@ -162,7 +162,7 @@ run = "bun scripts/check-data.mjs"
 # this checkout from `lesson-plan` (so it needs the site install) and the
 # open issues from GitHub (network, gh).
 [tasks.next-wave]
-description = "Pick the next wave of issues for meta-orchestration (docs/agents/meta-orchestration.md), with -- --size N, --kind lessons|content|code|harness, --only N,N,..., --unblockers-first and --json"
+description = "Pick the next wave of issues for meta-orchestration (docs/agents/meta-orchestration.md), with -- --size N, --kind lessons|content|code|harness, --only N,N,..., --unblockers-first, --created-before <ISO-8601 UTC timestamp> and --json"
 depends = ["require-setup"]
 run = "uv run --locked python scripts/next_wave.py"
 

@@ -350,10 +350,19 @@ printed.
    `wave <k>: open, PR #<n>` and stop as on any other `open`.
 4. **Pick.** Under `--only`, when the `Remaining --only` list is empty,
    stop with "the `Remaining --only` list is empty" before the picker runs.
-   Run `mise run next-wave -- --kind <kind>`, add
+   Run `mise run next-wave -- --kind <kind> --created-before <createdAt>`,
+   where `<createdAt>` is the run issue's
+   `gh issue view <run> --json createdAt -q .createdAt`, add
    `--size <size>` when the run's arguments give a size, and
    add `--only <remaining>` under `--only`, where `<remaining>` is the run
-   issue's `Remaining --only` list. The picker also takes
+   issue's `Remaining --only` list. Pass `--created-before` on every pick,
+   for every kind: a run picks only issues that existed when it started,
+   so its work is fixed and the maintainer reads a new issue before any
+   run builds it (#653). A resumed run reads the same `createdAt`, so the
+   cutoff never moves. The picker lists an issue created at or after it
+   under `## Filed after the run started` with its `createdAt`, and an
+   `--only` number among them under `Not picked from --only` too. Such
+   an issue waits for the next run, which the maintainer starts. The picker also takes
    `--unblockers-first`, which scores each candidate by how many blocked
    lessons it unblocks, sorts that score before the course position within
    an area (the planned `after` rule still comes first), and adds an
@@ -364,11 +373,13 @@ printed.
    `content`, `code` and `harness` pickers leave it out for this reason). Add it as ONE extra row
    appended to the picker's table, marked `(nits row)`, for one nits
    builder in one worktree and branch, only when its body has 10 or more
-   nit lines or the picker's table is otherwise empty. Under `--only`, add
+   nit lines or the picker's table is otherwise empty. A nits issue
+   opened during the run joins the same way, since its lines come from
+   merged waves the maintainer has seen. Under `--only`, add
    it only when it is in the remaining list. A wave that is only the nits
    row is valid and proceeds. When the table is empty after that,
-   stop, and report what the picker listed as blocked, skipped, waiting and
-   not picked.
+   stop, and report what the picker listed as blocked, filed after the run
+   started, skipped, waiting and not picked.
    When `mise run next-wave` exits non-zero, its output has no table, so
    skip the nits row and stop with "the picker exits non-zero". Quote the
    picker's own line, the last one on stderr that starts with `next-wave:`
@@ -829,7 +840,7 @@ Stop, and say which one it was, when:
 - the preflight finds `main` behind, ahead of or diverged from
   `origin/main`;
 - the picker returns an empty wave and there is no nits row (report what
-  is blocked, waiting and not picked);
+  is blocked, filed after the run started, waiting and not picked);
 - the picker exits non-zero (quote its `next-wave:` line and name the
   fix, step 4 of the loop);
 - under `--only`, the `Remaining --only` list is empty;
