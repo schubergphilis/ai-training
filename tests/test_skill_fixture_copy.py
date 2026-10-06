@@ -221,7 +221,11 @@ def test_a_git_error_is_named_in_the_note(
     assert "local edits included" in err
     # git's own message for a `.git` file it can't follow, which differs
     # from the "(or any of the parent directories)" of a missing checkout.
-    assert "(fatal: not a git repository: " in err
+    # Git 2.56 words it "gitfile does not point to a valid repository".
+    assert "(fatal: " in err
+    assert (
+        "not a git repository: " in err or "gitfile does not point to a valid repository: " in err
+    )
 
 
 def test_the_course_package_is_copied_from_git(clones: ModuleType, tmp_path: Path) -> None:
