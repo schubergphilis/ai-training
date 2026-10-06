@@ -230,10 +230,9 @@ One tick:
    `--created-before` (`gh issue view <run> --json createdAt`), on every
    pick and for every kind. The picker leaves out an issue created at or
    after that time and lists it under `Filed after the run started` with
-   its `createdAt`, an `--only` number too ("Runs and run issues" says
-   why).
-   The picker is
-   `scripts/next_wave.py`, and it reads the lessons of the checkout as
+   its `createdAt`, and an `--only` number among them under
+   `Not picked from --only` too ("Runs and run issues" says why). The
+   picker is `scripts/next_wave.py`, and it reads the lessons of the checkout as
    the JSON that `mise run lesson-plan` (`site/scripts/lesson-plan.mjs`)
    prints. For a lessons wave it lists the planned lessons whose issue
    is `ready-for-agent` and unassigned, and drops the ones that assume

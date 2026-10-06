@@ -362,8 +362,8 @@ printed.
    cutoff never moves. The picker lists an issue created at or after it
    under `## Filed after the run started` with its `createdAt`, and an
    `--only` number among them under `Not picked from --only` too. Such
-   an issue waits for the next run, which the maintainer starts. The picker also takes
-   `--unblockers-first`, which scores each candidate by how many blocked
+   an issue waits for the next run, which the maintainer starts. The
+   picker also takes `--unblockers-first`, which scores each candidate by how many blocked
    lessons it unblocks, sorts that score before the course position within
    an area (the planned `after` rule still comes first), and adds an
    `Unblocks` column. Use it when the maintainer asks for it. Then decide on
