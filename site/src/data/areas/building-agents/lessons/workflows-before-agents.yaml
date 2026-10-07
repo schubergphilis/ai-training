@@ -1,5 +1,9 @@
 id: building-agents/workflows-before-agents
 title: Workflows before agents
+description: >-
+  Run a chain with a gate, a route and parallel calls on a shop's emails, with code deciding the
+  order of the fake model calls, and tell those tasks apart from one that needs an agent that
+  chooses its own steps.
 mode: explanation
 covers: building-agents/patterns
 serves: [building-agents/orchestrates-agents/picks-a-pattern]
@@ -7,6 +11,7 @@ introduces: [workflow-patterns]
 assumes:
   - objective: building-agents/builds-agent-loop/implements-the-loop
     lesson: building-agents/stopping-the-loop
+    section: the-rules-that-end-a-run
 extends-to: []
 after: [building-agents/stopping-the-loop, building-agents/rubrics]
 shorts: []
@@ -16,8 +21,18 @@ exercise:
     For four tasks, decide whether fixed code can call the model in a chain, a route or in parallel,
     or whether the task needs an agent that chooses its own steps.
 sources: [Anthropic effective agents]
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 issue: 676
 minutes: 12
 notes: >-
   Opens the patterns part, before react. Workflow patterns are model calls inside one task with the
-  steps fixed in code. Coordinating several agents stays in the orchestration part.
+  steps fixed in code. Coordinating several agents stays in the orchestration part, and the page
+  links that part instead of teaching the article's orchestrator-workers pattern. The page runs
+  three of the four workflow patterns of the concept (chain, route, parallel calls) on the fixture
+  in site/examples/building-agents/workflows-before-agents/, and names the draft-and-critique loop
+  as the subject of the reflection lesson later in the part. The fixture's shop reuses order 1042
+  and its kettle from the planning and orchestrating-agents lessons, and its emails, orders and
+  the 2 seconds per model call are illustrative, written by the author. The four exercise tasks
+  differ from the four rows of the first checkpoint. The exercise is done on paper, and its stretch
+  edits the fixture.
