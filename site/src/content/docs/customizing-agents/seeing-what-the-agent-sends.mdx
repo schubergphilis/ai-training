@@ -1,0 +1,341 @@
+import { Choice, Match, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+In this lesson we look at what Claude Code sends to the model, in three
+places. The context meter shows how full the window is while you work.
+The session record on disk holds every message, tool call and tool
+result of a session. A request log, which you turn on for one session,
+holds each request exactly as it was sent. The exercise connects one
+more tool and follows it through all three.
+
+The concepts course showed a toy harness's own log of
+[what is in each request](/concepts/one-prompt-many-requests/#what-is-in-each-request):
+the instructions, the tool descriptions and the history, sent again on
+every call. The lesson on
+[what the tool list costs](/customizing-agents/mcp-tool-cost/#what-the-tool-list-costs)
+estimated what a server's tool definitions take from that request. Here
+you look at the real requests of your own agent.
+
+## Watch the context meter
+
+In Claude Code, `/context` shows what fills the window right now, broken
+down by category, with suggestions for what to trim (@Claude Code context window).
+One of the categories is the tools of Model Context Protocol (MCP)
+servers, shown as MCP tools. With tool search on, which is the
+default, only the tool names are in the window, and the model loads a
+full schema when a task needs it. With `ENABLE_TOOL_SEARCH=false` every
+schema loads at the start (@Claude Code context window).
+
+`/context` answers when you ask. A status line shows a number all the
+time. Claude Code runs the status line command after each new reply from
+the model, passes it the session data as JSON (JavaScript Object Notation) on
+standard input, and
+shows what it prints (@Claude Code statusline). The command runs on your
+machine and costs no tokens. Three of the fields are useful here:
+
+- `context_window.used_percentage`, the share of the window in use. It is
+  counted from the input tokens of the last request, and it can be null
+  early in a session.
+- `context_window.total_input_tokens`, those input tokens, cache reads
+  and cache writes included.
+- `transcript_path`, the path of the session record on disk.
+
+All three come from the statusline page (@Claude Code statusline).
+`statusline.py` in `site/examples/customizing-agents/seeing-what-the-agent-sends/`
+prints them on one line, and a dash for a field that is missing or null.
+You point Claude Code at it with a `statusLine` entry in a settings file
+(@Claude Code statusline):
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "python3 /tmp/handbook-inspect/.claude/statusline.py"
+  }
+}
+```
+
+<Predict id="status-line-output" title="Two status lines"
+  answer={`context - | 0 tokens | record 2f6c0d1e-5a7b-4c9d-8e3f-1a2b3c4d5e6f.jsonl
+  context 12% | 23,480 tokens | record 2f6c0d1e-5a7b-4c9d-8e3f-1a2b3c4d5e6f.jsonl`} run="customizing-agents/seeing-what-the-agent-sends/statusline_demo.py">
+Run `statusline_demo.py` in the fixture directory, and compare with the
+output below. The first sample input is from before the first request,
+when the share is still null. The second is from after a request.
+
+```python
+used_text = "-" if used is None else f"{round(used)}%"
+total_text = "-" if total is None else f"{total:,} tokens"
+record = "-" if not transcript else os.path.basename(transcript)
+return f"context {used_text} | {total_text} | record {record}"
+```
+
+</Predict>
+
+The meter tells you that the window is filling, and `/context` tells you
+which category fills it. Neither shows the text itself.
+
+## Find the session in its record
+
+Claude Code keeps data under `~/.claude` as you work. The transcript of a
+session is `projects/<project>/<session>.jsonl`, and it holds every
+message, every tool call and every tool result of that session
+(@Claude Code claude directory). The page's own example names the
+project directory after the project's path with each slash replaced by a
+dash, so `/home/user/work/my-repo` becomes `-home-user-work-my-repo`.
+The status line above gives you the file name, and `transcript_path`
+gives the full path.
+
+Resume and rewind read past sessions from these files, and they are the
+place to look when a run went wrong yesterday and you want to see which
+file the agent read before it did. They are also plain text and
+unencrypted, so whoever can read your files can read them. A `.env`
+file the agent opened, or a key that a command printed, ends up in the
+record as well (@Claude Code claude directory). Claude Code deletes
+records older than `cleanupPeriodDays`, which is 30 days unless you set
+it, and `claude purge <path>` deletes everything it keeps for one
+project, after it shows you the plan (@Claude Code claude directory).
+
+The record is the session as the agent lived it, turn by turn. The
+system prompt and the tool definitions that came with each request
+aren't in the page's list of what it holds. For those you need the
+request itself.
+
+<Match id="which-view-answers" objective="customizing-agents/connects-tools-safely/inspects-requests"
+  concepts={['context-meter', 'session-record', 'request-logging']}
+  context="Claude Code offers three views of a session: the context meter (the /context command and a status line), the session record (a JSONL transcript under ~/.claude/projects/), and a request log that writes each request sent to the model to a local directory while it is turned on."
+  title="Which view answers the question?" hint="Which view is live, which keeps the turns of past sessions, and which holds the parts of a request that are sent every time?"
+  options={['The context meter', 'The session record', 'The request log']}
+  rows={[
+    { statement: 'How full is the window in the session that is open now?', option: 0, why: 'Which view shows a number for the open session while you work?' },
+    { statement: 'Which file did last week\'s session read before it made the wrong change?', option: 1, why: 'Which view keeps every tool call of past sessions, without any setup?' },
+    { statement: 'How many tokens do the server\'s tool definitions take in each request, as sent?', option: 2, why: 'Which view holds the tool definitions that come with each request?' },
+    { statement: 'Did yesterday\'s session store the API key that a command printed?', option: 1, why: 'Where on disk does every tool result of a session end up?' },
+  ]}
+  rationale="The meter is live and shows how much. The record keeps every turn of every session for weeks. The request log holds the whole request, tool definitions included, for as long as you leave it on.">
+Match each question to the view that answers it. The request log was
+off in last week's and yesterday's sessions.
+</Match>
+
+## Log the requests on your machine
+
+Claude Code can write every request it sends to a directory on your
+machine. It is part of its OpenTelemetry monitoring, the standard it uses
+to export usage data (@Claude Code monitoring). Telemetry is on only with
+`CLAUDE_CODE_ENABLE_TELEMETRY=1`. `OTEL_LOG_RAW_API_BODIES=file:<dir>`
+then writes the full body of each request to `<dir>/<uuid>.request.json`,
+and from version 2.1.274 Claude Code adds one line per response to
+`<dir>/index.jsonl`, with the session id and the file names
+(@Claude Code monitoring). `OTEL_METRICS_EXPORTER=none` and
+`OTEL_LOGS_EXPORTER=none` switch off both exporters, so the events
+themselves don't go to a collector anywhere (@Claude Code monitoring).
+In our run in October 2026, the request files were written with both
+exporters set to `none`.
+
+The monitoring page leaves request bodies out unless you ask for them.
+The variable's description warns that a body carries the whole
+conversation, so it reveals all that the switches for prompt text and
+tool details would reveal (@Claude Code monitoring). A request file holds the system prompt, every
+tool definition and every message so far, with the full text of each
+file the agent read and any secret a command printed. So keep the log on
+your own machine, in a directory only your user can read and outside
+every repository. Turn it on for the session you are investigating, and
+delete the directory when you have your numbers. Don't send a request
+file to an online token counter or paste it into a chat assistant.
+
+A gateway can log requests too. You point `ANTHROPIC_BASE_URL` at it,
+and the gateway can log every request that passes through
+(@Claude Code llm gateway). Two things make it the wrong tool here.
+Anthropic doesn't audit third-party gateway products, and the gateway
+sees everything the log would hold (@Claude Code llm gateway). And when
+`ANTHROPIC_BASE_URL` names a host other than Anthropic's own, Claude Code
+turns tool search off and loads every tool definition upfront
+(@Claude Code mcp). A request logged that way comes from a different
+setup than the one you use every day.
+
+`read_log.py` in the fixture directory reads a log directory and prints,
+for each request, the estimated tokens of the system prompt, the tools
+and the messages, at four characters per token. The last column is the
+tool definitions of MCP servers, whose tool names start with `mcp__`,
+and their share of the request. `sample_log.py` writes a sample log of
+one prompt that took three model calls, with three built-in tools and a
+`notes` server with five tools, and runs `read_log.py` on it.
+
+<Predict id="read-the-sample-log" title="Read the request log"
+  answer={`request  system   tools  messages   total  mcp tools
+        1     404     926        20   1,350  604 (45%)
+        2     404     926       107   1,437  604 (42%)
+        3     404     926       235   1,565  604 (39%)
+  mcp__notes: 5 tools`} run="customizing-agents/seeing-what-the-agent-sends/sample_log.py">
+Run `sample_log.py` in the fixture directory, and compare with the
+output below.
+
+```python
+mcp = 0
+for tool in tools:
+    server = server_of(tool)
+    if server is not None:
+        mcp += size(tool)
+share = f"{mcp:,} ({round(100 * mcp / total)}%)"
+```
+
+</Predict>
+
+The sample is small, so read it for its pattern. The system prompt and
+the tools are the same in every request, and only the messages grow. The
+`notes` server's five definitions are 604 of the 1,350 tokens of the
+first request, before the agent has done anything. Two of the five tools
+did the work. `add_note` and `delete_note` came along on every call, and
+any instruction the agent read could ask for them.
+
+<Choice id="read-the-request-table" objective="customizing-agents/connects-tools-safely/inspects-requests"
+  concepts={['request-logging']}
+  context="A request log of one prompt that took three model calls was summarized per request: system prompt 404 tokens each time, tools 926 each time, messages 20, then 107, then 235. The MCP server's tool definitions were 604 tokens in each request, which was 45%, then 42%, then 39% of the request."
+  title="Why does the share fall?" hint="Which columns change from one request to the next, and which stay the same?"
+  options={[
+    { text: 'The client drops the definitions of the tools the model has already called.', why: 'The MCP column is 604 tokens in all three requests. Nothing was dropped.' },
+    { text: 'Prompt caching makes the definitions cheaper after the first request.', why: 'Caching changes the price of reading a part again. The log counts what is in the request, and that stays the same.' },
+    { text: 'The history grows with each call, and the definitions are sent unchanged.', correct: true },
+    { text: 'The system prompt gets shorter as the agent learns what the task needs.', why: 'The system column is 404 tokens in every request.' },
+  ]}>
+The server's tool definitions are 45% of the first request and 39% of
+the third. Why does the share fall?
+</Choice>
+
+<Scenario id="the-log-after-the-investigation" objective="customizing-agents/connects-tools-safely/inspects-requests"
+  concepts={['request-logging', 'session-record']}
+  context="A developer turned on Claude Code's request log for one session with OTEL_LOG_RAW_API_BODIES=file:<dir>, pointing at a directory in their home folder. The directory now holds forty request files from a session that read the project's configuration files."
+  title="The numbers are in" hint="What do the forty files hold besides the token counts, and who would see them in each place?"
+  options={[
+    { text: 'Attach the log directory to the team\'s issue as a zip, so others can check the numbers.', consequence: 'The issue now holds every file the agent read, and a configuration file with a database password is among them. Everyone who can read the issue can read the password.' },
+    { text: 'Upload the files to an online token counter to get exact counts for the issue.', consequence: 'The counts are exact, and a service nobody at the company reviewed now has the whole session, file contents included.' },
+    { text: 'Leave the directory, because Claude Code deletes its session files after 30 days.', consequence: 'The cleanup covers the paths under ~/.claude that its page lists. The log directory is not one of them, so the forty files stay until someone deletes them.' },
+    { text: 'Put the table of numbers in the issue, delete the directory, and start new sessions without the variable.', correct: true, consequence: 'The team gets the numbers, and the file contents exist only in the session record, which ages out.' },
+  ]}>
+The measurement is done: the server's tool definitions are a fifth of
+every request. What do you do with the log?
+</Scenario>
+
+<Pitfall title="The log in the project">
+A developer wants to measure their agent and points the request log at
+`./request-log` inside the project, because that is where they work. At
+the end of the day they run `git add .` and push. The forty request files
+are now in the repository's history, with the full text of every file
+the agent read that day, including the local `.env` file it opened to
+check a port number. Deleting the files in the next commit doesn't remove
+them from the history. The rule: a request log goes in a directory
+outside every repository, readable only by you, and you delete it when
+the measurement is done.
+</Pitfall>
+
+<Exercise stretch="Deny the server's write tools by name in the copy's .claude/settings.json, start a new logged session, ask the same question, and compare the mcp tools column of the first request with the one from your first run.">
+Connect one more tool in a copy and follow it through the meter, the
+record and the log. Copy the `handbook` directory and the status line
+script to places you can delete, and point the copy's settings at the
+script. Run the shell steps from the course repository's top level.
+
+```sh
+cp -r site/examples/customizing-agents/mcp-first-server/handbook /tmp/handbook-inspect
+mkdir -p /tmp/handbook-inspect/.claude
+cp site/examples/customizing-agents/seeing-what-the-agent-sends/statusline.py /tmp/handbook-inspect/.claude/
+printf '%s\n' '{"statusLine": {"type": "command", "command": "python3 /tmp/handbook-inspect/.claude/statusline.py"}}' > /tmp/handbook-inspect/.claude/settings.json
+mkdir -m 700 ~/claude-request-log
+```
+
+1. `cd /tmp/handbook-inspect` and start `claude`. Trust the folder, check
+   that the status line shows, and run `/context`. Write down the total
+   and the MCP tools line, if there is one. Quit.
+2. Add the file-system server to the copy, as in the lesson on your first
+   server, and start a logged session with every definition loaded:
+
+   ```sh
+   cd /tmp/handbook-inspect
+   claude mcp add handbook -- npx -y @modelcontextprotocol/server-filesystem@2026.8.31 /tmp/handbook-inspect
+   CLAUDE_CODE_ENABLE_TELEMETRY=1 OTEL_METRICS_EXPORTER=none OTEL_LOGS_EXPORTER=none OTEL_LOG_RAW_API_BODIES=file:$HOME/claude-request-log ENABLE_TOOL_SEARCH=false claude
+   ```
+
+   Run `/context` and compare the MCP tools line with step 1. Ask: "Use
+   the handbook server to read on-call.md and tell me when the rota
+   changes." Watch the status line after the reply.
+3. In a second terminal, find the record. The status line shows its file
+   name. Run `grep -l "rota changes every Monday" ~/.claude/projects/*/*.jsonl`
+   and check that the file it names is that one.
+4. Quit the session, then run
+   `python3 site/examples/customizing-agents/seeing-what-the-agent-sends/read_log.py ~/claude-request-log`
+   from the course repository. Read the `mcp tools` column.
+5. Clean up: `rm -rf ~/claude-request-log`, then
+   `cd /tmp/handbook-inspect && claude mcp remove handbook`. Run
+   `claude purge` without a path and pick the copy from its list, which
+   deletes the copy's records after it shows the plan
+   (@Claude Code claude directory). Last, `rm -rf /tmp/handbook-inspect`.
+
+A good result is three numbers from your own run: the MCP tools line of
+`/context` before and after, and the `handbook` share of the first logged
+request. Write them in a short note with one line on whether you would
+keep the server connected in a project that reads its files once a week.
+Then ask yourself: which of the three views would have shown you that a
+secret was read, and how long would it have stayed on disk?
+</Exercise>
+
+<Sort id="review-what-holds-what" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
+  concepts={['context-meter', 'session-record', 'request-logging']}
+  context="Claude Code offers three views of a session: the context meter (the /context command and a status line), the session record (a JSONL transcript under ~/.claude/projects/), and a request log that writes each request sent to the model to a local directory while it is turned on."
+  title="Which view holds it?" hint="Which view is live, which keeps the turns of past sessions, and which holds every part of a request?"
+  buckets={['The context meter', 'The session record', 'The request log']}
+  items={[
+    { text: 'The share of the window in use after the last reply', bucket: 0 },
+    { text: 'The tokens in use per category, such as MCP tools and memory files', bucket: 0 },
+    { text: 'Every tool call and tool result of last week\'s session, logged or not', bucket: 1 },
+    { text: 'The system prompt and every tool definition, exactly as sent', bucket: 2 },
+  ]}>
+Place each item in the view that holds it.
+</Sort>
+
+<Choice id="review-a-proxy-for-the-log" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
+  concepts={['request-logging']}
+  context="Claude Code's tool search is on by default and keeps MCP tool definitions out of the request until the model needs one. Setting ANTHROPIC_BASE_URL sends the requests to another host instead of Anthropic's own."
+  title="Every definition in every request" hint="What does Claude Code change about its own requests when the base URL names another host?"
+  options={[
+    { text: 'Tool search doesn\'t work, so the team should turn it off everywhere.', why: 'The logged requests came from a setup the team doesn\'t use every day. They say nothing about the default.' },
+    { text: 'The proxy added the definitions to the requests on its way to the provider.', why: 'A logging proxy passes the request on. Something before the proxy decided what the request holds.' },
+    { text: 'With that base URL Claude Code turned tool search off, so the log shows another setup.', correct: true },
+    { text: 'The definitions are always sent, and tool search only hides them from /context.', why: 'Tool search keeps the definitions out of the request until the model needs one, and that is why the default request is smaller.' },
+  ]}>
+A colleague points `ANTHROPIC_BASE_URL` at a logging proxy on their
+laptop and sees every MCP tool definition in every request. They
+conclude that tool search doesn't work. What do you answer?
+</Choice>
+
+<Choice id="review-when-to-log" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
+  concepts={['request-logging']}
+  context="Claude Code writes the full body of each request to a local directory when OTEL_LOG_RAW_API_BODIES=file:<dir> is set together with CLAUDE_CODE_ENABLE_TELEMETRY=1. A request body holds the system prompt, the tool definitions and the whole conversation so far."
+  title="Where do you set the variable?" hint="How long should a log of every file the agent reads exist, and who sets it up?"
+  options={[
+    { text: 'In your user settings, so the log is there whenever a question comes up.', why: 'Every session then writes every file the agent reads to disk, for months, to answer a question you may never ask.' },
+    { text: 'In your shell, for the one session you investigate, and nowhere else.', correct: true },
+    { text: 'In the project settings, so every developer on the team logs the same way.', why: 'Every developer\'s sessions then write their file contents to disk, and nobody decided to investigate anything.' },
+    { text: 'In a startup script that turns it on at login and deletes old files weekly.', why: 'The log then exists all week, every week, and a secret read on Monday stays on disk until the script runs.' },
+  ]}>
+You want to see what the tool definitions add to each request. Where do
+you turn on the request log?
+</Choice>
+
+<Recap>
+1. `/context` breaks down what fills the window by category, and a status
+   line can show the share in use, the input tokens and the record's path
+   after every reply (@Claude Code context window) (@Claude Code statusline).
+2. The session record under `~/.claude/projects/` holds every message,
+   tool call and tool result in plain text, secrets included, until
+   `cleanupPeriodDays` or `claude purge` removes it
+   (@Claude Code claude directory).
+3. `OTEL_LOG_RAW_API_BODIES=file:<dir>` writes each request, with the
+   system prompt, the tool definitions and the messages, to a local
+   directory (@Claude Code monitoring). The log shows what each part
+   costs in every request.
+4. Turn the log on for one session, keep it in a directory outside every
+   repository that only you can read, and delete it when you have your
+   numbers. A gateway on `ANTHROPIC_BASE_URL` sees the same data and
+   turns tool search off (@Claude Code mcp).
+</Recap>
+
+<Habit id="search-before-you-share">
+The next time you share a transcript, a log or a request file from an agent session, search it first for keys and for file contents you would not paste into a chat.
+</Habit>

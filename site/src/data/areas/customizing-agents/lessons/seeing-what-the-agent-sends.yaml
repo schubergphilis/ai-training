@@ -1,5 +1,8 @@
 id: customizing-agents/seeing-what-the-agent-sends
 title: Seeing what the agent sends
+description: >-
+  Watch the context meter while you connect one more tool, find the session in its record on disk,
+  and log the requests on your own machine to see what the tool definitions add to each one.
 mode: tutorial
 covers: customizing-agents/inspecting-the-agent
 serves: [customizing-agents/connects-tools-safely/inspects-requests]
@@ -7,9 +10,13 @@ introduces: [context-meter, session-record, request-logging]
 assumes:
   - objective: concepts/recognizes-agents/follows-one-prompt
     lesson: concepts/one-prompt-many-requests
+    section: what-is-in-each-request
   - objective: customizing-agents/connects-tools-safely/weighs-tool-cost
     lesson: customizing-agents/mcp-tool-cost
+    section: what-the-tool-list-costs
 extends-to: []
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 after: [customizing-agents/mcp-tool-cost]
 shorts: []
 exercise:
@@ -17,9 +24,24 @@ exercise:
   brief: >-
     Watch the context meter while you connect one more tool, find the same session in its record on
     disk, and log the requests locally to see what the tool definitions add to each one.
-sources: [Claude Code context window, Claude Code statusline, Claude Code claude directory, Claude Code monitoring, Claude Code llm gateway]
+sources: [Claude Code context window, Claude Code statusline, Claude Code claude directory, Claude Code monitoring, Claude Code llm gateway, Claude Code mcp]
 issue: 690
 minutes: 20
 notes: >-
   Its own part, after the MCP part, because inspects-requests asks what tools cost. The request log
-  stays on the learner's machine: it holds the whole prompt, including file contents.
+  stays on the learner's machine: it holds the whole prompt, including file contents. Changed from
+  the plan: the request log uses Claude Code's own OTEL_LOG_RAW_API_BODIES=file:<dir> with both
+  exporters set to none, instead of a gateway or proxy, because a local fixture proxy would need the
+  learner to point ANTHROPIC_BASE_URL at it, and a non-first-party base URL turns tool search off
+  (code.claude.com/docs/en/mcp), so the log would show another setup. The page names the gateway
+  route and why it is not used, which adds Claude Code mcp to the sources. That the files are
+  written with both exporters set to none is from the builder's own run on 2026-10-07, which the page
+  dates; no vendor page states it. The fixtures under site/examples/customizing-agents/seeing-what-the-agent-sends/
+  are read_log.py (the reader the learner runs on their own log), sample_log.py (a written sample
+  log in the file-mode layout, three requests, a five-tool notes server), and statusline.py with
+  statusline_demo.py. /context and its categories, and ENABLE_TOOL_SEARCH=false, come from the
+  context-window page; the status line fields and when the command runs from the statusline page;
+  the record path, plain-text storage, cleanupPeriodDays and claude purge from the claude-directory
+  page; CLAUDE_CODE_ENABLE_TELEMETRY, the exporter selectors, OTEL_LOG_RAW_API_BODIES and index.jsonl
+  from the monitoring page; ANTHROPIC_BASE_URL and audit logging from the llm-gateway page. All must
+  be re-checked by review-by.
