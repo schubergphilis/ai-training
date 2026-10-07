@@ -260,7 +260,7 @@ because the child process gets slow when several builders share one
 machine (#555). The tests in `site/tests/scripts/examples.test.ts` that
 run Python on a temporary fixture tree take it, and so does the
 `afterAll` hook in `site/tests/scripts/data.test.ts`, whose deletion of
-the temporary trees took over 10 s under that load. The timeout is the
+the temporary trees can take seconds under load. The timeout is the
 last argument to `it()` or `afterAll()`, with a comment on the same line
 saying why, and the rest of the file keeps the default. A test that can
 call the code in-process does that instead: the `lesson-plan command` test
