@@ -9,10 +9,14 @@ with 0, which means no objection.
 
 The hook splits the command into words the way a shell does, so quotes are
 removed, and into subcommands at shell operators such as `;`, `&&`, `|` and
-`&`, and at line breaks. In each subcommand it skips leading `NAME=value`
-assignments, checks that the program is `git` (by any path), skips git's own
-options, and denies when git's command is `push`. It reads only the text of
-the command, so a push inside `sh -c '...'` or inside a script gets past it.
+`&`, and at line breaks that no backslash continues. In each subcommand it
+skips leading `NAME=value` assignments and words such as `env` or `nohup`
+that run the next word as the command, checks that the program is `git` (by
+any path), skips git's own options, and denies when git's command is `push`.
+When the program or git's command is a word the shell would expand first,
+such as `{push,}` or `$CMD`, it denies when the rest of the subcommand
+contains `push`. It reads only the text of the command, so a push inside
+`sh -c '...'`, inside backticks or inside a script gets past it.
 
 When the input isn't a tool call it can read, it writes a message to
 standard error and exits with 2, which also blocks the call.
@@ -34,28 +38,50 @@ REASON = (
 OPTIONS_WITH_VALUE = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 OPERATOR_CHARS = set("();<>|&")
+# Words that run the rest of the line as a command, as in `env git push`.
+# Their own options, such as `time -p`, are skipped with them.
+PREFIX_WORDS = {"env", "command", "time", "nohup", "exec", "builtin", "{", "!"}
 
 
 def subcommands(command: str) -> "list[list[str]]":
     """The words of each subcommand. Raises ValueError on unbalanced quotes."""
-    lexer = shlex.shlex(command.replace("\n", ";"), posix=True, punctuation_chars=True)
+    # A backslash before a line break continues the line, so join those first.
+    text = command.replace("\\\n", "").replace("\n", ";")
+    lexer = shlex.shlex(text, posix=True, punctuation_chars=True)
     lexer.whitespace_split = True
     result: list[list[str]] = [[]]
     for word in lexer:
-        if set(word) <= OPERATOR_CHARS:
+        # An empty quoted word, as in `git -C "" push`, is a word and not an operator.
+        if word and set(word) <= OPERATOR_CHARS:
             result.append([])
         else:
             result[-1].append(word)
     return [words for words in result if words]
 
 
-def git_command(words: "list[str]") -> "str | None":
-    """The git command a subcommand runs, such as `push`, or None if it isn't git."""
+def expands(word: str) -> bool:
+    """True when the shell would change the word first, as in `{push,}` or `$CMD`."""
+    return any(char in word for char in "{$`")
+
+
+def subcommand_pushes(words: "list[str]") -> bool:
+    """True when the words of one subcommand run `git push`."""
     i = 0
-    while i < len(words) and ASSIGNMENT.match(words[i]):
+    after_prefix = False
+    while i < len(words):
+        word = words[i]
+        if word in PREFIX_WORDS:
+            after_prefix = True
+        elif not (ASSIGNMENT.match(word) or (after_prefix and word.startswith("-"))):
+            break
         i += 1
-    if i == len(words) or os.path.basename(words[i]) != "git":
-        return None
+    if i == len(words):
+        return False
+    if expands(words[i]):
+        # The program's name is only known after the shell expands it.
+        return any("push" in word for word in words[i:])
+    if os.path.basename(words[i]) != "git":
+        return False
     i += 1
     while i < len(words):
         word = words[i]
@@ -63,9 +89,12 @@ def git_command(words: "list[str]") -> "str | None":
             i += 2
         elif word.startswith("-"):
             i += 1
+        elif expands(word):
+            # git's command is only known after the shell expands it.
+            return any("push" in word for word in words[i:])
         else:
-            return word
-    return None
+            return word == "push"
+    return False
 
 
 def pushes(command: str) -> bool:
@@ -74,7 +103,7 @@ def pushes(command: str) -> bool:
     except ValueError:
         # Unbalanced quotes: the words can't be read, so judge the raw text.
         return "push" in command
-    return any(git_command(words) == "push" for words in parts)
+    return any(subcommand_pushes(words) for words in parts)
 
 
 def main() -> int:

@@ -41,7 +41,9 @@ notes: >-
   the skill sits outside any .claude/ folder for the same reason. The exercise adds a local bare
   repository as the remote, so a push that gets past the hook goes nowhere else. The hook uses the
   JSON deny form, which first-hook only mentions, and has no `if` field because it starts no other
-  program. No recorded agent run is shown: the exercise has the learner compare a run with the
+  program. Besides the vendor's three spellings, the hook joins backslash-continued lines, skips
+  prefix words such as env and exec, and denies when a shell expansion such as {push,} could yield
+  push; sh -c, backticks and scripts get past it, and the page says so. No recorded agent run is shown: the exercise has the learner compare a run with the
   reason and a stretch run with a bare "Blocked". Sources added: Claude Code skills (allowed-tools
   and that deny and ask rules win over it) and Claude Code memory (conflicting instructions). The
   event names, JSON fields and rule syntax must be re-checked by review-by.
