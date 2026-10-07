@@ -86,16 +86,20 @@ TOOLS = {
 
 The approval step shows the person the tool name and every argument
 exactly as the model sent it, one per line. Then it asks. Any answer other
-than `y` is a refusal, and a refusal asks for a reason.
+than `y` is a refusal, and a refusal asks for a reason. When the input ends
+before an answer, the step refuses with the reason `no answer`.
 
 ```python
 def ask_person(name, args, read=input) -> dict:
     print(f"approve? {name}")
     for key, value in args.items():
         print(f"  {key} = {value!r}")
-    if read("allow? [y/n] ").strip() == "y":
-        return {"allow": True}
-    return {"allow": False, "reason": read("reason: ").strip()}
+    try:
+        if read("allow? [y/n] ").strip() == "y":
+            return {"allow": True}
+        return {"allow": False, "reason": read("reason: ").strip()}
+    except EOFError:
+        return {"allow": False, "reason": "no answer"}
 ```
 
 Before a flagged tool, the loop asks, and the tool runs only after a yes.
