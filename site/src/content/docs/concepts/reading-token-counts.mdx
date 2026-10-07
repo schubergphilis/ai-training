@@ -107,16 +107,17 @@ request                                       input  output   input $  output $ 
 total                                        16,037   1,215   $0.0962   $0.0365   $0.1327
 ```
 
-The total row prices the summed counts, so a column added up by hand can
-differ from it by $0.0001. Read the table one column at a time. The output column goes up and down
+Read the table one column at a time. The output column goes up and down
 with the length of each answer. The input column only goes up. Request 1
 sent the instructions and one question. Request 2 sent those again, plus
 the first answer, plus the pasted notes. Each request after that held
 everything before it, because the model keeps nothing between requests and
 the earlier messages are passed in again with each new one
-(@Claude docs messages).
-This is **growing session cost**: every request in a conversation costs at
-least as much input as the one before it.
+(@Claude docs messages). This is **growing session cost**: every request in
+a conversation costs at least as much input as the one before it.
+
+The total row prices the summed counts, so a column added up by hand can
+differ from it by $0.0001.
 
 Now compare the first and the last row. Both questions are one short line.
 In request 1, most of the cost is output: 400 tokens of answer at the higher
@@ -204,12 +205,12 @@ report for this instruction?
 ## Starting fresh
 
 The history is what makes a late request expensive, so the cheapest way to
-lower the cost is to drop the history. When you move to a task that has nothing to do with
-the conversation so far, start a new conversation. The old history adds to
-the cost of every new request and gives the new task nothing it needs. The
-vendor's cost advice for its coding agent gives the same rule for a switch
-to unrelated work, because text from the old task is paid for again with
-each new message (@Claude Code costs).
+lower the cost is to drop the history. When you move to a task that has
+nothing to do with the conversation so far, start a new conversation. The
+old history adds to the cost of every new request and gives the new task
+nothing it needs. The vendor's cost advice for its coding agent gives the
+same rule for a switch to unrelated work, because text from the old task
+is paid for again with each new message (@Claude Code costs).
 
 When you need to keep going on the same task, some tools can compact the
 conversation: they ask the model to write a short version of the history
