@@ -43,7 +43,10 @@ notes: >-
   `~/.workbench/settings.json`, and deploy with `disable-model-invocation: true`. `vet.py` only reads
   files. It prints per skill the license (license file first, then the front matter field), the
   script count, who may invoke it, the `allowed-tools` value and the always-loaded token estimate
-  with the rule of `measure.py`; `whole_set.py` and `two_skills.py` run it for `mise run examples`.
+  over the same text and with the same rule as `inventory.py` in the plugins lesson. `whole_set.py`
+  and `two_skills.py` run it for `mise run examples`. The exercise has the learner pick two skills
+  with no `allowed-tools` line whose scripts change only files inside the project, because the
+  scratch clone protects the project and not the home directory.
   The builder checked that `vet.py` works on anthropics/skills at commit 683bc88e (19 skills, five
   plugins, mixed licenses), and the page doesn't print those numbers, because the learner picks the
   set. Installing two skills is done by copying them into a scratch clone's `.claude/skills/`,
