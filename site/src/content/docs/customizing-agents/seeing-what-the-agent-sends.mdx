@@ -27,10 +27,10 @@ schema loads at the start (@Claude Code context window).
 
 `/context` answers when you ask. A status line shows a number all the
 time. Claude Code runs the status line command after each new reply from
-the model, passes it the session data as JSON (JavaScript Object Notation) on
-standard input, and
-shows what it prints (@Claude Code statusline). The command runs on your
-machine and costs no tokens. Three of the fields are useful here:
+the model, passes it the session data as JSON (JavaScript Object
+Notation) on standard input, and shows what it prints
+(@Claude Code statusline). The command runs on your machine and costs no
+tokens. For this lesson the useful fields are these:
 
 - `context_window.used_percentage`, the share of the window in use. It is
   counted from the input tokens of the last request, and it can be null
@@ -78,9 +78,11 @@ which category fills it. Neither shows the text itself.
 Claude Code keeps data under `~/.claude` as you work. The transcript of a
 session is `projects/<project>/<session>.jsonl`, and it holds every
 message, every tool call and every tool result of that session
-(@Claude Code claude directory). The page's own example names the
-project directory after the project's path with each slash replaced by a
-dash, so `/home/user/work/my-repo` becomes `-home-user-work-my-repo`.
+(@Claude Code claude directory). The project directory is named after the
+project's path, with every character other than a letter or a digit
+turned into a dash, so `/home/user/work/my-repo` becomes
+`-home-user-work-my-repo`. On macOS a copy in `/tmp` is at
+`/private/tmp`, and its directory starts with `-private-tmp-`.
 The status line above gives you the file name, and `transcript_path`
 gives the full path.
 
@@ -91,24 +93,24 @@ unencrypted, so whoever can read your files can read them. A `.env`
 file the agent opened, or a key that a command printed, ends up in the
 record as well (@Claude Code claude directory). Claude Code deletes
 records older than `cleanupPeriodDays`, which is 30 days unless you set
-it, and `claude purge <path>` deletes everything it keeps for one
-project, after it shows you the plan (@Claude Code claude directory).
+it. From version 2.1.288, `claude purge <path>` deletes a project's
+transcripts, its memory and its lines in the prompt history, after it
+shows you the plan (@Claude Code claude directory).
 
-The record is the session as the agent lived it, turn by turn. The
-system prompt and the tool definitions that came with each request
-aren't in the page's list of what it holds. For those you need the
-request itself.
+The record holds the session turn by turn. The system prompt and the
+tool definitions that came with each request aren't in the page's list
+of what it holds. For those you need the request itself.
 
 <Match id="which-view-answers" objective="customizing-agents/connects-tools-safely/inspects-requests"
   concepts={['context-meter', 'session-record', 'request-logging']}
-  context="Claude Code offers three views of a session: the context meter (the /context command and a status line), the session record (a JSONL transcript under ~/.claude/projects/), and a request log that writes each request sent to the model to a local directory while it is turned on."
+  context="Claude Code offers three views of a session: the context meter (the /context command and a status line), the session record (a transcript in JSON Lines files under ~/.claude/projects/), and a request log that writes each request sent to the model to a local directory while it is turned on."
   title="Which view answers the question?" hint="Which view is live, which keeps the turns of past sessions, and which holds the parts of a request that are sent every time?"
   options={['The context meter', 'The session record', 'The request log']}
   rows={[
     { statement: 'How full is the window in the session that is open now?', option: 0, why: 'Which view shows a number for the open session while you work?' },
     { statement: 'Which file did last week\'s session read before it made the wrong change?', option: 1, why: 'Which view keeps every tool call of past sessions, without any setup?' },
     { statement: 'How many tokens do the server\'s tool definitions take in each request, as sent?', option: 2, why: 'Which view holds the tool definitions that come with each request?' },
-    { statement: 'Did yesterday\'s session store the API key that a command printed?', option: 1, why: 'Where on disk does every tool result of a session end up?' },
+    { statement: 'Did yesterday\'s session store the access key that a command printed?', option: 1, why: 'Where on disk does every tool result of a session end up?' },
   ]}
   rationale="The meter is live and shows how much. The record keeps every turn of every session for weeks. The request log holds the whole request, tool definitions included, for as long as you leave it on.">
 Match each question to the view that answers it. The request log was
@@ -122,59 +124,86 @@ machine. It is part of its OpenTelemetry monitoring, the standard it uses
 to export usage data (@Claude Code monitoring). Telemetry is on only with
 `CLAUDE_CODE_ENABLE_TELEMETRY=1`. `OTEL_LOG_RAW_API_BODIES=file:<dir>`
 then writes the full body of each request to `<dir>/<uuid>.request.json`,
-and from version 2.1.274 Claude Code adds one line per response to
-`<dir>/index.jsonl`, with the session id and the file names
-(@Claude Code monitoring). `OTEL_METRICS_EXPORTER=none` and
-`OTEL_LOGS_EXPORTER=none` switch off both exporters, so the events
+and from version 2.1.274 Claude Code adds one line per successful
+response to `<dir>/index.jsonl`, with the session id, the `query_source`
+that sent the request and the file names (@Claude Code monitoring).
+`OTEL_METRICS_EXPORTER=none` and `OTEL_LOGS_EXPORTER=none` switch off both
+exporters, so the events
 themselves don't go to a collector anywhere (@Claude Code monitoring).
 In our run in October 2026, the request files were written with both
-exporters set to `none`.
+exporters set to `none`. If your organization already collects Claude
+Code telemetry, ask its administrators before you turn on the request
+log, because their settings may send the events somewhere you don't
+expect.
 
 The monitoring page leaves request bodies out unless you ask for them.
 The variable's description warns that a body carries the whole
 conversation, so it reveals all that the switches for prompt text and
-tool details would reveal (@Claude Code monitoring). A request file holds the system prompt, every
-tool definition and every message so far, with the full text of each
-file the agent read and any secret a command printed. So keep the log on
+tool details would reveal (@Claude Code monitoring). A request file
+holds the system prompt, every tool definition and every message so
+far, with the full text of each file the agent read and any secret a command printed. So keep the log on
 your own machine, in a directory only your user can read and outside
 every repository. Turn it on for the session you are investigating, and
 delete the directory when you have your numbers. Don't send a request
 file to an online token counter or paste it into a chat assistant.
 
+Each request lists the tools in its `tools` field. In the Claude
+application programming interface (API), a definition marked
+`defer_loading` is sent to the API but stays out of the model's context
+window until the model searches for that tool
+(@Claude docs tool-search-tool). So `/context` shows what is in the
+window, the request log shows what was sent, and the two can differ. In
+our run on 7 October 2026, with tool search on, the deferred tools of
+Claude Code appeared by name in a message, and the `tools` field held
+one placeholder marked `defer_loading`. The exercise starts Claude Code
+with `ENABLE_TOOL_SEARCH=false`, which loads every definition upfront
+(@Claude Code mcp), so each definition in the log is one the model
+reads.
+
 A gateway can log requests too. You point `ANTHROPIC_BASE_URL` at it,
 and the gateway can log every request that passes through
-(@Claude Code llm gateway). Two things make it the wrong tool here.
-Anthropic doesn't audit third-party gateway products, and the gateway
-sees everything the log would hold (@Claude Code llm gateway). And when
-`ANTHROPIC_BASE_URL` names a host other than Anthropic's own, Claude Code
-turns tool search off and loads every tool definition upfront
-(@Claude Code mcp). A request logged that way comes from a different
-setup than the one you use every day.
+(@Claude Code llm gateway). Anthropic doesn't vouch for gateway products
+made by others (@Claude Code llm gateway). A gateway you don't run
+yourself also holds a copy of everything that passes through it, file
+contents and secrets included. The log in a local directory never leaves
+your machine.
+
+Claude Code also sends requests of its own besides the turns of your
+conversation. The monitoring page sorts requests into main, subagent and
+auxiliary ones (@Claude Code monitoring), and the side requests are in
+the log too.
 
 `read_log.py` in the fixture directory reads a log directory and prints,
 for each request, the estimated tokens of the system prompt, the tools
-and the messages, at four characters per token. The last column is the
-tool definitions of MCP servers, whose tool names start with `mcp__`,
-and their share of the request. `sample_log.py` writes a sample log of
-one prompt that took three model calls, with three built-in tools and a
-`notes` server with five tools, and runs `read_log.py` on it.
+and the messages, at four characters per token. The `mcp tools` column
+is the tool definitions of MCP servers and their share of the request.
+Claude Code names an MCP tool `mcp__<server>__<tool>`
+(@Claude Code permissions), and the script groups the tools by that
+name. The `source` column is the `query_source` from `index.jsonl`. The
+script skips a request without tools and leaves out a definition marked
+`defer_loading`, and it prints how many of each it found.
+`sample_log.py` writes a sample log of one side request without tools,
+then one prompt that took three model calls, with three built-in tools
+and a `notes` server with five tools, and runs `read_log.py` on it.
 
 <Predict id="read-the-sample-log" title="Read the request log"
-  answer={`request  system   tools  messages   total  mcp tools
-        1     404     926        20   1,350  604 (45%)
-        2     404     926       107   1,437  604 (42%)
-        3     404     926       235   1,565  604 (39%)
-  mcp__notes: 5 tools`} run="customizing-agents/seeing-what-the-agent-sends/sample_log.py">
+  answer={`estimated tokens, 4 characters per token
+  request  system   tools  messages   total  mcp tools   source
+        1     404     926        20   1,350  604 (45%)   repl_main_thread
+        2     404     926       107   1,437  604 (42%)   repl_main_thread
+        3     404     926       235   1,565  604 (39%)   repl_main_thread
+  mcp__notes: 5 tools
+  skipped 1 request(s) without tools
+  left out 0 deferred definition(s)`} run="customizing-agents/seeing-what-the-agent-sends/sample_log.py">
 Run `sample_log.py` in the fixture directory, and compare with the
 output below.
 
 ```python
-mcp = 0
-for tool in tools:
-    server = server_of(tool)
-    if server is not None:
-        mcp += size(tool)
-share = f"{mcp:,} ({round(100 * mcp / total)}%)"
+all_tools = body.get("tools") or []
+if not all_tools:
+    skipped += 1
+    continue
+tools = [tool for tool in all_tools if not tool.get("defer_loading")]
 ```
 
 </Predict>
@@ -226,7 +255,7 @@ outside every repository, readable only by you, and you delete it when
 the measurement is done.
 </Pitfall>
 
-<Exercise stretch="Deny the server's write tools by name in the copy's .claude/settings.json, start a new logged session, ask the same question, and compare the mcp tools column of the first request with the one from your first run.">
+<Exercise stretch="Before step 5, deny the server's write tools by name in the copy's .claude/settings.json, run mkdir -m 700 ~/claude-request-log-2, start a logged session as in step 2 with file:$HOME/claude-request-log-2, ask the same question, and compare the mcp tools column of its first row with the one from your first run.">
 Connect one more tool in a copy and follow it through the meter, the
 record and the log. Copy the `handbook` directory and the status line
 script to places you can delete, and point the copy's settings at the
@@ -244,7 +273,10 @@ mkdir -m 700 ~/claude-request-log
    that the status line shows, and run `/context`. Write down the total
    and the MCP tools line, if there is one. Quit.
 2. Add the file-system server to the copy, as in the lesson on your first
-   server, and start a logged session with every definition loaded:
+   server. It can read, write, edit and move files in the directory you
+   give it, which is the copy (@MCP filesystem server). Start a logged
+   session with every definition loaded, so the log counts what the
+   model reads:
 
    ```sh
    cd /tmp/handbook-inspect
@@ -257,27 +289,32 @@ mkdir -m 700 ~/claude-request-log
    changes." Watch the status line after the reply.
 3. In a second terminal, find the record. The status line shows its file
    name. Run `grep -l "rota changes every Monday" ~/.claude/projects/*/*.jsonl`
-   and check that the file it names is that one.
+   and check that it is one of the files grep names. Records of the
+   earlier handbook exercises can match too.
 4. Quit the session, then run
    `python3 site/examples/customizing-agents/seeing-what-the-agent-sends/read_log.py ~/claude-request-log`
-   from the course repository. Read the `mcp tools` column.
-5. Clean up: `rm -rf ~/claude-request-log`, then
+   from the course repository. Read the `mcp tools` column of the first
+   row whose source is `repl_main_thread`, the main conversation
+   (@Claude Code monitoring), or of the first row if the source column
+   shows `-`. If you do the stretch goal, do it now, before you clean up.
+5. Clean up: `rm -rf ~/claude-request-log ~/claude-request-log-2`, then
    `cd /tmp/handbook-inspect && claude mcp remove handbook`. Run
-   `claude purge` without a path and pick the copy from its list, which
-   deletes the copy's records after it shows the plan
+   `claude purge` without a path and pick the copy from its list. The
+   list may show it as `/private/tmp/handbook-inspect`. Check that the
+   plan names the copy before you answer `y`
    (@Claude Code claude directory). Last, `rm -rf /tmp/handbook-inspect`.
 
 A good result is three numbers from your own run: the MCP tools line of
-`/context` before and after, and the `handbook` share of the first logged
-request. Write them in a short note with one line on whether you would
-keep the server connected in a project that reads its files once a week.
+`/context` before and after, and the `handbook` share in the first
+main-conversation row of `read_log.py`. Write them in a short note with
+one line on whether you would keep the server connected in a project that reads its files once a week.
 Then ask yourself: which of the three views would have shown you that a
 secret was read, and how long would it have stayed on disk?
 </Exercise>
 
 <Sort id="review-what-holds-what" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
   concepts={['context-meter', 'session-record', 'request-logging']}
-  context="Claude Code offers three views of a session: the context meter (the /context command and a status line), the session record (a JSONL transcript under ~/.claude/projects/), and a request log that writes each request sent to the model to a local directory while it is turned on."
+  context="Claude Code offers three views of a session: the context meter (the /context command and a status line), the session record (a transcript in JSON Lines files under ~/.claude/projects/), and a request log that writes each request sent to the model to a local directory while it is turned on."
   title="Which view holds it?" hint="Which view is live, which keeps the turns of past sessions, and which holds every part of a request?"
   buckets={['The context meter', 'The session record', 'The request log']}
   items={[
@@ -289,19 +326,20 @@ secret was read, and how long would it have stayed on disk?
 Place each item in the view that holds it.
 </Sort>
 
-<Choice id="review-a-proxy-for-the-log" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
-  concepts={['request-logging']}
-  context="Claude Code's tool search is on by default and keeps MCP tool definitions out of the request until the model needs one. Setting ANTHROPIC_BASE_URL sends the requests to another host instead of Anthropic's own."
-  title="Every definition in every request" hint="What does Claude Code change about its own requests when the base URL names another host?"
+<Choice id="review-deferred-definitions" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
+  concepts={['request-logging', 'context-meter']}
+  context="In the Claude application programming interface (API), a tool definition can carry defer_loading: true, which keeps it out of the model's context window until the model searches for that tool. A request log records each request as it was sent, and /context shows what is in the model's context window."
+  title="Marked defer_loading" hint="Which of the two views shows what was sent, and which shows what the model reads?"
   options={[
-    { text: 'Tool search doesn\'t work, so the team should turn it off everywhere.', why: 'The logged requests came from a setup the team doesn\'t use every day. They say nothing about the default.' },
-    { text: 'The proxy added the definitions to the requests on its way to the provider.', why: 'A logging proxy passes the request on. Something before the proxy decided what the request holds.' },
-    { text: 'With that base URL Claude Code turned tool search off, so the log shows another setup.', correct: true },
-    { text: 'The definitions are always sent, and tool search only hides them from /context.', why: 'Tool search keeps the definitions out of the request until the model needs one, and that is why the default request is smaller.' },
+    { text: 'Agree: whatever is in a request is in the model\'s window on that turn.', why: 'A deferred definition is sent and stays out of the window until the model searches for the tool.' },
+    { text: 'Disagree: the log is written before the request goes out, so it can\'t show the cost.', why: 'Each file is the body of one request as it was sent.' },
+    { text: 'Agree, and set ENABLE_TOOL_SEARCH=false so the count in the log comes out right.', why: 'That loads every definition into the window, so the cost goes up to what your colleague feared.' },
+    { text: 'Disagree: they are sent, but they stay out of the window until loaded, as /context shows.', correct: true },
   ]}>
-A colleague points `ANTHROPIC_BASE_URL` at a logging proxy on their
-laptop and sees every MCP tool definition in every request. They
-conclude that tool search doesn't work. What do you answer?
+A request log shows all thirteen tool definitions of a server in every
+request, each marked `defer_loading: true`. A colleague says the server
+puts its full definitions in the model's window on every turn. What do
+you answer?
 </Choice>
 
 <Choice id="review-when-to-log" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
@@ -332,8 +370,9 @@ you turn on the request log?
    costs in every request.
 4. Turn the log on for one session, keep it in a directory outside every
    repository that only you can read, and delete it when you have your
-   numbers. A gateway on `ANTHROPIC_BASE_URL` sees the same data and
-   turns tool search off (@Claude Code mcp).
+   numbers. A gateway on `ANTHROPIC_BASE_URL` that you don't run holds a
+   copy of the same data. Anthropic doesn't vouch for gateway products
+   made by others (@Claude Code llm gateway).
 </Recap>
 
 <Habit id="search-before-you-share">

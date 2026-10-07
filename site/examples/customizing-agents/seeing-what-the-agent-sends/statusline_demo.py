@@ -14,7 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(HERE, "statusline.py")
 
 RECORD = (
-    "/Users/you/.claude/projects/-Users-you-handbook-inspect/"
+    "/Users/you/.claude/projects/-private-tmp-handbook-inspect/"
     "2f6c0d1e-5a7b-4c9d-8e3f-1a2b3c4d5e6f.jsonl"
 )
 
