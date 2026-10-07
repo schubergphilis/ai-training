@@ -415,10 +415,11 @@ printed.
      reason names `blockedBy`, such as `blockedBy lists <N> of <M> blockers`:
      GitHub gave an issue's relationships in a form the picker can't
      read. Fix the relationship on that issue when it is wrong, and
-     otherwise file a `code` issue. A blocker in another repository
-     doesn't stop the picker. It lists the issue under Blocked with the
-     reason `blocker in another repository: owner/repo#N`, and the fix is
-     to remove that relationship or to wait for the blocker to close.
+     otherwise file a `code` issue.
+   - A blocker in another repository doesn't stop the picker. It lists
+     the issue under Blocked with the reason
+     `blocker in another repository: owner/repo#N`, and the fix is to
+     remove that relationship or to wait for the blocker to close.
    - Any other `next-wave: gh issue list failed: ...`: `gh` can't reach
      GitHub or isn't logged in.
    - `next-wave: bun scripts/lesson-plan.mjs failed: ...`: the lesson plan
