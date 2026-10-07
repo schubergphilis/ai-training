@@ -117,9 +117,9 @@ else:
 `read` is `input` when a person is at the keyboard. The fixture steps pass
 a stand-in that gives a fixed answer and prints it after the prompt, the
 way a terminal shows what you typed. So continuous integration (CI) can
-run both answers without a person. The approval lines print while the loop runs, before the fixture
-prints the message list. Here a person approves a refund of the right
-amount.
+run both answers without a person. The approval lines print while the loop
+runs, before the fixture prints the message list. Here a person approves a
+refund of the right amount.
 
 <Predict id="run-approved" title="An approved refund"
   answer={`approve? issue_refund
@@ -301,13 +301,13 @@ show.
 
 ## The same step in the Agent SDK
 
-The Claude Agent software development kit (SDK) has this step built in. You pass a `canUseTool`
-callback (`can_use_tool` in Python), and the SDK calls it with the tool's
-name and the input the model sent. The callback returns allow or deny. A
-deny carries a message, which goes to the model so it can plan its next
-step. An allow can also carry a changed input. The tool then runs with your
-version, and nothing tells the model about the edit
-(@Claude Code agent sdk user input).
+The Claude Agent software development kit (SDK) has this step built in.
+You pass a `canUseTool` callback (`can_use_tool` in Python), and the SDK
+calls it with the tool's name and the input the model sent. The callback
+returns allow or deny. A deny carries a message, which goes to the model so
+it can plan its next step. An allow can also carry a changed input. The
+tool then runs with your version, and nothing tells the model about the
+edit (@Claude Code agent sdk user input).
 
 The callback is the last step of the SDK's checks. Before it, hooks run,
 then deny rules, ask rules, the permission mode and allow rules, and the
@@ -315,10 +315,10 @@ callback hears only about a call that none of those settled
 (@Claude Code agent sdk permissions). So a check that you put only in the
 callback never sees a call that an allow rule or a mode such as
 `bypassPermissions` already approved. A check that must see every call
-belongs in a `PreToolUse` hook, because hooks run before every other step
-(@Claude Code agent sdk permissions). Your `needs_approval` flag is the
-simple form of the same idea: the harness settles most calls by rule, and
-only the rest wait for a person.
+belongs in a `PreToolUse` hook, because hooks run first, before the rules
+and the mode (@Claude Code agent sdk permissions). Your `needs_approval`
+flag is the simple form of the same idea: the harness settles most calls by
+rule, and only the rest wait for a person.
 
 <Pitfall title="Asking in the prompt">
 A tempting shortcut is a line in the system prompt: "Always ask the user
