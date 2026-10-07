@@ -37,4 +37,8 @@ notes: >-
   ask_person step that prints every argument. The approved and refused steps feed a fixed answer
   through a stand-in for input(), so CI runs both answers, and the ask step reads the keyboard. The
   page reuses the ok False error result from tool-errors for the refusal, so it adds an assumes entry
-  for that lesson's defines-a-tool section, which the plan didn't have.
+  for the defines-a-tool objective, taught in the say-what-went-wrong-as-data section of tool-errors,
+  which the plan didn't have. The three first checkpoints and the three review alternates all serve
+  gates-risky-tools, and each alternate stands for one of the objective's three behaviors: the Match
+  for which tools wait, the MultiChoice for what the person is shown, and the Scenario for sending a
+  denial back as the tool's result.
