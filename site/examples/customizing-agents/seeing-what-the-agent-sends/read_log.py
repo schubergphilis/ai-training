@@ -14,8 +14,14 @@ tool definitions of each MCP server. It skips a request without tool
 definitions, such as a side request, and says how many it skipped. A
 definition marked `defer_loading` stays out of the model's context window
 until the model loads it, so the counts leave it out and the report says
-how many there were. The source column is the request's `query_source`
-from `index.jsonl`, or `-` when the index has no line for it.
+how many there were. The `defer_loading` field is described on the API
+tool search page,
+https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool.
+An MCP tool is named `mcp__<server>__<tool>`, as the permissions page
+shows, https://code.claude.com/docs/en/permissions, and the script groups
+the tools by the server in that name. The source column is the request's
+`query_source` from `index.jsonl`, printed as it is, or `-` when the
+index has no value for it.
 
 The counts are estimates at four characters per token, the rule of thumb
 from the concepts course. The model's own tokenizer gives other numbers.
@@ -86,18 +92,24 @@ def sources(log_dir):
     path = os.path.join(log_dir, "index.jsonl")
     if not os.path.exists(path):
         return found
-    with open(path) as index:
-        for line in index:
-            if not line.strip():
-                continue
-            try:
-                entry = json.loads(line)
-            except ValueError:
-                fail(f"{path} has a line that is not valid JSON")
-            if not isinstance(entry, dict):
-                fail(f"{path} has a line that is not an index entry")
-            name = os.path.basename(str(entry.get("request_file", "")))
-            found[name] = entry.get("query_source", "-")
+    try:
+        with open(path) as index:
+            lines = index.read().splitlines()
+    except ValueError:
+        fail(f"{path} is not text")
+    except OSError:
+        fail(f"{path} can't be read")
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            fail(f"{path} has a line that is not valid JSON")
+        if not isinstance(entry, dict):
+            fail(f"{path} has a line that is not an index entry")
+        name = os.path.basename(str(entry.get("request_file", "")))
+        found[name] = entry.get("query_source") or "-"
     return found
 
 

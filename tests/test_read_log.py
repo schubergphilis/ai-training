@@ -8,6 +8,7 @@ a definition marked `defer_loading`, which the counts leave out.
 
 import importlib.util
 import json
+import runpy
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -35,6 +36,7 @@ def read_log() -> ModuleType:
 def failure(read_log: ModuleType, log_dir: Path) -> str:
     with pytest.raises(SystemExit) as stopped:
         read_log.summarize(str(log_dir))
+    assert not isinstance(stopped.value.code, int)
     message = str(stopped.value.code)
     assert message.startswith("read_log: ")
     assert "\n" not in message
@@ -48,6 +50,21 @@ def tool(name: str, **extra: object) -> dict[str, object]:
 
 def test_a_missing_directory_fails_in_one_line(read_log: ModuleType, tmp_path: Path) -> None:
     assert "is not a directory" in failure(read_log, tmp_path / "missing")
+
+
+def test_a_failure_prints_nothing_on_stdout(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "a.request.json").write_text('{"messages": "' + SECRET)
+    monkeypatch.setattr(sys, "argv", ["read_log.py", str(tmp_path)])
+    with pytest.raises(SystemExit):
+        runpy.run_path(str(FIXTURE), run_name="__main__")
+    assert capsys.readouterr().out == ""
+
+
+def test_an_unreadable_request_file_names_the_file(read_log: ModuleType, tmp_path: Path) -> None:
+    (tmp_path / "a.request.json").mkdir()
+    assert "a.request.json can't be read" in failure(read_log, tmp_path)
 
 
 def test_an_empty_directory_names_the_variables(read_log: ModuleType, tmp_path: Path) -> None:
@@ -75,6 +92,25 @@ def test_a_broken_index_line_fails(read_log: ModuleType, tmp_path: Path) -> None
     (tmp_path / "a.request.json").write_text(json.dumps({"tools": [tool("Read")]}))
     (tmp_path / "index.jsonl").write_text('{"query_source": "' + SECRET + "\n")
     assert "index.jsonl has a line that is not valid JSON" in failure(read_log, tmp_path)
+
+
+def test_an_index_line_that_is_not_an_object_fails(read_log: ModuleType, tmp_path: Path) -> None:
+    (tmp_path / "a.request.json").write_text(json.dumps({"tools": [tool("Read")]}))
+    (tmp_path / "index.jsonl").write_text(json.dumps([SECRET]) + "\n")
+    assert "index.jsonl has a line that is not an index entry" in failure(read_log, tmp_path)
+
+
+def test_a_request_of_zero_tokens_shows_a_dash(
+    read_log: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "a.request.json").write_text(json.dumps({"tools": [tool("mcp__notes__read")]}))
+
+    def no_tokens(part: object) -> int:
+        return 0
+
+    monkeypatch.setattr(read_log, "size", no_tokens)
+    lines = read_log.summarize(str(tmp_path))
+    assert "0 (-)" in lines[2]
 
 
 def test_an_empty_body_is_skipped(read_log: ModuleType, tmp_path: Path) -> None:

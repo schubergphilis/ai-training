@@ -128,8 +128,8 @@ and from version 2.1.274 Claude Code adds one line per successful
 response to `<dir>/index.jsonl`, with the session id, the `query_source`
 that sent the request and the file names (@Claude Code monitoring).
 `OTEL_METRICS_EXPORTER=none` and `OTEL_LOGS_EXPORTER=none` switch off both
-exporters, so the events
-themselves don't go to a collector anywhere (@Claude Code monitoring).
+exporters, so the events themselves don't go to a collector anywhere
+(@Claude Code monitoring).
 In our run in October 2026, the request files were written with both
 exporters set to `none`. If your organization already collects Claude
 Code telemetry, ask its administrators before you turn on the request
@@ -141,11 +141,12 @@ The variable's description warns that a body carries the whole
 conversation, so it reveals all that the switches for prompt text and
 tool details would reveal (@Claude Code monitoring). A request file
 holds the system prompt, every tool definition and every message so
-far, with the full text of each file the agent read and any secret a command printed. So keep the log on
-your own machine, in a directory only your user can read and outside
-every repository. Turn it on for the session you are investigating, and
-delete the directory when you have your numbers. Don't send a request
-file to an online token counter or paste it into a chat assistant.
+far, with the full text of each file the agent read and any secret a
+command printed. So keep the log on your own machine, in a directory
+only your user can read and outside every repository. Turn it on for
+the session you are investigating, and delete the directory when you
+have your numbers. Don't send a request file to an online token counter
+or paste it into a chat assistant.
 
 Each request lists the tools in its `tools` field. In the Claude
 application programming interface (API), a definition marked
@@ -153,12 +154,13 @@ application programming interface (API), a definition marked
 window until the model searches for that tool
 (@Claude docs tool-search-tool). So `/context` shows what is in the
 window, the request log shows what was sent, and the two can differ. In
-our run on 7 October 2026, with tool search on, the deferred tools of
-Claude Code appeared by name in a message, and the `tools` field held
-one placeholder marked `defer_loading`. The exercise starts Claude Code
-with `ENABLE_TOOL_SEARCH=false`, which loads every definition upfront
-(@Claude Code mcp), so each definition in the log is one the model
-reads.
+our run on 7 October 2026, a `claude -p` run with tool search on and no
+MCP server, the deferred tools were Claude Code's own built-in tools.
+They appeared by name in a message, and the `tools` field held one
+placeholder marked `defer_loading`. The exercise starts Claude Code
+with `ENABLE_TOOL_SEARCH=false`, which loads every MCP tool definition
+upfront (@Claude Code mcp), so each MCP tool definition in the log is
+one the model reads.
 
 A gateway can log requests too. You point `ANTHROPIC_BASE_URL` at it,
 and the gateway can log every request that passes through
@@ -169,9 +171,11 @@ contents and secrets included. The log in a local directory never leaves
 your machine.
 
 Claude Code also sends requests of its own besides the turns of your
-conversation. The monitoring page sorts requests into main, subagent and
-auxiliary ones (@Claude Code monitoring), and the side requests are in
-the log too.
+conversation, and the side requests are in the log too. The monitoring
+page's cost counter sorts requests into main, subagent and auxiliary
+ones. The `query_source` in `index.jsonl` is a different field, with
+values such as `repl_main_thread` for the main conversation and
+`compact` (@Claude Code monitoring).
 
 `read_log.py` in the fixture directory reads a log directory and prints,
 for each request, the estimated tokens of the system prompt, the tools
@@ -255,7 +259,7 @@ outside every repository, readable only by you, and you delete it when
 the measurement is done.
 </Pitfall>
 
-<Exercise stretch="Before step 5, deny the server's write tools by name in the copy's .claude/settings.json, run mkdir -m 700 ~/claude-request-log-2, start a logged session as in step 2 with file:$HOME/claude-request-log-2, ask the same question, and compare the mcp tools column of its first row with the one from your first run.">
+<Exercise stretch="Before step 5, deny the server's write tools by name in the copy's .claude/settings.json, run mkdir -m 700 ~/claude-request-log-2, run the logged claude command from step 2 with file:$HOME/claude-request-log-2, ask the same question, quit, run read_log.py on ~/claude-request-log-2, and compare the mcp tools column of its first repl_main_thread row with the one from step 4.">
 Connect one more tool in a copy and follow it through the meter, the
 record and the log. Copy the `handbook` directory and the status line
 script to places you can delete, and point the copy's settings at the
@@ -275,8 +279,8 @@ mkdir -m 700 ~/claude-request-log
 2. Add the file-system server to the copy, as in the lesson on your first
    server. It can read, write, edit and move files in the directory you
    give it, which is the copy (@MCP filesystem server). Start a logged
-   session with every definition loaded, so the log counts what the
-   model reads:
+   session with every MCP tool definition loaded, so the log counts what
+   the model reads:
 
    ```sh
    cd /tmp/handbook-inspect
@@ -295,8 +299,10 @@ mkdir -m 700 ~/claude-request-log
    `python3 site/examples/customizing-agents/seeing-what-the-agent-sends/read_log.py ~/claude-request-log`
    from the course repository. Read the `mcp tools` column of the first
    row whose source is `repl_main_thread`, the main conversation
-   (@Claude Code monitoring), or of the first row if the source column
-   shows `-`. If you do the stretch goal, do it now, before you clean up.
+   (@Claude Code monitoring). If no row shows it, read the first row
+   whose source isn't a title or another side request, and note its
+   source. If the source column shows `-`, read the first row. If you
+   do the stretch goal, do it now, before you clean up.
 5. Clean up: `rm -rf ~/claude-request-log ~/claude-request-log-2`, then
    `cd /tmp/handbook-inspect && claude mcp remove handbook`. Run
    `claude purge` without a path and pick the copy from its list. The
@@ -307,9 +313,10 @@ mkdir -m 700 ~/claude-request-log
 A good result is three numbers from your own run: the MCP tools line of
 `/context` before and after, and the `handbook` share in the first
 main-conversation row of `read_log.py`. Write them in a short note with
-one line on whether you would keep the server connected in a project that reads its files once a week.
-Then ask yourself: which of the three views would have shown you that a
-secret was read, and how long would it have stayed on disk?
+one line on whether you would keep the server connected in a project
+that reads its files once a week. Then ask yourself: which of the three
+views would have shown you that a secret was read, and how long would it
+have stayed on disk?
 </Exercise>
 
 <Sort id="review-what-holds-what" phase="review" objective="customizing-agents/connects-tools-safely/inspects-requests"
