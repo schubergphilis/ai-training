@@ -114,10 +114,10 @@ The commands run with the credentials you give the tool. If those are your
 own login, the agent has your rights in every repository you can reach.
 It can close issues and change labels there. Give the agent only the
 rights it needs. Reading issues and adding comments is enough for most
-work. If your tracker lets you make a token with fewer rights, use one for the agent. In
-Claude Code you can also run the session in Manual mode. Claude Code then
-asks you before most shell commands, and you read each `gh` command before
-it runs. From version 2.1.283, a session started in a terminal starts in
+work. If your tracker lets you make a token with fewer rights, use one for
+the agent. In Claude Code you can also run the session in Manual mode.
+Claude Code then asks you before most shell commands, and you read each
+`gh` command before it runs. From version 2.1.283, a session started in a terminal starts in
 auto mode by default, so you choose Manual mode on purpose with
 `claude --permission-mode default` (@Claude Code permission modes).
 
@@ -233,8 +233,9 @@ broken rule from the file, or a failed check, blocks the change.
 Every other style point is a suggestion.
 
 That gives an agent reviewer a clear brief. Ask it to review the diff
-against `STANDARDS.md` and to mark a finding as blocking only when it
-names the rule it breaks. It writes every other style point as a "Nit:".
+against `STANDARDS.md` and to mark a style finding as blocking only when
+it names the rule it breaks. Ask it to write every other style point as a
+"Nit:", and to block on a bug as usual.
 When a reviewer, human or agent, blocks on taste, the author can no longer
 tell the rules in the file from the preferences, and starts to treat both
 as optional.
@@ -247,7 +248,7 @@ as optional.
     { text: 'Rename the function as the reviewer asks, because the change shouldn\'t merge while a finding blocks it.', why: 'That treats a preference as a rule. The next author can\'t tell from the file which names are allowed.' },
     { text: 'Add a naming rule to the standards file now, so that the finding has a rule behind it and can block.', why: 'One reviewer\'s preference on one change isn\'t a recurring finding yet. A rule written for it is a guess.' },
     { text: 'Delete the finding from the review, because a point without a rule behind it isn\'t useful to the author.', why: 'The point may still help the author. It can stay as a suggestion that the author is free to take or leave.' },
-    { text: 'Treat it as a "Nit:" that the author can take or leave, and remind the reviewer to block only on a rule or a check.', correct: true },
+    { text: 'Treat it as a "Nit:" that the author can take or leave, and remind the reviewer to block on style only for a rule or a check.', correct: true },
   ]}>
 The agent reviewer writes: "Blocking: rename `read_rows` to `parse_rows`."
 No rule in the file covers names, and nothing else is wrong with the
@@ -316,7 +317,7 @@ How does the team record that the second issue waits for the first?
 What does the team do with the line in the standards file?
 </Choice>
 
-<Exercise stretch="Then brief the agent to review its own next change against STANDARDS.md, to mark a finding as blocking only when it names a line of the file, and to write every other style point as a Nit. Check that it does.">
+<Exercise stretch='Then brief the agent to review its own next change against STANDARDS.md, to mark a style finding as blocking only when it names a line of the file, to write every other style point as a "Nit:", and to block on a bug as usual. Check that it does.'>
 Make a project from the course files and push it to a repository you can
 delete. From the root of your clone of the course repository, run:
 
@@ -360,10 +361,10 @@ the standards file. The CI step takes longer, and it is extra.
 
 A good result has two issues with a "blocked by" link between them, an
 agent that named the rates issue as the one to start without anyone
-pasting the spec, and one finding that is now a line in the standards file or a check
-that fails on the mistake. Delete the repository when you are done. Then
-answer one question: which review comment have you written more than once
-this month, and where would it go?
+pasting the spec, and one finding that is now a line in the standards
+file or a check that fails on the mistake. Delete the repository when you
+are done. Then answer one question: which review comment have you written
+more than once this month, and where would it go?
 </Exercise>
 
 <Recap>
