@@ -1,0 +1,251 @@
+import { Choice, Predict, Sort, Scenario, Pitfall, Exercise, Recap } from '@components/lesson';
+
+In this lesson one debug line breaks a tool server, and we find out why
+the client can't read the server's reply. The fix changes where the line
+goes. Then we read the log of the real file-system server while an agent
+calls it.
+
+The previous lesson connected the reference file-system server of the
+Model Context Protocol (MCP) project, and showed a stand-in that speaks
+the same stdio transport. Here we use that stand-in again. A quick way
+to debug a server you write is a `print`, and on this transport a
+`print` to standard output is a bug.
+
+## What a debug line does to the stream
+
+On the stdio transport the client starts the server as a child process.
+The server reads requests from its standard input and writes its
+messages to its standard output, one message per line in JSON-RPC, the
+JSON format for Remote Procedure Calls (RPC) that MCP uses. The
+specification allows nothing else on standard output. A server that wants
+to log writes to standard error instead, and the client may show that
+stream, pass it on or drop it. The client also shouldn't take output on
+standard error as a sign that something failed (@MCP specification).
+That rule is stdio logging, and the fixture below shows what happens
+without it.
+
+The fixture directory for this lesson,
+`site/examples/customizing-agents/logging-from-a-stdio-server/`, holds
+`server.py`. It answers each request with the stand-in's own code from
+`../mcp-first-server/stand_in.py`, so it has the same three read-only
+tools and the same scope. Before each answer it calls `log`, which prints
+the method and the tool name:
+
+```python
+def log(message):
+    print(message)
+```
+
+`check.py` plays the client. It starts a server and sends one
+`tools/call` for `list_directory` on the handbook directory. Then it
+reads one line from the server's standard output. It prints that line,
+cut at 40 characters, and whether the line parsed as JSON. Last it prints
+what the server wrote to standard error. `call_server.py` runs it against
+`server.py`.
+
+<Predict id="call-the-server" title="Call the server"
+  answer={`stdout line: debug: tools/call list_directory
+  parsed: no (Expecting value)
+  stderr: (empty)`} run="customizing-agents/logging-from-a-stdio-server/call_server.py">
+Run `call_server.py` in the fixture directory, and compare with the
+output below.
+
+```sh
+python3 call_server.py
+```
+
+</Predict>
+
+The server worked. It got the request, ran the tool and wrote a correct
+reply. But `print` writes to standard output by default, so the debug
+line went out first, on the line where the client waits for its reply.
+The client can't parse `debug: ...` as JSON-RPC. The server did its
+work, and all the client got was a line it can't read.
+
+<Choice id="why-the-client-failed" objective="customizing-agents/connects-tools-safely/adds-a-tool"
+  concepts={['stdio-logging', 'transport']}
+  context="A small MCP server over the stdio transport prints a debug line with Python's print before it writes each reply. A test client sends one tools/call, reads one line from the server's standard output and reports that it can't parse the line as JSON. The server's standard error is empty."
+  title="Why did the client fail?" hint="Which stream did the debug line go to, and what does the client expect to read from that stream?"
+  options={[
+    { text: 'The server crashed before it answered, so the client read an empty line from it.', why: 'The client read a line with text in it, the debug line. A crash would also leave a traceback on standard error, which is empty.' },
+    { text: 'The client sent a request that was not valid JSON-RPC, so the server answered with an error.', why: 'An error reply is a JSON-RPC message too, and the client would have parsed it.' },
+    { text: 'The debug line went to standard output, and the client read it where it expected the reply.', correct: true },
+    { text: 'The client read standard error by mistake, which is where the debug line is meant to go.', why: 'The client read standard output, as the transport says. Standard error is empty because the debug line never went there.' },
+  ]}>
+The client's report says `parsed: no (Expecting value)`, and the line it
+read is `debug: tools/call list_directory`. What went wrong?
+</Choice>
+
+## Move the log to standard error
+
+The fix is one argument. `server_fixed.py` is `server.py` with the `log`
+function changed to write to standard error:
+
+```python
+def log(message):
+    print(message, file=sys.stderr)
+```
+
+`call_fixed_server.py` sends the same call to `server_fixed.py`.
+
+<Predict id="call-the-fixed-server" title="Call the fixed server"
+  answer={`stdout line: {"jsonrpc": "2.0", "id": 1, "result":...
+  parsed: yes, isError: False
+  stderr: debug: tools/call list_directory`} run="customizing-agents/logging-from-a-stdio-server/call_fixed_server.py">
+Run `call_fixed_server.py` in the fixture directory, and compare with the
+output below.
+
+```sh
+python3 call_fixed_server.py
+```
+
+</Predict>
+
+Now the first line on standard output is the reply, and the debug line
+is still there, on standard error. You kept the information and the
+client gets a clean stream.
+
+MCP also has a logging feature inside the protocol, a `notifications/message`
+the server sends to the client. Revision 2026-07-28 deprecates it, and
+its registry of deprecated features tells a stdio server to log to
+standard error instead (@MCP deprecated features). So standard error is
+the one place for a stdio server's log, whatever your client does with it.
+
+<Scenario id="fix-the-debug-line" objective="customizing-agents/connects-tools-safely/adds-a-tool"
+  concepts={['stdio-logging', 'server']}
+  context="The server talks to its agent over the MCP stdio transport, where standard output carries the replies."
+  title="Fix the debug line" hint="Which change keeps the debug line and leaves standard output with protocol messages only?"
+  options={[
+    { text: 'Delete the print statement, since a stdio server is not allowed to print anything at all.', consequence: 'The agent connects again, and the information they needed for the other bug is gone. The next time they debug, the print comes back.' },
+    { text: 'Keep the print statement, and write the debug line to standard error.', correct: true, consequence: 'Standard output carries only replies, the client parses each one, and the debug line is where they can read it.' },
+    { text: 'Wrap the debug line in a JSON object, so that the client can parse every line it reads.', consequence: 'The line parses as JSON, and it is still not a valid MCP message, which the specification forbids on standard output. The client gets a message it never asked for.' },
+    { text: 'Send the debug line to the client as an MCP log notification, inside the protocol.', consequence: 'It may work with their client today. Revision 2026-07-28 deprecates that feature and tells a stdio server to log to standard error.' },
+  ]}>
+A colleague's stdio server stopped working with their agent after they
+added a `print` of a debug line before each reply. They still need the
+debug line for another bug, and they follow MCP revision 2026-07-28. What
+do you suggest?
+</Scenario>
+
+## Read the log while the agent calls it
+
+A client may ignore the server's standard error (@MCP specification), so
+to read the log with any agent, send it to a file yourself. Start the
+server through `sh -c` with `2>>` and a file name, and `sh` appends
+everything the server writes to standard error to that file. Standard
+output stays connected to the agent.
+
+The reference file-system server writes its own messages to standard
+error. Its source prints a line when it starts on stdio, and a line when
+it replaces its allowed directories with the roots the client sent
+(@MCP filesystem server). It doesn't log each tool call. This is
+its log from a run on October 7, 2026, with version 2026.8.31 and a
+small test client that sent one root:
+
+```text
+Secure MCP Filesystem Server running on stdio
+Updated allowed directories from MCP roots: 1 valid directories
+```
+
+The previous lesson showed that Claude Code sends the directory you
+started it in as a root (@Claude Code mcp), so under Claude Code the
+second line tells you the server took its scope from that directory.
+On that run `npx` also wrote two `npm notice` lines of its own to
+standard error, so your file may hold lines like those too.
+
+<Sort id="which-stream" phase="review" objective="customizing-agents/connects-tools-safely/adds-a-tool"
+  concepts={['stdio-logging', 'transport']}
+  context="An MCP server runs over the stdio transport as a child process of the agent, and writes to its standard output and its standard error."
+  title="Which stream?" hint="What does the client read from standard output, and what does it parse there?"
+  buckets={['Standard output', 'Standard error']}
+  items={[
+    { text: 'The reply to a tools/call request', bucket: 0 },
+    { text: 'A debug line that names the tool called', bucket: 1 },
+    { text: 'A warning that one allowed directory is missing', bucket: 1 },
+    { text: 'The reply to tools/list', bucket: 0 },
+    { text: 'A line saying the server has started', bucket: 1 },
+  ]}>
+Place each line where a stdio server writes it.
+</Sort>
+
+<Choice id="stderr-is-not-a-failure" phase="review" objective="customizing-agents/connects-tools-safely/adds-a-tool"
+  concepts={['stdio-logging', 'client']}
+  context="An agent shows the lines a stdio MCP server writes to its standard error. The server's tool calls succeed."
+  title="Lines on standard error" hint="What does the specification give standard error to, on the stdio transport?"
+  options={[
+    { text: 'The server is failing, because a healthy server writes nothing to standard error.', why: 'Standard error is the stdio server\'s log channel, and the specification tells clients not to read it as an error.' },
+    { text: 'The server is writing its log, and that alone says nothing about a failure.', correct: true },
+    { text: 'The server is breaking the transport, and it should send these lines on standard output.', why: 'Standard output is for protocol messages only. These lines are where they belong.' },
+    { text: 'The agent has lost the connection, and it shows the raw output of the server instead.', why: 'The calls succeed, so the connection works. The agent is showing the log next to it.' },
+  ]}>
+Your agent shows a few lines from the server's standard error, and the
+calls work. What do the lines tell you?
+</Choice>
+
+<Pitfall title="A library that prints">
+A developer adds a library to their stdio server, and the library prints
+a one-line banner to standard output the first time it is used. In their
+own test they start the server in a terminal, type a request, and read
+the reply by eye, so the banner looks like harmless extra text. In the
+agent the first tool call fails with a parse error that names neither
+the banner nor the library. The rule: on a stdio server, only the code
+that writes protocol messages writes to standard output. Send every other
+line to standard error, and test the server with a client that parses
+each line, as `check.py` does.
+</Pitfall>
+
+<Exercise stretch="Add a log line to your fixed copy of server.py that prints the path of each call to standard error, and run call_server.py again to check the stream is still clean.">
+Fix the bug, then read a real server's log. Copy both fixture directories
+next to each other, so `server.py` still finds the stand-in, and run the
+client against the broken server in the copy:
+
+```sh
+mkdir /tmp/stdio-log
+cp -r site/examples/customizing-agents/mcp-first-server site/examples/customizing-agents/logging-from-a-stdio-server /tmp/stdio-log/
+cd /tmp/stdio-log/logging-from-a-stdio-server
+python3 call_server.py
+```
+
+Change the `log` function in your copy of `server.py` so it writes to
+standard error, and run `python3 call_server.py` again. It now prints
+what `call_fixed_server.py` printed above.
+
+Then connect the reference server to the handbook copy with its standard
+error sent to a file, and start your agent inside the copy, as in the
+previous lesson. The server has write tools, so the copy is the only
+directory it may see. Claude Code gives the server the directory it
+started in as its root (@Claude Code mcp), and the command gives the
+same directory as the argument:
+
+```sh
+cd /tmp/stdio-log/mcp-first-server/handbook
+claude mcp add handbook-log -- sh -c 'exec npx -y @modelcontextprotocol/server-filesystem@2026.8.31 /tmp/stdio-log/mcp-first-server/handbook 2>>/tmp/stdio-log/server.log'
+claude
+```
+
+In a second terminal, run `tail -f /tmp/stdio-log/server.log`. Ask the
+agent to list the files in the handbook and change nothing, and watch the
+log while it works. A good result: the log has the two lines shown
+above, the agent's list has the four handbook files, and none of the log
+lines showed up in the agent's replies. When you're done, remove the server
+with `claude mcp remove handbook-log` (@Claude Code mcp). Then ask
+yourself: if the server had printed those lines to standard output
+instead, what would the agent have shown you?
+</Exercise>
+
+<Recap>
+1. On the stdio transport, standard output carries one JSON-RPC message
+   per line and nothing else. A server logs to standard error, which the
+   client may show, keep or drop, and which isn't a sign of failure
+   (@MCP specification).
+2. A `print` writes to standard output by default, so one debug line
+   arrives where the client expects a reply and the client can't parse
+   it. The server did its work, and the client sees a broken stream.
+3. The fix is to write the line to standard error, which keeps the
+   information. MCP revision 2026-07-28 deprecates the in-protocol
+   logging feature and points stdio servers to standard error
+   (@MCP deprecated features).
+4. To read a server's log with any agent, start it through `sh -c` and
+   append its standard error to a file, then read the file in a second
+   terminal.
+</Recap>

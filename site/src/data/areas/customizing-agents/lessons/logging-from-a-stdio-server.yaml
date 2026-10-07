@@ -1,5 +1,9 @@
 id: customizing-agents/logging-from-a-stdio-server
 title: Logging from a stdio server
+description: >-
+  Break a stdio tool server with one debug line on standard output, watch the client fail to parse the
+  reply, move the line to standard error, and read the reference file-system server's log while an
+  agent calls it.
 mode: tutorial
 covers: customizing-agents/mcp
 serves: [customizing-agents/connects-tools-safely/adds-a-tool]
@@ -7,7 +11,10 @@ introduces: [stdio-logging]
 assumes:
   - objective: customizing-agents/connects-tools-safely/adds-a-tool
     lesson: customizing-agents/mcp-first-server
+    section: what-the-client-asks-the-server
 extends-to: []
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 after: [customizing-agents/mcp-first-server]
 shorts: []
 exercise:
@@ -15,9 +22,23 @@ exercise:
   brief: >-
     Find why a stdio server breaks when it prints a debug line, move its logging to standard error,
     and read the log while the agent calls it.
-sources: [MCP specification]
+sources: [MCP specification, MCP deprecated features, MCP filesystem server, Claude Code mcp]
 issue: 687
 minutes: 10
 notes: >-
-  Short on purpose. It could also become a section of mcp-first-server, which the lesson's issue
-  decides.
+  Short on purpose. The plan allowed folding it into mcp-first-server as a section, and the wave lead
+  decided on a separate short lesson, because the plan file, the course position and the issue exist
+  for it. mcp-first-server gets only a one-line link forward. The fixtures under
+  site/examples/customizing-agents/logging-from-a-stdio-server/ reuse the stand-in of mcp-first-server
+  (server.py imports stand_in.handle from ../mcp-first-server), so the broken and the fixed server
+  differ in one line of their log function, and check.py is a client that reads one line of standard
+  output, tries to parse it and prints standard error. The stdout and stderr rules come from the stdio
+  page of MCP revision 2026-07-28 (basic/transports/stdio), and the deprecation of the in-protocol
+  logging feature with its stderr replacement from the deprecated-features registry. The exercise
+  connects the real reference server rather than the stand-in, because the stand-in answers no
+  initialize request and Claude Code uses that handshake for stdio by default. The reference server's
+  stderr lines were read from dist/index.js of @modelcontextprotocol/server-filesystem@2026.8.31 and
+  recorded on 2026-10-07 with a small test client that sent initialize with the roots capability and
+  one root. The npm notice lines come from npx on that run, so the page says "may". No vendor page
+  says where Claude Code shows a server's stderr, so the exercise redirects it to a file with sh -c and
+  makes no claim about the client. All must be re-checked by review-by, the spec revision included.
