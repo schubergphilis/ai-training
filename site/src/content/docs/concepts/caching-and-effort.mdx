@@ -1,0 +1,387 @@
+import { Choice, MultiChoice, Match, Sort, Scenario, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+A team uses an assistant all day to answer questions about one long
+contract. Two settings change what that day costs, and neither changes the
+questions they ask. The first sets how much work the model puts into each
+answer. The second lets the long start of every request, the instructions
+and the contract, be paid for at a small part of the normal price. In this
+lesson we choose an effort level for a kind of work and find out what makes
+the cache stop working. You install and
+run nothing: every count on the page is in a table.
+
+The [lesson on reading the token counts](/concepts/reading-token-counts/#a-short-chat-request-by-request)
+showed that each request in a conversation sends the whole history again.
+This lesson starts from there.
+
+## What the effort level changes
+
+The **effort level** is a setting that tells the model how many tokens to
+spend on its response (@Claude docs effort). On one vendor's models the
+levels run from low through medium and high to max, and some models add
+one more level between high and max. If nobody sets it, most of those models run at high
+and one recent model at medium (@Claude docs effort).
+
+The setting applies to everything the model writes, and not only to its
+thinking. The vendor's page lists the text of the answer, the requests for
+tools and the thinking, when the model thinks, as all affected by it
+(@Claude docs effort). The page expects fewer tool calls and shorter
+reports at a lower level. At a higher level it expects more tool calls, a
+plan explained before the model acts and a more detailed summary of what
+it did (@Claude docs effort).
+
+All of that is output, and output is the expensive kind of token. For an
+agent there is a second cost. Every extra tool call is one more request,
+and each request sends the whole history again. Higher effort adds input
+tokens that way. Higher effort costs more tokens and more time, and lower
+effort is faster and cheaper (@Claude docs effort).
+
+The setting guides the model and is no strict budget: at a low level the
+model still thinks on a hard problem, only less than it would at a higher level (@Claude docs effort). And on at least one
+model, the vendor says, a lower level changes how much it thinks but does
+not reliably make the visible answer shorter (@Claude docs effort). When
+you want a short answer, ask for one in the prompt.
+
+<Choice id="what-lower-effort-changes" objective="concepts/reasons-about-cost/chooses-effort-level"
+  concepts={['effort-level']}
+  context="An agent renames files in a folder to one naming pattern. Its effort level is lowered from high to low, and nothing else about the task changes."
+  title="What does a lower level change?"
+  hint="Which tokens does the effort setting govern: only the thinking, or everything the model writes?"
+  options={[
+    { text: 'Only the thinking gets shorter, and the tool calls and messages stay as they were.', why: 'The setting applies to all of the output, the tool calls and the messages included.' },
+    { text: 'The agent reads fewer input tokens, because it skips part of its instructions.', why: 'The instructions are sent in full either way. The setting governs what the model writes.' },
+    { text: 'The agent writes fewer tokens: less thinking, fewer tool calls and shorter messages.', correct: true },
+    { text: 'The agent stops at a fixed number of tokens, even in the middle of a hard step.', why: 'The level guides the model and is no strict budget. On a hard step the model still thinks, only less.' },
+  ]}>
+
+An agent renames the files in a folder to one pattern. You lower its effort
+level from high to low. What changes in the agent's work?
+
+</Choice>
+
+## Choosing a level
+
+The vendor's advice follows the kind of work. A low level suits simple,
+clear tasks where speed and cost matter most, such as a helper agent that
+does one small job. High suits hard reasoning, difficult problems and agent
+work. Max is for the tasks that need the deepest thinking, when the number
+of tokens is no concern, and medium sits between high and low
+(@Claude docs effort).
+
+That is a starting point, and the same page says the right level depends on
+the task, so try it on your own work before you settle (@Claude docs effort).
+Run a few typical requests at two levels and compare the results. If the
+lower level gives the same quality, keep it. Choose the level for a kind of
+work, such as "drafting emails" or "reviewing contracts", and not for each
+question. The section on the cache below shows why the level should then stay
+the same for the rest of the session.
+
+<Match id="pick-a-level" objective="concepts/reasons-about-cost/chooses-effort-level"
+  concepts={['effort-level']}
+  context="The vendor advises a low effort level for simple, clear work where speed and cost matter, and a high level for hard reasoning, difficult problems and open-ended agent work."
+  title="Which level would you start with?"
+  hint="Is the task simple and fully described, or does it need the model to work something out?"
+  options={['Low effort', 'High effort']}
+  rows={[
+    { statement: 'Turn a list of 200 addresses into one fixed format', option: 0, why: 'Is there anything to work out, or only a pattern to apply?' },
+    { statement: 'Compare two supplier contracts and list every place they conflict', option: 1, why: 'Does the model have to reason across two long texts?' },
+    { statement: 'Sort incoming emails into three named folders, as a helper agent', option: 0, why: 'How much thinking does a choice between three fixed folders need?' },
+    { statement: 'Find out why a monthly report total is wrong, across several spreadsheets', option: 1, why: 'Does the model know where to look before it starts?' },
+  ]}
+  rationale="Simple, fully described work gains nothing from more thinking, so a low level saves tokens and time. Work that needs reasoning gets a higher level. Try both on a few real cases before you settle.">
+
+Match each task to the effort level you would try first.
+
+</Match>
+
+## What the cache saves
+
+Look again at the day with the contract. The requests start with the
+same instructions and the same contract, and the end of each is new. The
+vendor processes that same start again for every question, and charges for
+it each time. **Prompt caching** keeps the processed start of a request for
+a short time. When a later request begins with exactly the same tokens,
+the model reuses the stored work for that part instead of processing it
+again (@Claude docs prompt-caching).
+
+The tool that sends the request decides whether to cache. Software that
+sends requests to one vendor's models turns caching on in the request
+(@Claude docs pricing), and one coding agent turns it on by itself
+(@Claude Code costs). The [lesson on reading the token
+counts](/concepts/reading-token-counts/#two-counts-on-every-request)
+mentioned the usage reports that then split the input count by what the
+cache did with each token.
+
+The two kinds of cached input have their own prices. On that vendor's price
+list, reading from the cache costs a tenth of the normal input price on most
+models and less on a few. Writing to the cache costs a quarter more than
+normal input, for a cache that lasts five minutes (@Claude docs pricing)
+(@Claude docs prompt-caching). So the first request pays a little extra to
+store the start, and each request after it that reads the start pays much
+less.
+
+Here is the contract day, priced twice. The counts are round numbers
+written for this lesson. The input and output prices are the example prices
+for a large model from the [lesson on what every token
+costs](/concepts/what-tokens-cost/#what-a-token-costs), $6 per million input
+tokens and $30 per million output tokens. The cache prices follow the
+vendor's rule above, and the first line of the table lists all four. The
+table assumes that the tool caches everything up to the newest message.
+Each request then reads what the request before it sent and writes the
+rest. The instructions are 1,000 tokens.
+
+```text
+one chat, priced without and with a prompt cache
+prices per million tokens: input $6.00, output $30.00, cache write $7.50, cache read $0.60
+request                                      input written    read output  no cache    cached
+1. pastes a contract, asks what it covers   21,000  21,000       0    500   $0.1410   $0.1725
+2. asks when the contract ends              21,515     515  21,000    120   $0.1327   $0.0201
+3. asks about the penalties                 21,655     140  21,515    300   $0.1389   $0.0230
+4. asks for a summary for the manager       21,980     325  21,655    400   $0.1439   $0.0274
+5. after lunch, asks who signed it          22,395  22,395       0     80   $0.1368   $0.1704
+total                                      108,545  44,375  64,170  1,400   $0.6933   $0.4133
+```
+
+Read the written and read columns first. Request 1 writes all 21,000
+tokens to the cache, so it costs more with the cache ($0.1725) than without
+it ($0.1410). Request 2 reads those 21,000 tokens back and writes only the
+first answer and the new question, and it costs $0.0201 instead of $0.1327.
+Requests 3 and 4 work the same way.
+
+Now read the output column. It is the same with and without the cache.
+Caching changes nothing about what the model writes. The answer comes
+out exactly as it would without the cache (@Claude docs prompt-caching),
+and every output token is billed at the normal output price. The new text
+at the end of each request is never read from the cache either, because no
+earlier request held it.
+
+## What breaks the cache
+
+Request 5 came after a lunch break, and it read nothing. A cache entry
+lasts five minutes by default, and each read starts the five minutes again
+at no extra cost. A cache that lasts an hour is also on offer, at a higher
+write price (@Claude docs prompt-caching). One coding agent's cost guide
+gives the same five minutes by default when the agent is billed by the
+token and an hour on a subscription, and says that the first message
+after a longer break processes the whole history again
+(@Claude Code costs). So request 5 wrote all 22,395 tokens again and cost
+more than it would have without a cache.
+
+A break is one way to lose the cache, and a change to the start of the
+request is the other. The start of
+a request is built in a fixed order: the tool descriptions first, then the
+instructions, then the messages. The cache matches only a start that is
+identical up to the point it stored (@Claude docs prompt-caching). A change
+at any point ends the match there, and everything after it is processed and
+paid for again.
+
+- **Changing the tools** that the assistant can use ends the match at the
+  very start, so nothing is read from the cache (@Claude docs prompt-caching).
+- **Editing the instructions** ends it after the tool descriptions, so the
+  whole conversation is processed again.
+- **Changing the effort level** between requests ends the match at least
+  before the messages, because the level is part of what the request sends
+  (@Claude docs prompt-caching). Some newer models can change the level for
+  one message and keep the cache, and on other models the vendor's advice
+  is to choose a level at the start of a session and keep it there
+  (@Claude docs effort).
+- **Adding a message at the end** keeps the match. Everything before it is
+  the same, so it is read from the cache.
+
+Keep the effort level the same within a session for that reason. Choose the
+level for the kind of work when the session starts, and when you need
+another level for different work, start that work in its own session.
+
+A very short start isn't cached at all. Each model has a minimum length,
+from about five hundred to a few thousand tokens (@Claude docs prompt-caching).
+The cache saves the most in a long session that repeats a large start, and
+makes little difference to a short chat.
+
+<MultiChoice id="what-the-cache-saved" objective="concepts/reasons-about-cost/explains-prompt-caching"
+  concepts={['prompt-caching', 'input-and-output-tokens']}
+  context="A chat has five requests about one long contract, pasted in request 1, and each request is priced with and without a prompt cache. Request 5 came after a lunch break longer than the cache lifetime of five minutes. A cache read costs a tenth of the normal input price and a cache write a quarter more."
+  title="What did the cache do in this chat?"
+  hint="For each request, which tokens were read from the cache, which were written, and which were output?"
+  options={[
+    { text: 'Request 1 cost less with the cache, because the contract was stored in it.', why: 'Storing the contract is a cache write, which costs more than normal input. The saving comes in the requests that read it.' },
+    { text: 'Request 2 cost less with the cache, because the contract was read from it.', correct: true },
+    { text: 'Request 5 cost less with the cache, because the contract had been stored that morning.', why: 'The lunch break was longer than the cache lifetime, so request 5 found nothing to read and wrote everything again.' },
+    { text: 'The output tokens of every request cost the same with and without the cache.', correct: true },
+  ]}>
+
+In the table above, which two statements are true?
+
+</MultiChoice>
+
+<Sort id="keeps-or-breaks-the-cache" objective="concepts/reasons-about-cost/explains-prompt-caching"
+  concepts={['prompt-caching', 'effort-level']}
+  context="A long chat holds a large pasted document, and the assistant uses a prompt cache with a lifetime of five minutes. The request is built in a fixed order: tool descriptions, then instructions, then messages. In this tool, a change of effort level applies to the whole request."
+  title="Will the next request read the cache?"
+  hint="Is the start of the next request still exactly the same, and is it within five minutes of the last one?"
+  buckets={['The next request reads the history from the cache', 'The next request processes the history again']}
+  items={[
+    { text: 'You ask a new question two minutes after the last answer', bucket: 0 },
+    { text: 'You paste one more paragraph of text at the end of the conversation', bucket: 0 },
+    { text: 'You edit a rule in the instructions at the top', bucket: 1 },
+    { text: 'You come back after a two-hour meeting', bucket: 1 },
+    { text: 'You switch the effort level from high to low for the next question', bucket: 1 },
+    { text: 'You turn on a tool the assistant did not have before', bucket: 1 },
+  ]} />
+
+<Scenario id="one-hard-question" objective="concepts/reasons-about-cost/explains-prompt-caching"
+  concepts={['effort-level', 'prompt-caching']}
+  context="A drafting session at low effort has run all morning and holds a long, cached history. In this tool a change of effort level applies to the whole request and starts the cache over. The person now has an unrelated hard question that needs high effort."
+  title="A hard question in the middle of the session"
+  hint="What does a change of level do to the cached history, and does the hard question need that history?"
+  options={[
+    { text: 'Switch this session to high for the question, then back to low.', consequence: 'Each switch starts the cache over, so the next two requests process the whole morning again, and the hard question carries a history it does not need.' },
+    { text: 'Ask the hard question in this session at low effort.', consequence: 'The cache holds, but the hard question gets less thinking than it needs, and the answer may need a second round.' },
+    { text: 'Ask the hard question at high effort in a new session.', correct: true, consequence: 'The drafting session keeps its level and its cache, and the hard question is sent without the morning\'s history.' },
+    { text: 'Switch this session to max, so every later question is answered well.', consequence: 'The switch starts the cache over, and every later drafting request now spends more output tokens than the simple work needs.' },
+  ]}>
+
+You have drafted emails at low effort all morning in one session. Now you
+have one hard question, unrelated to the emails, that needs high effort.
+What do you do?
+
+</Scenario>
+
+<Pitfall title="Polishing the instructions during the session">
+A person pastes a long report into an assistant and asks questions about it
+all afternoon. Every few questions she opens the assistant's instructions and
+improves one sentence. The usage report shows that each request after an edit
+wrote the whole report to the cache again. The
+instructions come before the conversation, so every edit ended the cached
+match there. The rule: settle the instructions and the setting before a long
+session, and put a change in a new message at the end.
+</Pitfall>
+
+<Choice id="low-or-high-to-be-safe" phase="review" objective="concepts/reasons-about-cost/chooses-effort-level"
+  concepts={['effort-level']}
+  context="The effort level tells the model how many tokens to spend on its whole response: thinking, tool calls and answer text. A reformatting job changes the date format in a list of 500 rows."
+  title="Max effort, to be safe?"
+  hint="Is there anything in this task that more thinking would improve?"
+  options={[
+    { text: 'It makes the job more correct, because the model checks every row more carefully.', why: 'The task is a fixed pattern. More thinking adds tokens and time and nothing the pattern needs.' },
+    { text: 'It spends more output tokens and time, for a job that gains nothing from them.', correct: true },
+    { text: 'It changes nothing, because the setting only matters for questions that need thinking.', why: 'The setting applies to all the output, the answer text and the tool calls included.' },
+    { text: 'It lowers the cost, because a thorough model gets the job done in fewer requests.', why: 'Higher effort tends to mean more tool calls, and each one is another request.' },
+  ]}>
+
+A colleague runs a job that changes the date format in a list of 500 rows,
+and sets the effort level to max "to be safe". What does that choice do?
+
+</Choice>
+
+<Sort id="start-low-or-high" phase="review" objective="concepts/reasons-about-cost/chooses-effort-level"
+  concepts={['effort-level']}
+  context="The vendor advises a low effort level for simple, clear work where speed and cost matter, and a high level for hard reasoning, difficult problems and open-ended agent work."
+  title="Low or high to start with?"
+  hint="Does the model have to work out what to do, or only apply a rule it was given?"
+  buckets={['Start at low effort', 'Start at high effort']}
+  items={[
+    { text: 'Translate fifty short product labels, one word each', bucket: 0 },
+    { text: 'Pull the invoice number out of each of 300 emails', bucket: 0 },
+    { text: 'Plan the move of a team to a new office, with the risks', bucket: 1 },
+    { text: 'Find which of three draft policies breaks a new law, and where', bucket: 1 },
+  ]} />
+
+<Choice id="same-document-new-first-line" phase="review" objective="concepts/reasons-about-cost/explains-prompt-caching"
+  concepts={['prompt-caching']}
+  context="A prompt cache stores the processed start of a request. A later request reuses it only when it begins with exactly the same tokens. Two requests a minute apart each send one long document, but they begin with a different first instruction before the document."
+  title="Why did both pay the full price?"
+  hint="Where does the first difference between the two requests sit?"
+  options={[
+    { text: 'The document is too long to fit in the cache.', why: 'A long document is what the cache is for. Look at what comes before it.' },
+    { text: 'The cache had expired in the minute between the two requests.', why: 'A minute is within the cache lifetime of five minutes.' },
+    { text: 'A cache only works for the questions at the end of a request.', why: 'The cache stores the start of a request, and the end is what is new.' },
+    { text: 'The first instruction differs, so the match ended before the document.', correct: true },
+  ]}>
+
+Two requests a minute apart send the same long document, each with its own
+first instruction in front of it. Neither reads anything from the cache.
+Why?
+
+</Choice>
+
+<Choice id="where-the-question-goes" phase="review" objective="concepts/reasons-about-cost/explains-prompt-caching"
+  concepts={['prompt-caching']}
+  context="A prompt cache reuses the processed start of a request when a later request begins with exactly the same tokens. A team sends many questions about one shared handbook, each as a separate request."
+  title="Where does the question go?"
+  hint="Which part is the same in every request, and which part changes?"
+  options={[
+    { text: 'The handbook first and the question after it, so every request starts the same.', correct: true },
+    { text: 'The question first and the handbook after it, so the model reads the question first.', why: 'The question changes each time, so the match ends at the very first line.' },
+    { text: 'The order makes no difference, because the cache finds the handbook anywhere.', why: 'The cache matches from the start of the request and stops at the first difference.' },
+    { text: 'The handbook in every other request, so half of the requests are cheaper.', why: 'A request without the handbook cannot answer from it, and the next one stores it again.' },
+  ]}>
+
+A team asks many separate questions about one long handbook. To get the
+most from the prompt cache, how should each request be built?
+
+</Choice>
+
+<Scenario id="back-from-the-meeting" phase="review" objective="concepts/reasons-about-cost/explains-prompt-caching"
+  concepts={['prompt-caching', 'growing-session-cost']}
+  context="A chat holds a long, cached history. The cache lasts five minutes, and each read starts the five minutes again. The person leaves for a two-hour meeting and then wants to ask one more question about the same work."
+  title="After a two-hour meeting"
+  hint="Is the cache still there after two hours, and what does the next request have to do with the history?"
+  options={[
+    { text: 'Expect the next question to cost about as much as the last one before the meeting.', consequence: 'The cache expired during the meeting. The next request processes and writes the whole history again and costs much more.' },
+    { text: 'Expect the next question to cost more, because the whole history is processed again.', correct: true, consequence: 'You see the jump in the usage report and know it is the expired cache, and the requests after it read from the cache again.' },
+    { text: 'Ask the question twice, so the second copy is read from the cache.', consequence: 'The first copy pays to store the history again, and the second only adds one more request to the bill.' },
+    { text: 'Expect a lower price, because the vendor charges less for a session that was idle.', consequence: 'Idle time is not billed at a lower rate. The cache simply expired, so the next request pays to store the history again.' },
+  ]}>
+
+You come back from a two-hour meeting to a long chat and ask one more
+question. What should you expect, and why?
+
+</Scenario>
+
+<Exercise>
+
+On paper or in a note, take these three tasks: turning a list of meeting
+dates into a table, planning the move of a twelve-person team to a new
+office over three months, and checking whether a 40-page tender meets each
+of 25 requirements. For each one, choose an effort level and say in one
+line what that level changes in the model's work. Then picture one
+afternoon in a single chat about the tender, which you pasted at the start.
+Write which part of each request prompt caching makes cheaper, which part
+it leaves at the normal price, and two things that would make the next
+request pay for the whole tender again. Ten minutes is enough.
+
+A good result chooses low for the table and high for the plan and the
+tender, and says that a higher level means more thinking, more tool calls
+and longer answers, at more tokens and time. It adds that you would try the
+level on a few real cases first. For the cache, it names the instructions,
+the tender and the earlier messages as the part read from the cache, and
+the answers, the thinking and each new question as the part that stays at
+full price. It names two of these as what breaks the cache: a break longer
+than the cache lifetime, an edit to the instructions, a change of tools,
+or a change of effort level. To close, ask yourself: in your own work, which
+long start do you send again most often?
+
+</Exercise>
+
+<Recap>
+
+1. The effort level tells the model how many tokens to spend, and it
+   applies to all of its output: the thinking, the tool calls and the
+   answer (@Claude docs effort).
+2. Start low for simple, clear work and high for hard or open work, and
+   test the level on a few real cases before you settle (@Claude docs effort).
+3. Prompt caching makes the unchanged start of a request cheap to read
+   again. The output and the new text at the end are billed as before
+   (@Claude docs prompt-caching).
+4. The cache matches from the start and ends at the first change. A changed
+   tool or instruction, an effort level changed for the whole request, or a
+   break longer than the cache lifetime makes the next request process the
+   history again
+   (@Claude docs prompt-caching) (@Claude Code costs).
+5. Choose the effort level for a kind of work when a session starts, and
+   keep it until the session ends.
+
+</Recap>
+
+<Habit id="set-effort-at-the-start">
+The next time you start a long session with an assistant or an agent, choose its effort level for the kind of work first, and leave it there until the session ends.
+</Habit>

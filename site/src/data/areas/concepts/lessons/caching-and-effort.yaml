@@ -1,5 +1,9 @@
 id: concepts/caching-and-effort
 title: Caching and effort
+description: >-
+  See what an effort level changes in everything the model writes, choose a level for a kind of
+  work, and read a long chat priced with and without a prompt cache to find what the cache saves
+  and what makes it stop working.
 mode: explanation
 covers: concepts/tokens-and-cost
 serves: [concepts/reasons-about-cost/chooses-effort-level, concepts/reasons-about-cost/explains-prompt-caching]
@@ -7,6 +11,7 @@ introduces: [prompt-caching, effort-level]
 assumes:
   - objective: concepts/reasons-about-cost/explains-growing-cost
     lesson: concepts/reading-token-counts
+    section: a-short-chat-request-by-request
 extends-to: []
 after: [concepts/reading-token-counts]
 shorts: []
@@ -15,9 +20,27 @@ exercise:
   brief: >-
     For three tasks, choose an effort level and say what it changes, then say which part of a long
     session prompt caching makes cheaper and which part it leaves alone.
-sources: [Claude docs effort, Claude docs prompt-caching, Claude Code costs]
+sources: [Claude docs effort, Claude docs prompt-caching, Claude Code costs, Claude docs pricing]
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 issue: 692
 minutes: 12
+proofs: [concepts/caching-and-effort/cached_session.py]
 notes: >-
   Effort governs all output, not only reasoning, per the Effort page. Prompt caching is the expert
-  objective, so the lesson can end on it.
+  objective, so the lesson can end on it. Foundations page: the cached chat is a text fence, and
+  the fixture site/examples/concepts/caching-and-effort/cached_session.py prints it, so it is listed
+  in proofs. The counts are round illustrative numbers, the input and output prices are the example
+  prices for a large model from concepts/what-tokens-cost, and the cache prices apply the
+  multipliers of the vendor's pricing page for most models (write 1.25x, read 0.1x). The vendor
+  claims were checked on 2026-10-07 against the Effort, Prompt caching, Pricing and Manage costs
+  pages. The Effort page says effort affects all tokens of the response (text, tool calls, thinking),
+  and also that on one model a lower level does not reliably shorten the visible answer, so the
+  page states both and tells the learner to ask for length in the prompt. The cache effect of an
+  effort change is worded as the pages give it: a change to the top-level value invalidates at
+  least the message part of the cache, and some newer models have a per-message change that keeps
+  it. The five-minute lifetime is stated by both the Prompt caching and the Manage costs page.
+  Changed from the plan: Claude docs pricing is a fourth source, for the cache prices and for
+  turning caching on per request, and the page has a habit. The keep-the-level-fixed behavior of
+  chooses-effort-level is taught in the cache section, where its reason is, and its scenario
+  checkpoint serves explains-prompt-caching, which names a changed effort level as a cache breaker.
