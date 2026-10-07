@@ -59,8 +59,8 @@ objectives:
       - claim: The learner keeps the level fixed within one conversation and changes it only between kinds
           of work.
         why: Changing the effort level between requests can invalidate the prompt cache, so the next
-          request writes the whole history to the cache again, at a little more than the normal input
-          price (@Claude docs effort) (@Claude docs pricing).
+          request writes the whole history to the cache again, at more than the normal input price
+          (@Claude docs effort) (@Claude docs pricing).
         example: The learner sets the level when starting the review session and leaves it there, and uses
           another level in a separate drafting session.
   - id: concepts/reasons-about-cost/explains-prompt-caching
@@ -81,7 +81,7 @@ objectives:
           question reuses the document from the cache.
       - claim: "The learner names what breaks the cache: changed instructions or tools, a changed setting
           such as the effort level, and a pause longer than the cache lifetime."
-        why: Each of these makes the next request pay again for everything before the change
+        why: Each of these makes the next request pay again for everything from the change on
           (@Claude Code costs).
         example: After a long lunch break, the first message in the old session costs much more than
           the one before the break, and the learner knows why.

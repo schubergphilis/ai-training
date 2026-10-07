@@ -35,7 +35,7 @@ request, and each request sends the whole history again. Higher effort adds
 input tokens that way. Higher effort costs more tokens and more time, and
 lower effort is faster and cheaper (@Claude docs effort).
 
-The setting guides the model and is no strict budget. A hard problem still
+The setting guides the model and does not set a hard limit. A hard problem still
 gets some thinking at a low level, but it gets less of it
 (@Claude docs effort). And on at least one model, the vendor says, a lower
 level changes how much it thinks but does not reliably make the visible
@@ -51,7 +51,7 @@ one in the prompt.
     { text: 'Only the thinking gets shorter, and the tool calls and messages stay as they were.', why: 'The setting applies to all of the output, the tool calls and the messages included.' },
     { text: 'The agent reads fewer input tokens, because it skips part of its instructions.', why: 'The instructions are sent in full at every level. Any input saved comes from fewer requests, so the reason given is wrong.' },
     { text: 'The agent writes fewer tokens: less thinking, fewer tool calls and terser messages around them.', correct: true },
-    { text: 'The agent stops at a fixed number of tokens, even in the middle of a hard step.', why: 'The level guides the model and is no strict budget. A hard step still gets some thinking, only less of it.' },
+    { text: 'The agent stops at a fixed number of tokens, even in the middle of a hard step.', why: 'The level guides the model and does not set a hard limit. A hard step still gets some thinking, only less of it.' },
   ]}>
 
 An agent renames the files in a folder to one pattern. You lower its effort
