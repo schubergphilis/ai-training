@@ -42,5 +42,5 @@ notes: >-
   as the software that sends the requests and runs the tools, and the back references in
   assistant-or-agent now name the toy agent lesson as the lesson before last. The objective covers
   three ideas (counting requests, statelessness, and which part did a step), so the three review
-  alternates each test all three on one short log, and none of them tests only one idea. Changed from
-  the plan: extends-to links the vendor agent loop page.
+  alternates are all on one short run and together test all three ideas. Changed from the plan:
+  extends-to links the vendor agent loop page.
