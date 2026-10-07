@@ -38,20 +38,20 @@ allowed-tools: Bash(git add *) Bash(git commit *) Bash(git push *)
 ```
 
 Step 3 works against the project. It is an instruction, and the
-project's `CLAUDE.md` gives the opposite one. When two instructions
-contradict each other, Claude may follow either one (@Claude Code memory).
-A third line that says "follow the project, not the skill" only adds one
-more instruction to weigh. The fix is to remove the conflict, and the place to remove it
-is your copy of the skill. The project's rule stays as it is.
+project's `CLAUDE.md` gives the opposite one. Given two instructions
+that disagree, Claude may act on either of them (@Claude Code memory). A
+third line that says "follow the project, not the skill" only adds one
+more instruction to weigh. The fix is to remove the conflict, and the
+place to remove it is your copy of the skill. The project's rule stays as it is.
 
-The `allowed-tools` line also works against the project. During the turn that
-starts the skill, Claude may use the tools it lists without asking you.
-So the skill's author has pre-approved `git push` in your project
-(@Claude Code skills). The grant goes through the normal permission
-flow, and deny and ask rules still override it (@Claude Code skills). A
-PreToolUse hook that exits with 2 stops the call before the permission
-rules are checked, so an allow rule can't make the call run
-(@Claude Code permissions). A deny decision in the hook's JSON output
+The `allowed-tools` line also works against the project. The tools it
+lists are pre-approved for the turn in which the skill starts, so Claude
+runs them with no prompt. The skill's author has pre-approved `git push`
+in your project (@Claude Code skills). That grant is part of the usual
+permission checks, and deny and ask rules still override it
+(@Claude Code skills). Exit code 2 from a PreToolUse hook ends the call
+before Claude Code looks at any permission rule, and a matching allow
+rule then has no effect (@Claude Code permissions). A deny decision in the hook's JSON output
 prevents the call too (@Claude Code hooks). So the project's hooks and
 permission rules decide, and the skill's front matter doesn't widen
 them.
@@ -92,9 +92,9 @@ back from each kind of refusal in Claude Code.
 - A hook that exits with 2 blocks the same way, and its text on standard
   error becomes the reason (@Claude Code hooks).
 - When you answer No to a permission prompt, you can press Tab and type a
-  comment. Claude Code sends the comment to Claude as the reason, and
-  Claude goes on working. A No without a comment on a prompt in the main
-  conversation stops the turn (@Claude Code permissions).
+  comment. The comment reaches Claude as the reason for your refusal,
+  and the session continues. Without a comment, a No in the main
+  conversation ends Claude's turn (@Claude Code permissions).
 - A deny rule in `permissions.deny`, such as `Bash(git push *)`, blocks
   every call that matches. A rule is a tool name and a pattern, so it
   has no place for a reason of yours (@Claude Code permissions).
@@ -145,7 +145,7 @@ The reason names the rule, says who does the push instead, and gives the
 agent its next step. It also asks the agent not to look for another way,
 for a reason the next section shows. `pushes` splits the command into
 words the way a shell does, which removes the quotes, and into
-subcommands at `;`, `&&`, `||`, `|` and `&`. In each subcommand it skips
+subcommands at shell operators such as `;`, `&&`, `|` and `&`. In each subcommand it skips
 leading `NAME=value` assignments, checks that the program is `git` by any
 path, skips git's own options such as `-C .`, and returns true when git's
 command is `push`. When the input isn't a tool call it can read, the hook
@@ -196,7 +196,7 @@ lesson.
 This entry has no `if` field, and without one the hook runs for every
 Bash command that the matcher picks (@Claude Code hooks). The script
 reads only the text of the command and doesn't start another program,
-so it returns as soon as it has read the command.
+so it returns right after it has read the command.
 
 <Choice id="reason-that-steers" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
   concepts={['steering-by-rejection', 'hooks']}
@@ -289,7 +289,7 @@ Which two changes should the team make?
 
 <Choice id="the-push-that-got-through" phase="review" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
   concepts={['steering-by-rejection', 'allowlists']}
-  context="A project has the Claude Code deny rule Bash(git push *) and no hook. An agent's git push origin main was refused with no reason from the project. Its next command was git -C . push origin main, and the branch reached the remote."
+  context="A project has the Claude Code deny rule Bash(git push *) and no hook. An agent's git push origin main was refused with no reason from the project. Its next command was git -C . push origin main. The developer approved the prompt for it, expecting the rule to catch any push, and the branch reached the remote."
   title="The push that got through" hint="What does a Bash rule match against, and what did the agent know about the rule after the first refusal?"
   options={[
     { text: 'The agent ran in a permission mode that skips deny rules, so only the first push was refused.', why: 'The first push was refused by the same rule in the same session, so the mode didn\'t switch the rule off.' },
@@ -320,7 +320,8 @@ A team saw that an installed skill pushed branches, and added the deny
 rule `Bash(git push *)` to the project settings. They left the skill as
 it was. In the next session the skill asked for the push, the rule
 refused it, and the agent tried `git -C . push`, which the rule doesn't
-match. The branch reached the remote before review. The rule did its one
+match. The developer approved the prompt for it, sure that the rule
+caught every push, and the branch reached the remote before review. The rule did its one
 job, and the skill still asked for the push in every session. Remove the
 conflict from your copy of the skill, and refuse with a reason that
 names the open route, so the agent has a better move than a second
