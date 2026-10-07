@@ -23,7 +23,7 @@ import {
 const roots: string[] = [];
 afterAll(() => {
 	for (const r of roots) rmSync(r, { recursive: true, force: true });
-}, 30000); // Deletes one temp tree per tree() call, which took over 10 s on a busy machine (#555).
+}, 30000); // Deletes one temp tree per tree() call, which can take seconds under load (#555).
 
 const GROUPS = '- id: g\n  order: 1\n  name: G\n  audience: Everyone\n  description: d\n  areas: [a]\n';
 const AREA = 'id: a\nname: A\ngroup: g\ndescription: d\n';
