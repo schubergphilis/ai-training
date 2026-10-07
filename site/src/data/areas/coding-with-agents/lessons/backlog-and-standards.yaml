@@ -1,5 +1,9 @@
 id: coding-with-agents/backlog-and-standards
 title: A backlog and standards the agent can read
+description: >-
+  Move a two-part spec into the issue tracker as two issues with a "blocked by" link that an agent
+  reads through `gh`, then turn a finding that came up in two reviews into a line in a standards file
+  or a check, and block reviews only on the file or a failed check.
 mode: tutorial
 covers: coding-with-agents/team
 serves: [coding-with-agents/works-in-team/keeps-the-backlog-reachable, coding-with-agents/works-in-team/turns-findings-into-rules]
@@ -7,8 +11,13 @@ introduces: [agent-reachable-backlog, standards-file]
 assumes:
   - objective: coding-with-agents/works-in-team/follows-team-norms
     lesson: coding-with-agents/attribution-and-review-norms
+    section: before-you-ask-for-a-review
   - objective: customizing-agents/configures-agent/writes-project-instructions
     lesson: customizing-agents/instructions
+    section: what-belongs-in-it
+  - objective: coding-with-agents/works-in-team/sets-team-practice
+    lesson: coding-with-agents/ci-and-hooks
+    section: further-steps-for-the-team
 extends-to: []
 after: [coding-with-agents/ci-and-hooks]
 shorts: []
@@ -17,9 +26,34 @@ exercise:
   brief: >-
     Move one specification into the issue tracker where the agent reads it through the command-line
     tool, then turn a finding that came up in two reviews into a line in the standards file or a check.
-sources: [Claude Code best practices, Claude Code memory, GitHub docs creating-issue-dependencies, Google eng-practices]
+sources:
+  - Claude Code best practices
+  - Claude Code memory
+  - Claude Code permission modes
+  - GitHub docs creating-issue-dependencies
+  - Google eng-practices
 issue: 678
 minutes: 15
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 notes: >-
   Comes after ci-and-hooks, so a recurring finding can become an automated check as well as a
-  written rule.
+  written rule. The page links ci-and-hooks for "a finding becomes a check" and doesn't teach hooks
+  or CI again, and the assumes entry on sets-team-practice is added because the page builds on that
+  lesson's "Further steps for the team" (a finding that comes back goes into the instructions, or a
+  check). GitHub docs creating-issue-dependencies gives the "blocked by" and "blocking" links, the
+  Blocked icon, the Relationships sidebar, `gh issue create --blocked-by`, the "Blocked by" row of
+  `gh issue view` and its `blockedBy,blocking` JSON fields, checked on 2026-10-07 with gh 2.102.0.
+  Claude Code best practices gives CLI tools as the most context-efficient way to reach outside
+  services, `gh` by name, and `--help` for an unknown tool. Claude Code memory gives the second
+  mistake and a review catch as the moment to write a rule down, `@path` imports loaded at launch,
+  and the 200-line target. Claude Code permission modes is added to the plan's sources for Manual
+  mode and the auto-mode default from v2.1.283, used in the exercise so the learner reads each `gh`
+  command. Google eng-practices (CC BY 3.0, read from the LICENSE and README of google/eng-practices)
+  gives the style guide as the authority on style, a style point it doesn't cover as preference,
+  and the "Nit:" prefix. The behavior "reviewers block only for a rule in the file or a failed
+  check" is narrowed on the page to style points, because the guide treats design as more than
+  style and a bug still blocks. The narrow-credentials advice names no vendor feature, because no
+  cited page states one. The fixtures under site/examples/coding-with-agents/backlog-and-standards/
+  are the two issue bodies, check_money.py (the float finding as a check) and run_check.py, which
+  runs the check on a copy of observing-and-debugging/nightly. They run no git.
