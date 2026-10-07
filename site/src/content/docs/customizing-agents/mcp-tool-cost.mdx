@@ -7,10 +7,11 @@ through the server, and the same query through a command-line tool
 (CLI). The numbers show what to keep connected. The exercise repeats the measurement with a real
 server in your own agent and ends in a short table.
 
-The lesson [Connecting your first tool server](/customizing-agents/mcp-first-server/) connected the reference file-system server to a copy
-of a small directory and read every call in the transcript. Here the
-question is what that connection costs on each turn, before the agent
-uses it and after. The lesson on [what a token costs](/concepts/what-tokens-cost/#what-a-token-costs)
+The lesson [Connecting your first tool server](/customizing-agents/mcp-first-server/)
+connected the reference file-system server to a copy of a small
+directory and read every call in the transcript. Here the question is
+what that connection costs on each turn, before the agent uses it and
+after. The lesson on [what a token costs](/concepts/what-tokens-cost/#what-a-token-costs)
 showed that a model reads its whole input again on every call. A tool
 definition is part of that input.
 
@@ -262,10 +263,11 @@ tool search is no reason to keep one.
 Measure a real server in your own agent, on a copy. Copy the `handbook`
 directory from `site/examples/customizing-agents/mcp-first-server/` to a
 place you can delete, change into the copy, and add the reference
-file-system server there as in the lesson on your first tool server. It has thirteen
-tools, and four of them write (@MCP filesystem server). Claude Code gives
-the server the directory it was started in as its root, so start the
-agent inside the copy every time (@Claude Code mcp). Roots are deprecated
+file-system server there as in
+[Connecting your first tool server](/customizing-agents/mcp-first-server/#connect-the-real-server).
+It has thirteen tools, and four of them write (@MCP filesystem server).
+Claude Code gives the server the directory it was started in as its
+root, so start the agent inside the copy every time (@Claude Code mcp). Roots are deprecated
 in MCP revision 2026-07-28 (@MCP deprecated features), and the command
 below also gives the copy as the argument, so a client that stops sending
 roots still leaves the server on the copy. With your own measurement you

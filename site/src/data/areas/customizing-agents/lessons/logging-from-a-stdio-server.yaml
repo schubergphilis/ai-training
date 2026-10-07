@@ -35,9 +35,9 @@ notes: >-
   output, tries to parse it and prints standard error. The stdout and stderr rules come from the stdio
   page of MCP revision 2026-07-28 (basic/transports/stdio), and the deprecation of the in-protocol
   logging feature with its stderr replacement from the deprecated-features registry. The exercise
-  connects the real reference server rather than the stand-in, because the stand-in answers no
-  initialize request and Claude Code uses that handshake for stdio by default. The reference server's
-  stderr lines were read from dist/index.js of @modelcontextprotocol/server-filesystem@2026.8.31 and
+  connects the real reference server rather than the stand-in, because the stand-in answers neither
+  initialize nor server/discover. The page cites the server's README only for roots replacing the
+  allowed directories, and the recorded run is the evidence for the two log lines. Those lines were read from dist/index.js of @modelcontextprotocol/server-filesystem@2026.8.31 and
   recorded on 2026-10-07 with a small test client that sent initialize with the roots capability and
   one root. The npm notice lines come from npx on that run, so the page says "may". No vendor page
   says where Claude Code shows a server's stderr, so the exercise redirects it to a file with sh -c and
