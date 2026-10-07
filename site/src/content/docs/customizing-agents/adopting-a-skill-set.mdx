@@ -24,9 +24,11 @@ cd <course-repo>/site/examples/customizing-agents/adopting-a-skill-set
 **Published skill sets** are collections of skills that a vendor or a
 developer maintains for other people to install, often as a plugin.
 Model vendors, tool makers and individual developers all publish them.
-A set like this is a dependency. Its skills act in your sessions, they change when the author
-releases a new version, and one set can hold skills under different
-licenses. Anthropic's own public set is an example of the last point:
+A set like this is a dependency, and its skills act in your sessions.
+They change whenever the author releases a new version.
+
+One set can also hold skills under different licenses. Anthropic's own
+public set is an example:
 many of its skills are under the Apache License 2.0, and its document
 skills are source-available, so you can read them, but they aren't open
 source (@anthropics skills).
@@ -35,17 +37,17 @@ A skill acts in more ways than its text suggests. Its instructions tell
 Claude what to do, and the steps can tell Claude to run the scripts that
 come with the skill. A skill's front matter can also have an
 `allowed-tools` field. While the skill runs, Claude may use the tools
-it lists without asking you first. Anthropic's skills page points out
-that a skill can use this field to widen its own access, and asks you to
-check the field in a repository's skills before you run Claude Code
-there (@Claude Code skills). When the set is a
-plugin, it can bring hooks and servers as well, and the previous lesson
-read those.
+it lists without asking you first. That means the author of the skill
+decides part of your permissions. The field takes effect even in a
+folder that you never marked as trusted, so read it in every skill that
+you didn't write (@Claude Code skills). When the set is a plugin, it can
+bring hooks and servers as well, and the previous lesson read those.
 
-A skill set also has a cost while nothing in it runs. For each skill that
-Claude may start by itself, the name and the description are in the
-context on every turn of every session where the plugin is enabled. The
-full text of a skill loads only when it is used (@Claude Code plugins).
+Even while nothing in it runs, a skill set has a cost. An enabled
+plugin adds a short entry to every turn of every session: the name and
+the description of each skill that Claude may start by itself. Claude
+reads the rest of a skill's `SKILL.md` only when the skill is used
+(@Claude Code plugins).
 That's the first stage that
 [Loading only what the skill needs](/customizing-agents/progressive-disclosure/)
 measured for one skill, and a set has one such entry per skill.
@@ -74,8 +76,9 @@ Before you install a set, look for these answers.
 `vet.py` answers the license question and part of the contents question
 for every skill at once. Each skill gets one line. It shows the license
 and the number of scripts, then who may invoke the skill and an estimate
-of the tokens its name and description add to every session. It uses the same counting
-rule as `measure.py` two lessons ago. A skill that only you may invoke
+of the tokens its name and description add to every session. It counts
+the same text with the same rule as `inventory.py` in the previous
+lesson. A skill that only you may invoke
 counts as 0 tokens, because its description stays out of the context.
 When a skill has an `allowed-tools` line, the script prints it at the
 end of that skill's line.
@@ -105,18 +108,19 @@ python3 vet.py workbench
 
 The set has no license file at the top, so each skill has its own terms.
 Every skill except two is under Apache-2.0. `release-notes` states no
-license at all, so you may use it through the plugin, but you have no permission to
-copy it. `spreadsheet` has a license file that reserves all rights. Open
+license at all, so you have no permission to copy it. `spreadsheet` has
+a license file that reserves all rights. Open
 `workbench/skills/spreadsheet/LICENSE.txt`: it allows use through the
 plugin and nothing else.
 
-Read the `setup-env` and `deploy` lines more closely. `setup-env` pre-approves `Bash(python3 *)`,
-so while it runs, Claude may run any `python3` command without asking
-you. Open `workbench/skills/setup-env/scripts/bootstrap.py`. It writes a
-settings file to `~/.workbench/` in your home directory, outside every
-project. That file turns on telemetry. `deploy` is the opposite case.
-Only you can start it, by typing its name. Its description stays out of
-the context.
+Read the `setup-env` and `deploy` lines more closely. `setup-env`
+pre-approves `Bash(python3 *)`, so while it runs, Claude may run any
+`python3` command without asking you. Open
+`workbench/skills/setup-env/scripts/bootstrap.py`. It writes a settings
+file to `~/.workbench/` in your home directory, outside every project.
+That file turns on telemetry. `deploy` is the opposite case. Only you
+can start it, by typing its name. Its description stays out of the
+context.
 
 For maintenance, open `workbench/CHANGELOG.md`. It lists three releases
 in three months, each with a date and a line per change, and version
@@ -220,11 +224,10 @@ python3 vet.py workbench plan-ticket review-diff
 `plan-ticket` and `review-diff` add an estimated 61 tokens to every
 turn, and the whole set would add 230. The estimate is small next to a
 context window, but it is paid on every turn, and it grows with each set
-you add. When there
-are many skills, Claude Code also shortens or drops descriptions to fit
-its listing into a fixed share of the context, and a skill whose
-description is dropped is harder for Claude to match to a request
-(@Claude Code skills).
+you add. When there are many skills, Claude Code also shortens or drops
+descriptions to fit its listing into a fixed share of the context, and a
+skill whose description is dropped is harder for Claude to match to a
+request (@Claude Code skills).
 
 In a real session, check two things after you add the skills.
 
@@ -238,12 +241,12 @@ In a real session, check two things after you add the skills.
   result got better (@Claude Code skills).
 
 Then act on what you found. A skill that didn't change the results still
-costs context and still needs updates, so delete its folder. You may start a
-skill yourself once in a while, and never need Claude to. Give such a skill
-`disable-model-invocation: true` in its front matter, and its
-description leaves the context. After a few weeks, `/skill-doctor`
-shows what each of your skills costs and flags the ones that were never
-invoked (@Claude Code skills).
+costs context and still needs updates, so delete its folder. When you
+start a skill yourself now and then and never need Claude to start it,
+give it `disable-model-invocation: true` in its front matter, and its
+description leaves the context. After a few weeks, `/skill-doctor` lists
+the context that each skill takes and how often it was used, and it
+marks the skills that nobody ever invoked (@Claude Code skills).
 
 <Scenario id="two-skills-from-one-plugin" objective="customizing-agents/adopts-a-skill-set/adopts-skills-gradually"
   concepts={['published-skill-sets']}
@@ -303,13 +306,13 @@ Why does the team add skills this slowly?
 A developer installs the whole `workbench` plugin at user scope to get
 `plan-ticket`. A month later, they find a file
 `~/.workbench/settings.json` in their home directory, with telemetry
-turned on, and they don't remember approving it. The `setup-env` skill matched the request "set
-up this project", and its `allowed-tools` line let Claude run
-`bootstrap.py` without asking. The commit messages also look different
-in every project, and it is not clear which skill did that. A set brings
-every skill in it into every session where it is enabled. Read the
-`allowed-tools` line and the scripts of each skill, and take only the
-skills you need, one or two at a time.
+turned on, and they don't remember approving it. The `setup-env` skill
+matched the request "set up this project", and its `allowed-tools` line
+let Claude run `bootstrap.py` without asking. The commit messages also
+look different in every project, and it is not clear which skill did
+that. A set brings every skill in it into every session where it is
+enabled. Read the `allowed-tools` line and the scripts of each skill,
+and take only the skills you need, one or two at a time.
 </Pitfall>
 
 <Exercise stretch="After a week of real work with the two skills, run /skill-doctor, remove any skill that didn't change a result, and only then take a third one from the set.">
@@ -319,10 +322,13 @@ its skills into a scratch copy of a project, and compare what they
 change with what they add to the context. Know what the skills can
 change before you start. Their steps can edit files, run their scripts
 and run commands, and an `allowed-tools` line lets Claude use the tools
-it names without asking. So never add them to your real working copy
-during the exercise. Use a fresh clone with no way to push, and in the
-test sessions ask for a plan or a report rather than a commit or a
-deploy.
+it names without asking, even in a folder you never marked as trusted
+(@Claude Code skills). The exercise uses a fresh clone with no way to
+push, and in the test sessions you ask for a plan or a report rather
+than a commit or a deploy. That protects your project and nothing else.
+A skill's scripts run with your user rights, so they can change files in
+your home directory as well. The skills you pick have to be safe outside
+the clone too.
 
 These commands fetch the set into `~/set-read` and show its recent
 history. The first line deletes `~/set-read`, so the commands also work
@@ -335,11 +341,16 @@ git -C ~/set-read log -5 --format='%h %cs %s'
 python3 <course-repo>/site/examples/customizing-agents/adopting-a-skill-set/vet.py ~/set-read
 ```
 
-`vet.py` reads skills in `skills/<name>/SKILL.md`. If the set keeps
-them somewhere else, read the folders by hand. Write down the commit at
-the top of the log. Pick two skills whose license allows copying, run
-`vet.py` again with their names, and read every file in their folders,
-the scripts included. Then make the scratch copy and start a session in
+`vet.py` reads skills in `skills/<name>/SKILL.md`, and it stops with a
+message when the set has none there. If the set keeps them somewhere
+else, read the folders by hand. Write down the commit at the top of the
+log. Pick two skills whose license allows copying, run `vet.py` again
+with their names, and read every file in their folders, the scripts
+included. Both skills must have no `allowed-tools` line, and each of
+their scripts must change only files inside the project, as with
+`plan-ticket` and `review-diff` in `workbench`. If no two skills in the
+set pass, pick another set, or stop here and write the vetting part of
+the note below. Then make the scratch copy and start a session in
 it with auto memory off, so that one test run can't leave notes for the
 next (@Claude Code memory). Replace `<project>` with the path to a
 repository you work in, and `<skill-a>` and `<skill-b>` with the two
@@ -348,13 +359,15 @@ skill names.
 ```sh
 rm -rf ~/skill-trial
 git clone -q <project> ~/skill-trial
-git -C ~/skill-trial remote remove origin
 cd ~/skill-trial
+git remote remove origin
 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude
 ```
 
 Run `/context` and note the Skills row, then quit. Copy the two skills
-in, start a new session the same way, and run `/context` again.
+in, start a new session the same way, and run `/context` again. The
+`cp` line expects the skills in `skills/<name>/`, so change the paths
+if the set keeps them elsewhere.
 
 ```sh
 cd ~/skill-trial
@@ -378,9 +391,9 @@ whole set and trying it?
 </Exercise>
 
 <Recap>
-1. Published skill sets are dependencies. They act in your sessions,
-   change with each release, and can mix licenses from one skill to the
-   next (@anthropics skills).
+1. Published skill sets are dependencies that act in your sessions and
+   change with each release. One set can also mix licenses from one
+   skill to the next (@anthropics skills).
 2. Vet a set before you install it: the license of each skill, who
    maintains it and how it changes, every skill, script and
    `allowed-tools` line, and the option of writing the few skills you
@@ -396,5 +409,6 @@ whole set and trying it?
 
 <Habit id="two-skills-at-a-time">
 The next time you find a skill set you like, take two of its skills and
-note the commit you read, before you install the rest.
+note the commit you read. Add a third only after one of the first two
+changed a result.
 </Habit>
