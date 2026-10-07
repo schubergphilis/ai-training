@@ -1,0 +1,341 @@
+import { Choice, Sort, Order, Match, Pitfall, Exercise, Recap } from '@components/lesson';
+
+In the last lesson you watched a toy agent work through a task step by
+step. You typed nothing between those steps, and yet the model was called
+again at every one of them. This lesson slows the loop down to single
+calls. You follow one prompt through every call it caused and see what
+is sent to the model each time and what comes back. Then you learn why
+the model needs the whole history again on every call. By the end you can
+read an agent's log and count the calls a prompt cost.
+
+## One prompt, three requests
+
+Here is the first transcript from the last lesson again.
+
+```text
+task: Which meeting note mentions the June delivery?
+1. model: call list_dir with path "notes"
+   loop: ran list_dir, result: 2026-03-14-lantern.txt, 2026-03-21-budget.txt, 2026-03-28-lantern.txt
+2. model: call read_file with path "notes/2026-03-14-lantern.txt"
+   loop: ran read_file, result: Project Lantern, 14 March. Sensor boards moved from April to June. Ana confirms the date by Friday.
+3. model: done. The note of 14 March: the sensor boards moved from April to June.
+loop: stopped, the model said it is done after 3 steps
+```
+
+A person asked one question. Behind it, the software around the model
+called the model three times, once for each `model:` line. Each of those
+calls is a **model request**: the software sends the model one package of
+text, and the model sends back one reply (@Claude docs messages). A
+request ends when its reply comes back. If the reply asks for a tool, the
+software runs it, and the result goes to the model in the next request.
+If the reply asks for nothing, the run is over (@Claude Code agent loop).
+
+Each request, with its reply and the tool run that follows, is one turn
+of the loop, the same turn you
+labeled observe, think and act in the last lesson. Step 3 had no act,
+but it was still a request, because the model had to be asked before it
+could write its answer.
+
+The software that sends the requests and runs the tools is called the
+**harness**. The last lesson called it the loop. The next lesson shows
+what else it holds, and in this lesson it does two jobs: it
+sends each request, and it carries out the tool requests that come back.
+
+## One reply, several tool calls
+
+A reply can ask for more than one tool at once (@Claude Code agent loop).
+A model that needs three files can ask for all three in one reply. The
+harness then runs all three and sends the three results back together, in
+one new request. So the number of tool calls and the number of requests
+are often different.
+
+In a log, the rule for counting is this: a new request starts only when
+the harness has something new to send, which is the results of the tools
+it just ran. Model lines with no harness line between them came in the
+same reply. Count the replies, and you have counted the requests.
+
+<Choice id="count-the-requests" objective="concepts/recognizes-agents/follows-one-prompt"
+  concepts={['model-request', 'tool']}
+  context="An agent log shows one prompt. The model asks for a file search, the harness returns three file names, the model then writes three read_file calls in a row with no harness line between them, the harness returns three results, and the model writes a final answer."
+  title="How many requests?" hint="Where does the harness have new results to send, and how many replies did the model write?"
+  options={[
+    { text: 'One request, because the person sent the agent one prompt.', why: 'The prompt starts the run, and the harness calls the model again each time it has tool results to send back.' },
+    { text: 'Five requests, one for each model line in the log.', why: 'The three read_file lines have no harness line between them, so they came in one reply. One reply belongs to one request.' },
+    { text: 'Three requests, one for each reply the model wrote.', correct: true },
+    { text: 'Four requests, one for each tool the harness ran.', why: 'The harness ran four tools, but three of them came from one reply and their results went back together in one request.' },
+  ]}>
+How many model requests did this prompt cause?
+
+```text
+prompt: What did we spend on travel in September?
+model: call search_files with query "travel invoice September"
+harness: ran search_files, result: inv-0912-train.txt, inv-0918-hotel.txt, inv-0925-taxi.txt
+model: call read_file with path "inv-0912-train.txt"
+model: call read_file with path "inv-0918-hotel.txt"
+model: call read_file with path "inv-0925-taxi.txt"
+harness: ran read_file three times, results: train EUR 84.00, hotel EUR 236.50, taxi EUR 31.20
+model: done. Travel in September came to EUR 351.70 over three invoices.
+```
+
+</Choice>
+
+## What is in each request
+
+A transcript shows what the model wrote and what the tools returned. It
+doesn't show what was in each request. Here is the same toy run again,
+written as the harness's own log of what it sent. This log was written
+for this lesson to show the contents, and a real harness records more
+detail, such as the exact text of every part.
+
+```text
+prompt: Which meeting note mentions the June delivery?
+
+request 1
+  harness sent: instructions, tool descriptions (list_dir, read_file),
+    history: the prompt
+  model replied: call list_dir with path "notes"
+  harness ran list_dir, and the folder returned 3 file names
+
+request 2
+  harness sent: instructions, tool descriptions (list_dir, read_file),
+    history: the prompt, reply 1, result 1
+  model replied: call read_file with path "notes/2026-03-14-lantern.txt"
+  harness ran read_file, and the folder returned the text of the note
+
+request 3
+  harness sent: instructions, tool descriptions (list_dir, read_file),
+    history: the prompt, reply 1, result 1, reply 2, result 2
+  model replied: done. The note of 14 March: the sensor boards moved from April to June.
+  no tool was asked for, so the harness stopped the run
+```
+
+Each request has the same three parts (@Claude Code agent loop):
+
+- **The instructions.** The standing text the model reads before the
+  task, the system prompt from earlier in this course. It is the same in
+  every request.
+- **The tool descriptions.** The name, purpose and parameters of each
+  tool, as in the last lesson. They are also the same every time.
+- **The history.** The prompt, followed by every reply the model wrote
+  and every result that came back, in order. This is the part that grows.
+  Request 1 has one item in its history, request 2 has three, and
+  request 3 has five.
+
+In the Messages documentation, the history is a list of turns that
+alternate between the person's side and the model's side, and a tool
+result goes back on the person's side, in the message after the reply
+that asked for it (@Claude docs messages). The harness writes that list.
+The person typed only the first item in it.
+
+## The model keeps nothing between requests
+
+Look at request 3 again. To write its answer, the model needs the text
+of the 14 March note. It read that note in request 2. So why does the
+harness send the note again?
+
+Because the model keeps nothing from one request to the next. It is a
+**stateless model**: each request is answered from what is in that request
+and from what the model learned in training, and from nothing else. The
+Messages documentation calls a conversation of many turns stateless, and
+the caller passes the earlier turns in again with each new request
+(@Claude docs messages). In request 3 the model "remembers" the
+note only because the note is in the history the harness sent.
+
+The requests get bigger as the run goes on. The history in each request
+holds everything so far. A long session sends a long history on every
+call. Agent documentation says this directly: the context keeps growing over
+the turns of a session, and nothing clears it between turns
+(@Claude Code agent loop).
+The token-cost lessons later in this course build on this point.
+
+The harness decides what the model knows. If the harness leaves
+something out of the history, the model has never seen it, as far as
+that request goes. When a session gets too long, a harness may replace
+the oldest part of the history with a short summary, and a detail from
+early on can be lost in that summary (@Claude Code agent loop).
+
+What looks like the agent's memory is text that the harness keeps and
+sends again. Clear the conversation and the model knows nothing of it in
+the next request, at once.
+
+<Choice id="how-it-remembered" objective="concepts/recognizes-agents/follows-one-prompt"
+  concepts={['stateless-model', 'model-request']}
+  context="An agent searched for three travel invoices, read all three in its second request, and in its third request wrote the total. The third request asked for no tools."
+  title="How did it know the hotel amount?" hint="What did the harness put in the third request, and what does the model keep between requests?"
+  options={[
+    { text: 'The model kept the amounts in its memory after it read the invoices.', why: 'The model keeps nothing between requests. Whatever it uses in a request has to be in that request.' },
+    { text: 'The harness sent the read results again, in the history of the third request.', correct: true },
+    { text: 'The model read the hotel invoice again during the third request.', why: 'The model reads files only by asking for a tool, and the third request asked for none. The amount was already in front of it.' },
+    { text: 'The amount was in the training data the model learned from.', why: 'A hotel invoice from last month is not in the training data. The figure came from the read result.' },
+  ]}>
+In its third request the agent wrote "Travel in September came to EUR
+351.70", which includes the EUR 236.50 hotel invoice it read in the
+second request. How did the model have that amount when it wrote the
+total?
+</Choice>
+
+<Choice id="what-the-model-sees" phase="review" objective="concepts/recognizes-agents/follows-one-prompt"
+  concepts={['stateless-model']}
+  context="A chat tool sends the model only the last ten messages of a conversation and drops the older ones. In message 3 the person said that the report is for the finance team. The person is now writing message 15."
+  title="What does the model know?" hint="Which messages are in the request that answers message 15?"
+  options={[
+    { text: 'It knows the report is for finance, because it read message 3 earlier.', why: 'Reading something in an earlier request leaves nothing behind in the model. Only what is in this request counts.' },
+    { text: 'It knows the report is for finance, because the tool keeps a memory of the chat.', why: 'The tool keeps the old messages, but it does not send them. What the tool keeps and what the model sees are different things.' },
+    { text: 'It does not know who the report is for, unless message 15 or a recent one says it.', correct: true },
+  ]}>
+In message 15 the person asks for a closing paragraph "that suits the
+readers". What does the model know about who the readers are?
+</Choice>
+
+## Model, harness, environment
+
+An agent has three parts, and every step of a run is done by one of
+them. The model chooses: it writes a reply, which is either a request for
+a tool or an answer. The harness carries out: it sends the requests, checks
+whether a tool call is allowed, and runs the tool. The **environment** is
+what the tools act on: the files, programs, services and data within
+the agent's reach. When a tool runs, the change happens in the
+environment, and what the environment returns is the tool's result.
+
+In the toy run, the model chose to list the folder and then to read one
+note. The harness sent three requests and ran two tools. The environment
+was the folder of notes, which returned three file names and then the
+text of one note.
+
+The permission check is part of the harness. When the harness refuses a
+tool call, nothing reaches the environment, and the harness sends the
+refusal back to the model as that tool's result (@Claude Code agent loop).
+The model then picks another way, or reports that it couldn't do the
+step.
+
+The three parts go wrong in different ways, so naming the part tells you
+where to look. A poor choice of file is the model's. A tool call that
+should have been refused and wasn't is the harness's. A file that was
+missing or out of date is the environment's. The environment is also
+where a mistake does its damage, which is why a copy of a folder is a
+safer place for an agent than the folder itself.
+
+<Sort id="who-did-this-step" objective="concepts/recognizes-agents/follows-one-prompt"
+  concepts={['environment', 'harness', 'model-request']}
+  context="An agent was asked to find last month's invoices and total them. Its run is split into steps, and each step was done by the model, by the harness around it, or by the files and services the tools act on."
+  title="Who did this step?" hint="Did this step choose something, carry something out, or hold the data that came back?"
+  buckets={['Model', 'Harness', 'Environment']}
+  items={[
+    { text: 'Decided to search the shared drive for invoices', bucket: 0 },
+    { text: 'Sent the prompt, the instructions and the tool descriptions in the first request', bucket: 1 },
+    { text: 'Checked that the search tool was allowed and ran it', bucket: 1 },
+    { text: 'The shared drive returned the names of two invoice files', bucket: 2 },
+    { text: 'Asked to open both files in one reply', bucket: 0 },
+    { text: 'Put the text of both files into the history of the next request', bucket: 1 },
+    { text: 'Added the two amounts and wrote the total as the answer', bucket: 0 },
+  ]} />
+
+<Match id="which-part-did-it" phase="review" objective="concepts/recognizes-agents/follows-one-prompt"
+  concepts={['environment', 'harness']}
+  context="An agent has three parts. The model chooses each next step, the harness sends the requests and checks and runs the tools, and the environment is the files and services the tools act on."
+  title="Which part did it?" hint="For each step, ask whether it was a choice, the carrying out of a choice, or what the tools found."
+  options={['The model', 'The harness', 'The environment']}
+  rows={[
+    { statement: 'The agent asked to read the 2024 price list when the task was about 2026', option: 0, why: 'Which file to ask for is a choice. Who makes the choices?' },
+    { statement: 'A request to delete a file was refused before anything ran', option: 1, why: 'The refusal came between the request and the tool. Which part sits there?' },
+    { statement: 'The read came back with last year\'s figures, because nobody had updated the file', option: 2, why: 'The tool did what it was asked. Where did the old figures come from?' },
+  ]}
+  rationale="The model chooses, the harness carries the choice out and checks it, and the environment is what the tools find and change.">
+Match each step of an agent run to the part of the agent that did it.
+</Match>
+
+<Order id="one-request-in-order" phase="review" objective="concepts/recognizes-agents/follows-one-prompt"
+  concepts={['model-request', 'environment']}
+  context="An agent handles a prompt in model requests. The question is the order of events from the moment the harness sends one request until it sends the next."
+  title="Order one request" hint="What has to exist before the harness can run a tool?"
+  steps={[
+    'The harness sends the instructions, the tool descriptions and the history',
+    'The model replies with a request for a tool',
+    'The harness checks the tool call and runs the tool',
+    'The environment returns the result of the tool',
+    'The harness puts the result at the end of the history',
+  ]} />
+
+<Pitfall title="The rule from the first hour">
+A person starts a long session with an agent by saying "never move
+anything into the archive folder". The agent follows the rule all
+morning. In the afternoon it moves two files into the archive. The
+person decides the model forgot the rule, or ignored it. Neither is what
+happened. The session had grown long, so the harness had replaced the
+oldest part of the history with a summary, and the summary had no line
+about the archive (@Claude Code agent loop). From that request on, the
+rule wasn't in front of the model at all. A rule that has to hold for a
+whole session belongs in the agent's instructions file, which the harness
+adds to every request, and not in a message early in the chat
+(@Claude Code agent loop).
+</Pitfall>
+
+<Exercise stretch="Rewrite request 4 as it would be if the harness had sent only the prompt and the last reply and result as its history. What would the model know, and what could its answer say?">
+
+Here is the log of one prompt to an agent with three tools: `list_dir`,
+`move_file` and `send_message`. The harness asks the person before it
+sends a message, and the person said no. On paper or in a note, write
+how many model requests the prompt caused. Then write one line per
+request: what the harness sent, what the model replied, and what came
+back from the environment, or "nothing" when nothing did. Ten minutes is
+enough.
+
+```text
+prompt: Put the October newsletter draft in the shared folder and tell Mia it is there.
+
+request 1
+  harness sent: instructions, tool descriptions (list_dir, move_file, send_message),
+    history: the prompt
+  model replied: call list_dir with path "drafts"
+  harness ran list_dir, result: newsletter-oct.txt, newsletter-sep.txt
+
+request 2
+  harness sent: instructions, tool descriptions (list_dir, move_file, send_message),
+    history: the prompt, reply 1, result 1
+  model replied: call move_file from "drafts/newsletter-oct.txt" to "shared/newsletter-oct.txt"
+  harness ran move_file, result: moved
+
+request 3
+  harness sent: instructions, tool descriptions (list_dir, move_file, send_message),
+    history: the prompt, reply 1, result 1, reply 2, result 2
+  model replied: call send_message to "Mia" with text "The October newsletter draft is in the shared folder."
+  harness asked the person, the person said no, result: the person declined this message
+
+request 4
+  harness sent: instructions, tool descriptions (list_dir, move_file, send_message),
+    history: the prompt, reply 1, result 1, reply 2, result 2, reply 3, result 3
+  model replied: done. The draft is now in shared/newsletter-oct.txt. I did not message Mia, because you declined it.
+  no tool was asked for, so the harness stopped the run
+```
+
+A good result says the prompt caused four requests. In request 1 the
+drafts folder returned two file names, and in request 2 the file moved
+and the folder reported it. In request 3 nothing came back from the
+environment: the harness refused the call, and the "declined" result is
+the harness's own text. In request 4 nothing came back either, because
+the model asked for no tool. Each line also notes that the instructions
+and the tool descriptions were the same every time, and that the history
+grew by one reply and one result per request. When you are done, ask
+yourself: the model wrote "because you declined it" in request 4, so
+where did it learn that, if it keeps nothing between requests?
+
+</Exercise>
+
+<Recap>
+
+1. One prompt to an agent usually causes several model requests. Each
+   request is one call to the model and gets one reply, and a new
+   request follows each batch of tool results until a reply asks for no
+   tool (@Claude Code agent loop).
+2. A reply can ask for several tools at once, so count requests by the
+   replies, not by the tool calls.
+3. Every request carries the instructions, the tool descriptions and
+   the whole history so far, and only the history grows.
+4. The model is stateless. It keeps nothing between requests, so it
+   knows an earlier step only because the harness sent it again
+   (@Claude docs messages).
+5. The model chooses, the harness sends the requests and checks and
+   runs the tools, and the environment is what the tools act on. Name
+   the part to know where to look when a step goes wrong.
+
+</Recap>

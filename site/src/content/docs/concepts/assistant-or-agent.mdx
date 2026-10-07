@@ -1,7 +1,8 @@
 import { Choice, MultiChoice, Sort, Pitfall, Exercise, Recap, Scenario } from '@components/lesson';
 
-In the last lesson you read the transcript of a toy agent and named each
-turn of its loop. This lesson steps back and asks a question people get
+In the lesson before last you read the transcript of a toy agent and named each
+turn of its loop, and in the last lesson you followed one prompt through
+its model requests. This lesson steps back and asks a question people get
 wrong every day: is the product in front of you an assistant or an
 agent? Vendors sell both with the same words, and both often show a chat
 box. By the end you have one test that answers the question whatever
@@ -21,7 +22,7 @@ again. Before the first call it tells the model which tools it has. When
 a reply asks for a tool, the software runs it, puts the result back into
 the conversation, and calls the model again. It keeps going until the
 model writes an answer instead of a request, or until a stop rule ends
-the run (@AEC-01). You saw that loop turn by turn in the last lesson,
+the run (@AEC-01). You saw that loop turn by turn in the lesson on the toy agent,
 and **model vs agent** is the name for the difference it makes: the model
 supplies the judgment, and the software supplies the tools, the memory
 and the loop.
@@ -93,7 +94,8 @@ whether each is an assistant or an agent?
 
 ## The harness
 
-The software around the model has a name: the **harness**. It is the
+The software around the model has a name, which the last lesson used
+already: the **harness**. It is the
 part that makes a model into an agent, and it has more in it than the
 loop you watched. The Agent Engineer Course calls it the orchestration
 layer, and lists the loop, the state, error handling, stop conditions and
@@ -102,7 +104,7 @@ guardrails as its jobs (@AEC-01). A harness holds:
 - **The loop.** Call the model, read the reply, run the tool it asked
   for, feed the result back, repeat.
 - **The tool definitions.** The text that tells the model which tools
-  exist, what each does and what parameters it takes. In the last lesson
+  exist, what each does and what parameters it takes. In the toy agent
   this was the two-line description of `list_dir` and `read_file`.
 - **The permission checks.** The step between a tool request and the
   tool, where the harness can ask a person, refuse, or run.
