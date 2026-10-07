@@ -40,6 +40,11 @@ notes: >-
   committed golden set file stays the 21 items of the gate lesson. With the cases, the live prompt is
   blocked and the stricter prompt passes the refusal gate and still waits for a sign-off. Week 2 is
   the exercise: two misspellings, two wrong sentences on the right page, and one known kind (w2-07).
+  In each of the four new runs the search returns the right page, which is why they are new kinds:
+  the a01 kind is a search that does not return the page with the answer. cases.py holds the rows of
+  both weeks, and gate_week2.py gates both prompts with all six added, so the 9 of 14 in the exercise
+  key is printed by a fixture. A page that adds a case per new-kind failure, rather than one per
+  failure as error-analysis did, says why: a weekly sample repeats known kinds.
   Husain 2024 backs logging traces before human or model evaluation, reading as much as possible at
   first and sampling later, a viewer that removes friction, and binary good or bad labels. Its license
   cell stays Proprietary: hamel.dev shows no license on the post, the home page or the about page,

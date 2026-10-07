@@ -4,7 +4,7 @@ traces".
 
 Run the gate on a candidate prompt with:  python3 gate.py <prompt>
 where <prompt> is the name of a file in prompts/ without `.txt`, for example
-`python3 gate.py shorter`. Two more steps take a prompt name too:
+`python3 gate.py stricter`. Two more steps take a prompt name too:
   python3 gate.py declined <prompt>     the items the prompt answers with `not found`
   python3 gate.py transcripts <prompt>  the items that fail on the prompt and pass
                                         on the current one, with both answers

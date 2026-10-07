@@ -3,13 +3,13 @@ import { Choice, MultiChoice, Order, Predict, Scenario, Sort, Pitfall, Exercise,
 {/* cspell:ignore labtop lpatop -- the misspellings are the failures the traces show */}
 
 In this lesson we read a week of traces from an agent that staff use
-every day and label each run good or bad. The failures that the golden
-set has no case for become new cases. The previous lesson put a gate
+every day and label each run good or bad. The failures of a kind that
+the golden set has no case for become new cases. The previous lesson put a gate
 in front of every change, and the gate ran 21 questions. Staff ask
 hundreds a week, and some of their questions are unlike anything in the
 set. **Trace-driven evaluation** brings those questions into the set. The agent logs every
-run, people read the traces, and each failure they find there becomes a
-case that the next change must pass.
+run, and people read a sample of the traces. Each bad run of a new kind
+becomes a case that the next change must pass.
 
 The agent is the handbook assistant of
 [Gating a deploy on the evaluation](/building-agents/eval-gated-deploys/),
@@ -134,7 +134,7 @@ did:
 | Run   | What went wrong                                                        |
 | ----- | ---------------------------------------------------------------------- |
 | w1-04 | no rule for sick leave, and the agent quoted the annual leave rule     |
-| w1-08 | the handbook says "annual leave", not "vacation", so: not found        |
+| w1-08 | the handbook calls it "annual leave", and the search got expenses      |
 | w1-11 | no rule for parental leave, and the agent quoted the annual leave rule |
 | w1-13 | the answer needs a second lookup, the data team page                   |
 
@@ -145,17 +145,21 @@ two shared words are enough for the agent to answer.
 
 ## Which failures does the set already have?
 
-A failure from a trace needs a new case only when the set has no case of
-its kind. So for each bad run, look in `golden-set.csv` for an item that
-would fail on the same mistake.
+In [Reading failures one by one](/building-agents/error-analysis/) each
+of the ten failures added an item. A weekly sample brings the same kinds
+back week after week. So here a bad run of a kind that the set already
+has adds to the count of that kind, and a bad run of a new kind becomes
+a case. So for each bad run, look in `golden-set.csv` for an item
+that would fail on the same mistake, at the same step.
 
-- w1-08 has the kind of a01, "How much holiday can I take?". The handbook
-  doesn't use the user's word, and the agent says "not found". The set
-  accepts that answer from a01, and the `helpful` metric already counts
-  it as a failure.
-- w1-13 has the kind of r08, which needs a second lookup for the payments
-  team. It fails on every prompt today, and the routine threshold of the
-  previous lesson allows it.
+- w1-08 has the kind of a01, "How much holiday can I take?". In both runs
+  the search doesn't return the page with the answer, because the handbook
+  doesn't use the user's word. For w1-08 it returns the expenses page, and
+  for a01 it doesn't find a page. The set accepts "not found" from a01, and the
+  `helpful` metric already counts it as a failure.
+- w1-13 has the kind of r08. The search returns the laptop page, and the
+  answer needs a second lookup, the team page. r08 fails on every prompt
+  today, and the routine threshold of the previous lesson allows it.
 - w1-04 and w1-11 have no item of their kind. The refuse items x01
   to x06 all get "not found" today, because none of them shares two words
   with a sentence in the handbook. So the gate passed while staff got a
@@ -168,16 +172,16 @@ with two runs.
 
 <Sort id="new-kind-or-known-kind" objective="building-agents/evaluates-agents/grows-the-set-from-use"
   concepts={['trace-driven-evaluation', 'golden-sets']}
-  context="A handbook assistant's golden set has these items, among others. One asks about holiday, a word the handbook does not use, and accepts not found. One asks who approves a laptop for a team, which needs a second lookup, the team page. Six ask about things the handbook does not cover, and each gets not found, because no handbook sentence shares two words with it. A kind of failure means the step where the run went wrong."
+  context="A handbook assistant searches the handbook for one page, and then answers with a sentence from that page, or says not found when no sentence shares two words with the question. Its golden set has these items, among others. One asks about holiday, a word the handbook does not use, so the search does not return the leave page, and the set accepts not found. One asks who approves a laptop for a team: the search returns the laptop page, and the answer needs a second lookup, the team page. Six ask about things the handbook does not cover, and each gets not found. A kind of failure means the step where the run went wrong, and what went wrong there."
   title="New kind or known kind?"
   hint="For each failure, is there an item in the set that would fail on the same mistake, or would every item still pass?"
   buckets={['The set has a case of this kind', 'A new kind: add a case']}
   items={[
-    { text: '"How much time off can I take?" got not found, and the handbook calls it annual leave', bucket: 0 },
-    { text: '"How many days of study leave do I get?" got the annual leave rule', bucket: 1 },
-    { text: '"Who approves a new phone for the data team?" got the general rule without the owner\'s name', bucket: 0 },
-    { text: '"Who do I tell about a lost lpatop?" got not found, and the laptop page answers it', bucket: 1 },
-    { text: '"When are travel claims due?" got the meals sentence from the expenses page', bucket: 1 },
+    { text: '"How much time off can I take?": the search returned no page, because the handbook calls it annual leave', bucket: 0 },
+    { text: '"How many days of study leave do I get?": the handbook has no such rule, and the agent quoted the annual leave rule', bucket: 1 },
+    { text: '"Who approves a replacement laptop for the data team?": the search returned the laptop page, and the agent gave the general rule without the owner\'s name from the team page', bucket: 0 },
+    { text: '"Who do I tell about a lost lpatop?": the search returned the laptop page, which answers it, and the agent still said not found', bucket: 1 },
+    { text: '"When are travel claims due?": the search returned the expenses page, and the agent quoted the meals sentence instead of the claims sentence', bucket: 1 },
   ]} />
 
 ## Remove personal data before a trace becomes a case
@@ -232,7 +236,7 @@ what the trace showed.
   title="A trace with a health detail"
   hint="What does the case need to fail the way the trace did, and who reads the golden set file?"
   options={[
-    { text: 'Add the question as the person wrote it, because the set is internal and the detail shows why the person asked.', consequence: 'The surgery and the employee number are now in a file that everyone on the team reads. A later edit removes them from the file, and the old commit still holds them.' },
+    { text: 'Add the question as the person wrote it, because the set is internal and the detail shows why the person asked.', consequence: 'The surgery is now in a file that everyone on the team reads. A later edit removes them from the file, and the old commit still holds them.' },
     { text: 'Leave the trace out of the set, because a question that came with health data may never become a case.', consequence: 'The made-up sick leave rule has no case. A later change can bring it back, and the gate will not notice.' },
     { text: 'Use "How many days of sick leave do I get?", check that it still gets the annual leave rule, and add it with the trace id.', correct: true, consequence: 'The case fails on the live prompt the way the trace did. Nothing in the file points at a person, and the trace id leads to the full trace only for those who may read the trace store.' },
     { text: 'Ask a model for a new question on the same topic, such as "What is the policy for illness absence?", and add that.', consequence: 'The new question shares no word with the handbook, so the agent says not found and the case passes today. It does not test the failure the trace showed.' },
@@ -279,10 +283,13 @@ python3 gate.py current
 
 The prompt that passed the gate last week fails it now. The agent didn't
 change, and the set did. The two cases fail on the live prompt, which
-shows that they catch the failure from the traces. Until a change passes
-them, the hard gate blocks every deploy. This is what the hard gate is
-for, because staff get a made-up leave rule today. The next change is the
-fix.
+shows that they catch the failure from the traces. From now on the hard
+gate blocks every deploy until a change passes them, also a change that
+fixes something else. A team that doesn't want that adds the cases in the
+same change as the fix. This team adds them now and accepts that nothing
+else ships until the fix does. Staff get a made-up leave rule today, and
+the refusal gate needs 100% because any answer to a refuse item can be a
+made-up policy, so the fix goes first. The next change is the fix.
 
 The previous lesson had a candidate that might be that fix. The stricter
 prompt answers only when one sentence covers every keyword of the
@@ -310,8 +317,8 @@ The decision is still a person's, but the person now has more to weigh.
 On one side are two helpful answers that the stricter prompt loses. On
 the other side are two refusals that it gets right, from questions that
 staff asked this week. Before the traces, the set had no case on the
-other side. Next Friday the team reads a new sample, and the gate checks
-it against a set that has these two cases.
+other side. Next Friday the team reads a new sample, and from now on the
+gate checks every change against a set that has these two cases.
 
 <Order id="order-one-round" phase="review" objective="building-agents/evaluates-agents/grows-the-set-from-use"
   concepts={['trace-driven-evaluation']}
@@ -347,7 +354,7 @@ Which of these belong in the case?
 
 <Choice id="the-new-case-passes" phase="review" objective="building-agents/evaluates-agents/grows-the-set-from-use"
   concepts={['trace-driven-evaluation']}
-  context="A handbook assistant answered a question about a bike allowance with a rule about the home office allowance. The handbook has no bike allowance. A team member rewrote the question without personal details as What does the company pay toward a bicycle?, added it as a refuse case, and ran the gate on the live prompt, which has not changed."
+  context="A handbook assistant answered a question about a bike allowance with a rule about the home office allowance. The handbook has no bike allowance. The assistant gives the same answer to the same question every time. A team member rewrote the question without personal details as What does the company pay toward a bicycle?, added it as a refuse case, and ran the gate on the live prompt, which has not changed."
   title="The new case passes on the live prompt"
   hint="The live prompt gave the wrong answer in the trace. What should the case do on that same prompt?"
   options={[
@@ -397,7 +404,7 @@ it.
         answer: Equipment stays company property.
   w2-09 Wed  Is there a parking garage?
         answer: not found
-  w2-10 Wed  How do I report a fishing email?
+  w2-10 Wed  What do I do with a fishing email?
         answer: not found
   w2-11 Wed  Who builds the checkout?
         answer: The payments team builds the checkout and billing services.
@@ -428,7 +435,7 @@ python3 traces.py week 2
 
 </Predict>
 
-<Exercise stretch="Run python3 traces.py ask stricter with the question of each new case. Which of the new kinds does the stricter prompt fix, and which part of the agent would a fix for the others change?">
+<Exercise stretch="Run python3 traces.py ask stricter with the question of each new case. Which of the new kinds of both weeks does the stricter prompt fix, and which part of the agent would a fix for the others change?">
 
 In your copy, with x07 and x08 added, read the sample of week 2 with
 `python3 traces.py week 2`, and label each run good or bad against the
@@ -443,30 +450,66 @@ way shows what the gate didn't know before.
 
 A good result has five bad runs. In w2-02 and w2-10 a misspelled word,
 "labtop" and "fishing", leaves one word of the question that the
-handbook has. The search returns the laptop page on that one word, and
-one shared word is too few for an answer, so the agent says "not found"
-to a question that the handbook answers. In w2-05 and w2-14 the search found
-the right page, and the agent quoted the wrong sentence on it. Those are
-two new kinds. Run w2-07 has the kind of x07 and x08, an uncovered
-question answered with a rule that shares two words with it, so it needs
-no new case. The four new cases are routine items, with the page and a
-phrase from the right sentence, such as `30 days` for w2-05. With the
-four cases added, the gate fails the routine metric, 9 of 14, on both
-prompts, and blocks both. Week 2 has no personal data in its questions,
-and the employee numbers stay out of the set. Which of the two new kinds
-would you fix first, and why?
+handbook has, "lost" and "email". The search returns the right page on
+that one word, the laptop page and the security page. One shared word is
+too few for an answer. The agent says "not found" to a question that the
+page answers. In w2-05 and w2-14 the search also returns the right
+page, and the agent quotes the wrong sentence on it. Those are two new
+kinds. Run w2-07 has the kind of x07 and x08, an uncovered question
+answered with a rule that shares two words with it, so it needs no new
+case. The four new cases are routine items, with the page and a phrase
+from the right sentence, such as `30 days` for w2-05. Week 2 has no
+personal data in its questions, and the employee numbers stay out of the
+set. These are the four rows of a good result:
+
+```text
+r11,routine,Who do I tell about a lost labtop?,laptops.txt,service desk,no,no,trace w2-02: misspelled laptop
+r12,routine,What do I do with a fishing email?,security.txt,security team,no,no,trace w2-10: misspelled phishing
+r13,routine,When are claims for a work trip due?,expenses.txt,30 days,no,no,trace w2-05: quoted the meals sentence
+r14,routine,When do unused leave days expire?,leave.txt,31 March,no,no,trace w2-14: quoted the annual leave sentence
+```
+
+With x07, x08 and these four rows in the set, the two gate runs print
+this:
+
+<Predict id="gate-after-week-two" title="The gate on both prompts, with the cases of week 2"
+  answer={`prompt: current
+    refused  hard  6 of 8    needs 100%  FAIL
+    routine  hard  9 of 14   needs 90%   FAIL
+    helpful  soft  11 of 19  needs 70%   FAIL
+  deploy: blocked
+  prompt: stricter
+    refused  hard  8 of 8    needs 100%  pass
+    routine  hard  9 of 14   needs 90%   FAIL
+    helpful  soft  9 of 19   needs 70%   FAIL
+  new failures: none
+  less helpful: a03 a04
+  deploy: blocked`} run="building-agents/evals-from-traces/gate_week2.py">
+
+Compare this with the output of your own two gate runs.
+
+```sh
+python3 gate.py current
+python3 gate.py stricter
+```
+
+</Predict>
+
+The four new cases fail on both prompts. The routine metric drops to
+9 of 14, and the gate blocks both. Which of the two new kinds would you
+fix first, and why?
 
 </Exercise>
 
 <Recap>
 
-1. Log a trace for every run from the first release, because people and
-   models can only judge the runs that were logged (@Husain 2024).
+1. Log the agent's traces, because people and models can only judge the
+   runs that were logged (@Husain 2024).
 2. Read a sample of the traces on a schedule, more at first and fewer
    later, and label each run good or bad (@Husain 2024).
-3. For each bad run, look for an item of the same kind in the set. A new
-   kind becomes a case, with the quality a good answer has written down
-   and the trace id as its origin.
+3. For each bad run, look for an item of the same kind in the set. Each
+   bad run of a new kind becomes a case, with the quality a good answer
+   has written down and the trace id as its origin.
 4. Take out the details that point at a person before a trace becomes a
    case, and check that the stripped case still fails on the live
    version.
