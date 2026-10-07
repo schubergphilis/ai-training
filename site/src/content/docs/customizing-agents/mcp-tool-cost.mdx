@@ -20,9 +20,9 @@ definition is part of that input.
 When a client connects a server, it asks for `tools/list`, and each tool
 comes back with a name, a description and a parameter schema (@MCP specification).
 Each definition takes tokens of context before any work begins (@AEC-16).
-Without on-demand loading, the client passes the definitions to the
-model with each request. The model reads them on every turn, whether
-the turn uses a tool or not.
+Without on-demand loading, every definition is in the model's context
+on each request. The model reads them on every turn, whether the turn
+uses a tool or not.
 
 The fixture for this lesson is at
 `site/examples/customizing-agents/mcp-tool-cost/`. `tracker_server.py` is
@@ -80,18 +80,25 @@ the window, by category (@Claude Code context window). The size is what
 matters here: about 3,447 tokens for the full definitions and about 138
 for the names.
 
-Claude Code doesn't send the full definitions by default. Its *tool
-search* holds them back, and the model searches for a tool's definition
-when it needs that tool (@Claude Code mcp). Until then, only the tool
-names and each server's instructions enter the context
-(@Claude Code costs). The mcp page lists the cases where Claude Code
+By default, Claude Code doesn't load the full definitions into the
+context window. Its *tool search* holds them back, and the model searches
+for a tool's definition when it needs that tool (@Claude Code mcp). Until
+then, only the tool names and each server's instructions enter the
+context (@Claude Code costs). The mcp page lists the cases where Claude Code
 loads every definition upfront instead: `ENABLE_TOOL_SEARCH=false`, an
 `ANTHROPIC_BASE_URL` that points to a third-party host such as a proxy,
 models before the Claude 4.5 generation on Google Cloud's Agent
 Platform, and a Microsoft Foundry deployment hosted on Azure
-(@Claude Code mcp). In the Claude API, a definition that search loads
-stays in the conversation for later turns, and it counts as input tokens
-like any other definition (@Claude docs tool-search-tool).
+(@Claude Code mcp).
+
+The held-back definitions are still in the request. With
+tool search on, Claude Code still sends the definitions and marks the
+deferred ones with a `defer_loading` field (@Claude Code llm gateway protocol).
+In the Claude API, every definition, deferred or not, is in the request's
+`tools` list on every request, and the field decides only what enters
+the context. A definition that search loads stays in the conversation
+for later turns, and it counts as input tokens like any other definition
+(@Claude docs tool-search-tool).
 
 ## One query, two ways
 
@@ -238,7 +245,7 @@ and a CLI, and the CLI can list and show issues but can't change them.
   options={[
     { text: 'Agree: with tool search on, an unused server adds no tokens at all to a turn.', why: 'The names and the server instructions of every connected server still load on every turn.' },
     { text: 'Agree about the tokens: the five servers matter only once someone calls one of their tools.', why: 'The names of all five servers still cost tokens on every turn. And any search can find their tools, including a search that an injected instruction asks for.' },
-    { text: 'Disagree: tool search loads every definition on the first turn, so the five cost as much as before.', why: 'Tool search holds definitions back until the model needs one. The cost it leaves is smaller than that, and it isn\'t zero.' },
+    { text: 'Disagree: tool search loads every definition on the first turn, so the five cost as much as before.', why: 'Tool search keeps definitions out of the context until the model needs one. The cost it leaves is smaller than that, and it isn\'t zero.' },
     { text: 'Disagree: their names still load on every turn, and a search can still reach their tools.', correct: true },
   ]}>
 A project has six MCP servers connected and uses one. A colleague says:
@@ -320,7 +327,7 @@ server has forty tools. What do you set up?
 <Sort id="review-what-costs-each-turn" phase="review" objective="customizing-agents/connects-tools-safely/weighs-tool-cost"
   concepts={['tool-cost', 'mcp-vs-cli']}
   context="An agent client with tool search on connects one MCP server. The agent ran one query through that server on the first turn of a ten-turn session, and one CLI command on the second turn."
-  title="What does the model read again?" hint="Which of these are in the conversation or the request once they have appeared, and which exist only when the model asks for them?"
+  title="What does the model read again?" hint="Which of these stay in the model's context once they have appeared, and which enter it only when the model asks for them?"
   buckets={['Read again on every later turn', 'Not in the context until it is used']}
   items={[
     { text: 'The names of the server\'s tools', bucket: 0 },
