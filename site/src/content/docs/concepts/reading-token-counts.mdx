@@ -16,8 +16,8 @@ the two together.
 
 ## Two counts on every request
 
-Every reply from a model comes with a short usage report, and that report
-holds two counts, the **input and output tokens** of the request
+When software sends a request to a model, the reply comes back with a
+short usage report, and that report holds two counts, the **input and output tokens** of the request
 (@Claude docs messages). The vendor bills by these counts.
 
 The input count is everything the request sent to the model. It's the
@@ -29,9 +29,9 @@ The output count is everything the model wrote. That includes the visible
 answer and a request for a tool. A model that thinks before it answers
 writes its thinking as tokens too, and those are billed as output tokens
 (@Claude Code costs). So the output count can be larger than the answer you
-see. The counts are also not an exact count of the words on the screen,
-because the vendor turns the request into its own format before the model
-reads it (@Claude docs messages).
+see. Both counts differ from the count of words on the screen, since the
+vendor turns the request into its own format before the model reads it
+(@Claude docs messages).
 
 The two counts have different prices. On the vendor's price list an
 output token costs five times as much as an input token, on every model
@@ -43,8 +43,8 @@ Some usage reports split the input count further: tokens written to a cache,
 tokens read from it, and the rest. Together those parts are the whole input
 (@Claude docs messages). The usage screen of one coding agent shows the
 same split for a session (@Claude Code costs). The cache is the subject of
-a later lesson in this course. In this lesson every request is billed at the normal
-input price.
+a later lesson in this course. In this lesson every request is billed at
+the normal input price.
 
 <Choice id="where-the-bill-comes-from" objective="concepts/reasons-about-cost/reads-token-counts"
   concepts={['input-and-output-tokens']}
@@ -123,7 +123,7 @@ input, the 5,277 tokens of conversation the subject line was sent with.
 The two pasted documents are in that input, and they were paid for again in
 every request after they arrived.
 
-The last row of the table below is the same subject-line question asked
+The row below is the same subject-line question asked
 alone in a new chat, with only the instructions in front of it. A subject
 line written that way knows nothing about the email, so this row is for the
 price only.
@@ -152,9 +152,9 @@ Why did request 5 cost about twice as much as request 1?
 ## One prompt to an agent
 
 A chat sends one request for each message you type, and an agent sends one
-for each step of its loop. The cost guide of one coding agent says
-it sends the full conversation with every request, plus one more request
-each time a batch of tool results comes back (@Claude Code costs). So one
+for each step of its loop. One coding agent's cost guide explains that
+the agent calls the model again whenever tool results are ready, and that
+each of those calls holds the whole conversation so far (@Claude Code costs). So one
 prompt to an agent can fill several rows of a usage report.
 
 Here is the toy run from the [lesson on one prompt and many
