@@ -24,24 +24,30 @@ exercise:
   brief: >-
     Watch the context meter while you connect one more tool, find the same session in its record on
     disk, and log the requests locally to see what the tool definitions add to each one.
-sources: [Claude Code context window, Claude Code statusline, Claude Code claude directory, Claude Code monitoring, Claude Code llm gateway, Claude Code mcp]
+sources: [Claude Code context window, Claude Code statusline, Claude Code claude directory, Claude Code monitoring, Claude Code llm gateway, Claude Code mcp, Claude docs tool-search-tool, Claude Code permissions, MCP filesystem server]
 issue: 690
 minutes: 20
 notes: >-
   Its own part, after the MCP part, because inspects-requests asks what tools cost. The request log
   stays on the learner's machine: it holds the whole prompt, including file contents. Changed from
   the plan: the request log uses Claude Code's own OTEL_LOG_RAW_API_BODIES=file:<dir> with both
-  exporters set to none, instead of a gateway or proxy, because a local fixture proxy would need the
-  learner to point ANTHROPIC_BASE_URL at it, and a non-first-party base URL turns tool search off
-  (code.claude.com/docs/en/mcp), so the log would show another setup. The page names the gateway
-  route and why it is not used, which adds Claude Code mcp to the sources. That the files are
-  written with both exporters set to none is from the builder's own run on 2026-10-07, which the page
-  dates; no vendor page states it. The fixtures under site/examples/customizing-agents/seeing-what-the-agent-sends/
-  are read_log.py (the reader the learner runs on their own log), sample_log.py (a written sample
-  log in the file-mode layout, three requests, a five-tool notes server), and statusline.py with
-  statusline_demo.py. /context and its categories, and ENABLE_TOOL_SEARCH=false, come from the
-  context-window page; the status line fields and when the command runs from the statusline page;
-  the record path, plain-text storage, cleanupPeriodDays and claude purge from the claude-directory
-  page; CLAUDE_CODE_ENABLE_TELEMETRY, the exporter selectors, OTEL_LOG_RAW_API_BODIES and index.jsonl
-  from the monitoring page; ANTHROPIC_BASE_URL and audit logging from the llm-gateway page. All must
-  be re-checked by review-by.
+  exporters set to none, instead of a gateway or proxy, because a gateway holds a copy of all the
+  data and Anthropic doesn't endorse or audit third-party gateways (llm-gateway page). The exercise
+  sets ENABLE_TOOL_SEARCH=false on purpose, so every definition in the log is one the model reads;
+  defer_loading keeping a sent definition out of the window is from the API tool search page. Two
+  facts come from the builder's own runs on 2026-10-07 (claude -p, version not recorded), which the
+  page dates and no vendor page states: the files are written with both exporters set to none, and
+  with tool search on the deferred built-in tools appeared by name in a message, with one
+  DeferredToolPlaceholder marked defer_loading in the tools field. The fixtures under
+  site/examples/customizing-agents/seeing-what-the-agent-sends/ are read_log.py (the reader the
+  learner runs on their own log; it skips requests without tools, leaves out defer_loading
+  definitions and prints query_source from index.jsonl), sample_log.py (a written sample log in the
+  file-mode layout: one side request without tools and three requests with a five-tool notes
+  server), and statusline.py with statusline_demo.py. /context and its categories, and
+  ENABLE_TOOL_SEARCH=false, come from the context-window page; the status line fields and when the
+  command runs from the statusline page; the record path, the project directory name, plain-text
+  storage, cleanupPeriodDays and claude purge (v2.1.288) from the claude-directory page;
+  CLAUDE_CODE_ENABLE_TELEMETRY, the exporter selectors, OTEL_LOG_RAW_API_BODIES, index.jsonl and the
+  main, subagent and auxiliary request categories from the monitoring page; ANTHROPIC_BASE_URL and
+  audit logging from the llm-gateway page; the mcp__<server>__<tool> name from the permissions page;
+  what the file-system server can change from its README. All must be re-checked by review-by.
