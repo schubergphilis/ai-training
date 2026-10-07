@@ -1,0 +1,313 @@
+import { Choice, MultiChoice, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Prompt, Response, Habit } from '@components/lesson';
+
+In the previous lesson you reviewed the due-dates branch yourself, and you
+found five problems the agent's summary didn't mention. In this lesson a
+second agent session reviews the same branch. You give it the diff, the
+spec and the criteria, and none of the conversation that wrote the code.
+Then you check its findings and sort them into ones to fix, ones to
+reject and ones to turn into a rule for the next session.
+
+A review from a model doesn't replace yours. It is fast, and it reads
+every line of the diff. It can also be wrong, and it can find problems
+that aren't there. The lesson is about getting a useful review from it and
+weighing what comes back.
+
+## Why the session that wrote it is the wrong reviewer
+
+The session that wrote a change holds the reasoning behind every line. Ask
+it to review its own diff and it reads the code through that reasoning and
+is biased toward its own choices. Claude Code's guide to good practice
+makes the same point. It suggests a second session for the review, because
+the model in the first one leans toward the code it produced there
+(@Claude Code best practices).
+
+A **fresh-context review** is a review by a session that didn't write the
+change. It receives the diff, the specification and the criteria to check.
+The steps that led to the code stay out of its context. Its verdict then
+rests on what the change does, measured against the spec
+(@Claude Code best practices). In Claude Code you can open a new session
+in a second terminal, or run `/clear` to empty the current one before the
+review (@Claude Code best practices). You can also ask the writing session
+to hand the review to a subagent, which runs in its own context and reports
+back (@Claude Code subagents). A bundled `/code-review` skill hands the
+current diff to a new subagent that looks for bugs. For a check against
+your own spec, the guide says to write the review prompt yourself
+(@Claude Code best practices).
+
+<Choice id="who-reviews" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review']}
+  context="A coding agent session has just finished a feature branch against a written spec. The developer wants a model to review the branch before they read it themselves."
+  title="Which review is fresh?" hint="Which reviewer has none of the conversation that produced the code in its context?"
+  options={[
+    { text: 'The same session, asked to read its diff again slowly and list every problem it can see.', why: 'The session still has every step of its own reasoning in context, and it reads the diff through it.' },
+    { text: 'A new session that gets the diff, the spec and the criteria, with no other text from the first one.', correct: true },
+    { text: 'A new session that gets the diff, the spec and the first session\'s summary of what it did and why.', why: 'The summary carries the first session\'s reasoning and claims into the new one, so the review starts from them.' },
+    { text: 'The same session, told to act as a strict reviewer who has never seen this code before.', why: 'A role in the prompt changes the tone. The whole conversation that wrote the code is still in its context.' },
+  ]}>
+Which of these gives the branch a review from a fresh context?
+</Choice>
+
+## What the reviewer gets
+
+The reviewer knows only what you give it. The brief says which change to
+review, which document it is measured against, and what a finding is
+(@Claude Code best practices). It also says what to leave out. When you ask
+a reviewer for gaps, it reports gaps, and it reports some even when the
+work is sound. Acting on all of them makes the change bigger than the task,
+with more layers, more defensive code and tests for inputs that never
+arrive. The guide suggests limiting the request to gaps that break
+correctness or a stated requirement, and treating the rest as optional
+(@Claude Code best practices).
+
+For the due-dates branch, the brief is this. It points at `SPEC.md` rather
+than restating it. The reviewer then reads the same text the agent worked
+from. The transcripts in this lesson are illustrative and don't record a
+specific model's words.
+
+<Prompt model="illustrative" recorded="illustrative">
+Review the change on this branch. Run `git diff main` to see it, and check
+it against `SPEC.md`. For each success criterion, say whether the branch
+meets it and how you checked. Check that every limit in the spec still
+holds and that nothing outside the spec changed. Report only gaps that
+affect correctness or the spec's requirements, one line each, with the
+file and the line of the spec it breaks. Don't edit any file.
+</Prompt>
+<Response>
+```text
+1. todo.py, overdue: returns an empty string when no item is overdue.
+   Criterion 3 asks for "nothing overdue".
+2. todo.py, main: a malformed date prints "bad date: ..." but the
+   command saves the file and exits 0. Criterion 4 asks for status 2.
+3. test_todo.py: test_list_empty was deleted, and render.py no longer
+   prints "nothing to do" for an empty list. The limits say list keeps
+   working as it does.
+4. store.py: the default file changed from todos.json to .todos.json.
+   No line of the spec asks for it, and the committed list no longer
+   loads without TODO_FILE.
+5. test_clear.py: reformatted from double to single quotes. The spec
+   doesn't ask for it.
+6. todo.py, valid_date: only checks the format, so an impossible date
+   such as 2026-02-30 is accepted.
+7. todo.py: the date handling would be easier to extend in a DueDate
+   class with parse and compare methods.
+```
+</Response>
+
+The review found the five problems the previous lesson found, and two
+more. The brief asked for gaps against the spec only, and finding 7 is
+a design suggestion anyway. A brief narrows the review, but the reviewer
+can still go outside it, so you read every finding.
+
+<MultiChoice id="what-the-brief-holds" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review']}
+  context="A developer writes the prompt for a new agent session that will review a feature branch. The feature was built from a written spec with success criteria and limits."
+  title="What goes in the review brief?" hint="Which lines give the reviewer something to check against, and which give it the writer's view or an open task?"
+  options={[
+    { text: 'Run `git diff main` and check the change against `SPEC.md`.', correct: true },
+    { text: 'Here is the summary the first session wrote of what it changed and why.', why: 'That is the first session\'s reasoning. The review then checks the summary\'s story instead of the diff.' },
+    { text: 'For each success criterion, say whether it is met and how you checked.', correct: true },
+    { text: 'List every improvement you can find in the code, however small it is.', why: 'The reviewer will find many, and acting on them adds code and tests that nobody asked for.' },
+    { text: 'Report only gaps that affect correctness or the requirements in the spec.', correct: true },
+  ]}>
+Select the three lines that belong in the brief for the reviewing
+session.
+</MultiChoice>
+
+## Check each finding before you act on it
+
+A finding is a claim, and the reviewer is a model, so it can be wrong.
+Finding 6 sounds likely: a function that checks a date "only for the
+format" is a common bug. Before you fix or reject a finding, check it the
+same way you checked the agent's summary. Most of these findings say what
+a command does, so you can run the command.
+
+<Predict id="run-check-findings" title="Check the findings"
+  answer={`1. overdue, nothing due: prints an empty line, confirmed
+  2. due 1 tomorrow: exit status 0, confirmed
+  3. list, empty list: prints '0 open, 0 done', confirmed
+  4. list, TODO_FILE unset: prints '0 open, 0 done', confirmed
+  6. due 1 2026-02-30: prints 'bad date: 2026-02-30', refuted`} run="coding-with-agents/review-in-a-fresh-session/check_findings.py">
+In a clone of the course repository, from
+`site/examples/coding-with-agents/review-in-a-fresh-session/`, run the
+script that builds the branch on a temporary copy and runs the command
+behind each finding that names one. Each line has the finding's number,
+the command, what came back, and `confirmed` or `refuted`.
+
+```sh
+python3 check_findings.py
+```
+
+</Predict>
+
+This example isn't graded. It shows the check, and the checkpoints ask
+what you do with the result. Findings 1 to 4 are confirmed. Finding 6 is
+refuted: `valid_date` uses `datetime.date.fromisoformat`, which refuses a
+day that doesn't exist. The branch already prints `bad date:` for it.
+Finding 5 is about the diff, and you read that diff in the previous lesson.
+Finding 7 is a suggestion, and no command can confirm a suggestion.
+
+## Fix, reject, or turn into a rule
+
+Each finding gets one of three decisions.
+
+- **Fix it in this change.** The finding is confirmed, and it breaks a
+  criterion or a limit, or it changes something the spec never asked for.
+- **Reject it.** The check refutes it, or it is a suggestion with no gap
+  against the spec behind it. Write down why, in one line, so the next
+  reviewer doesn't raise it again.
+- **Fix it, and add a line to the project instructions.** The finding is a
+  mistake the agent has made before, so it will come back on the next task.
+  The lesson on [project instructions](/coding-with-agents/project-instructions/#fix-it-once-in-the-file)
+  gives the same trigger for a new line in `AGENTS.md`.
+
+Say that this is the second branch this month where an agent deleted a
+failing test to make the suite pass, and the first time an agent has
+reformatted a file outside its task. The deleted test is then fixed and
+becomes a rule, one specific line in `AGENTS.md`:
+
+```md
+- Never delete or weaken a test to make the suite pass. If a test fails after your change, fix the code, or stop and say which test fails and why.
+```
+
+<Sort id="sort-the-findings" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review']}
+  context="A fresh agent session reviewed a due-dates branch against its spec and reported seven findings. The developer ran a check on each finding that names a command. This is the second branch where an agent deleted a failing test, and the first where one reformatted a file outside its task."
+  title="Sort the seven findings" hint="Is the finding confirmed and a gap against the spec, and has the agent made this mistake before?"
+  buckets={['Fix in this change', 'Reject', 'Fix, and add a line to AGENTS.md']}
+  items={[
+    { text: '1. overdue prints an empty line instead of nothing overdue (confirmed)', bucket: 0 },
+    { text: '2. a malformed date exits with status 0 (confirmed)', bucket: 0 },
+    { text: '3. test_list_empty deleted, and the empty list lost nothing to do (confirmed, second time)', bucket: 2 },
+    { text: '4. store.py reads .todos.json by default (confirmed)', bucket: 0 },
+    { text: '5. test_clear.py reformatted outside the spec (first time)', bucket: 0 },
+    { text: '6. valid_date accepts 2026-02-30 (refuted)', bucket: 1 },
+    { text: '7. move the date handling into a DueDate class', bucket: 1 },
+  ]} />
+
+<Pitfall title="The branch that grew after the review">
+A developer asks a reviewer session for every gap it can find in a small
+change to a payment form. It reports fourteen. The developer has the
+writing session fix all of them, and the change comes back four times its
+size, with a validation layer, a retry wrapper and tests for inputs the
+form can't send. The next reviewer can't see the original fix inside it.
+Two of the fourteen findings were real. Ask the reviewer only for gaps
+against the requirements, and decide on each finding before anything is
+changed.
+</Pitfall>
+
+## The review advises, and the gates decide
+
+A review from a model is one more judgment about the change, next to
+yours. It can be wrong, and the next model can be wrong in the same way.
+The tests, the type checks and the CI job give the same answer every time
+for the same code, so they are what blocks a merge. When the fixes are in,
+run a second fresh review if you want one, and then wait for the gates.
+
+<Scenario id="review-is-clean" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review', 'deterministic-gates']}
+  context="A developer fixed the confirmed findings of a fresh-session review on a pull request. The team's CI job runs the tests and must pass before a merge."
+  title="The second review finds nothing" hint="Which of these results gives the same answer every time for the same code?"
+  options={[
+    { text: 'Ask the reviewer session to run the tests as well, and merge when it reports that they pass.', consequence: 'The reviewer says the tests pass. That is a report from a model about the tests, and the job that the team agreed on hasn\'t finished.' },
+    { text: 'Merge now, because two reviews found every problem the first one could and the second found none.', consequence: 'The CI job fails ten minutes later on main. A fix for criterion 4 broke a test the reviewer never ran.' },
+    { text: 'Wait for the CI job on the pull request, and merge when it passes.', correct: true, consequence: 'The job fails on one test. You fix it, the job passes, and the change merges on the gate the team agreed on.' },
+    { text: 'Ask the session that wrote the fixes whether they are complete, and merge if it confirms.', consequence: 'It confirms. It is the writer, and its answer comes from the reasoning that the fresh review was meant to avoid.' },
+  ]}>
+After your fixes, a second fresh review reports no gaps. The CI job on the
+pull request is still running. What do you do?
+</Scenario>
+
+<Sort id="fresh-or-not" phase="review" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review']}
+  context="A developer wants a model to review a branch an agent session wrote. They consider several ways to set up the reviewer."
+  title="Is the reviewer fresh?" hint="Does the reviewer have the writing session's conversation, or a summary of it, in its context?"
+  buckets={['Fresh context', 'Not a fresh context']}
+  items={[
+    { text: 'A subagent that gets the diff and the spec', bucket: 0 },
+    { text: 'A new session in a second terminal, given the diff and the criteria', bucket: 0 },
+    { text: 'The writing session, asked to review its own diff', bucket: 1 },
+    { text: 'A new session given the diff and the writer\'s summary of its reasons', bucket: 1 },
+  ]} />
+
+<Choice id="fourteen-findings" phase="review" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review']}
+  context="A developer asked a fresh agent session to list every gap it could find in a small change. The review came back with fourteen findings, and the change has a written spec."
+  title="Fourteen findings" hint="Which findings are a gap against the spec, and how do you know that a finding is true?"
+  options={[
+    { text: 'Check each finding, keep the ones that break the spec, and next time ask only for gaps against it.', correct: true },
+    { text: 'Fix all fourteen, because each one is a gap that a careful reviewer took the time to point out.', why: 'A reviewer asked for gaps finds some in sound work. Fixing all of them adds code and tests nobody needs.' },
+    { text: 'Ignore the review, because a reviewer that reports fourteen gaps in a small change is not working.', why: 'Some of the fourteen may be real. You find out which by checking them against the spec.' },
+    { text: 'Ask the writing session which of the fourteen are right, and fix the ones it agrees with.', why: 'The writer is biased toward its own choices, which is the reason for a fresh review.' },
+  ]}>
+What do you do with the fourteen findings?
+</Choice>
+
+<Choice id="merge-on-review" phase="review" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review', 'deterministic-gates']}
+  context="A team uses a fresh agent session to review each pull request, and a CI job that runs the tests. A developer asks which of the two may block a merge on its own."
+  title="What blocks the merge?" hint="Which of the two gives the same answer every time for the same code?"
+  options={[
+    { text: 'The fresh review, because it reads every line of the diff and the CI job reads none of them.', why: 'The review is a model\'s judgment. It can miss a problem or report one that isn\'t there, so it is advice.' },
+    { text: 'Either one, whichever finishes first, since both of them check the same change.', why: 'They check in different ways. One gives the same answer every time, and the other doesn\'t.' },
+    { text: 'Neither one, because only the developer who wrote the brief can decide to merge.', why: 'The developer weighs the review, and the team agreed that the CI job decides.' },
+    { text: 'The CI job, and the review findings are advice the developer weighs before the merge.', correct: true },
+  ]}>
+Which of the two may block a merge on its own?
+</Choice>
+
+<Choice id="a-finding-that-sounds-right" phase="review" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
+  concepts={['fresh-context-review']}
+  context="A fresh agent session reviewed a branch and reported that a command accepts a date that doesn't exist, such as February 30. The finding names the command and the input."
+  title="A finding that sounds right" hint="What kind of statement is a finding, and how did you treat the agent's summary?"
+  options={[
+    { text: 'Fix it at once, because a date check that misses February 30 is a common bug.', why: 'Common is not the same as present. The fix may change code that already works.' },
+    { text: 'Reject it, because the brief asked the reviewer for gaps against the spec only.', why: 'An impossible date that is accepted would break the spec\'s rule on malformed dates, so it is inside the brief.' },
+    { text: 'Run the command with that date on the branch, and decide once you see the output.', correct: true },
+    { text: 'Ask the writing session whether the check handles February 30, and go by its answer.', why: 'The writer is biased toward its own code, and its answer is one more claim.' },
+  ]}>
+What do you do with the finding first?
+</Choice>
+
+<Exercise stretch="Then give the confirmed findings to a writing session, as one brief, and have a second fresh session review its fix with the same brief. Count what the second review finds.">
+Build the due-dates branch into a new directory with the previous lesson's
+`build.py`, from `site/examples/coding-with-agents/reviewing-the-diff/`,
+and start a new Claude Code session in the copy.
+
+```sh
+python3 build.py ~/fresh-review
+cd ~/fresh-review/fixture-repo
+CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude --permission-mode default
+```
+
+The environment variable turns auto-memory off, so no note from an earlier
+session reaches the reviewer (@Claude Code memory). Manual mode, which the
+flag selects, lets the agent read files without a prompt and asks you
+before each edit and each command (@Claude Code permission modes). The copy
+is yours to delete, so you can approve a command that runs the tests or
+the program. Refuse every edit, because this session reports and doesn't
+fix. Type the brief from this lesson as your first message.
+
+Sort what comes back into three lists: fix, reject, and fix with a rule.
+Check each finding that names a command before you sort it, and write one
+line of reason for each rejection. Write the rule line for `AGENTS.md`,
+and don't commit it. Ten minutes is enough. Delete the directory when
+you are done.
+
+A good result has every confirmed finding in the fix list or the rule
+list, every rejection with a reason, and one rule line specific enough
+that you could check a later branch against it. Then compare the lists
+with the five findings of the previous lesson, and answer one question:
+which finding did the reviewer get that you missed, or which did you get
+that it missed?
+</Exercise>
+
+<Recap>
+1. A session that wrote a change is biased toward it. Give the review to a session that didn't write it, with the diff, the spec and the criteria, and none of the writer's reasoning (@Claude Code best practices).
+2. Say which change to review, which spec it is measured against and what a finding is. Ask only for gaps that break correctness or a stated requirement, because a reviewer asked for gaps reports some even in sound work (@Claude Code best practices).
+3. A finding is a claim. Check each one before you act on it, then fix it, reject it with a reason, or fix it and add a line to the project instructions when the agent has made the mistake before.
+4. The review is advice you weigh. The tests and the CI job decide whether the change merges.
+</Recap>
+
+<Habit id="review-in-a-new-session">
+The next time an agent finishes a change for you, give the diff and the spec to a new session for review before you read the agent's summary.
+</Habit>

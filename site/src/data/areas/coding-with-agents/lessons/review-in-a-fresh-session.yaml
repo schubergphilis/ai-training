@@ -1,5 +1,9 @@
 id: coding-with-agents/review-in-a-fresh-session
 title: A review from a fresh session
+description: >-
+  Give the due-dates branch to a new agent session with the diff, the spec and the criteria, ask
+  only for gaps against the spec, check each finding before acting on it, and sort the findings into
+  ones to fix, ones to reject and ones to turn into a rule, while the gates still decide the merge.
 mode: tutorial
 covers: coding-with-agents/verification
 serves: [coding-with-agents/verifies-agent-work/uses-a-fresh-review]
@@ -7,6 +11,10 @@ introduces: [fresh-context-review]
 assumes:
   - objective: coding-with-agents/verifies-agent-work/reviews-others-code
     lesson: coding-with-agents/reviewing-the-diff
+    section: the-criteria-item-by-item
+  - objective: coding-with-agents/ships-with-agent/gives-the-right-context
+    lesson: coding-with-agents/project-instructions
+    section: fix-it-once-in-the-file
 extends-to: []
 after: [coding-with-agents/reviewing-the-diff]
 shorts: []
@@ -15,6 +23,21 @@ exercise:
   brief: >-
     Have a new session review a change the first session wrote, against the specification, and sort
     its findings into ones to fix, ones to reject and ones to turn into a rule.
-sources: [Claude Code best practices]
+sources:
+  [Claude Code best practices, Claude Code subagents, Claude Code memory, Claude Code permission modes]
 issue: 680
 minutes: 12
+sources-checked: 2026-10-07
+review-by: 2027-04-07
+notes: >-
+  The change under review is the prepared due-dates branch from reviewing-the-diff, built by that
+  lesson's build.py, so the learner already knows its five planted problems and can judge the
+  reviewer against them. The fixture check_findings.py loads reviewing-the-diff/_common.py by path
+  and runs the command behind five of the seven illustrative findings; finding 6 (2026-02-30
+  accepted) is refuted because the standard library's date parser rejects it. The plan assumed only
+  reviewing-the-diff, and the rule bucket builds on project-instructions "Fix it once, in the file", so that lesson is
+  a second assumes entry. Sources added past the plan: Claude Code subagents (a subagent runs in its
+  own context), Claude Code memory (CLAUDE_CODE_DISABLE_AUTO_MEMORY) and Claude Code permission
+  modes (Manual mode reads without a prompt), all for the exercise setup. The best-practices facts
+  used are the writer/reviewer paragraph, the adversarial review step with its prompt parts and the
+  /code-review skill, and the callout that a reviewer asked for gaps finds some in sound work.
