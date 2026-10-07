@@ -1,7 +1,7 @@
 id: concepts/agent-loop
 title: Watch a tiny agent work
 description: >-
-  Read the transcript of a toy agent that lists a folder and reads a note, name each turn as observe,
+  Read the transcript of a toy agent that lists a folder and reads a note, name each phase as observe,
   think or act, see how a tool is described to the model, and learn the ways the loop ends.
 mode: tutorial
 covers: concepts/what-is-an-agent
@@ -16,7 +16,7 @@ shorts: [how a tool is described to the model]
 exercise:
   kind: do
   brief: >-
-    Read the third transcript of the toy agent (a scripted model with two tools), and list each turn
+    Read the third transcript of the toy agent (a scripted model with two tools), and list each phase
     as observe, think or act with the tool it used.
 sources: [AEC-01, DLAI-11, Academy claude-platform-101]
 issue: 140

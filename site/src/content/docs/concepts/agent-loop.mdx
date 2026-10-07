@@ -7,7 +7,7 @@ notes. The toy is small enough to read in one sitting. Its "model" is a
 script with a fixed list of replies. Every run below comes out the same
 way, and there is nothing for you to install or run. You read
 three transcripts. By the end you can label each line of one with the
-turn it belongs to, and you can say why the run stopped.
+phase it belongs to, and you can say why the run stopped.
 
 ## A model in a loop with two tools
 
@@ -73,7 +73,8 @@ is what happened.
 ## Observe, think, act
 
 The transcript has a rhythm, and the **agent loop** is that rhythm. Each
-step is one turn of it (@AEC-01):
+step is one turn of it: one request to the model, its reply, and the tool
+run that follows (@AEC-01). A turn has three phases:
 
 - **Observe.** The model reads what's in front of it: the task at the
   start, and after that the result of the last tool.
@@ -95,13 +96,13 @@ correct file read is a think problem, and the fix is in the prompt or
 the model. A right request that returned an error is an act problem, and
 the fix is in the tool. An agent that read the wrong file did a
 reasonable think on a poor observe, and the fix is often a better tool
-description or a better folder name. Naming the turn tells you where to
+description or a better folder name. Naming the phase tells you where to
 look.
 
 <Sort id="label-the-turns" objective="concepts/recognizes-agents/names-the-loop"
   concepts={['agent-loop', 'tool']}
   context="The lesson shows the transcript of a toy agent with two tools, list_dir and read_file. Lines that start with model: are what the model wrote, and lines that start with loop: are what the software around it did."
-  title="Label the turns" hint="Is something being read, being decided, or being run?"
+  title="Label the phases" hint="Is something being read, being decided, or being run?"
   buckets={['Observe', 'Think', 'Act']}
   items={[
     { text: 'The model reads the task at the top of the transcript', bucket: 0 },
@@ -222,11 +223,11 @@ interrupted run. Look at the last request and at what it half did, and
 then decide whether to rerun from there or throw the partial result away.
 </Pitfall>
 
-<Exercise stretch="Write the transcript a fourth run would produce for the task 'Which note names Bram?', with the fewest steps a model that read the file names carefully could take, and mark the three turns of each step.">
+<Exercise stretch="Write the transcript a fourth run would produce for the task 'Which note names Bram?', with the fewest steps a model that read the file names carefully could take, and mark the three phases of each step.">
 
 Here is a third transcript, on a different task over the same three
 notes. Read it once. Then, on paper or in a note, write one line per
-step, in the form "step, tool used, which turns", where the turns are
+step, in the form "step, tool used, which phases", where the phases are
 observe, think and act. Step 1 of the first transcript would read
 "1, list_dir, observe (task), think (request), act (listing)". Finish
 with one line that names how the run ended and how you know. Ten minutes
@@ -268,7 +269,7 @@ step?
    and how to ask for it.
 3. Each step of the loop is observe (read the task or the last result),
    think (write a request or an answer) and act (the loop runs the
-   tool). Naming the turn tells you where a mistake came from.
+   tool). Naming the phase tells you where a mistake came from.
 4. The loop ends when the model writes an answer, when the step limit is
    reached, or when a person stops it. A run that ended on a limit or a
    stop was interrupted in the middle of a step, and its output has to be
