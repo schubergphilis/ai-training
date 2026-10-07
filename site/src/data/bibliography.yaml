@@ -796,7 +796,7 @@ MCP specification:
 MCP filesystem server:
   type: reference
   title: Filesystem MCP Server
-  container: GitHub, modelcontextprotocol/servers README
+  container: GitHub, modelcontextprotocol/servers, src/filesystem
   author: Model Context Protocol a Series of LF Projects, LLC
   license: Apache-2.0, CC BY 4.0, MIT
   url: https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
