@@ -99,8 +99,8 @@ specific model's words.
 <Prompt model="illustrative" recorded="illustrative">
 The open issues in this repository are the backlog. Use `gh issue list`
 and `gh issue view` to find the open issue that can start now, because
-its blockers are closed. Tell me its number, its title, and
-what it blocks. Don't change any issue yet.
+its blockers are closed or it has none. Tell me its number, its title,
+and what it blocks. Don't change any issue yet.
 </Prompt>
 <Response>
 The repository has two open issues. Issue 2, "Import a past night with its own
@@ -112,9 +112,9 @@ night, and for a night without a rates file to be rejected.
 
 The commands run with the credentials you give the tool. If those are your
 own login, the agent has your rights in every repository you can reach.
-It can close issues and change labels there. Give the agent only
-the rights it needs. Reading issues and adding comments is enough for most work. If your
-tracker lets you make a token with fewer rights, use one for the agent. In
+It can close issues and change labels there. Give the agent only the
+rights it needs. Reading issues and adding comments is enough for most
+work. If your tracker lets you make a token with fewer rights, use one for the agent. In
 Claude Code you can also run the session in Manual mode. Claude Code then
 asks you before most shell commands, and you read each `gh` command before
 it runs. From version 2.1.283, a session started in a terminal starts in
@@ -210,7 +210,7 @@ imported file loads at launch and takes context the same way
   title="Where does each finding go?" hint="Is the finding a defect or a style point, has it come up before, and could a script find it on its own?"
   options={['Fix it in this change only', 'A line in the standards file', 'A check in the CI job', 'A suggestion that doesn\'t block']}
   rows={[
-    { statement: 'A total that adds one export twice, found for the first time', option: 0, why: 'A wrong total is a defect. Has this one come up in any earlier review?' },
+    { statement: 'A total that counts one row twice, found for the first time', option: 0, why: 'A wrong total is a defect. Has this one come up in any earlier review?' },
     { statement: 'Error messages that don\'t name the file, found in a second review', option: 1, why: 'It came back, and can a script tell whether a message names the right file?' },
     { statement: 'An amount converted with float(), found in a second review', option: 2, why: 'Could a short script find every case without a person reading the code?' },
     { statement: 'A reviewer would name a function differently, and no rule covers names', option: 3, why: 'Which rule in the file does the change break?' },
@@ -234,7 +234,7 @@ Every other style point is a suggestion.
 
 That gives an agent reviewer a clear brief. Ask it to review the diff
 against `STANDARDS.md` and to mark a finding as blocking only when it
-names the rule it breaks. Every other style point it writes as a "Nit:".
+names the rule it breaks. It writes every other style point as a "Nit:".
 When a reviewer, human or agent, blocks on taste, the author can no longer
 tell the rules in the file from the preferences, and starts to treat both
 as optional.
