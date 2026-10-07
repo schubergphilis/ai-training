@@ -33,10 +33,14 @@ import gate
 
 HERE = Path(__file__).resolve().parent
 LIVE = "current"
+USAGE = "steps: week <n>, show <run>, ask <prompt> <question>"
 
 
 def load_week(week: str) -> list[dict[str, str]]:
-    with (HERE / f"week{week}.csv").open(encoding="utf-8", newline="") as f:
+    path = HERE / f"week{week}.csv"
+    if not path.exists():
+        raise SystemExit(f"no file week{week}.csv\n{USAGE}")
+    with path.open(encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
 
 
@@ -95,11 +99,12 @@ def ask(prompt: str, question: str) -> None:
 
 
 if __name__ == "__main__":
-    if sys.argv[1] == "week":
-        week(sys.argv[2])
-    elif sys.argv[1] == "show":
-        show(sys.argv[2])
-    elif sys.argv[1] == "ask":
-        ask(sys.argv[2], sys.argv[3])
+    args = sys.argv[1:]
+    if len(args) == 2 and args[0] == "week":
+        week(args[1])
+    elif len(args) == 2 and args[0] == "show":
+        show(args[1])
+    elif len(args) == 3 and args[0] == "ask":
+        ask(args[1], args[2])
     else:
-        raise SystemExit("steps: week <n>, show <run>, ask <prompt> <question>")
+        raise SystemExit(USAGE)
