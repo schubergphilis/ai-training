@@ -2,7 +2,7 @@ id: customizing-agents/logging-from-a-stdio-server
 title: Logging from a stdio server
 description: >-
   Break a stdio tool server with one debug line on standard output, watch the client fail to parse the
-  reply, move the line to standard error, and read the reference file-system server's log while an
+  first line, move the line to standard error, and read the reference file-system server's log while an
   agent calls it.
 mode: tutorial
 covers: customizing-agents/mcp
@@ -37,8 +37,9 @@ notes: >-
   logging feature with its stderr replacement from the deprecated-features registry. The exercise
   connects the real reference server rather than the stand-in, because the stand-in answers neither
   initialize nor server/discover. The page cites the server's README only for roots replacing the
-  allowed directories, and the recorded run is the evidence for the two log lines. Those lines were read from dist/index.js of @modelcontextprotocol/server-filesystem@2026.8.31 and
-  recorded on 2026-10-07 with a small test client that sent initialize with the roots capability and
-  one root. The npm notice lines come from npx on that run, so the page says "may". No vendor page
+  allowed directories, and the recorded run is the evidence for the two log lines. Those lines were
+  read from dist/index.js of @modelcontextprotocol/server-filesystem@2026.8.31 and recorded on
+  2026-10-07 with a small test client that sent initialize with the roots capability and one root,
+  then called a tool, and the server logged nothing for that call. The npm notice lines come from npx on that run, so the page says "may". No vendor page
   says where Claude Code shows a server's stderr, so the exercise redirects it to a file with sh -c and
   makes no claim about the client. All must be re-checked by review-by, the spec revision included.

@@ -2,8 +2,8 @@ import { Choice, Predict, Sort, Scenario, Pitfall, Exercise, Recap } from '@comp
 
 In this lesson one debug line breaks a tool server for our test client,
 and we find out why that client can't read the server's reply. The fix
-changes where the line goes. Then we read the log of the real file-system server while an agent
-calls it.
+changes where the line goes. Then we read the log of the real
+file-system server while an agent calls it.
 
 The previous lesson connected the reference file-system server of the
 Model Context Protocol (MCP) project, and showed a stand-in that speaks
@@ -18,9 +18,9 @@ The server reads requests from its standard input and writes its
 messages to its standard output, one message per line in JSON-RPC, the
 JSON format for Remote Procedure Calls (RPC) that MCP uses. The
 specification says a server must not write anything to standard output
-that isn't a valid MCP message. A server that wants
-to log writes to standard error instead, and the client may show that
-stream, pass it on or drop it. The client also shouldn't take output on
+that isn't a valid MCP message. A server that wants to log writes to
+standard error instead, and the client may show that stream, pass it on
+or drop it. The client also shouldn't take output on
 standard error as a sign that something failed (@MCP specification).
 That rule is stdio logging, and the fixture below shows what happens
 without it.
@@ -61,9 +61,8 @@ The server worked. It got the request, ran the tool and wrote a correct
 reply. But `print` writes to standard output by default, so the debug
 line went out first, on the line where the client waits for its reply.
 The client can't parse `debug: ...` as JSON-RPC, although the server did
-its work. What a client does with a line like that is left to the
-client by the specification. `check.py` stops at the first line it can't
-parse. Another
+its work. The specification doesn't say what a client does with a line
+like that. `check.py` stops at the first line it can't parse. Another
 client may drop the line, report an error and read on. Either way the
 server broke the rule, and you can't count on one outcome.
 
