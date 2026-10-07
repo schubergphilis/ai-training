@@ -96,11 +96,12 @@ nothing until a task touches a template or cuts a release.
 
 A pointer works only when the agent opens the file it names, and the agent
 decides that from the pointer line and the task in front of it. The vendor
-gives an example of this case. When a project has a `CLAUDE.md`, Claude
-Code doesn't load the `AGENTS.md` next to it by itself, and a `CLAUDE.md`
-that asks in a sentence for `AGENTS.md` to be read gets it read only when
-Claude decides to open it (@Claude Code memory). So write the pointer as a condition and a
-place: "Before you change a file in `templates/`, read
+gives an example of this case. When there is a `CLAUDE.md`,
+`.claude/CLAUDE.md` or `CLAUDE.local.md` in the directory you start Claude
+Code in or in any directory above it, Claude Code doesn't load `AGENTS.md`
+by itself. A `CLAUDE.md` that asks in a sentence for `AGENTS.md` to be
+read then gets it read only when Claude decides to open it
+(@Claude Code memory). So write the pointer as a condition and a place: "Before you change a file in `templates/`, read
 `docs/templates.md`." The condition is what the agent matches against the
 task. A bare "see `docs/`" gives it no task to match, and "always read
 `docs/release.md` first" makes it read the file in every session, which
@@ -137,14 +138,14 @@ context.
 </Match>
 
 <MultiChoice id="what-loads-at-start" phase="review" objective="customizing-agents/configures-agent/chooses-load-or-point"
-  concepts={['loading-versus-pointing']}
-  context="In Claude Code, the instruction file is read at the start of every session. A line that starts with @ followed by a path imports that file. A rule file scoped with a paths field loads later, when the agent works with matching files."
+  revision={2} concepts={['loading-versus-pointing']}
+  context="In Claude Code, the project and user instruction files are read at the start of every session. A file in .claude/rules/ loads at start-up unless a paths field scopes it. A skill's instructions load when you call the skill or when the agent decides the task fits it. A CLAUDE.md in a subdirectory is read when the agent first reads, writes or edits a file in that subdirectory."
   title="What is in context before the first task?" hint="For each one, does the agent read the text whatever the task is?"
   options={[
-    { text: 'A line in the project instruction file', correct: true },
-    { text: 'A file the instruction file names in backticks in a pointer line', why: 'A path without an @ imports nothing. The agent reads that file only if it decides to open it.' },
-    { text: 'A file the instruction file imports with `@docs/style.md`', correct: true },
-    { text: 'A rule file whose `paths` field matches only `templates/**`', why: 'A rule scoped with paths loads when the agent works with files that match it.' },
+    { text: 'A rule file in `.claude/rules/` with no `paths` field', correct: true },
+    { text: 'The instructions of a skill for writing database migrations', why: 'A skill loads when it is called or when the agent decides the task fits it. A task without a migration leaves it out.' },
+    { text: 'Your personal `~/.claude/CLAUDE.md`', correct: true },
+    { text: 'The `CLAUDE.md` in `services/web/` when the task is in another service', why: 'A subdirectory file is read only once the agent works on a file in that subdirectory.' },
   ]}>
 Which two of these are in the agent's context at the start of every
 session, whatever the task is? Select two.
@@ -287,7 +288,7 @@ Delete every *cut* line. Then count what you have left:
 wc -l ~/prune-me/AGENTS.md ~/prune-me/docs/*.md
 ```
 
-A good result is about 20 lines, with every rule the agent has broken
+A good result is about 20 lines in `AGENTS.md`, with every rule the agent has broken
 still in it, the test command written once and correctly, and no `@`
 imports. Compare it with `AGENTS.pruned.md`, `docs/templates.md` and
 `docs/release.md` in the lesson folder, which are one answer, not the only
