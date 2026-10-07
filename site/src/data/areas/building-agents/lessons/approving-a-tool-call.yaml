@@ -1,5 +1,8 @@
 id: building-agents/approving-a-tool-call
 title: Approving a risky tool call
+description: >-
+  Make the loop stop before a refund tool runs, show a person the call and its exact arguments, and
+  send a refusal back to the model as the tool's result.
 mode: tutorial
 covers: building-agents/tool-use
 serves: [building-agents/builds-agent-loop/gates-risky-tools]
@@ -7,8 +10,13 @@ introduces: [tool-approval]
 assumes:
   - objective: building-agents/builds-agent-loop/implements-the-loop
     lesson: building-agents/agent-loop
+    section: the-loop
   - objective: safety/judges-agent-risk/chooses-human-in-loop
     lesson: safety/agent-risk
+    section: human-in-the-loop
+  - objective: building-agents/builds-agent-loop/defines-a-tool
+    lesson: building-agents/tool-errors
+    section: say-what-went-wrong-as-data
 extends-to: []
 after: [building-agents/tool-errors]
 shorts: []
@@ -20,6 +28,13 @@ exercise:
 sources: [Claude Code agent sdk permissions, Claude Code agent sdk user input]
 issue: 674
 minutes: 15
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 notes: >-
   Runs against the fake model with a fixture under site/examples/building-agents/, like the other
-  lessons of the course.
+  lessons of the course. start.py is the tool-errors loop with a read tool and a refund tool and no
+  gate, and it is the exercise's starting file. agent.py adds a needs_approval flag per tool and an
+  ask_person step that prints every argument. The approved and refused steps feed a fixed answer
+  through a stand-in for input(), so CI runs both answers, and the ask step reads the keyboard. The
+  page reuses the ok False error result from tool-errors for the refusal, so it adds an assumes entry
+  for that lesson's defines-a-tool section, which the plan didn't have.
