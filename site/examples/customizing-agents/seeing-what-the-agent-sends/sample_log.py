@@ -3,10 +3,14 @@
 It writes a small request log into a temporary directory, in the layout
 Claude Code uses with OTEL_LOG_RAW_API_BODIES=file:<dir>: one
 `<uuid>.request.json` per request and an `index.jsonl` that lists them.
-The three requests are one prompt that took three model calls. The agent
-has three built-in tools and one MCP server, `notes`, with five tools,
-and every definition is sent with every request. All the text is written
-for this lesson. Then it prints what read_log.py reports for the log.
+The first request is a side request without tools, which asks for a
+title for the session. The other three are one prompt that took three
+model calls. The agent has three built-in tools and one MCP server,
+`notes`, with five tools, and every definition is sent with every request,
+as with tool search off. All the text is written for this lesson. The
+`query_source` of the main requests, `repl_main_thread`, is a value the
+monitoring page names, and `title` for the side request is made up.
+Then it prints what read_log.py reports for the log.
 """
 
 import json
@@ -196,21 +200,34 @@ REQUESTS = [
 ]
 
 
+TITLE_REQUEST = {
+    "model": "sample-model",
+    "max_tokens": 64,
+    "system": [
+        {"type": "text", "text": "Write a title of at most six words for this conversation."}
+    ],
+    "messages": [PROMPT],
+}
+
+
 def write_log(log_dir):
-    """Write the three requests and their index into `log_dir`."""
+    """Write the side request, the three requests and their index into `log_dir`."""
+    bodies = [("title", TITLE_REQUEST)]
+    for messages in REQUESTS:
+        body = {
+            "model": "sample-model",
+            "max_tokens": 4096,
+            "system": SYSTEM,
+            "tools": BUILT_IN + NOTES,
+            "messages": messages,
+        }
+        bodies.append(("repl_main_thread", body))
     with open(os.path.join(log_dir, "index.jsonl"), "w") as index:
-        for number, messages in enumerate(REQUESTS, start=1):
+        for number, (source, body) in enumerate(bodies, start=1):
             name = f"00000000-0000-0000-0000-00000000000{number}.request.json"
-            body = {
-                "model": "sample-model",
-                "max_tokens": 4096,
-                "system": SYSTEM,
-                "tools": BUILT_IN + NOTES,
-                "messages": messages,
-            }
             with open(os.path.join(log_dir, name), "w") as handle:
                 json.dump(body, handle, indent=2)
-            entry = {"session_id": "sample-session", "request_file": name}
+            entry = {"session_id": "sample-session", "query_source": source, "request_file": name}
             index.write(json.dumps(entry) + "\n")
 
 
