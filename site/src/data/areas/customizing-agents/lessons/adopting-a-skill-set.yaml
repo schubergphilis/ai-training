@@ -1,5 +1,9 @@
 id: customizing-agents/adopting-a-skill-set
 title: Adopting a published skill set
+description: >-
+  Vet an invented skill set skill by skill for license, maintenance, scripts and pre-approved tools,
+  take two of its skills, and check what they change in a session against what they add to the
+  context.
 mode: tutorial
 covers: customizing-agents/skills
 serves: [customizing-agents/adopts-a-skill-set/vets-a-skill-set, customizing-agents/adopts-a-skill-set/adopts-skills-gradually]
@@ -7,9 +11,13 @@ introduces: [published-skill-sets]
 assumes:
   - objective: customizing-agents/writes-skill/evaluates-a-plugin
     lesson: customizing-agents/plugins
+    section: install-it-copy-one-skill-or-leave-it
   - objective: customizing-agents/writes-skill/discloses-progressively
     lesson: customizing-agents/progressive-disclosure
+    section: what-the-agent-reads-and-when
 extends-to: []
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 after: [customizing-agents/plugins]
 shorts: []
 exercise:
@@ -17,9 +25,34 @@ exercise:
   brief: >-
     Vet one public skill set as you would a library, install two of its skills, and compare what
     they change in a session against what they add to the context.
-sources: [Claude Code skills, Claude Code plugins, anthropics skills]
+sources:
+  - Claude Code skills
+  - Claude Code plugins
+  - anthropics skills
+  - Agent Skills spec
+  - Claude Code plugin install
+  - Claude Code memory
 issue: 685
 minutes: 15
 notes: >-
   The lesson the adopts-a-skill-set competency's notes ask for. It names no single skill set as the
-  one to use, and the exercise lets the learner pick one.
+  one to use, and the exercise lets the learner pick one. The set on the page is invented, in
+  `site/examples/customizing-agents/adopting-a-skill-set/workbench/`: one plugin of eight skills,
+  six under Apache-2.0, release-notes with no license, spreadsheet with an all-rights-reserved
+  LICENSE.txt, setup-env with `allowed-tools: Bash(python3 *)` and a script that writes
+  `~/.workbench/settings.json`, and deploy with `disable-model-invocation: true`. `vet.py` only reads
+  files. It prints per skill the license (license file first, then the front matter field), the
+  script count, who may invoke it, the `allowed-tools` value and the always-loaded token estimate
+  with the rule of `measure.py`; `whole_set.py` and `two_skills.py` run it for `mise run examples`.
+  The builder checked that `vet.py` works on anthropics/skills at commit 683bc88e (19 skills, five
+  plugins, mixed licenses), and the page doesn't print those numbers, because the learner picks the
+  set. Installing two skills is done by copying them into a scratch clone's `.claude/skills/`,
+  because `skillOverrides` doesn't reach plugin skills, so a single-plugin set can't be adopted two
+  skills at a time. The plan named three sources. The page also cites the Agent Skills spec (the
+  `license` field), the plugin install page (auto-update defaults) and the memory page (turning
+  auto memory off for the test runs). Vendor facts to re-check by review-by, all on
+  code.claude.com/docs/en/skills unless named: `allowed-tools` and its warning, the
+  description-in-context rule per invocation mode (also plugins), the listing budget, the `/context`
+  Skills row, `skillOverrides` and that it skips plugin skills, the baseline comparison, the
+  `/skills` menu toggle, `/skill-doctor`, and auto-update defaults (plugins/install). Keeping the
+  project in charge when a skill disagrees is left to `project-stays-in-charge`.

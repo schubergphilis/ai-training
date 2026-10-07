@@ -1,0 +1,23 @@
+{
+  "name": "workbench-market",
+  "owner": { "name": "The workbench authors" },
+  "plugins": [
+    {
+      "name": "workbench",
+      "description": "Skills for everyday development work: planning, review, commits, tests, setup, release notes, spreadsheets and deploys",
+      "version": "3.2.0",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/commit-message",
+        "./skills/deploy",
+        "./skills/plan-ticket",
+        "./skills/release-notes",
+        "./skills/review-diff",
+        "./skills/setup-env",
+        "./skills/spreadsheet",
+        "./skills/write-tests"
+      ]
+    }
+  ]
+}
