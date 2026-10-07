@@ -91,14 +91,13 @@ models before the Claude 4.5 generation on Google Cloud's Agent
 Platform, and a Microsoft Foundry deployment hosted on Azure
 (@Claude Code mcp).
 
-The held-back definitions are still in the request. With
-tool search on, Claude Code still sends the definitions and marks the
-deferred ones with a `defer_loading` field (@Claude Code llm gateway protocol).
-In the Claude API, every definition, deferred or not, is in the request's
-`tools` list on every request, and the field decides only what enters
-the context. A definition that search loads stays in the conversation
-for later turns, and it counts as input tokens like any other definition
-(@Claude docs tool-search-tool).
+With tool search on, Claude Code still sends every definition in the
+request, and marks the held-back ones with a `defer_loading` field
+(@Claude Code llm gateway protocol). In the Claude API, every
+definition, deferred or not, is in the request's `tools` list on every
+request, and the field decides only what enters the context. A definition that search loads stays in the conversation
+for later turns, and it is billed as input tokens, the same as a
+definition that was loaded upfront (@Claude docs tool-search-tool).
 
 ## One query, two ways
 
@@ -144,8 +143,8 @@ return.
 ## The same query over a session
 
 One query happens once, and the context it adds stays. The call and its
-result remain in the conversation, and the definitions arrive with every
-request. The model reads both again on every later turn.
+result remain in the conversation, and the definitions in the context are
+there on every request. The model reads both again on every later turn.
 `session.py` adds that up over a ten-turn session with the query on the
 first turn, for four setups. The first is the server with all twenty
 definitions loaded. The second is tool search: the names on every turn,
