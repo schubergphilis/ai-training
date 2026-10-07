@@ -33,25 +33,21 @@ concepts:
     definition: >-
       Reusing the processing of the opening part of a request when a later
       request starts with exactly the same tokens. The reused part is billed
-      at a small fraction of the normal input price. The opening part is
-      built in a fixed order: tool descriptions, then the system prompt, then
-      the messages. A change at any point invalidates the cache from there
-      on, so after an edit to an early instruction the rest of the request is
-      written to the cache again, at a little more than the normal input
-      price. An unused cache expires after five minutes, or after one hour
-      with an option that makes writing to the cache cost more.
+      at a small fraction of the normal input price. The opening part has a
+      fixed order: tool descriptions, then the system prompt, then the
+      messages. After a change, everything from that point on is cached
+      again, at more than the normal input price. An unused cache expires
+      after five minutes, or after one hour at a higher write price.
   - id: effort-level
     name: Effort level
     definition: >-
       A setting that tells the model how many tokens to spend on a response,
       from low to max. Higher effort gives more thinking and more thorough
-      tool use, and costs more tokens and time. On some models it does not
-      reliably change the length of the answer, so ask for a length in the
-      prompt when it matters. Lower effort is faster and cheaper and suits
-      simple, well-defined work. The setting guides the model and is no
-      strict budget. Changing it between requests
-      in one conversation can invalidate the prompt cache, so it is chosen
-      per kind of work and kept for the session.
+      tool use, and costs more tokens and time. Lower effort is faster and
+      cheaper and suits simple work. The setting guides the model but does
+      not set a hard limit, and on at least one model it does not reliably
+      change the length of the answer. Changing it in one conversation can
+      invalidate the prompt cache.
 links:
   prerequisites: [concepts/how-models-work]
   related: [concepts/limits, using-agents/choosing-tools]
