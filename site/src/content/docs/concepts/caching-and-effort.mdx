@@ -31,15 +31,16 @@ it did (@Claude docs effort).
 
 All of that is output, and output is the expensive kind of token. For an
 agent there is a second cost. Every extra round of tool calls is one more
-request, and each request sends the whole history again. Higher effort adds input
-tokens that way. Higher effort costs more tokens and more time, and lower
-effort is faster and cheaper (@Claude docs effort).
+request, and each request sends the whole history again. Higher effort adds
+input tokens that way. Higher effort costs more tokens and more time, and
+lower effort is faster and cheaper (@Claude docs effort).
 
 The setting guides the model and is no strict budget. A hard problem still
 gets some thinking at a low level, but it gets less of it
-(@Claude docs effort). And on at least one model, the vendor says, a lower level changes how much it thinks but does
-not reliably make the visible answer shorter (@Claude docs effort). When
-you want a short answer, ask for one in the prompt.
+(@Claude docs effort). And on at least one model, the vendor says, a lower
+level changes how much it thinks but does not reliably make the visible
+answer shorter (@Claude docs effort). When you want a short answer, ask for
+one in the prompt.
 
 <Choice id="what-lower-effort-changes" objective="concepts/reasons-about-cost/chooses-effort-level"
   concepts={['effort-level']}
@@ -164,15 +165,17 @@ lasts five minutes by default, and each read starts the five minutes again
 at no extra cost. A cache that lasts an hour is also available, at a higher
 write price (@Claude docs prompt-caching). One coding agent's cost guide
 gives the same five minutes by default when the agent is billed by the
-token. On a subscription it gives an hour, until the subscription draws on
-paid extra usage. It also says that the first message after a longer break
-processes the whole history again (@Claude Code costs). So request 5 wrote all 22,395 tokens again and cost
+token. On a subscription it gives an hour, which drops to five minutes
+once the subscription draws on paid extra usage. It also says that the
+first message after a longer break processes the whole history again
+(@Claude Code costs). So request 5 wrote all 22,395 tokens again and cost
 more than it would have without a cache.
 
 A break is one way to lose the cache, and a change to the start of the
 request is the other. The start of a request is built in a fixed order: the
-tool descriptions first, then the instructions, then the messages. The cache matches only a start that is
-identical up to the point it stored (@Claude docs prompt-caching). A change
+tool descriptions first, then the instructions, then the messages. The
+cache matches only a start that is identical up to the point it stored
+(@Claude docs prompt-caching). A change
 at any point ends the match there, and everything after it is processed and
 paid for again.
 
@@ -356,15 +359,16 @@ request pay for the whole tender again. Ten minutes is enough.
 
 A good result chooses low for the table and high for the plan and the
 tender, and says that a higher level means more thinking and more tool
-calls, at more tokens and time. It adds that you would try the
-level on a few real cases first. For the cache, it names the instructions,
-the tender and the earlier messages as the part read from the cache. The
-answers and the thinking stay at the normal output price. Each new question
-is never read from the cache, and it costs a little more than normal input
-when it is written to the cache. It names two of these as what breaks the cache: a break longer
-than the cache lifetime, an edit to the instructions, a change of tools,
-or a change of effort level. To close, ask yourself: in your own work, which
-long start do you send again most often?
+calls, at more tokens and time. It adds that you would try the level on a
+few real cases first. For the cache, it names the instructions, the tender
+and the earlier messages as the part read from the cache. The answers and
+the thinking stay at the normal output price. Each new question and the
+answer before it are never read from the cache in that request: they are
+written to it, at a little more than the normal input price. It names two
+of these as what breaks the cache: a break longer than the cache lifetime,
+an edit to the instructions, a change of tools, or a change of effort
+level. To close, ask yourself: in your own work, which long start do you
+send again most often?
 
 </Exercise>
 
