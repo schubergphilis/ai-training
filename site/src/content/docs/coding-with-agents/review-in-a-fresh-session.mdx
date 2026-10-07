@@ -32,11 +32,12 @@ to start a subagent for the review. An ordinary subagent starts in a
 context of its own and reports back, but it gets its task from the writing
 session (@Claude Code subagents). Tell the writing session to give it the
 diff, the spec and the criteria. Its own account of the work stays out.
-A fork is different: it is a subagent that starts with the whole conversation so far,
-and a fork isn't a fresh reviewer (@Claude Code subagents). A bundled
-`/code-review` skill gives the current diff to a new subagent that looks
-for bugs. It doesn't know your spec. A review against the spec needs a
-brief that you write (@Claude Code best practices).
+A fork is different: it is a subagent that starts with the whole
+conversation so far, and a fork isn't a fresh reviewer
+(@Claude Code subagents). A bundled `/code-review` skill gives the current
+diff to a new subagent that looks for bugs. It checks the diff for bugs,
+so a review against your spec needs a brief that you write
+(@Claude Code best practices).
 
 <Choice id="who-reviews" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
   concepts={['fresh-context-review']}
@@ -99,7 +100,7 @@ style. Don't edit any file.
 </Response>
 
 The review found the five problems the previous lesson found, and two
-more. The brief asked for gaps against the spec only, and finding 7 is
+more. The brief defined a finding and left out style, and finding 7 is
 a design suggestion anyway. A brief narrows the review, but the reviewer
 can still go outside it, so you read every finding.
 
@@ -112,7 +113,7 @@ can still go outside it, so you read every finding.
     { text: 'Here is the summary the first session wrote of what it changed and why.', why: 'That is the first session\'s reasoning. The review then checks the summary\'s story instead of the diff.' },
     { text: 'For each success criterion, say whether it is met and how you checked.', correct: true },
     { text: 'List every improvement you can find in the code, however small it is.', why: 'The reviewer will find many, and acting on them adds code and tests that nobody asked for.' },
-    { text: 'Report only gaps that affect correctness or the requirements in the spec.', correct: true },
+    { text: 'Count as a finding only a criterion or limit the branch breaks, or a change the spec didn\'t ask for.', correct: true },
   ]}>
 Select the three lines that belong in the brief for the reviewing
 session.
@@ -192,10 +193,10 @@ A developer asks a reviewer session for every gap it can find in a small
 change to a payment form. It reports fourteen. The developer has the
 writing session fix all of them, and the change comes back four times its
 size. It now has a new validation module and twenty more tests, and
-several of the tests pass the form input it can never receive. The next reviewer can't see the original fix inside it.
-Two of the fourteen findings were real. Ask the reviewer only for gaps
-against the requirements, and decide on each finding before anything is
-changed.
+several of the tests send input that the form can never receive. The next
+reviewer can't see the original fix inside it. Two of the fourteen
+findings were real. Ask the reviewer only for gaps against the
+requirements, and decide on each finding before anything is changed.
 </Pitfall>
 
 ## The review advises, and the gates decide
@@ -282,17 +283,17 @@ cd ~/fresh-review/fixture-repo
 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude --permission-mode default
 ```
 
-The environment variable turns auto-memory off, so the session loads no
+The environment variable turns auto-memory off. The session then loads no
 note from an earlier session and saves none of its own
 (@Claude Code memory). Manual mode, which the flag selects, lets the agent
 read files without a prompt (@Claude Code permission modes). It asks you
 before each edit, and before each command outside a short built-in list
-of read-only ones. `git diff` is on that list and runs without a prompt
-(@Claude Code permissions). The copy is yours to delete, so you can
+of read-only ones. Read-only git commands such as `git diff` are on it
+and run without a prompt (@Claude Code permissions). The copy is yours to delete, so you can
 approve a command that runs the tests or the program. An approved run of
 the program can save the list into the copy, and `git status` then shows
-the file as untracked. Refuse every edit, because this session reports and doesn't
-fix. Type the brief from this lesson as your first message.
+the file as untracked. Refuse every edit, because this session reports
+and doesn't fix. Type the brief from this lesson as your first message.
 
 Sort what comes back into three lists: fix, reject, and fix with a rule.
 Check each finding that names a command before you sort it, and write one
@@ -310,8 +311,8 @@ that it missed?
 
 <Recap>
 1. A session that wrote a change is biased toward it. Give the review to a session that didn't write it, with the diff, the spec and the criteria, and none of the writer's reasoning (@Claude Code best practices).
-2. Point the reviewer at the change and the spec, and define a finding as a line of the spec the change breaks or a change no line asks for. A reviewer finds what it is asked to find, and fixing every remark makes the change larger than the task (@Claude Code best practices).
-3. A finding is a claim. Check each one before you act on it, then fix it, reject it with a reason, or fix it and add a line to the project instructions when the agent has made the mistake before.
+2. Point the reviewer at the change and the spec, and define a finding as a line of the spec the change breaks or a change outside the spec. A reviewer finds what it is asked to find, and fixing every remark makes the change larger than the task (@Claude Code best practices).
+3. A finding is a claim. Check each one before you act on it. A confirmed gap is fixed in the change, and a refuted claim or a bare suggestion is rejected with a reason. When the agent has made the mistake before, the fix also gets a line in the project instructions.
 4. The review is advice you weigh. The tests and the CI job decide whether the change merges.
 </Recap>
 
