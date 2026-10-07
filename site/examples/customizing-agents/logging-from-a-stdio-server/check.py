@@ -1,8 +1,9 @@
 """Start one of the lesson's servers, send it one tools/call, and show both of its output streams.
 
 The client reads one line from the server's standard output and tries to
-parse it as a JSON-RPC message, which is what an MCP client does over the
-stdio transport. Standard error is read separately, after the server exits.
+parse it as a JSON-RPC message, which is what this strict test client does
+over the stdio transport. Standard error is read separately, after the
+server exits.
 """
 
 import json
