@@ -1,0 +1,1 @@
+Security. Passwords are kept in the company password manager. Forward a phishing email to the security team and delete it afterwards.

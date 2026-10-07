@@ -1,5 +1,9 @@
 id: building-agents/evals-from-traces
 title: Growing the evaluation set from traces
+description: >-
+  Read a weekly sample of the handbook assistant's traces, label each run good or bad, find the
+  failures the golden set has no case for, strip personal data from them, and add them as cases that
+  the deploy gate runs on the next change.
 mode: tutorial
 covers: building-agents/production
 serves: [building-agents/evaluates-agents/grows-the-set-from-use]
@@ -7,8 +11,10 @@ introduces: [trace-driven-evaluation]
 assumes:
   - objective: building-agents/evaluates-agents/prioritizes-fixes
     lesson: building-agents/error-analysis
+    section: fix-the-most-common-failure-first
   - objective: building-agents/runs-in-production/gates-on-evals
     lesson: building-agents/eval-gated-deploys
+    section: from-a-script-that-counts-to-a-gate-that-decides
 extends-to: []
 after: [building-agents/eval-gated-deploys]
 shorts: []
@@ -20,3 +26,23 @@ exercise:
 sources: [Husain 2024]
 issue: 675
 minutes: 15
+notes: >-
+  The fixture in site/examples/building-agents/evals-from-traces/ is a copy of the eval-gated-deploys
+  fixture (agent.py, gate.py, docs/ and the golden set file) with only the docstrings changed, and that
+  fixture is left untouched. prompts/current.txt is the shorter-fixed prompt of that lesson, which
+  the rollout took to all staff, and prompts/stricter.txt is its stricter candidate. traces.py is the
+  trace viewer: it runs the live agent on the questions in the two week files, so each trace is
+  what the agent does, and prints records with the fields of the traces-and-trajectories lesson,
+  without tokens, latency and cost, and with user added. The questions, the employee numbers and the
+  wife-is-due detail in w1-11 are invented. Week 1 has four bad runs: two of a new kind (an uncovered
+  leave question answered with the annual leave rule, x07 and x08) and two of kinds the set has (a01,
+  r08). The gate fixtures copy the folder to a temporary directory and append x07 and x08, so the
+  committed golden set file stays the 21 items of the gate lesson. With the cases, the live prompt is
+  blocked and the stricter prompt passes the refusal gate and still waits for a sign-off. Week 2 is
+  the exercise: two misspellings, two wrong sentences on the right page, and one known kind (w2-07).
+  Husain 2024 backs logging traces before human or model evaluation, reading as much as possible at
+  first and sampling later, a viewer that removes friction, and binary good or bad labels. Its license
+  cell stays Proprietary: hamel.dev shows no license on the post, the home page or the about page,
+  and no public repository for the site was found. The page gives no source for removing personal
+  data, which is the course's own rule (competency behavior). The plan's single exercise is kept, on
+  the week 2 sample.

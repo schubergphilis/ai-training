@@ -1,0 +1,480 @@
+import { Choice, MultiChoice, Order, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+{/* cspell:ignore labtop lpatop -- the misspellings are the failures the traces show */}
+
+In this lesson we read a week of traces from an agent that staff use
+every day and label each run good or bad. The failures that the golden
+set has no case for become new cases. The previous lesson put a gate
+in front of every change, and the gate ran 21 questions. Staff ask
+hundreds a week, and some of their questions are unlike anything in the
+set. **Trace-driven evaluation** brings those questions into the set. The agent logs every
+run, people read the traces, and each failure they find there becomes a
+case that the next change must pass.
+
+The agent is the handbook assistant of
+[Gating a deploy on the evaluation](/building-agents/eval-gated-deploys/),
+and the rollout of that lesson is finished. The shorter fixed prompt is
+live for the whole office, and it is `prompts/current.txt` in this
+lesson's copy. The gate, the golden set and the stricter candidate prompt are the
+files of that lesson. The files are in
+`site/examples/building-agents/evals-from-traces/`. Copy the
+`evals-from-traces` folder, and run each step below from inside the copy,
+as `python3 traces.py <step>` or `python3 gate.py <prompt>`. No
+application programming interface (API) key is needed.
+
+The traces in this lesson are invented, and so are the people and their
+employee numbers. Real traces come from the trace store that a production
+agent writes to, and they hold what real people typed, which can be
+personal data.
+
+## Log every run, and read a sample
+
+Before people or a model can judge what an agent did, its runs have to be
+logged (@Husain 2024). The assistant writes one trace per run. Its records
+use the fields of
+[Recording and grading the path the agent took](/building-agents/traces-and-trajectories/).
+A tool record holds the search, and a model record holds the answer. The
+records here leave out the token counts, the latency and the cost, which
+this lesson doesn't use, and they add `user`, the employee number of the
+person who asked.
+
+How much to read changes over time. Husain reads as much as he can when
+a product is new, and reads a smaller sample as it matures, but he never
+stops reading (@Husain 2024). This team picks 20 runs at random from each
+week and reads them on Friday. He also says that reading must take as
+little effort as possible, and he often builds his own viewer that puts
+everything a reader needs on one screen (@Husain 2024). The `week`
+step is this team's viewer. It prints each run of the sample with its
+question and the answer the person got.
+
+<Predict id="the-week-one-sample" title="The traces of week 1"
+  answer={`week 1 sample: 20 runs
+  w1-01 Mon  How many days can I work from home?
+        answer: Staff may work from home up to three days per week.
+  w1-02 Mon  What is the budget for training?
+        answer: Every employee has a training budget of 1500 euros per year.
+  w1-03 Mon  Can I expense a taxi to the airport?
+        answer: not found
+  w1-04 Mon  How many days of sick leave do I get?
+        answer: Every employee accrues 25 days of annual leave per year.
+  w1-05 Tue  Who is the cost center owner of the payments team?
+        answer: The cost center owner of the payments team is Maria Duarte, head of platform.
+  w1-06 Tue  What do I do with a phishing email?
+        answer: Forward a phishing email to the security team and delete it afterwards.
+  w1-07 Tue  Where do I report a lost laptop?
+        answer: Report a lost laptop to the service desk the same day.
+  w1-08 Tue  How many vacation days do I have?
+        answer: not found
+  w1-09 Wed  How much do I get for my home office?
+        answer: A home office allowance of 30 euros per month is paid with salary.
+  w1-10 Wed  Is there free coffee?
+        answer: not found
+  w1-11 Wed  My wife is due in May, how many days of parental leave do I get?
+        answer: Every employee accrues 25 days of annual leave per year.
+  w1-12 Wed  How far ahead are flights booked?
+        answer: Flights are booked through the travel desk at least 14 days ahead.
+  w1-13 Thu  Who approves a new laptop for the data team?
+        answer: The cost center owner of your team approves a replacement laptop before that, see the team pages.
+  w1-14 Thu  Where are passwords kept?
+        answer: Passwords are kept in the company password manager.
+  w1-15 Thu  Can I carry over unused leave days?
+        answer: Unused days carry over until 31 March.
+  w1-16 Thu  How fast are service desk tickets answered?
+        answer: The service desk answers tickets within one working day.
+  w1-17 Fri  How much are meals reimbursed on a trip?
+        answer: Meals on a work trip are reimbursed up to 40 euros per day with a receipt.
+  w1-18 Fri  When do I get my accounts as a new starter?
+        answer: New starters get their accounts on day one from the service desk.
+  w1-19 Fri  Is there a gym at the office?
+        answer: not found
+  w1-20 Fri  What are core hours?
+        answer: Core hours, when everyone in the office is reachable, are 10 to 15.`} run="building-agents/evals-from-traces/week1.py">
+
+Run this, and compare what you see with the output below.
+
+```sh
+python3 traces.py week 1
+```
+
+</Predict>
+
+<Choice id="why-read-the-traces" objective="building-agents/evaluates-agents/grows-the-set-from-use"
+  concepts={['trace-driven-evaluation']}
+  context="A team runs a support agent for its customers. Every change goes through a gate on a golden set of 40 items, and every change since the rollout has passed it. The live rates, such as the share of conversations that end with not found, have stayed level."
+  title="Why read traces when the gate passes?"
+  hint="Where did the 40 questions of the set come from, and what does the gate know about a question that is not among them?"
+  options={[
+    { text: 'To check the pass counts the gate printed, because a bug in the gate script could hide failures.', why: 'The gate script is code with its own tests. Reading 30 conversations does not recount its results.' },
+    { text: 'To replace the gate over time, because real conversations say more than any fixed set can.', why: 'Thirty traces a week cannot check each change before it ships. The gate does that, and the traces give it new cases.' },
+    { text: 'To collect the replies customers liked, so the set can use them as the expected answers.', why: 'An item records the qualities of a good answer. A reply copied word for word fails a right answer worded another way.' },
+    { text: 'To find failures that no item of the set checks, because the set holds only what someone thought to ask.', correct: true },
+  ]}>
+
+Every Friday the team reads 30 traces from the week. A colleague asks
+why, since the gate passes and the live rates are level. What's the
+reason?
+
+</Choice>
+
+## Label each run good or bad
+
+A trace has no expected answer. Nobody wrote one, because nobody knew the
+question would come. The reader decides whether the run was good, here by
+checking the answer against the handbook pages in `docs/`. Husain starts
+with a label of good or bad for each trace, because finer scores are
+harder to manage than two labels (@Husain 2024).
+
+Sixteen of the twenty runs are good. Three of them answer "not found",
+and that's right. The handbook says nothing about taxis or coffee, and
+nothing about a gym. Runs w1-04, w1-08, w1-11 and w1-13 are bad. For each one, write down the first step that
+went wrong, the way
+[Reading failures one by one](/building-agents/error-analysis/)
+did:
+
+| Run   | What went wrong                                                        |
+| ----- | ---------------------------------------------------------------------- |
+| w1-04 | no rule for sick leave, and the agent quoted the annual leave rule     |
+| w1-08 | the handbook says "annual leave", not "vacation", so: not found        |
+| w1-11 | no rule for parental leave, and the agent quoted the annual leave rule |
+| w1-13 | the answer needs a second lookup, the data team page                   |
+
+Runs w1-04 and w1-11 are the worst of the four. A person who asked about
+sick leave was told a rule that the handbook doesn't have. The question
+shares two words with the annual leave sentence, "days" and "leave", and
+two shared words are enough for the agent to answer.
+
+## Which failures does the set already have?
+
+A failure from a trace needs a new case only when the set has no case of
+its kind. So for each bad run, look in `golden-set.csv` for an item that
+would fail on the same mistake.
+
+- w1-08 has the kind of a01, "How much holiday can I take?". The handbook
+  doesn't use the user's word, and the agent says "not found". The set
+  accepts that answer from a01, and the `helpful` metric already counts
+  it as a failure.
+- w1-13 has the kind of r08, which needs a second lookup for the payments
+  team. It fails on every prompt today, and the routine threshold of the
+  previous lesson allows it.
+- w1-04 and w1-11 have no item of their kind. The refuse items x01
+  to x06 all get "not found" today, because none of them shares two words
+  with a sentence in the handbook. So the gate passed while staff got a
+  made-up leave rule.
+
+A failure of a kind that the set already has tells you how often that
+kind happens, and the count helps you choose what to fix first. A new
+kind tells you what the set is missing. This week has one new kind,
+with two runs.
+
+<Sort id="new-kind-or-known-kind" objective="building-agents/evaluates-agents/grows-the-set-from-use"
+  concepts={['trace-driven-evaluation', 'golden-sets']}
+  context="A handbook assistant's golden set has these items, among others. One asks about holiday, a word the handbook does not use, and accepts not found. One asks who approves a laptop for a team, which needs a second lookup, the team page. Six ask about things the handbook does not cover, and each gets not found, because no handbook sentence shares two words with it. A kind of failure means the step where the run went wrong."
+  title="New kind or known kind?"
+  hint="For each failure, is there an item in the set that would fail on the same mistake, or would every item still pass?"
+  buckets={['The set has a case of this kind', 'A new kind: add a case']}
+  items={[
+    { text: '"How much time off can I take?" got not found, and the handbook calls it annual leave', bucket: 0 },
+    { text: '"How many days of study leave do I get?" got the annual leave rule', bucket: 1 },
+    { text: '"Who approves a new phone for the data team?" got the general rule without the owner\'s name', bucket: 0 },
+    { text: '"Who do I tell about a lost lpatop?" got not found, and the laptop page answers it', bucket: 1 },
+    { text: '"When are travel claims due?" got the meals sentence from the expenses page', bucket: 1 },
+  ]} />
+
+## Remove personal data before a trace becomes a case
+
+The golden set is a file in version control. Everyone who works on the
+agent reads it, and it is kept for years. A trace holds what a person
+typed, and run w1-11 holds more than its question needs. The `show` step
+prints its records:
+
+<Predict id="show-trace-w1-11" title="The trace of run w1-11"
+  answer={`{"run": "w1-11", "span": 1, "kind": "tool", "name": "execute_tool search_docs", "tool": "search_docs", "args": {"query": "My wife is due in May, how many days of parental leave do I get?"}, "result": {"name": "leave.txt"}, "user": "emp-2613"}
+  {"run": "w1-11", "span": 2, "kind": "model", "name": "chat fake-model", "asked": "answer", "answer": "Every employee accrues 25 days of annual leave per year.", "user": "emp-2613"}`} run="building-agents/evals-from-traces/show_w1_11.py">
+
+Run this, and compare what you see with the output below.
+
+```sh
+python3 traces.py show w1-11
+```
+
+</Predict>
+
+The employee number names a person, and the first half of the question
+says something about that person's family that a colleague shouldn't
+learn from a test file. Neither is needed to test the failure. Remove
+the details that point at a person, and keep the structure of the
+request: "How many days of parental leave do I get?". The case leaves out
+the employee number, and its origin names the trace id. The trace id
+leads back to the full trace only for people who may read the trace
+store.
+
+A rewritten question can also lose the failure. Check that the stripped
+question still fails the same way on the live prompt before you add it:
+
+<Predict id="ask-the-stripped-question" title="The stripped question on the live prompt"
+  answer={`search returned: leave.txt
+  answer: Every employee accrues 25 days of annual leave per year.`} run="building-agents/evals-from-traces/ask_parental.py">
+
+Run this, and compare what you see with the output below.
+
+```sh
+python3 traces.py ask current "How many days of parental leave do I get?"
+```
+
+</Predict>
+
+The same page and the same wrong sentence, so the stripped case tests
+what the trace showed.
+
+<Scenario id="a-trace-with-a-health-detail" objective="building-agents/evaluates-agents/grows-the-set-from-use"
+  concepts={['trace-driven-evaluation', 'golden-sets']}
+  context="A handbook assistant answers staff questions, and its traces record the employee number of the person who asked. The handbook has no rule for sick leave. The assistant answers when a handbook sentence shares two words with the question. A team adds cases from traces to a golden set that is kept in version control."
+  title="A trace with a health detail"
+  hint="What does the case need to fail the way the trace did, and who reads the golden set file?"
+  options={[
+    { text: 'Add the question as the person wrote it, because the set is internal and the detail shows why the person asked.', consequence: 'The surgery and the employee number are now in a file that everyone on the team reads. A later edit removes them from the file, and the old commit still holds them.' },
+    { text: 'Leave the trace out of the set, because a question that came with health data may never become a case.', consequence: 'The made-up sick leave rule has no case. A later change can bring it back, and the gate will not notice.' },
+    { text: 'Use "How many days of sick leave do I get?", check that it still gets the annual leave rule, and add it with the trace id.', correct: true, consequence: 'The case fails on the live prompt the way the trace did. Nothing in the file points at a person, and the trace id leads to the full trace only for those who may read the trace store.' },
+    { text: 'Ask a model for a new question on the same topic, such as "What is the policy for illness absence?", and add that.', consequence: 'The new question shares no word with the handbook, so the agent says not found and the case passes today. It does not test the failure the trace showed.' },
+  ]}>
+
+A trace from the employee emp-5530 asks: "I need surgery in June, how
+many days of sick leave do I get?". The assistant answered with the
+annual leave rule. What goes into the golden set?
+
+</Scenario>
+
+## Add the cases, and gate the next change
+
+The two new cases go into `golden-set.csv` in the format of the golden
+set lesson. They are refuse items, because the handbook covers neither
+question. Their `held_out` is `no`, because the team will change the
+agent while it looks at them, and
+[A golden set is the agent's regression suite](/building-agents/golden-sets/)
+keeps such items in the part that runs after every change. The `origin`
+column names the trace:
+
+```text
+x07,refuse,How many days of sick leave do I get?,,,no,no,trace w1-04: gave the annual leave rule as sick leave
+x08,refuse,How many days of parental leave do I get?,,,no,no,trace w1-11 with personal details removed: gave the annual leave rule as parental leave
+```
+
+Add the two rows to the end of `golden-set.csv` in your copy, and run the
+gate on the prompt that staff get today:
+
+<Predict id="gate-the-live-prompt" title="The gate on the live prompt, with the new cases"
+  answer={`prompt: current
+    refused  hard  6 of 8    needs 100%  FAIL
+    routine  hard  9 of 10   needs 90%   pass
+    helpful  soft  11 of 15  needs 70%   pass
+  deploy: blocked`} run="building-agents/evals-from-traces/gate_current_new.py">
+
+Run this, and compare what you see with the output below.
+
+```sh
+python3 gate.py current
+```
+
+</Predict>
+
+The prompt that passed the gate last week fails it now. The agent didn't
+change, and the set did. The two cases fail on the live prompt, which
+shows that they catch the failure from the traces. Until a change passes
+them, the hard gate blocks every deploy. This is what the hard gate is
+for, because staff get a made-up leave rule today. The next change is the
+fix.
+
+The previous lesson had a candidate that might be that fix. The stricter
+prompt answers only when one sentence covers every keyword of the
+question, and it waited for a sign-off because it lost the helpful answers
+to a03 and a04. Run the gate on it with the new cases:
+
+<Predict id="gate-the-stricter-prompt-again" title="The gate on the stricter prompt, with the new cases"
+  answer={`prompt: stricter
+    refused  hard  8 of 8    needs 100%  pass
+    routine  hard  9 of 10   needs 90%   pass
+    helpful  soft  9 of 15   needs 70%   FAIL
+  new failures: none
+  less helpful: a03 a04
+  deploy: waits for a person to sign off`} run="building-agents/evals-from-traces/gate_stricter_new.py">
+
+Run this, and compare what you see with the output below.
+
+```sh
+python3 gate.py stricter
+```
+
+</Predict>
+
+The decision is still a person's, but the person now has more to weigh.
+On one side are two helpful answers that the stricter prompt loses. On
+the other side are two refusals that it gets right, from questions that
+staff asked this week. Before the traces, the set had no case on the
+other side. Next Friday the team reads a new sample, and the gate checks
+it against a set that has these two cases.
+
+<Order id="order-one-round" phase="review" objective="building-agents/evaluates-agents/grows-the-set-from-use"
+  concepts={['trace-driven-evaluation']}
+  context="A team runs an agent in production and grows its golden set from the agent's traces. A gate runs the golden set on every change before it ships."
+  title="Order one round of growing the set"
+  hint="What must exist before anyone can read a run? And what must be true of a case before it goes into the set?"
+  steps={[
+    'Log a trace for every run the agent makes',
+    'Pick a sample of the week\'s traces and read each one',
+    'Label each run good or bad',
+    'For each bad run, look for an item of the same kind in the set',
+    'Write a case for each new kind, without personal data, and check that it fails today',
+    'Add the cases to the set',
+    'Run the gate on the next change, with the new cases in the set',
+  ]} />
+
+<MultiChoice id="what-a-case-from-a-trace-holds" phase="review" objective="building-agents/evaluates-agents/grows-the-set-from-use"
+  concepts={['trace-driven-evaluation', 'golden-sets']}
+  context="A support agent told a customer, who gave their name and order number, that a product could be returned after 60 days. The return policy says 30 days. The trace has the customer's name, the order number and the question. A team turns the trace into a golden set case, which a script checks without a person reading it."
+  title="What goes into the case?"
+  hint="Which lines does the case need to fail on the same mistake, and which lines point at the customer?"
+  options={[
+    { text: 'The question with the name and order number taken out.', correct: true },
+    { text: 'A phrase that a good answer must contain, here 30 days.', correct: true },
+    { text: 'The trace id, as the origin of the case.', correct: true },
+    { text: 'The customer\'s name, so the case can be traced back to them.', why: 'The trace id already leads back to the full trace, for the people who may read it. The name adds nothing to the test.' },
+    { text: 'The reply the agent gave, as the answer the case expects.', why: 'That reply is the failure. A case records what a good answer has.' },
+  ]}>
+
+Which of these belong in the case?
+
+</MultiChoice>
+
+<Choice id="the-new-case-passes" phase="review" objective="building-agents/evaluates-agents/grows-the-set-from-use"
+  concepts={['trace-driven-evaluation']}
+  context="A handbook assistant answered a question about a bike allowance with a rule about the home office allowance. The handbook has no bike allowance. A team member rewrote the question without personal details as What does the company pay toward a bicycle?, added it as a refuse case, and ran the gate on the live prompt, which has not changed."
+  title="The new case passes on the live prompt"
+  hint="The live prompt gave the wrong answer in the trace. What should the case do on that same prompt?"
+  options={[
+    { text: 'The failure is fixed already, because a case that passes means the agent handles the question now.', why: 'Nothing changed in the agent. The case passes because it asks something the agent handles, which is a different question from the trace.' },
+    { text: 'The rewrite lost the failure, so the case needs wording closer to the trace until it fails today.', correct: true },
+    { text: 'The case belongs in the held-out part, because it passes and the team does not need to look at it.', why: 'Moving it does not make it catch the failure. A case that passes on the version that failed tests nothing from the trace.' },
+    { text: 'The gate has a bug, because a case added from a failure must fail, whatever the question says.', why: 'The gate graded the answer it got. The rewritten question got a different answer, so the result is correct.' },
+  ]}>
+
+The new case passes on the same live prompt that gave the wrong answer in
+the trace. What does that tell you?
+
+</Choice>
+
+<Pitfall title="Pasting the trace into the set as it is">
+
+A team adds a case from a trace in a hurry, with the question as the
+person typed it: a name, a diagnosis and an employee number. Many people
+read the golden set. A contractor reads it, and the file goes into a
+copy for a vendor. Six months later someone notices and deletes the line,
+and every earlier commit still holds it. Take out the details that point
+at a person before the case is written. Then check that the stripped
+question still fails.
+
+</Pitfall>
+
+The exercise uses the sample of the second week. The `week 2` step lists
+it.
+
+<Predict id="the-week-two-sample" title="The traces of week 2"
+  answer={`week 2 sample: 20 runs
+  w2-01 Mon  How long is the onboarding checklist?
+        answer: The onboarding checklist takes two weeks and ends with a review with your manager.
+  w2-02 Mon  Who do I tell about a lost labtop?
+        answer: not found
+  w2-03 Mon  What is the default class for short flights?
+        answer: Economy class is the default for flights under six hours.
+  w2-04 Mon  How often are laptops replaced?
+        answer: Laptops are replaced every four years.
+  w2-05 Tue  When are claims for a work trip due?
+        answer: Meals on a work trip are reimbursed up to 40 euros per day with a receipt.
+  w2-06 Tue  Who runs the warehouse?
+        answer: The data team runs the warehouse and the reports.
+  w2-07 Tue  Can I carry over my training budget?
+        answer: Unused days carry over until 31 March.
+  w2-08 Tue  Is home office equipment company property?
+        answer: Equipment stays company property.
+  w2-09 Wed  Is there a parking garage?
+        answer: not found
+  w2-10 Wed  How do I report a fishing email?
+        answer: not found
+  w2-11 Wed  Who builds the checkout?
+        answer: The payments team builds the checkout and billing services.
+  w2-12 Wed  When is the building open on weekdays?
+        answer: The building is open from 7 to 20 on weekdays.
+  w2-13 Thu  Can my dog come to the office?
+        answer: not found
+  w2-14 Thu  When do unused leave days expire?
+        answer: Every employee accrues 25 days of annual leave per year.
+  w2-15 Thu  Do I need a receipt for meals?
+        answer: Meals on a work trip are reimbursed up to 40 euros per day with a receipt.
+  w2-16 Thu  How many euros is the training budget?
+        answer: Every employee has a training budget of 1500 euros per year.
+  w2-17 Fri  Who is the cost center owner of the data team?
+        answer: The cost center owner of the data team is Jonas Berg, head of analytics.
+  w2-18 Fri  Who books train tickets?
+        answer: Train tickets are booked through the travel desk.
+  w2-19 Fri  Do conference tickets count against my budget?
+        answer: Conference tickets count against the training budget.
+  w2-20 Fri  What is the home office allowance?
+        answer: A home office allowance of 30 euros per month is paid with salary.`} run="building-agents/evals-from-traces/week2.py">
+
+Run this, and compare what you see with the output below.
+
+```sh
+python3 traces.py week 2
+```
+
+</Predict>
+
+<Exercise stretch="Run python3 traces.py ask stricter with the question of each new case. Which of the new kinds does the stricter prompt fix, and which part of the agent would a fix for the others change?">
+
+In your copy, with x07 and x08 added, read the sample of week 2 with
+`python3 traces.py week 2`, and label each run good or bad against the
+pages in `docs/`. For each bad run, write the first step that went wrong,
+and look in `golden-set.csv` for an item of the same kind. For each new
+kind, write one case per bad run in the person's words, without the
+employee number, and with the trace id in `origin`. Check with
+`python3 traces.py ask current "<question>"` that each case fails today.
+Add the rows, and run `python3 gate.py current` and
+`python3 gate.py stricter`. Twenty minutes is enough. A sample read this
+way shows what the gate didn't know before.
+
+A good result has five bad runs. In w2-02 and w2-10 a misspelled word,
+"labtop" and "fishing", leaves one word of the question that the
+handbook has. The search returns the laptop page on that one word, and
+one shared word is too few for an answer, so the agent says "not found"
+to a question that the handbook answers. In w2-05 and w2-14 the search found
+the right page, and the agent quoted the wrong sentence on it. Those are
+two new kinds. Run w2-07 has the kind of x07 and x08, an uncovered
+question answered with a rule that shares two words with it, so it needs
+no new case. The four new cases are routine items, with the page and a
+phrase from the right sentence, such as `30 days` for w2-05. With the
+four cases added, the gate fails the routine metric, 9 of 14, on both
+prompts, and blocks both. Week 2 has no personal data in its questions,
+and the employee numbers stay out of the set. Which of the two new kinds
+would you fix first, and why?
+
+</Exercise>
+
+<Recap>
+
+1. Log a trace for every run from the first release, because people and
+   models can only judge the runs that were logged (@Husain 2024).
+2. Read a sample of the traces on a schedule, more at first and fewer
+   later, and label each run good or bad (@Husain 2024).
+3. For each bad run, look for an item of the same kind in the set. A new
+   kind becomes a case, with the quality a good answer has written down
+   and the trace id as its origin.
+4. Take out the details that point at a person before a trace becomes a
+   case, and check that the stripped case still fails on the live
+   version.
+5. A new case fails on the live version until a change fixes it, and the
+   gate then checks that change against it.
+
+</Recap>
+
+<Habit id="read-traces-before-scores">
+The next time you check the dashboard of an agent you work on, open five of this week's traces and read them in full before you look at the scores.
+</Habit>
