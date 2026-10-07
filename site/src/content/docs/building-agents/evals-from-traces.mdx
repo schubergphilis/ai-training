@@ -149,8 +149,8 @@ In [Reading failures one by one](/building-agents/error-analysis/) each
 of the ten failures added an item. A weekly sample brings the same kinds
 back week after week. So here a bad run of a kind that the set already
 has adds to the count of that kind, and a bad run of a new kind becomes
-a case. So for each bad run, look in `golden-set.csv` for an item
-that would fail on the same mistake, at the same step.
+a case. For each bad run, look in `golden-set.csv` for an item that
+would fail on the same mistake, at the same step.
 
 - w1-08 has the kind of a01, "How much holiday can I take?". In both runs
   the search doesn't return the page with the answer, because the handbook
@@ -172,7 +172,7 @@ with two runs.
 
 <Sort id="new-kind-or-known-kind" objective="building-agents/evaluates-agents/grows-the-set-from-use"
   concepts={['trace-driven-evaluation', 'golden-sets']}
-  context="A handbook assistant searches the handbook for one page, and then answers with a sentence from that page, or says not found when no sentence shares two words with the question. Its golden set has these items, among others. One asks about holiday, a word the handbook does not use, so the search does not return the leave page, and the set accepts not found. One asks who approves a laptop for a team: the search returns the laptop page, and the answer needs a second lookup, the team page. Six ask about things the handbook does not cover, and each gets not found. A kind of failure means the step where the run went wrong, and what went wrong there."
+  context="A handbook assistant searches the handbook for one page, and then answers with a sentence from that page, or says not found when no sentence shares two words with the question. Every item of its golden set gets a right answer today, apart from these. One asks about holiday, a word the handbook does not use, so the search does not return the leave page, and the set accepts not found. One asks where to keep passwords: the search returns the security page, which answers it, but the best sentence shares only one word with the question, so the agent says not found, and the set accepts that. One asks who approves a laptop for a team: the search returns the laptop page, and the answer needs a second lookup, the team page. Six ask about things the handbook does not cover, and each gets not found. A kind of failure means the step where the run went wrong, and what went wrong there."
   title="New kind or known kind?"
   hint="For each failure, is there an item in the set that would fail on the same mistake, or would every item still pass?"
   buckets={['The set has a case of this kind', 'A new kind: add a case']}
@@ -180,8 +180,8 @@ with two runs.
     { text: '"How much time off can I take?": the search returned no page, because the handbook calls it annual leave', bucket: 0 },
     { text: '"How many days of study leave do I get?": the handbook has no such rule, and the agent quoted the annual leave rule', bucket: 1 },
     { text: '"Who approves a replacement laptop for the data team?": the search returned the laptop page, and the agent gave the general rule without the owner\'s name from the team page', bucket: 0 },
-    { text: '"Who do I tell about a lost lpatop?": the search returned the laptop page, which answers it, and the agent still said not found', bucket: 1 },
-    { text: '"When are travel claims due?": the search returned the expenses page, and the agent quoted the meals sentence instead of the claims sentence', bucket: 1 },
+    { text: '"Who do I tell about a lost lpatop?": the search returned the laptop page, which answers it, and the agent still said not found', bucket: 0 },
+    { text: '"When are claims for meals on a trip due?": the search returned the expenses page, and the agent quoted the meals sentence instead of the claims sentence', bucket: 1 },
   ]} />
 
 ## Remove personal data before a trace becomes a case
@@ -236,7 +236,7 @@ what the trace showed.
   title="A trace with a health detail"
   hint="What does the case need to fail the way the trace did, and who reads the golden set file?"
   options={[
-    { text: 'Add the question as the person wrote it, because the set is internal and the detail shows why the person asked.', consequence: 'The surgery is now in a file that everyone on the team reads. A later edit removes them from the file, and the old commit still holds them.' },
+    { text: 'Add the question as the person wrote it, because the set is internal and the detail shows why the person asked.', consequence: 'The surgery is now in a file that everyone on the team reads. A later edit removes it from the file, and the old commit still holds it.' },
     { text: 'Leave the trace out of the set, because a question that came with health data may never become a case.', consequence: 'The made-up sick leave rule has no case. A later change can bring it back, and the gate will not notice.' },
     { text: 'Use "How many days of sick leave do I get?", check that it still gets the annual leave rule, and add it with the trace id.', correct: true, consequence: 'The case fails on the live prompt the way the trace did. Nothing in the file points at a person, and the trace id leads to the full trace only for those who may read the trace store.' },
     { text: 'Ask a model for a new question on the same topic, such as "What is the policy for illness absence?", and add that.', consequence: 'The new question shares no word with the handbook, so the agent says not found and the case passes today. It does not test the failure the trace showed.' },
@@ -284,12 +284,13 @@ python3 gate.py current
 The prompt that passed the gate last week fails it now. The agent didn't
 change, and the set did. The two cases fail on the live prompt, which
 shows that they catch the failure from the traces. From now on the hard
-gate blocks every deploy until a change passes them, also a change that
+gate blocks every deploy until a change passes them, even a change that
 fixes something else. A team that doesn't want that adds the cases in the
 same change as the fix. This team adds them now and accepts that nothing
-else ships until the fix does. Staff get a made-up leave rule today, and
-the refusal gate needs 100% because any answer to a refuse item can be a
-made-up policy, so the fix goes first. The next change is the fix.
+else ships until the fix does. Staff get a made-up leave rule today. The
+refusal gate needs 100% because any answer to a refuse item can be a
+made-up policy, and that makes the fix the first change to ship. The next
+change is the fix.
 
 The previous lesson had a candidate that might be that fix. The stricter
 prompt answers only when one sentence covers every keyword of the
@@ -448,40 +449,40 @@ Add the rows, and run `python3 gate.py current` and
 `python3 gate.py stricter`. Twenty minutes is enough. A sample read this
 way shows what the gate didn't know before.
 
-A good result has five bad runs. In w2-02 and w2-10 a misspelled word,
-"labtop" and "fishing", leaves one word of the question that the
-handbook has, "lost" and "email". The search returns the right page on
-that one word, the laptop page and the security page. One shared word is
-too few for an answer. The agent says "not found" to a question that the
-page answers. In w2-05 and w2-14 the search also returns the right
-page, and the agent quotes the wrong sentence on it. Those are two new
-kinds. Run w2-07 has the kind of x07 and x08, an uncovered question
-answered with a rule that shares two words with it, so it needs no new
-case. The four new cases are routine items, with the page and a phrase
-from the right sentence, such as `30 days` for w2-05. Week 2 has no
-personal data in its questions, and the employee numbers stay out of the
-set. These are the four rows of a good result:
+A good result has five bad runs and one new kind. In w2-02 and w2-10 a
+misspelled word, "labtop" and "fishing", leaves one word of the question
+that the handbook has, "lost" and "email". The search returns the right
+page on that one word, the laptop page and the security page. One shared
+word is too few for an answer. The agent says "not found" to a question
+that the page answers. That is the kind of a05, "Where do I keep my
+passwords?", which gets the security page and "not found" on the one
+word "passwords". Run w2-07 has the kind of x07 and x08, an uncovered
+question answered with a rule that shares two words with it. These
+three runs add to the counts of kinds that the set has. In w2-05 and
+w2-14 the search also returns the right page, and the agent quotes the
+wrong sentence on it. The set has no item of that kind. The two new cases are routine items, with the page
+and a phrase from the right sentence, such as `30 days` for w2-05. Week 2
+has no personal data in its questions, and the employee numbers stay out
+of the set. These are the two rows of a good result:
 
 ```text
-r11,routine,Who do I tell about a lost labtop?,laptops.txt,service desk,no,no,trace w2-02: misspelled laptop
-r12,routine,What do I do with a fishing email?,security.txt,security team,no,no,trace w2-10: misspelled phishing
 r13,routine,When are claims for a work trip due?,expenses.txt,30 days,no,no,trace w2-05: quoted the meals sentence
 r14,routine,When do unused leave days expire?,leave.txt,31 March,no,no,trace w2-14: quoted the annual leave sentence
 ```
 
-With x07, x08 and these four rows in the set, the two gate runs print
+With x07, x08 and these two rows in the set, the two gate runs print
 this:
 
 <Predict id="gate-after-week-two" title="The gate on both prompts, with the cases of week 2"
   answer={`prompt: current
     refused  hard  6 of 8    needs 100%  FAIL
-    routine  hard  9 of 14   needs 90%   FAIL
-    helpful  soft  11 of 19  needs 70%   FAIL
+    routine  hard  9 of 12   needs 90%   FAIL
+    helpful  soft  11 of 17  needs 70%   FAIL
   deploy: blocked
   prompt: stricter
     refused  hard  8 of 8    needs 100%  pass
-    routine  hard  9 of 14   needs 90%   FAIL
-    helpful  soft  9 of 19   needs 70%   FAIL
+    routine  hard  9 of 12   needs 90%   FAIL
+    helpful  soft  9 of 17   needs 70%   FAIL
   new failures: none
   less helpful: a03 a04
   deploy: blocked`} run="building-agents/evals-from-traces/gate_week2.py">
@@ -495,9 +496,10 @@ python3 gate.py stricter
 
 </Predict>
 
-The four new cases fail on both prompts. The routine metric drops to
-9 of 14, and the gate blocks both. Which of the two new kinds would you
-fix first, and why?
+The two new cases fail on both prompts. The routine metric drops to
+9 of 12, and the gate blocks both. The kind of a05 got two more runs
+this week, and the new kind has two runs. Which of the two would you fix
+first, and why?
 
 </Exercise>
 

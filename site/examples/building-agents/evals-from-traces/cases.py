@@ -21,12 +21,8 @@ WEEK1_CASES = [
     "trace w1-11 with personal details removed: gave the annual leave rule as parental leave",
 ]
 
-# The four cases of the exercise's good result, one per bad run of a new kind in week 2.
+# The two cases of the exercise's good result, one per bad run of the new kind in week 2.
 WEEK2_CASES = [
-    "r11,routine,Who do I tell about a lost labtop?,laptops.txt,service desk,no,no,"
-    "trace w2-02: misspelled laptop",
-    "r12,routine,What do I do with a fishing email?,security.txt,security team,no,no,"
-    "trace w2-10: misspelled phishing",
     "r13,routine,When are claims for a work trip due?,expenses.txt,30 days,no,no,"
     "trace w2-05: quoted the meals sentence",
     "r14,routine,When do unused leave days expire?,leave.txt,31 March,no,no,"
