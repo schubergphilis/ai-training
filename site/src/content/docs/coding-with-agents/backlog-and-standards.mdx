@@ -140,10 +140,9 @@ Review comments have a second problem. A reviewer writes "use `Decimal` for
 money, not `float`" on one pull request, and two weeks later writes the
 same comment on the next one, for a change another session wrote. The
 comment is in the old pull request, where no new session reads it. The
-memory page for Claude Code gives the moment to write such a thing down:
-when the agent makes the same mistake a second time, or when a review
-catches something the agent should have known about the project
-(@Claude Code memory).
+memory page for Claude Code names two moments to write a rule down that fit
+here: the agent repeats a mistake, or a code review turns up a fact about
+the project that the agent was missing (@Claude Code memory).
 
 A standards file is the team's list of coding rules that no tool checks.
 Human reviewers and agent reviewers read the same file, and check a change
@@ -171,8 +170,8 @@ Some findings don't need a line, because a script can find them. The
 `float` comment is one. The [hooks and CI lesson](/coding-with-agents/ci-and-hooks/)
 showed how a rule that must hold every time becomes a hook or a CI step,
 and a repeated finding can take the same path. This check flags every call
-to `float(` in the files it is given. It is crude on purpose: it is ten
-lines that catch the mistake the reviews found, and if the code ever needs
+to `float(` in the files it is given. It is crude on purpose: it catches
+the mistake the reviews found, and if the code ever needs
 a float for something other than money, that is the day to make it
 narrower.
 
@@ -225,8 +224,8 @@ Match each review finding to what the team does with it.
 The file also changes what a reviewer may block on. Google's code review
 guide for reviewers says that on questions of style, the team's style
 guide decides, and a style point the guide doesn't cover is the reviewer's
-personal preference. It suggests a prefix such as "Nit:" for a point of
-polish the author may choose to ignore (@Google eng-practices). The guide
+personal preference. It suggests a prefix such as "Nit:" for a small
+improvement that the author doesn't have to make (@Google eng-practices). The guide
 treats design as more than taste, and a bug or a design problem can still
 block a change. For the
 conventions of the code, the standards file plays the part of the style
@@ -248,7 +247,7 @@ preferences.
     { text: 'Rename the function as the reviewer asks, because the change shouldn\'t merge while a finding blocks it.', why: 'That treats a preference as a rule. The next author can\'t tell from the file which names are allowed.' },
     { text: 'Add a naming rule to the standards file now, so that the finding has a rule behind it and can block.', why: 'One reviewer\'s preference on one change isn\'t a recurring finding yet. A rule written for it is a guess.' },
     { text: 'Delete the finding from the review, because a point without a rule behind it isn\'t useful to the author.', why: 'The point may still help the author. It can stay as a suggestion that the author is free to take or leave.' },
-    { text: 'Treat it as a "Nit:" that the author may ignore, and remind the reviewer to block only on a rule or a check.', correct: true },
+    { text: 'Treat it as a "Nit:" that the author can take or leave, and remind the reviewer to block only on a rule or a check.', correct: true },
   ]}>
 The agent reviewer writes: "Blocking: rename `read_rows` to `parse_rows`."
 No rule in the file covers names, and nothing else is wrong with the
