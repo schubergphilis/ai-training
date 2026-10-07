@@ -1,5 +1,9 @@
 id: concepts/one-prompt-many-requests
 title: One prompt, many requests
+description: >-
+  Follow one prompt to an agent through every model request it causes, see what the harness sends
+  each time and what comes back from the environment, and learn why the model needs the whole history
+  on every request.
 mode: explanation
 covers: concepts/what-is-an-agent
 serves: [concepts/recognizes-agents/follows-one-prompt]
@@ -7,7 +11,10 @@ introduces: [environment, model-request, stateless-model]
 assumes:
   - objective: concepts/recognizes-agents/names-the-loop
     lesson: concepts/agent-loop
-extends-to: []
+    section: observe-think-act
+extends-to:
+  - label: How the agent loop works
+    href: https://code.claude.com/docs/en/agent-sdk/agent-loop
 after: [concepts/agent-loop]
 shorts: []
 exercise:
@@ -18,7 +25,19 @@ exercise:
 sources: [Claude Code agent loop, Claude docs messages]
 issue: 682
 minutes: 12
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 notes: >-
   Picks up the loop where concepts/agent-loop leaves it and slows it down to single requests, so the
   tokens-and-cost lessons can rely on the model being stateless. "Turn" keeps the meaning the live
-  lessons give it, one round trip inside the loop.
+  lessons give it, one round trip inside the loop: a request, its reply and the tool run that follows.
+  Foundations page, so the learner runs nothing, and every log is a text fence. The first log is the
+  first transcript of concepts/agent-loop rewritten as what the harness sent, and the page says it was
+  written for the lesson. No fixture, because no number on the page is computed: the request and
+  history counts are read off the logs. Sections later lessons can point at: what-is-in-each-request
+  (the three parts of a request and the growing history, for concepts/reading-token-counts),
+  the-model-keeps-nothing-between-requests (stateless-model) and model-harness-environment. The
+  harness concept stays introduced by concepts/assistant-or-agent, the next lesson. This page names it
+  as the software that sends the requests and runs the tools, and the back references in
+  assistant-or-agent now name the toy agent lesson as the lesson before last. Changed from the plan:
+  extends-to links the vendor agent loop page.
