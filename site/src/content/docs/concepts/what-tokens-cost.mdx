@@ -33,7 +33,9 @@ with a greeting, explains what project Lantern is, says why the finance
 team is busy, apologizes for the trouble, gives the notes in full
 sentences and closes with thanks. It is the kind of prompt people write
 when they treat the assistant as a colleague. Counted with the same
-rule of thumb as the last lesson, about four characters per token, the two
+rule of thumb as
+[the context window lesson](/concepts/context-window/#count-the-tokens-of-a-page),
+about four characters per token, the two
 come out like this, with the answer the model writes added for the price
 table below. Both counts are estimates, and the vendor's own tokenizer
 gives the exact number.
@@ -199,7 +201,7 @@ it too.
 Dilution here is about one prompt or one file, where an instruction
 competes with the text after it. A long chat has a second, separate effect:
 the window fills, early turns fall out or get summarized, and the model
-loses the facts rather than weighing them less. The last lesson covered
+loses the facts rather than weighing them less. The context window lesson covered
 that under [when the early facts fall
 out](/concepts/context-window/#when-the-early-facts-fall-out), and a later
 lesson on memory returns to it.
@@ -249,7 +251,7 @@ answer.
   hint="In each case, is the rule still in the window and competing with more text, or has it left the window?"
   options={[
     { text: 'A twenty-rule instruction file is pasted at the start of a fresh chat, and the answer follows most rules and skips two in the middle.', correct: true },
-    { text: 'Two hours into a chat, the model writes for the wrong team because the first instruction no longer fits in the window.', why: 'The instruction is gone from the window, and so the model never read it for this answer. That is the window filling up, from the last lesson.' },
+    { text: 'Two hours into a chat, the model writes for the wrong team because the first instruction no longer fits in the window.', why: 'The instruction is gone from the window, and so the model never read it for this answer. That is the window filling up, from the context window lesson.' },
     { text: 'A prompt that gives one rule and then pastes a fifty-page contract gets an answer that follows the rule loosely.', correct: true },
     { text: 'A call with a long prompt costs a third more than the same call with a short one.', why: 'Price grows with every token read. That is the cost of the tokens, and it says nothing about which rule the model followed.' },
   ]}>

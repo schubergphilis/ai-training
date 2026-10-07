@@ -9,7 +9,7 @@ model, such as a summary that changes a date in the memo you pasted. In
 this lesson we split one wrong summary into those two kinds and find the
 check that catches each one.
 
-## One summary, four mistakes
+## One summary, five mistakes
 
 You paste a short memo into a chat assistant and ask for a summary. The
 exchange below is illustrative: the author wrote it to show the pattern,
@@ -36,16 +36,17 @@ The offsite is in Spain, since Lisbon is the capital of Spain.
 
 </Response>
 
-The reply reads well, and it gets four things wrong.
+The reply reads well, and it gets five things wrong.
 
 - It gives 26 March, and the memo says 19 March.
 - It says the move is one week, and 12 to 26 March is two weeks. The reply
   contradicts itself.
-- It has three bullet points, and you asked for two. The third one adds
-  flights, which the memo never mentions.
+- It has three bullet points, and you asked for two.
+- It says the office manager books the flights, which the memo never
+  mentions.
 - It puts Lisbon in Spain. Lisbon is the capital of Portugal.
 
-The first three mistakes you can find with the memo alone. The fourth
+The first four mistakes you can find with the memo alone. The fifth
 one you can't, because the memo never says which country Lisbon is in.
 
 ## Two kinds of hallucination
@@ -54,24 +55,24 @@ A survey of research on hallucination in large language models sorts
 these mistakes into two groups, and the names of the groups are
 factuality and faithfulness (@Huang 2025).
 
-A **factuality** error is wrong about the world. The survey splits it
-into two cases. In the first, the claim is about something real and gets
-it wrong, such as the wrong person named as the inventor of a device, or
-Lisbon placed in Spain. In the second, the claim can't be checked against
-anything that exists, such as a quote from a person who never said it or
+A **factuality** error is wrong about the world. The survey separates a
+claim about something real that gets it wrong, such as the wrong person
+named as the inventor of a device, or Lisbon placed in Spain, from a
+claim that can't be checked against anything that exists, such as a quote from a person who never said it or
 a reference to a paper nobody wrote (@Huang 2025).
 
-A **faithfulness** error departs from what the user gave the model. The
-survey names three cases (@Huang 2025):
+A **faithfulness** error departs from what the user gave the model, or
+from itself. The survey divides it by what the output departs from
+(@Huang 2025):
 
 - The output ignores the instruction, such as three bullet points where
   you asked for two.
-- The output contradicts the text it was given, such as 26 March where
-  the memo says 19 March, or flights that the memo doesn't mention.
+- The output changes or adds to the text it was given, such as 26 March
+  where the memo says 19 March, or flights that the memo doesn't mention.
 - The output contradicts itself, such as "one week later" next to two
   dates that are two weeks apart.
 
-So the summary above has one factuality error and three faithfulness
+So the summary above has one factuality error and four faithfulness
 errors. A faithfulness error can sound true. "The office manager books
 the flights" is a reasonable thing for an office manager to do, and it
 can even be true in your company. It is still a mistake in this
@@ -80,7 +81,7 @@ it.
 
 <Sort id="world-or-text" objective="concepts/explains-models/names-failure-modes"
   concepts={['factuality-and-faithfulness']}
-  context="Each item is one mistake in a reply from a chat assistant. Each item says what the user gave the model: a document, an instruction, or only a question."
+  context="Each item is one mistake in a reply from a chat assistant. Most items say what the user gave the model: a document, an instruction, or only a question."
   title="Wrong about the world, or about the input?"
   hint="Could you find this mistake with the user's input and the reply alone, or do you need to know something the input doesn't say?"
   buckets={['Wrong about the world (factuality)', 'Departs from the input or from itself (faithfulness)']}
@@ -133,7 +134,7 @@ do as a user is know which check a claim needs.
     { text: 'Search the web for the usual notice period in contracts of this kind.', why: 'A usual period says nothing about this contract. The answer has to match the text you pasted.' },
     { text: 'Ask the same assistant whether it is sure, in a new chat.', why: 'The model is not a reliable store of facts, and a new chat has never seen the contract.' },
     { text: 'Find the clause on notice in the contract and read it.', correct: true },
-    { text: 'Ask a second assistant the same question about notice periods.', why: 'A second model without the contract can only guess what is usual. It never sees the clause.' },
+    { text: 'Ask a second assistant, without the contract, what notice periods usually are.', why: 'A second model without the contract can only guess what is usual. It never sees the clause.' },
   ]}>
 
 You paste a contract into a chat assistant and ask for the notice period.
@@ -184,12 +185,13 @@ Which two of these mistakes are faithfulness errors?
 Match each mistake to the check that finds it.
 </Match>
 
-<Exercise stretch="Paste a short email you wrote into a chat assistant, ask for a two-line summary and one fact about a place or a date the email names, and sort every mistake you find in the reply the same way.">
+<Exercise stretch="Paste a short email you wrote, one with nothing confidential in it, into a chat assistant, ask for a two-line summary and one fact about a place or a date the email names, and sort every mistake you find in the reply the same way.">
 
 Copy the wrong answers below, all from chat assistants, into a note,
 and for each one write two things: the kind of error (factuality or
 faithfulness) and the check that finds it, in one line, such as "compare
-with paragraph two of the report".
+with the menu". The point is to practice choosing the check before you
+start checking, because the wrong check finds nothing.
 
 ```text
 1. Asked to translate a menu, the reply adds a dish the menu doesn't have.
@@ -215,7 +217,7 @@ do you need the letter to see the mistake, or the reply alone?
    wrongly, or a claim nothing can confirm, such as a quote nobody said
    (@Huang 2025).
 2. A faithfulness error departs from what you gave the model: it ignores
-   the instruction, contradicts the text you pasted, or contradicts
+   the instruction, changes or adds to the text you pasted, or contradicts
    itself (@Huang 2025).
 3. Check a factuality claim against a source outside the chat. Check a
    faithfulness claim against your own input, side by side.
