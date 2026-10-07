@@ -38,8 +38,9 @@ notes: >-
   and also that on one model a lower level does not reliably shorten the visible answer, so the
   page states both and tells the learner to ask for length in the prompt. The cache effect of an
   effort change is worded as the pages give it: a change to the top-level value invalidates at
-  least the message part of the cache, and some newer models have a per-message change that keeps
-  it. The five-minute lifetime is stated by both the Prompt caching and the Manage costs page.
+  least the message part of the cache, and some newer models can change the level partway through
+  a conversation (beta), and the new level holds until another change, which keeps it. The
+  five-minute lifetime is stated by both the Prompt caching and the Manage costs page.
   Changed from the plan: Claude docs pricing is a fourth source, for the cache prices and for
   turning caching on per request, and the page has a habit. The keep-the-level-fixed behavior of
   chooses-effort-level is taught in the cache section, where its reason is, and its scenario

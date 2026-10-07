@@ -166,7 +166,7 @@ at no extra cost. A cache that lasts an hour is also available, at a higher
 write price (@Claude docs prompt-caching). One coding agent's cost guide
 gives the same five minutes by default when the agent is billed by the
 token. On a subscription it gives an hour, which drops to five minutes
-once the subscription draws on paid extra usage. It also says that the
+once the subscription draws on usage credits. It also says that the
 first message after a longer break processes the whole history again
 (@Claude Code costs). So request 5 wrote all 22,395 tokens again and cost
 more than it would have without a cache.
@@ -175,21 +175,20 @@ A break is one way to lose the cache, and a change to the start of the
 request is the other. The start of a request is built in a fixed order: the
 tool descriptions first, then the instructions, then the messages. The
 cache matches only a start that is identical up to the point it stored
-(@Claude docs prompt-caching). A change
-at any point ends the match there, and everything after it is processed and
-paid for again.
+(@Claude docs prompt-caching). A change at any point ends the match there,
+and everything after it is processed and paid for again.
 
 - **Changing the tools** that the assistant can use ends the match at the
   very start, so nothing is read from the cache (@Claude docs prompt-caching).
 - **Editing the instructions** ends it after the tool descriptions, so the
   whole conversation is processed again.
 - **Changing the effort level** between requests ends the match at least
-  before the messages, because the level is written into the prompt the
-  model reads (@Claude docs prompt-caching). Some newer models can change
-  the level partway through a conversation and keep the cache, with a
-  setting that is still in beta. The new level then holds until another
-  change. On other models the vendor's advice is to choose a level at the
-  start of a session and keep it there (@Claude docs effort).
+  before the messages (@Claude docs prompt-caching), because the level is
+  written into the prompt the model reads (@Claude docs effort). Some newer
+  models can change the level partway through a conversation and keep the
+  cache, with a setting that is still in beta. The new level then holds
+  until another change. On other models the vendor's advice is to choose a
+  level at the start of a session and keep it there (@Claude docs effort).
 - **Adding a text message at the end** keeps the match. Everything before
   it is the same, so it is read from the cache. An image is an exception:
   adding one anywhere ends the match before the messages
@@ -381,8 +380,9 @@ send again most often?
    test the level on a few real cases before you decide (@Claude docs effort).
 3. Prompt caching makes the unchanged start of a request cheap to read
    again. The output is billed as before, and the new text at the end is
-   never read from the cache. A five-minute cache stores it at a quarter
-   more than normal input (@Claude docs prompt-caching) (@Claude docs pricing).
+   never read from the cache. A five-minute cache stores that new text at a
+   quarter more than normal input
+   (@Claude docs prompt-caching) (@Claude docs pricing).
 4. The cache matches from the start and ends at the first change. A changed
    tool or instruction, an effort level changed for the whole request, or a
    break longer than the cache lifetime makes the next request process the
