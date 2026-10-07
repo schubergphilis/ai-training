@@ -36,16 +36,20 @@ concepts:
       at a small fraction of the normal input price. The opening part is
       built in a fixed order: tool descriptions, then the system prompt, then
       the messages. A change at any point invalidates the cache from there
-      on, so editing an early instruction makes the next request pay full
-      price. An unused cache also expires after a few minutes.
+      on, so after an edit to an early instruction the rest of the request is
+      written to the cache again, at a little more than the normal input
+      price. An unused cache expires after five minutes, or after one hour
+      with an option that makes writing to the cache cost more.
   - id: effort-level
     name: Effort level
     definition: >-
       A setting that tells the model how many tokens to spend on a response,
-      from low to max. Higher effort gives more thinking, more thorough tool
-      use and longer answers, and costs more tokens and time. Lower effort is
-      faster and cheaper and suits simple, well-defined work. The setting
-      guides the model and is no strict budget. Changing it between requests
+      from low to max. Higher effort gives more thinking and more thorough
+      tool use, and costs more tokens and time. On some models it does not
+      reliably change the length of the answer, so ask for a length in the
+      prompt when it matters. Lower effort is faster and cheaper and suits
+      simple, well-defined work. The setting guides the model and is no
+      strict budget. Changing it between requests
       in one conversation can invalidate the prompt cache, so it is chosen
       per kind of work and kept for the session.
 links:
