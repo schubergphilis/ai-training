@@ -1,0 +1,250 @@
+import { Choice, Match, MultiChoice, Scenario, Sort, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+In this lesson we look at the moment between two phases of work, such as
+the end of planning and the start of implementation. A planning session
+fills its context window with the files it read and the ideas it tried,
+including the ones you turned down. When the plan is written, you choose
+what the next phase starts with: the same session, a new session that
+starts from the written plan, or a summary of the old one. Each choice
+keeps different things, and each costs something different. The page has
+no code to run.
+
+The lesson builds on two earlier ones.
+[*Telling the agent where the task is and where it stops*](/coding-with-agents/scoping-and-referencing/#point-at-the-file-instead-of-describing-it)
+showed how to point an agent at a file by path, and a plan file is the file
+you point the next phase at.
+[*Directing the summary before compaction*](/customizing-agents/compaction/#what-the-summary-replaces-and-what-comes-back)
+listed what Claude Code puts back after a compaction. This page uses that
+list to compare the options. Where it names a Claude Code feature it says
+so, and the vendor pages were checked on the date at the end of the lesson.
+
+## What a session holds before you type
+
+A new session doesn't start empty. Its **starting context** is everything
+in the context window before your first message. In Claude Code that's the
+system prompt, the `CLAUDE.md` or `AGENTS.md` instructions, the auto-memory
+notes, the names of the tools from connected Model Context Protocol (MCP)
+servers and a one-line description of each skill (@Claude Code context window).
+Other agents load their own set, and most load an instructions file.
+
+The starting context stays in the window for the whole session. Claude
+Code sends the whole conversation with each request it makes
+(@Claude Code costs), and the starting context goes with it. A large starting context takes room
+from the task in every session, including the short ones. In Claude Code
+the `/context` command shows what fills the window, by category
+(@Claude Code context window).
+
+You make it smaller in two ways that the costs page names
+(@Claude Code costs). Move instructions for one workflow, such as how to run
+a database migration, out of `CLAUDE.md` and into a skill, which loads its
+full text only when it is used. And run `/mcp` to turn off the servers you
+don't use. The lesson [*Writing project instructions the agent reads every session*](/coding-with-agents/project-instructions/)
+gave a second reason to keep the instructions file short: the agent follows
+a short file more reliably than a long one.
+
+<Choice id="what-the-long-file-costs" objective="coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with"
+  concepts={['starting-context']}
+  context="A project's instructions file, loaded by the coding agent at the start of every session, has 600 lines. 400 of them describe a database migration that the team runs once a month. Today an engineer starts a session to fix one typo in a help text."
+  title="What do the 400 lines cost today?" hint="When does the agent load the instructions file, and what goes into each request after that?"
+  options={[
+    { text: 'Nothing, because the agent reads the migration part of the file only when a migration comes up.', why: 'The agent loads the instructions file whole at the start of the session. Loading text only when it is needed is what a skill does.' },
+    { text: 'Nothing after the first request, because the file is sent only once, at the start of the session.', why: 'Each request sends the whole context again, the file included, so the lines take room in the window for the whole session.' },
+    { text: 'They are in the window from the first message and go with each request, although the task never needs them.', correct: true },
+    { text: 'They push the oldest messages out of the window, so the agent forgets the typo it was asked to fix.', why: 'Loading the file doesn\'t remove messages. A one-typo session is far from full, and the cost is the room and tokens the lines take in each request.' },
+  ]}>
+The engineer fixes one typo in this session and closes it. What did the 400
+migration lines cost?
+</Choice>
+
+## Three ways to start the next phase
+
+Take a planning session on the to-do program from earlier lessons. You asked
+the agent for a `due <n> <date>` command. It read `todo.py`, `store.py` and
+the tests, and tried two date formats. You turned down free-text dates,
+because the list must sort by date. In the chat you also reminded the
+agent not to edit `legacy/`. The agent wrote the plan to `PLAN.md`:
+five steps, the files to change and the test to write first. The plan is
+done, and implementation comes next. Here is what each option starts it
+with.
+
+**Continue in the same session.** The next phase has everything: each file
+the agent read, each command output and each idea you turned down, word for
+word. That history is also the problem. As the context window fills, the
+agent follows earlier instructions less well and makes more mistakes
+(@Claude Code best practices). Every request in the implementation phase
+also sends the whole planning conversation again (@Claude Code costs).
+
+**Clear, and start from the written plan.** In Claude Code, `/clear` starts
+a new session (@Claude Code costs). The next phase has the starting context,
+the repository with its uncommitted changes and the files you point it at,
+and nothing from the conversation. For a spec that is finished, the
+best-practices page advises this: start a fresh session to carry it out, so
+the context holds only the implementation and the spec is in a file you can
+refer to (@Claude Code best practices). The costs page adds that `/clear`
+costs nothing (@Claude Code costs). What you lose is anything that was said
+and not written down.
+
+**Compact, then continue.** `/compact` replaces the conversation with a
+summary. After it, Claude Code reads the project-root `CLAUDE.md`, the
+auto-memory notes and the plan from plan mode again from disk. It also
+reads up to five of the files the agent read or edited, the most recently
+modified first. What the commands printed and the steps the agent reasoned
+through are not kept word for word (@Claude Code context window). The
+context-window page suggests `/compact` with instructions before you start a
+long new task, so the summary keeps what you name (@Claude Code context window).
+A compaction of a long conversation is itself a large request, because the
+agent reads all of it to write the summary (@Claude Code costs). And a
+summary can drop a detail whose importance shows only later
+(@Anthropic context engineering).
+
+Two more options are variations on these. A handoff file is a written plan
+for a session that is not done: what was done, what is left and what was
+decided. And a subagent starts with a clean context of its own and reports
+back a short summary, so a large search stays out of your window
+(@Anthropic context engineering).
+
+<Match id="what-each-start-keeps" objective="coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with"
+  concepts={['deciding-at-a-phase-boundary', 'starting-context']}
+  context="A coding agent session in Claude Code has just finished planning a new command, and the plan is in PLAN.md in the repository. The engineer is choosing how the implementation phase starts: going on in the session, running /clear and pointing the new session at PLAN.md, or running /compact and going on."
+  title="What does implementation start with?" hint="Which option keeps the conversation word for word, which keeps a summary of it, and which keeps none of it?"
+  options={['Continue in the session', 'Clear, and start from PLAN.md', 'Compact, then continue']}
+  rows={[
+    { statement: 'Every file read, test output and turned-down idea from planning, word for word', option: 0, why: 'Which option leaves the planning conversation in the window as it was?' },
+    { statement: 'The starting context, the repository and the plan file, and nothing that was only said in the chat', option: 1, why: 'Which option starts a new session that has only what is on disk?' },
+    { statement: 'A summary of the conversation, with CLAUDE.md, the memory notes and recent files read again from disk', option: 2, why: 'Which option replaces the conversation with a shorter version of it?' },
+  ]}
+  rationale="Continuing keeps all of the history, compacting keeps a summary of it, and clearing keeps only what is in files.">
+Match what the implementation phase has at its start with the option that
+gives it.
+</Match>
+
+## Decide at the boundary
+
+**Deciding at a phase boundary** is choosing what the next phase starts
+with when one phase ends. The sources give no rule for it, but they point
+at one question: does the next phase go on with the same problem, or
+start a new one?
+
+Implementation that follows a finished plan is a new problem. It needs the
+plan, the files the plan names and the reasons behind the plan's choices.
+It doesn't need the planning conversation, so clear, and start from the
+plan file. A debugging session in the middle of one hard bug is the other
+case. The best-practices page says that sometimes you should let the
+context grow, because you are deep in one complex problem and the history
+is worth keeping (@Claude Code best practices). Between the two, compaction
+fits work that keeps going back and forth on one problem, and notes in a
+file fit work with clear milestones (@Anthropic context engineering).
+
+Whatever you choose, do one step first: write down what the next phase
+must keep. Clearing drops the whole conversation, and compacting keeps only
+what the summary states. In the planning session above, that is the reason
+you turned down free-text dates. Add it to `PLAN.md` and read the file.
+Then clear, and start the new session with a brief that points at it:
+
+```text
+Implement the due command as PLAN.md describes. Start with step 1, the test.
+```
+
+The rule about `legacy/` that you typed in the chat an hour ago needs no
+line, because it is already in `AGENTS.md`, and the new session loads that
+file. A rule that is only in the chat needs a line in a file, or it is gone.
+
+<Scenario id="planning-is-done" objective="coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with"
+  concepts={['deciding-at-a-phase-boundary']}
+  context="An engineer and a coding agent spent two hours planning a new command. The session read many files, tried two approaches in scratch scripts, and the engineer turned one down for a reason given in the chat. The agent then wrote a five-step plan to PLAN.md that names the files and the first test. The engineer added the turned-down approach and its reason to PLAN.md and read the file. The context window is about two thirds full."
+  title="Planning is done" hint="Does implementation need the two hours of exploration, or what is in PLAN.md?"
+  options={[
+    { text: 'Go on in the same session, because it already knows everything that was explored.', consequence: 'Each implementation request sends the two hours of exploration again, and the agent follows its instructions less well as the window fills toward its limit.' },
+    { text: 'Run /compact with no instructions and go on in the same session.', consequence: 'The automatic summary keeps what it judges important from the exploration, and writing it is a large request. The plan was already in a file, so the summary adds little that the next phase needs.' },
+    { text: 'Run /clear, then tell the new session to implement PLAN.md from step 1.', correct: true, consequence: 'The new session has the starting context and the plan, and the plan holds the reason for the turned-down approach. Nothing that implementation needs was only in the chat.' },
+    { text: 'Run /clear, then describe the plan to the new session from memory.', consequence: 'The new session gets your summary of the plan in place of the plan. A retelling from memory tends to miss file names, the order of the steps and the reason you wrote down.' },
+  ]}>
+What does the implementation phase start with?
+</Scenario>
+
+<Pitfall title="The reason the summary dropped">
+At the end of a long planning session, an engineer runs `/compact` and goes
+on to implementation. The plan is in the summary, and the reason for
+turning down free-text dates is not, because it was said once in the chat
+an hour earlier. An hour later the agent proposes free-text dates "to keep
+the change small", and the engineer explains the reason a second time. A
+summary keeps what its writer judges important at that moment, and a
+detail can turn out to matter later (@Anthropic context engineering). The
+rule: before you clear or compact, put what the next phase must keep in a
+file, and read the file.
+</Pitfall>
+
+<Sort id="still-there-after-clear" phase="review" objective="coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with"
+  concepts={['deciding-at-a-phase-boundary', 'starting-context']}
+  context="An engineer runs /clear in Claude Code at the end of a planning session, which starts a new session in the same repository. A new session loads its starting context, including the instructions file, and reads files in the repository when it needs them or is pointed at them. The conversation before /clear is not in it."
+  title="Still there after /clear?" hint="Is the item in a file on disk, or was it only said or shown in the conversation?"
+  buckets={['The new session has it, or can read it', 'Gone unless someone wrote it down']}
+  items={[
+    { text: 'The rules in the project instructions file', bucket: 0 },
+    { text: 'The plan the agent wrote to PLAN.md', bucket: 0 },
+    { text: 'The uncommitted changes in the working tree', bucket: 0 },
+    { text: 'The reason you gave in the chat for turning down an approach', bucket: 1 },
+    { text: 'The output of a test run from an hour ago', bucket: 1 },
+  ]}>
+Sort each item by what the session after `/clear` has of it.
+</Sort>
+
+<Choice id="one-bug-an-hour-in" phase="review" objective="coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with"
+  concepts={['deciding-at-a-phase-boundary']}
+  context="An engineer has worked with a coding agent for an hour on one hard bug in one session. Together they ruled out three causes, each with a test run whose output is in the conversation. The context window is about a quarter full, and the next step is to test a fourth cause."
+  title="An hour into one bug" hint="Has a phase ended, and does the next step need the history of what was ruled out?"
+  options={[
+    { text: 'Clear, and start a new session from a note that lists the three causes.', why: 'The note has to restate three causes and the evidence against each, and the work is not at a boundary. The session has room left and the history is what the next step uses.' },
+    { text: 'Compact with instructions to keep the three causes, then test the fourth one.', why: 'A compaction is a large request that buys room the session doesn\'t need yet, and the summary keeps less of the evidence than the conversation does.' },
+    { text: 'Hand the fourth cause to a subagent and wait for it to report back.', why: 'A subagent starts with a clean context and knows none of what was ruled out, unless you write it all into its brief.' },
+    { text: 'Go on in the same session, because the next step works on the same problem.', correct: true },
+  ]}>
+What should the next step start with?
+</Choice>
+
+<MultiChoice id="write-it-down-first" phase="review" objective="coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with"
+  concepts={['deciding-at-a-phase-boundary']}
+  context="An engineer is about to run /clear in Claude Code at the end of a planning session. The agent wrote the plan to PLAN.md. In the chat, the engineer turned down one approach and agreed with the agent to settle a question about time zones during implementation. Neither is in PLAN.md. The new session will load the project's CLAUDE.md and can read any file in the repository."
+  title="What goes in the file first?" hint="Which of these exist only in the conversation, and does implementation need them?"
+  options={[
+    { text: 'The approach you turned down in the chat, with your reason', correct: true },
+    { text: 'The full text of the CLAUDE.md file, so the new session has its rules', why: 'The new session loads CLAUDE.md at its start. A copy in the plan adds length and nothing else.' },
+    { text: 'The question about time zones that you agreed to settle during implementation', correct: true },
+    { text: 'The full list of every file the planning session opened, in order', why: 'The agent can read any file again when it needs it. The plan names the files that matter.' },
+  ]}>
+Before the `/clear`, which two of these do you add to `PLAN.md`?
+</MultiChoice>
+
+<Exercise stretch="Do the same at the end of your next real planning session. Before you choose, run /context, or your agent's way of showing the context, and note how full the window is. At the start of the next session, check its starting context too, and name one thing in it that the task doesn't need.">
+Judge one phase boundary on paper. A session has just finished planning a
+`tag <n> <word>` command for the to-do program. Over ninety minutes it read
+`todo.py`, `store.py` and the tests, and tried two ways to store tags in a
+scratch script. You turned down storing tags as part of the item text,
+because the `list` output must not change. The agent wrote a four-step plan
+to `PLAN.md`, which doesn't mention the turned-down approach. In the chat
+you also reminded the agent not to edit `legacy/`, which `AGENTS.md` already
+says. The window is about two thirds full. Write three short lines: what
+implementation starts with and why, what the new phase loses, and what you
+add to a file before the switch. Ten minutes is enough.
+
+A good result: implementation starts from a cleared session and
+`PLAN.md`, because it is a new problem and the plan is written. The new
+phase loses the exploration with its scratch script output, and everything
+said only in the chat. Before the `/clear` you add the turned-down approach and
+its reason to `PLAN.md`. The `legacy/` rule doesn't need a line, because
+`AGENTS.md` holds it. Then answer one question: what in the work itself
+would make you continue in the session instead?
+</Exercise>
+
+<Recap>
+1. The starting context is everything in the window before your first message, and it goes with each request, so keep what the task never needs out of it (@Claude Code context window) (@Claude Code costs).
+2. At a phase boundary you choose what the next phase starts with. It can keep the whole history or a summary of it, or start again from what's in files.
+3. Continuing keeps everything, and a full window makes the agent follow its instructions less well (@Claude Code best practices).
+4. Clearing and starting from the written plan fits a phase that starts a new problem, such as implementation after planning (@Claude Code best practices).
+5. Compacting keeps a summary and drops the detail, and it is itself a large request (@Claude Code costs).
+6. Before you clear or compact, write what the next phase must keep in a file and read the file back.
+</Recap>
+
+<Habit id="plan-file-before-clear">
+At the end of your next planning session, add the decisions from the chat to the plan file before you clear, and start implementation in a session that points at the file.
+</Habit>

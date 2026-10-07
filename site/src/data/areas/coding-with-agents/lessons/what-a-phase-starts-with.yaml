@@ -1,5 +1,9 @@
 id: coding-with-agents/what-a-phase-starts-with
 title: What each phase starts with
+description: >-
+  When planning ends, decide what the implementation phase starts with: the same session, a cleared
+  session and the written plan, or a compacted summary. Know what each keeps, and what the starting
+  context costs before you type.
 mode: explanation
 covers: coding-with-agents/context
 serves: [coding-with-agents/ships-with-agent/chooses-what-a-phase-starts-with]
@@ -7,8 +11,13 @@ introduces: [starting-context, deciding-at-a-phase-boundary]
 assumes:
   - objective: coding-with-agents/ships-with-agent/gives-the-right-context
     lesson: coding-with-agents/scoping-and-referencing
+    section: point-at-the-file-instead-of-describing-it
   - objective: customizing-agents/configures-agent/manages-memory
-extends-to: []
+    lesson: customizing-agents/compaction
+    section: what-the-summary-replaces-and-what-comes-back
+extends-to:
+  - label: Writing a handoff before a session ends
+    href: /customizing-agents/session-handoff/
 after: [coding-with-agents/project-instructions]
 shorts: []
 exercise:
@@ -17,9 +26,21 @@ exercise:
     For a session that has finished planning, decide whether implementation continues in it, starts
     fresh from the written plan, or starts after compaction, and say what the new phase loses.
 sources: [Claude Code context window, Claude Code best practices, Anthropic context engineering, Claude Code costs]
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 issue: 681
 minutes: 15
 notes: >-
   Expert lesson. It comes before keeping-understanding, which closes the part. No source gives a
   decision guide for the phase boundary, so the lesson lays out the options the sources describe
-  (continue, clear and start from a written plan, compact) and what each one keeps.
+  (continue, clear and start from a written plan, compact) and what each one keeps. The page has no
+  fixture: the planning session is described in prose, and nothing on the page prints output. The
+  manages-memory assumption names the compaction lesson's section on what a compaction keeps and
+  what comes back from disk, because the page compares continuing, clearing and compacting and
+  relies on that list. The handoff and subagent options of the concept are named briefly, with the
+  handoff lesson as the extends-to link. The page names project-instructions by its title and
+  doesn't call it the previous lesson, so it needs no assumes entry for it. Vendor facts to re-check
+  by review-by: what loads before the first message and what survives compaction (context-window
+  page), the fresh session for a finished spec and letting context accumulate in one problem
+  (best-practices page), `/clear` costing nothing and `/compact` being a large request, moving
+  instructions to skills and disabling servers with `/mcp` (costs page).
