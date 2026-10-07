@@ -1,5 +1,9 @@
 id: customizing-agents/project-stays-in-charge
 title: Keeping the project in charge
+description: >-
+  When an installed skill asks for a push the project forbids, remove the conflict from your copy of
+  the skill, refuse the push with a PreToolUse hook whose reason names the open route, and see why
+  a bare refusal leaves other spellings of the same command open.
 mode: tutorial
 covers: customizing-agents/hooks-permissions
 serves: [customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge]
@@ -7,9 +11,13 @@ introduces: [steering-by-rejection]
 assumes:
   - objective: customizing-agents/configures-agent/adds-a-hook
     lesson: customizing-agents/first-hook
+    section: write-the-lockfile-check
   - objective: customizing-agents/adopts-a-skill-set/adopts-skills-gradually
     lesson: customizing-agents/adopting-a-skill-set
+    section: take-two-skills-at-a-time
 extends-to: []
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 after: [customizing-agents/first-hook, customizing-agents/adopting-a-skill-set]
 shorts: []
 exercise:
@@ -17,10 +25,23 @@ exercise:
   brief: >-
     When an installed skill asks for something the project forbids, write a hook or permission rule
     that refuses it with a reason, and check that the agent changes its approach.
-sources: [Claude Code hooks, Claude Code permissions]
+sources: [Claude Code hooks, Claude Code permissions, Claude Code skills, Claude Code memory]
 issue: 689
 minutes: 15
 notes: >-
-  Comes before subagents, which closes the part. The sources say a deny reason reaches the model.
-  That a bare refusal invites workarounds is inferred from the documented limits of Bash rules, and
-  the lesson says so.
+  Comes before subagents, which closes the part. The sources say a deny reason reaches the model
+  (hooks: permissionDecisionReason for deny is shown to Claude, exit 2 routes the same way;
+  permissions: a No with a Tab comment is sent as the reason, a No without one stops the turn). That
+  a bare refusal invites workarounds is inferred from the "What a Bash rule doesn't match" table on
+  the permissions page, and the page says so in prose and in the recap. Changes from the plan: the
+  forbidden action is git push, because the permissions page's table lists three push spellings a
+  Bash(git push *) rule misses. The skill `ship-branch` and the project are invented and live under
+  site/examples/customizing-agents/project-stays-in-charge/; the project's instruction file is
+  committed as CLAUDE.sample.md so that agents working in the course repository don't load it, and
+  the skill sits outside any .claude/ folder for the same reason. The exercise adds a local bare
+  repository as the remote, so a push that gets past the hook goes nowhere else. The hook uses the
+  JSON deny form, which first-hook only mentions, and has no `if` field because it starts no other
+  program. No recorded agent run is shown: the exercise has the learner compare a run with the
+  reason and a stretch run with a bare "Blocked". Sources added: Claude Code skills (allowed-tools
+  and that deny and ask rules win over it) and Claude Code memory (conflicting instructions). The
+  event names, JSON fields and rule syntax must be re-checked by review-by.
