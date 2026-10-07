@@ -1,0 +1,378 @@
+import { Choice, MultiChoice, Match, Sort, Scenario, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+A colleague spends a morning in one chat with an assistant. She asks what a
+kickoff email should contain, pastes her meeting notes, asks for a draft,
+pastes a budget sheet, and at the end asks for a subject line. The last
+question is one short line, and yet it cost about twice as much as the first one.
+In this lesson we read the token counts of every request in that chat and
+find out where the money went. Then we do the same for one prompt to an
+agent. You install and run nothing: every count on the page is in a table.
+
+The [lesson on what every token costs](/concepts/what-tokens-cost/#what-a-token-costs)
+priced one call. The [lesson on one prompt and many
+requests](/concepts/one-prompt-many-requests/#what-is-in-each-request)
+showed that each request carries the whole history so far. This lesson puts
+the two together.
+
+## Two counts on every request
+
+Every reply from a model comes with a short usage report, and that report
+holds two counts, the **input and output tokens** of the request
+(@Claude docs messages). The vendor bills by these counts.
+
+The input count is everything the request sent to the model. That is the
+instructions, the tool descriptions if the assistant has tools, the history
+of the conversation and the new message. The tool descriptions count as
+input on every request that carries them, and so do the tool results that
+come back (@Claude docs pricing).
+
+The output count is everything the model wrote. That includes the visible
+answer and a request for a tool. A model that thinks before it answers
+writes its thinking as tokens too, and those are billed as output tokens
+(@Claude Code costs). So the output count can be larger than the answer you
+see. The counts are also not an exact count of the words on the screen,
+because the vendor turns the request into its own format before the model
+reads it (@Claude docs messages).
+
+The two counts have different prices. On the vendor's price list an
+output token costs five times as much as an input token, on every model
+(@Claude docs pricing), and the example prices in the lesson on what every
+token costs follow the same pattern. So the same total can mean two very
+different bills. Read the two counts apart, and price each one.
+
+Some usage reports split the input count further: tokens written to a cache,
+tokens read from it, and the rest. Together those parts are the whole input
+(@Claude docs messages). A coding agent shows the same split on its usage
+screen for a session (@Claude Code costs). A later lesson in this course
+explains the cache. In this lesson every request is billed at the normal
+input price.
+
+<Choice id="where-the-bill-comes-from" objective="concepts/reasons-about-cost/reads-token-counts"
+  concepts={['input-and-output-tokens']}
+  context="The lesson prices input tokens at $6 and output tokens at $30 per million, so an output token costs five times an input token."
+  title="Where is most of the cost?"
+  hint="Multiply each count by its price. Which product is larger?"
+  options={[
+    { text: 'The summary, because each output token costs five times as much.', why: 'At five times the price, 500 output tokens cost as much as 2,500 input tokens, and the input is 40,000.' },
+    { text: 'The input and the output cost about the same, because the prices make up for the counts.', why: 'Price each count at its own rate and compare. The higher price does not make up for a count eighty times smaller.' },
+    { text: 'The instructions, because they are sent first.', why: 'The instructions are a small part of the input. Most of the forty thousand tokens is the report.' },
+    { text: 'The report that was sent in, because the input count is eighty times the output.', correct: true },
+  ]}>
+
+A summary job sends a long report and asks for a short summary. Its usage
+report shows 40,000 input tokens and 500 output tokens, at $6 per million
+input tokens and $30 per million output tokens. Where does most of the cost
+of this request come from?
+
+</Choice>
+
+<Match id="input-or-output" objective="concepts/reasons-about-cost/reads-token-counts"
+  concepts={['input-and-output-tokens', 'model-request']}
+  context="Every request to a model reports two counts: input tokens, for everything the request sent, and output tokens, for everything the model wrote in reply."
+  title="Which count does it go in?"
+  hint="Did the harness send this part to the model, or did the model write it in this reply?"
+  options={['Input tokens', 'Output tokens']}
+  rows={[
+    { statement: 'The instructions the assistant reads before every task', option: 0, why: 'Who sent this text to the model, and who wrote it?' },
+    { statement: 'The descriptions of the tools the assistant can use', option: 0, why: 'Is this text part of the package the harness sends?' },
+    { statement: 'The thinking the model writes before its answer', option: 1, why: 'Who produced these tokens in this reply?' },
+    { statement: 'A request for a tool in the model\'s reply', option: 1, why: 'Is a tool request something the model writes or something it reads?' },
+    { statement: 'A tool result that goes back to the model', option: 0, why: 'Which side wrote the result, the model or the tool?' },
+    { statement: 'The model\'s own reply from two requests ago, sent again in the history', option: 0, why: 'In this request, did the model write that reply or read it?' },
+  ]}
+  rationale="Everything the harness sends is input, even text the model wrote earlier. Only what the model writes in this reply is output.">
+
+Sort each part of a request into the count it adds to.
+
+</Match>
+
+## A short chat, request by request
+
+Here is the usage of the chat from the top of the page, one row per
+request. The counts are round numbers written for this lesson, and the
+prices are the example prices for a large model from the [lesson on what
+every token costs](/concepts/what-tokens-cost/#what-a-token-costs): $6 per
+million input tokens and $30 per million output tokens. The left column
+says what was new in each request. The assistant's instructions are 500
+tokens.
+
+```text
+chat session
+request                                       input  output   input $  output $   total $
+1. asks what a kickoff email holds              515     400   $0.0031   $0.0120   $0.0151
+2. pastes meeting notes, asks for a draft     2,435     350   $0.0146   $0.0105   $0.0251
+3. asks to make it shorter                    2,795     200   $0.0168   $0.0060   $0.0228
+4. pastes a budget sheet, asks to add it      5,015     250   $0.0301   $0.0075   $0.0376
+5. asks for a subject line                    5,277      15   $0.0317   $0.0004   $0.0321
+total                                        16,037   1,215   $0.0962   $0.0365   $0.1327
+```
+
+Read the table one column at a time. The output column goes up and down
+with the length of each answer. The input column only goes up. Request 1
+sent the instructions and one question. Request 2 sent those again, plus
+the first answer, plus the pasted notes. Each request after that carried
+everything before it, because the model keeps nothing between requests and
+the earlier messages are passed in again with each new one
+(@Claude docs messages).
+This is **growing session cost**: every request in a conversation costs at
+least as much input as the one before it.
+
+Now compare the first and the last row. Both questions are one short line.
+In request 1, most of the cost is output: 400 tokens of answer at the higher
+price. In request 5 the answer is 15 tokens, and almost all of the cost is
+input, the 5,277 tokens of conversation the subject line was sent with.
+The two pasted documents are in that input, and they were paid for again in
+every request after they arrived.
+
+The last row of the table below is the same subject-line question asked
+alone in a new chat, with only the instructions in front of it. A subject
+line written that way knows nothing about the email, so this row is for the
+price only.
+
+```text
+question 5 alone, in a new chat                 512      15   $0.0031   $0.0004   $0.0035
+```
+
+<Choice id="why-the-last-cost-more" objective="concepts/reasons-about-cost/explains-growing-cost"
+  concepts={['growing-session-cost', 'stateless-model']}
+  context="A chat had five requests. Two of them pasted documents. Request 1 was a one-line question with 515 input and 400 output tokens. Request 5 was a one-line question with 5,277 input and 15 output tokens."
+  title="Why did request 5 cost more?"
+  hint="What did the assistant send along with the fifth question?"
+  options={[
+    { text: 'Request 5 was sent with the whole conversation, both pasted documents included.', correct: true },
+    { text: 'The price per token goes up the longer a chat stays open.', why: 'The price per token is the same in every row. The input count is what changed.' },
+    { text: 'The answer to request 5 was longer than the answer to request 1.', why: 'Look at the output column: 15 tokens against 400. The answer was much shorter.' },
+    { text: 'The model had to search its memory of the chat for the earlier documents.', why: 'The model keeps no memory between requests. The documents were in front of it because they were sent again.' },
+  ]}>
+
+In the chat above, request 1 and request 5 were both a one-line question.
+Why did request 5 cost about twice as much as request 1?
+
+</Choice>
+
+## One prompt to an agent
+
+A chat sends one request for each message you type. An agent sends one
+request for each step of its loop. The cost guide of one coding agent says
+it sends the full conversation with every request, plus one more request
+each time a batch of tool results comes back (@Claude Code costs). So one
+prompt to an agent can fill several rows of a usage report.
+
+Here is the toy run from the [lesson on one prompt and many
+requests](/concepts/one-prompt-many-requests/#what-is-in-each-request): find
+the meeting note that mentions the June delivery, with a tool that lists a
+folder and a tool that reads a file. The agent's instructions and its tool
+descriptions are 1,400 tokens together. The counts are again written for
+this lesson.
+
+```text
+one prompt to an agent
+request                                       input  output   input $  output $   total $
+1. the prompt                                 1,430      40   $0.0086   $0.0012   $0.0098
+2. result: 3 file names                       1,530      40   $0.0092   $0.0012   $0.0104
+3. result: the text of one note               3,970     120   $0.0238   $0.0036   $0.0274
+total                                         6,930     200   $0.0416   $0.0060   $0.0476
+```
+
+The person typed one line, and the report has three rows. The first two
+outputs are short, because a request for a tool is short. The input of
+request 3 is more than twice that of request 2, because the full note came
+back as a tool result and went into the history. Had the agent gone on to
+a fourth step, the note would have been in that request too.
+
+<Choice id="how-many-rows" objective="concepts/reasons-about-cost/explains-growing-cost"
+  concepts={['growing-session-cost', 'model-request']}
+  context="An agent sends a new request to the model after every batch of tool results. In this run, every reply of the model asked for exactly one tool, until the last reply, which gave the answer."
+  title="How many requests?"
+  hint="Count the replies the model wrote, the final answer included."
+  options={[
+    { text: 'One request, because the person gave the agent one instruction.', why: 'The instruction starts the run. The harness sends a new request after each tool result.' },
+    { text: 'Eleven requests, one for each tool the agent used.', why: 'Each tool call was in its own reply, and the answer needed one more reply after the last result.' },
+    { text: 'Two requests, one before the tools ran and one after.', why: 'The tools ran one at a time, each in its own step, so each result went back in a request of its own.' },
+    { text: 'Twelve requests, one for each tool and one for the answer.', correct: true },
+  ]}>
+
+You give an agent one instruction. It uses eleven tools, one per reply, and
+then writes its answer. How many requests do you expect to see in the usage
+report for this instruction?
+
+</Choice>
+
+## Starting fresh
+
+The history is what makes a late request expensive, so the cheapest way to
+lower it is to drop it. When you move to a task that has nothing to do with
+the conversation so far, start a new conversation. The old history adds to
+the cost of every new request and gives the new task nothing it needs. The
+vendor's cost advice for its coding agent gives the same rule for a switch
+to unrelated work, because text from the old task is paid for again with
+each new message (@Claude Code costs).
+
+When you need to keep going on the same task, some tools can compact the
+conversation: they ask the model to summarize the history and carry on from
+the summary. That makes the requests after it smaller. The summary itself
+is one large request, because the model has to read the whole conversation
+to write it. A new conversation costs nothing (@Claude Code costs).
+
+<Scenario id="new-task-same-chat" objective="concepts/reasons-about-cost/explains-growing-cost"
+  concepts={['growing-session-cost']}
+  context="A chat has been open all morning and holds a long history about one email, including two pasted documents. The person now has an unrelated question about booking a train."
+  title="The next question is about something else"
+  hint="What will every request after this one carry, and does the new question need any of it?"
+  options={[
+    { text: 'Ask in the same chat, so the assistant has more context to work with.', consequence: 'Every request about the train now carries the whole email conversation. It costs more each time and adds nothing the train question needs.' },
+    { text: 'Ask the assistant to forget the email first, then ask about the train.', consequence: 'The request to forget is one more message in the history. The email conversation is still sent with every request after it.' },
+    { text: 'Open a new chat and ask about the train there.', correct: true, consequence: 'The first request carries only the instructions and the question. The email chat is still there to go back to.' },
+    { text: 'Ask the assistant to summarize the chat, then ask about the train.', consequence: 'The summary is one large request that reads the whole history, and the summary of the email then goes with every train question.' },
+  ]}>
+
+You have spent the morning on one email in a single chat. Now you want to
+ask about booking a train for next week, which has nothing to do with the
+email. What do you do?
+
+</Scenario>
+
+<Pitfall title="Blaming the long answers">
+A team's assistant costs more than they expected, and the first guess is that
+its answers are too long. They add "keep answers short" to the instructions.
+The bill barely moves. The usage report shows why: the output counts were a
+few hundred tokens a request, and the input counts were tens of thousands,
+because a reference document was attached to every conversation and the
+conversations ran all day. The rule: read the input and the output counts
+before you guess, and look at what the input carries before you shorten the
+answers.
+</Pitfall>
+
+<MultiChoice id="read-one-row" phase="review" objective="concepts/reasons-about-cost/reads-token-counts"
+  concepts={['input-and-output-tokens']}
+  context="A usage report for one request shows 12,000 input tokens and 300 output tokens. Output tokens cost five times as much per token as input tokens."
+  title="What does this row tell you?"
+  hint="Which count covers what was sent, which covers what was written, and what does each cost?"
+  options={[
+    { text: 'Most of the cost of this request is the text that was sent to the model.', correct: true },
+    { text: 'The model wrote about 12,000 tokens, and most of them were thinking.', why: 'Thinking is output, and the output count is 300. The 12,000 is what the request sent.' },
+    { text: 'The 300 output tokens can include thinking that the visible answer does not show.', correct: true },
+    { text: 'Output costs more per token, so the output is most of the cost here.', why: 'Five times 300 is 1,500 input tokens at the same price, and the input is 12,000.' },
+  ]}>
+
+A request's usage report shows 12,000 input tokens and 300 output tokens.
+Which two statements are true?
+
+</MultiChoice>
+
+<Choice id="same-total-two-bills" phase="review" objective="concepts/reasons-about-cost/reads-token-counts"
+  concepts={['input-and-output-tokens']}
+  context="Output tokens cost five times as much per token as input tokens. Two requests each used 10,000 tokens in total."
+  title="Which request costs more?"
+  hint="Price the output part of each request at five times the input price."
+  options={[
+    { text: 'They cost the same, because the total is 10,000 tokens in both.', why: 'The total hides the split, and the two kinds have different prices.' },
+    { text: 'Request B, because 8,000 of its tokens were written by the model.', correct: true },
+    { text: 'Request A, because a larger input takes the model longer to read.', why: 'Reading time is not what the bill counts. Input is the cheaper kind of token.' },
+    { text: 'Request A, because 9,500 of its tokens were sent to the model.', why: 'Sent tokens are input, the cheaper kind. Request B wrote sixteen times as many output tokens.' },
+  ]}>
+
+Request A had 9,500 input tokens and 500 output tokens. Request B had 2,000
+input tokens and 8,000 output tokens. Which request costs more?
+
+</Choice>
+
+<Choice id="one-line-late-in-the-day" phase="review" objective="concepts/reasons-about-cost/explains-growing-cost"
+  concepts={['growing-session-cost', 'stateless-model']}
+  context="A person has worked in one chat since the morning. In the afternoon they ask a one-line question, and its usage report shows 40,000 input tokens."
+  title="Why so much input?"
+  hint="What does the assistant send with each new message, and what does the model keep between requests?"
+  options={[
+    { text: 'The assistant counts every word of the question many times over.', why: 'Each token of the question is counted once. The count is large because of what came with it.' },
+    { text: 'The model looked up the morning\'s messages in its memory, and the lookup is billed.', why: 'The model keeps nothing between requests. The morning\'s messages were sent again as part of this request.' },
+    { text: 'The question was sent together with all of the morning\'s conversation.', correct: true },
+    { text: 'Long chats switch to a larger model, which counts more tokens per word.', why: 'The model is the same all day. The count grew because the history grew.' },
+  ]}>
+
+A one-line question late in a long chat shows 40,000 input tokens in its
+usage report. Why?
+
+</Choice>
+
+<Sort id="paid-once-or-again" phase="review" objective="concepts/reasons-about-cost/explains-growing-cost"
+  concepts={['growing-session-cost', 'input-and-output-tokens']}
+  context="In a chat, the assistant sends the whole conversation so far with every new request. The question is which text is paid for in one request only and which is paid for again in later requests of the same chat."
+  title="Paid once, or again later?"
+  hint="Will this text be in the history of a later request in the same chat?"
+  buckets={['Paid again in later requests', 'Paid for in one request only']}
+  items={[
+    { text: 'A report pasted into the first message of a chat that goes on all day', bucket: 0 },
+    { text: 'A long answer the model wrote early in the chat', bucket: 0 },
+    { text: 'A tool result in the second step of an agent run with five steps', bucket: 0 },
+    { text: 'The answer to the last question, after which the chat is closed', bucket: 1 },
+    { text: 'A one-line question asked in a new chat that ends after one reply', bucket: 1 },
+  ]} />
+
+<MultiChoice id="agent-run-rows" phase="review" objective="concepts/reasons-about-cost/explains-growing-cost"
+  concepts={['growing-session-cost', 'model-request']}
+  context="An agent sends a new request after each batch of tool results. In this run the model asked for one tool per reply: first a folder listing, then two files one after the other, and then it gave its answer."
+  title="What is true of this run?"
+  hint="Count the replies, and ask what the history of the last request holds."
+  options={[
+    { text: 'The usage report shows four requests for this one prompt.', correct: true },
+    { text: 'The usage report shows one request, because the person typed one prompt.', why: 'The harness sends a new request after each tool result, so one prompt fills several rows.' },
+    { text: 'The last request carries the listing and both files as input.', correct: true },
+    { text: 'Every request has about the same input, because the instructions are the same.', why: 'The instructions are the same, but the history grows with every result.' },
+  ]}>
+
+An agent gets one prompt. It asks for a folder listing, then reads one
+file, then reads another, each in its own reply, and then answers. Which two
+statements are true?
+
+</MultiChoice>
+
+<Exercise stretch="If a tool you use shows a usage screen with input and output counts, open it after your next long session. Find the request with the largest input and say what was in its history.">
+
+Here is the usage report of another chat, about planning a team day. The
+counts are written for this lesson, at the same example prices. On paper or
+in a note, write for each request its input and output count, and say in
+one line what made the input grow. Then write two or three sentences on why
+request 4, a one-line question, cost more than request 1, and what you
+would do differently next time. Ten minutes is enough.
+
+```text
+exercise: chat about a team day
+request                                       input  output   input $  output $   total $
+1. asks for team day ideas                      520     600   $0.0031   $0.0180   $0.0211
+2. pastes a price list, asks which fits       4,120     300   $0.0247   $0.0090   $0.0337
+3. asks for the invitation                    4,435     250   $0.0266   $0.0075   $0.0341
+4. asks if Friday is better                   4,693      60   $0.0282   $0.0018   $0.0300
+total                                        13,768   1,210   $0.0826   $0.0363   $0.1189
+```
+
+A good result notes that the input grows on every row and the output does
+not. It names the pasted price list as the jump in request 2 and says the
+list was sent again with requests 3 and 4. It says that most of the cost of
+request 1 is its long answer, and most of the cost of request 4 is the
+history it was sent with. A good answer to the last part asks whether the
+Friday question needed the price list at all. To close, ask yourself: in
+your own last long chat, which pasted text did you pay for most often?
+
+</Exercise>
+
+<Recap>
+
+1. Every request reports two counts. Input tokens are everything the
+   request sent: instructions, tool descriptions, the history and the new
+   message. Output tokens are everything the model wrote, thinking and tool
+   requests included (@Claude docs messages).
+2. An output token costs several times an input token, so read the two
+   counts apart and price each one (@Claude docs pricing).
+3. Each request in a conversation carries the whole history, so the input
+   count only goes up. A short question late in a long chat can cost more
+   than a long one at the start (@Claude Code costs).
+4. An agent sends a request for every step of its loop, and every tool
+   result goes into the input of the requests after it.
+5. Start a new conversation for an unrelated task. Compacting makes later
+   requests smaller, and the summary is one large request of its own.
+
+</Recap>
+
+<Habit id="new-task-new-chat">
+The next time a chat with an assistant moves on to a task that has nothing to do with the conversation so far, open a new chat for it.
+</Habit>
