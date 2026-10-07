@@ -1,0 +1,37 @@
+Buy milk
+x Call the plumber
+Water the plants
+x Renew the passport
+[x] Pay the electricity bill
+Book the dentist
+Fix the bike light
+
+x Return the library books
+Call the bank about the card
+Buy stamps
+[x] Send the birthday card
+Clean the gutters
+x Order printer ink
+Plan the weekend trip
+Back up the laptop
+x Pick up the dry cleaning
+Read the lease renewal
+Buy a new kettle
+
+[x] Cancel the gym trial
+Write to the landlord
+x Sort the tax papers
+Take the car for a service
+Book a table for Friday
+x Repot the basil
+Call the electrician
+Replace the hall bulb
+x Pay the parking fine
+Update the phone
+[x] Collect the parcel
+
+Change the bed sheets
+x Mend the jacket zip
+Find the warranty card
+Defrost the freezer
+x Return the shoes
