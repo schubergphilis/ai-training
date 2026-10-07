@@ -6,8 +6,8 @@ questions they ask. The first sets how much work the model puts into each
 answer. The second lets the long start of every request, the instructions
 and the contract, be paid for at a small part of the normal price. In this
 lesson we choose an effort level for a kind of work and find out what makes
-the cache stop working. You install and
-run nothing: every count on the page is in a table.
+the cache stop working. You install and run nothing: every count on the
+page is in a table.
 
 The [lesson on reading the token counts](/concepts/reading-token-counts/#a-short-chat-request-by-request)
 showed that each request in a conversation sends the whole history again.
@@ -18,8 +18,8 @@ This lesson starts from there.
 The **effort level** is a setting that tells the model how many tokens to
 spend on its response (@Claude docs effort). On one vendor's models the
 levels run from low through medium and high to max, and some models add
-one more level between high and max. If nobody sets it, most of those models run at high
-and one recent model at medium (@Claude docs effort).
+one more level between high and max. If nobody sets it, most of those
+models run at high and one recent model at medium (@Claude docs effort).
 
 The setting applies to everything the model writes, and not only to its
 thinking. The vendor's page lists the text of the answer, the requests for
@@ -30,14 +30,14 @@ plan explained before the model acts and a more detailed summary of what
 it did (@Claude docs effort).
 
 All of that is output, and output is the expensive kind of token. For an
-agent there is a second cost. Every extra tool call is one more request,
-and each request sends the whole history again. Higher effort adds input
+agent there is a second cost. Every extra round of tool calls is one more
+request, and each request sends the whole history again. Higher effort adds input
 tokens that way. Higher effort costs more tokens and more time, and lower
 effort is faster and cheaper (@Claude docs effort).
 
-The setting guides the model and is no strict budget: at a low level the
-model still thinks on a hard problem, only less than it would at a higher level (@Claude docs effort). And on at least one
-model, the vendor says, a lower level changes how much it thinks but does
+The setting guides the model and is no strict budget. A hard problem still
+gets some thinking at a low level, but it gets less of it
+(@Claude docs effort). And on at least one model, the vendor says, a lower level changes how much it thinks but does
 not reliably make the visible answer shorter (@Claude docs effort). When
 you want a short answer, ask for one in the prompt.
 
@@ -48,9 +48,9 @@ you want a short answer, ask for one in the prompt.
   hint="Which tokens does the effort setting govern: only the thinking, or everything the model writes?"
   options={[
     { text: 'Only the thinking gets shorter, and the tool calls and messages stay as they were.', why: 'The setting applies to all of the output, the tool calls and the messages included.' },
-    { text: 'The agent reads fewer input tokens, because it skips part of its instructions.', why: 'The instructions are sent in full either way. The setting governs what the model writes.' },
-    { text: 'The agent writes fewer tokens: less thinking, fewer tool calls and shorter messages.', correct: true },
-    { text: 'The agent stops at a fixed number of tokens, even in the middle of a hard step.', why: 'The level guides the model and is no strict budget. On a hard step the model still thinks, only less.' },
+    { text: 'The agent reads fewer input tokens, because it skips part of its instructions.', why: 'The instructions are sent in full at every level. Any input saved comes from fewer requests, so the reason given is wrong.' },
+    { text: 'The agent writes fewer tokens: less thinking, fewer tool calls and terser messages around them.', correct: true },
+    { text: 'The agent stops at a fixed number of tokens, even in the middle of a hard step.', why: 'The level guides the model and is no strict budget. A hard step still gets some thinking, only less of it.' },
   ]}>
 
 An agent renames the files in a folder to one pattern. You lower its effort
@@ -68,7 +68,7 @@ of tokens is no concern, and medium sits between high and low
 (@Claude docs effort).
 
 That is a starting point, and the same page says the right level depends on
-the task, so try it on your own work before you settle (@Claude docs effort).
+the task, so try it on your own work before you decide (@Claude docs effort).
 Run a few typical requests at two levels and compare the results. If the
 lower level gives the same quality, keep it. Choose the level for a kind of
 work, such as "drafting emails" or "reviewing contracts", and not for each
@@ -87,7 +87,7 @@ the same for the rest of the session.
     { statement: 'Sort incoming emails into three named folders, as a helper agent', option: 0, why: 'How much thinking does a choice between three fixed folders need?' },
     { statement: 'Find out why a monthly report total is wrong, across several spreadsheets', option: 1, why: 'Does the model know where to look before it starts?' },
   ]}
-  rationale="Simple, fully described work gains nothing from more thinking, so a low level saves tokens and time. Work that needs reasoning gets a higher level. Try both on a few real cases before you settle.">
+  rationale="Simple, fully described work gains nothing from more thinking, so a low level saves tokens and time. Work that needs reasoning gets a higher level. Try both on a few real cases before you decide.">
 
 Match each task to the effort level you would try first.
 
@@ -141,6 +141,9 @@ request                                      input written    read output  no ca
 total                                      108,545  44,375  64,170  1,400   $0.6933   $0.4133
 ```
 
+The totals are computed from the summed counts before rounding, so a
+column added up by hand can differ from them by $0.0001.
+
 Read the written and read columns first. Request 1 writes all 21,000
 tokens to the cache, so it costs more with the cache ($0.1725) than without
 it ($0.1410). Request 2 reads those 21,000 tokens back and writes only the
@@ -158,18 +161,17 @@ earlier request held it.
 
 Request 5 came after a lunch break, and it read nothing. A cache entry
 lasts five minutes by default, and each read starts the five minutes again
-at no extra cost. A cache that lasts an hour is also on offer, at a higher
+at no extra cost. A cache that lasts an hour is also available, at a higher
 write price (@Claude docs prompt-caching). One coding agent's cost guide
 gives the same five minutes by default when the agent is billed by the
-token and an hour on a subscription, and says that the first message
-after a longer break processes the whole history again
-(@Claude Code costs). So request 5 wrote all 22,395 tokens again and cost
+token. On a subscription it gives an hour, until the subscription draws on
+paid extra usage. It also says that the first message after a longer break
+processes the whole history again (@Claude Code costs). So request 5 wrote all 22,395 tokens again and cost
 more than it would have without a cache.
 
 A break is one way to lose the cache, and a change to the start of the
-request is the other. The start of
-a request is built in a fixed order: the tool descriptions first, then the
-instructions, then the messages. The cache matches only a start that is
+request is the other. The start of a request is built in a fixed order: the
+tool descriptions first, then the instructions, then the messages. The cache matches only a start that is
 identical up to the point it stored (@Claude docs prompt-caching). A change
 at any point ends the match there, and everything after it is processed and
 paid for again.
@@ -179,13 +181,16 @@ paid for again.
 - **Editing the instructions** ends it after the tool descriptions, so the
   whole conversation is processed again.
 - **Changing the effort level** between requests ends the match at least
-  before the messages, because the level is part of what the request sends
-  (@Claude docs prompt-caching). Some newer models can change the level for
-  one message and keep the cache, and on other models the vendor's advice
-  is to choose a level at the start of a session and keep it there
-  (@Claude docs effort).
-- **Adding a message at the end** keeps the match. Everything before it is
-  the same, so it is read from the cache.
+  before the messages, because the level is written into the prompt the
+  model reads (@Claude docs prompt-caching). Some newer models can change
+  the level partway through a conversation and keep the cache, with a
+  setting that is still in beta. The new level then holds until another
+  change. On other models the vendor's advice is to choose a level at the
+  start of a session and keep it there (@Claude docs effort).
+- **Adding a text message at the end** keeps the match. Everything before
+  it is the same, so it is read from the cache. An image is an exception:
+  adding one anywhere ends the match before the messages
+  (@Claude docs prompt-caching).
 
 Keep the effort level the same within a session for that reason. Choose the
 level for the kind of work when the session starts, and when you need
@@ -248,10 +253,10 @@ What do you do?
 <Pitfall title="Polishing the instructions during the session">
 A person pastes a long report into an assistant and asks questions about it
 all afternoon. Every few questions she opens the assistant's instructions and
-improves one sentence. The usage report shows that each request after an edit
-wrote the whole report to the cache again. The
-instructions come before the conversation, so every edit ended the cached
-match there. The rule: settle the instructions and the setting before a long
+improves one sentence. The usage report shows that each request after an
+edit wrote the whole report to the cache again. The instructions come
+before the conversation, so every edit ended the cached match there. The
+rule: finish the instructions and choose the effort level before a long
 session, and put a change in a new message at the end.
 </Pitfall>
 
@@ -288,7 +293,7 @@ and sets the effort level to max "to be safe". What does that choice do?
 <Choice id="same-document-new-first-line" phase="review" objective="concepts/reasons-about-cost/explains-prompt-caching"
   concepts={['prompt-caching']}
   context="A prompt cache stores the processed start of a request. A later request reuses it only when it begins with exactly the same tokens. Two requests a minute apart each send one long document, but they begin with a different first instruction before the document."
-  title="Why did both pay the full price?"
+  title="Why did neither read the cache?"
   hint="Where does the first difference between the two requests sit?"
   options={[
     { text: 'The document is too long to fit in the cache.', why: 'A long document is what the cache is for. Look at what comes before it.' },
@@ -350,12 +355,13 @@ it leaves at the normal price, and two things that would make the next
 request pay for the whole tender again. Ten minutes is enough.
 
 A good result chooses low for the table and high for the plan and the
-tender, and says that a higher level means more thinking, more tool calls
-and longer answers, at more tokens and time. It adds that you would try the
+tender, and says that a higher level means more thinking and more tool
+calls, at more tokens and time. It adds that you would try the
 level on a few real cases first. For the cache, it names the instructions,
-the tender and the earlier messages as the part read from the cache, and
-the answers, the thinking and each new question as the part that stays at
-full price. It names two of these as what breaks the cache: a break longer
+the tender and the earlier messages as the part read from the cache. The
+answers and the thinking stay at the normal output price. Each new question
+is never read from the cache, and it costs a little more than normal input
+when it is written to the cache. It names two of these as what breaks the cache: a break longer
 than the cache lifetime, an edit to the instructions, a change of tools,
 or a change of effort level. To close, ask yourself: in your own work, which
 long start do you send again most often?
@@ -368,15 +374,15 @@ long start do you send again most often?
    applies to all of its output: the thinking, the tool calls and the
    answer (@Claude docs effort).
 2. Start low for simple, clear work and high for hard or open work, and
-   test the level on a few real cases before you settle (@Claude docs effort).
+   test the level on a few real cases before you decide (@Claude docs effort).
 3. Prompt caching makes the unchanged start of a request cheap to read
-   again. The output and the new text at the end are billed as before
-   (@Claude docs prompt-caching).
+   again. The output is billed as before, and the new text at the end is
+   never read from the cache. A five-minute cache stores it at a quarter
+   more than normal input (@Claude docs prompt-caching) (@Claude docs pricing).
 4. The cache matches from the start and ends at the first change. A changed
    tool or instruction, an effort level changed for the whole request, or a
    break longer than the cache lifetime makes the next request process the
-   history again
-   (@Claude docs prompt-caching) (@Claude Code costs).
+   history again (@Claude docs prompt-caching) (@Claude Code costs).
 5. Choose the effort level for a kind of work when a session starts, and
    keep it until the session ends.
 
