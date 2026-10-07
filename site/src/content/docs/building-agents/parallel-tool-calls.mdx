@@ -25,8 +25,9 @@ answer. A round is one call to the model.
 The first fake model asks for one city at a time. It reads the weather
 results it has and asks for the first city that's missing. Once it has all
 three, it answers. A real model behaves this way when the request sets
-`disable_parallel_tool_use` to `true`, and the loop from When a tool fails
-only knew how to handle one call per reply anyway.
+`disable_parallel_tool_use` to `true`, and the loop from
+[When a tool fails](/building-agents/tool-errors/) only knew how to handle
+one call per reply anyway.
 
 ```python
 def model_one_at_a_time(messages):
@@ -65,8 +66,8 @@ def run(question, model, execute=in_order, max_steps=5):
 ```
 
 The `show` function prints the `user` line as the question in `repr`, the
-same as in When a tool fails, an assistant line as `call_1 get_weather(city='Amsterdam')`
-and a tool line as `call_1 '14°C, rain'`. If a message has two
+same as in "When a tool fails", an assistant line as
+`call_1 get_weather(city='Amsterdam')` and a tool line as `call_1 '14°C, rain'`. If a message has two
 or more calls or results, the line lists them all, separated by commas. The weather table has
 `Amsterdam: 14°C, rain`, `Lisbon: 27°C, sun` and `Oslo: 6°C, snow`, and
 `summary` joins them in that order with a period after each.
