@@ -1,0 +1,298 @@
+import { Choice, MultiChoice, Order, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+*Splitting the work into components the agent can build one at a time*
+wrote the acceptance test for the import parser, and that test treats a
+line that starts with `x ` as a done item. The rule came from the
+colleague who asked for the feature. They remember their old app writing
+`x `, and nobody has looked at the file. In this lesson we check that
+rule before the parser is built. We write down the one question, have
+the agent build the smallest program that answers it, put the answer in
+the spec and delete the program.
+
+*Let the agent interview you* ended with open questions in the spec, and
+some of them can't be settled by talking. Whether a file uses one done
+mark or two is a fact about the file, and a short program finds it out
+faster than a meeting does. Thomas and Hunt call this a prototype built
+to learn: it answers a question, it can leave out completeness and
+robustness, and it is thrown away when the question is answered
+(@Thomas 2019). With a coding agent, such a program takes a minute to
+write, so trying the idea often costs less than discussing it.
+
+## The fixture
+
+The fixture is in the course repository under
+`site/examples/coding-with-agents/prototype-to-throw-away/`. Copy that
+whole directory to a place of its own and change into the copy. It holds
+`SPEC.md`, the spec for the `import` command of the to-do program, and
+`old-list.txt`, a copy of the colleague's old file. A `sample/` directory
+holds a script that the second half of the lesson uses. The other files
+are for the course's own checks. The reset is to delete the copy and copy
+again.
+
+The spec ends with this section:
+
+```md
+## Open questions
+
+- Which done marks the old file uses. The colleague thinks it is `x` and a
+  space, but nobody has looked. `old-list.txt` is a copy of the file.
+```
+
+If the answer is "only `x `", the parser and its test don't need a
+change. A second mark in the file would make the parser import those
+items as open. The test would still pass, because none of its input lines
+has that mark.
+
+## One question before any code
+
+A throwaway prototype is a small program built only to answer one design
+question, and deleted once it has. The question comes first, written in
+one sentence, before you ask for any code. Without it, the agent builds
+whatever seems useful: a parser, then a test for the parser, then a
+command that calls it. That's a first version of the import, built
+without the components and checks that *Splitting the work into
+components the agent can build one at a time* designed.
+
+A prototype can answer a question when the program prints the answer,
+such as a count or two outputs side by side.
+"Which done marks does `old-list.txt` use?" is such a question. "Should
+we build the import at all?" isn't, because no program prints the answer.
+"How should the import work?" isn't either, because it asks for the whole
+design.
+
+<Choice id="question-for-a-prototype" objective="coding-with-agents/specifies-work/settles-with-a-prototype"
+  concepts={['throwaway-prototype']}
+  context="An engineer is specifying an import command for a small to-do program. It reads a text file that the colleague who asked for it exported from an old app. The spec has open questions, and the engineer wants a coding agent to build a throwaway prototype for one of them."
+  title="Which question fits a prototype?"
+  hint="For which question can a short program print something that settles it?"
+  options={[
+    { text: 'Whether the import should be built at all, or the colleague could type the items by hand.', why: 'That is a judgment about cost and value. No program prints it, so the agent would build something and the question would still be open.' },
+    { text: 'How the import should be designed, from the parser to the report it prints at the end.', why: 'That asks for the whole design, and the program that answers it is a first version of the feature, built without its components and checks.' },
+    { text: 'Whether the old file marks done items in any other way than with an x and a space.', correct: true },
+    { text: 'Whether the old file will cause any kind of problem for the import once it is built.', why: 'No short program prints that answer. To find every problem, the agent has to build the import, and the question is still not named.' },
+  ]}>
+Which of these questions should the engineer give the agent as the one
+question for a throwaway prototype?
+</Choice>
+
+## The smallest program that answers it
+
+Start your coding agent in the copy and give it the question, and say
+what the program reads and prints. Say what to leave out, too. Tests,
+error handling and structure are effort spent on code that you delete,
+and a brief that doesn't mention them leaves that choice to the agent.
+Say also that it may create one file and change nothing else.
+
+```text
+Read SPEC.md. Its open question is which done marks old-list.txt uses.
+Write a throwaway script, count_forms.py, that answers only that. It reads
+old-list.txt (hard-code the name), counts the blank lines, and prints how
+many lines start with each first word, most common first, the top five.
+No tests, no error handling, no command-line options. Create only
+count_forms.py, and don't start on the import.
+```
+
+Counting first words is enough. A done mark is the first word of its
+line, and a mark that the colleague forgot shows up near the top of the
+list. The course ships one version of such a script in
+`sample/count_forms.py`, so the output below is checked on every build:
+
+```python
+# Throwaway: answers which done marks old-list.txt uses. Delete after.
+from collections import Counter
+from pathlib import Path
+
+lines = Path("old-list.txt").read_text(encoding="utf-8").splitlines()
+blank = sum(1 for line in lines if not line.strip())
+words = Counter(line.split()[0] for line in lines if line.strip())
+print(f"{len(lines)} lines, {blank} blank")
+for word, count in words.most_common(5):
+    print(f"{word}: {count}")
+```
+
+The file name is hard-coded, and the whole file is read at once. It has
+no functions, tests, or checks. In the parser each of those would be a
+defect, and for one run on a file of 37 lines none of them matters.
+
+<Predict id="run-the-prototype" title="Run the course's prototype"
+  answer={`37 lines, 3 blank
+  x: 10
+  [x]: 4
+  Buy: 3
+  Book: 2
+  Call: 2`} run="coding-with-agents/prototype-to-throw-away/sample_run.py">
+Run this from the top of your copy, and compare what you see with the
+output below.
+
+```sh
+python3 sample/count_forms.py
+```
+
+</Predict>
+
+Run the script your agent wrote the same way, with
+`python3 count_forms.py`. Its format may differ, and the counts for `x`
+and `[x]` should be the same. If they differ, one of the two scripts is
+wrong, and reading both against `old-list.txt` tells you which.
+
+<MultiChoice id="what-the-brief-leaves-out" objective="coding-with-agents/specifies-work/settles-with-a-prototype"
+  concepts={['throwaway-prototype']}
+  context="An engineer briefs a coding agent for a throwaway script that counts how the lines of one text file start, to find out which done marks the file uses. The script runs once and is then deleted."
+  title="What does the prototype brief ask for?"
+  hint="Which parts of the brief serve the one answer, and which serve code that someone keeps?"
+  options={[
+    { text: 'Hard-code the name of the one file the script reads.', correct: true },
+    { text: 'Add unit tests for the counting in the script, so the numbers can be trusted.', why: 'The counts are checked by reading a few lines of the file. Tests are effort spent on code that is deleted after one run.' },
+    { text: 'Print the counts and nothing that the question doesn\'t need.', correct: true },
+    { text: 'Put the counting in importer.py, so the parser can reuse it.', why: 'Then the prototype is part of the system, with its shortcuts, and nobody deletes it.' },
+    { text: 'Catch a missing or unreadable file and print a clear message.', why: 'The file is there, and the engineer runs the script once. Handling errors is work for code that other people run.' },
+  ]}>
+Which two of these belong in the brief for the throwaway script?
+</MultiChoice>
+
+## Write the answer down, then delete the program
+
+The output answers the question. The file has two done marks: `x`
+starts ten lines and `[x]` starts four. A parser built from the spec as
+it stands would import four done items as open. The prototype found the
+fact, and the decision is still yours. Here the decision is that `[x] `
+marks a done item too. Write it into the behavior and take the question
+out of the open questions:
+
+```md
+2. A line that starts with `x` or `[x]` and a space is a done item, and
+   the mark isn't part of its text. The old file uses both (10 and 4
+   lines).
+```
+
+The acceptance test from *Splitting the work into components the agent
+can build one at a time* gets one more input line, such as
+`"[x] Pay the bill"`, so that it fails on a parser that knows only `x `.
+Then delete both scripts:
+
+```sh
+rm count_forms.py sample/count_forms.py
+```
+
+The answer is in the spec, where a fresh session and a reviewer read it.
+The code that found the answer is gone, so nobody can build on it. In
+an interview with Venners, Hunt and Thomas compare a prototype to the
+front of a film set, with no building behind it. They say it is made to
+be thrown away, and that the code a system keeps is a different kind,
+which they call tracer code (@Artima tracer bullets).
+
+<Pitfall title="The prototype that became the parser">
+An engineer had an agent write a quick script to see how an old file
+marked its done items. The script worked, so the engineer asked the agent
+to add the import command around it. The script read the whole file into
+memory, had a hard-coded path and no tests, and it was now the parser. A
+month later a colleague imported a much larger file, and the import
+stopped with an error about a path that existed only on the engineer's
+laptop. The rule: a prototype answers its question and is deleted, and
+the parser is built from the spec, with its own test.
+</Pitfall>
+
+<Scenario id="keep-the-script" objective="coding-with-agents/specifies-work/settles-with-a-prototype"
+  concepts={['throwaway-prototype']}
+  context="A coding agent wrote a throwaway script that showed which done marks an old to-do file uses: ten lines start with x and four with [x]. The spec for the import command says only x. The parser hasn't been built yet."
+  title="The script works. Now what?"
+  hint="Where must the answer be for a fresh session to build the parser, and what should happen to code written without tests?"
+  options={[
+    { text: 'Ask the agent to add tests to the script and grow it into the parser.', consequence: 'The parser starts from code written to be deleted, with a hard-coded path and a whole-file read, and the tests are written to fit it.' },
+    { text: 'Delete the script and tell the agent about [x] at the start of the next session.', consequence: 'The answer is in one chat. The spec still says x only, and the next session that reads the spec builds the old rule.' },
+    { text: 'Move the script to a prototypes folder in the repository, in case it is useful later.', consequence: 'The script stays in the code base, nobody remembers which question it answered, and someone imports from it a month later.' },
+    { text: 'Write the [x] rule into the spec, add an [x] line to the test, and delete the script.', correct: true, consequence: 'The spec and the test carry the answer. The parser is built from them in a fresh session, and the script is gone.' },
+  ]}>
+The script printed `x: 10` and `[x]: 4`. The colleague says: "It works.
+Keep it and turn it into the parser." What do you do?
+</Scenario>
+
+## Small on purpose
+
+In 1975, Fred Brooks advised teams to plan to throw away the first
+version of a whole system, because they would anyway. In the 1995
+anniversary edition he took that advice back. He wrote that it assumed a
+system is designed, built and tested in one pass, and that he now
+preferred to grow a system step by step (@Brooks 1995). A throwaway
+prototype in this lesson is a different thing from a first version of
+the system. It is a few lines that answer one question that you wrote
+down before it existed. The system itself grows one checked component at
+a time, as *Splitting the work into components the agent can build one
+at a time* planned it.
+
+<Choice id="throw-the-whole-thing-away" phase="review"
+  objective="coding-with-agents/specifies-work/settles-with-a-prototype"
+  concepts={['throwaway-prototype']}
+  context="A team is about to build an import command for a small to-do program with a coding agent. One design question is open: which done marks the old file uses. The work is planned as three components, each checked before the next."
+  title="Throw the first version away?"
+  hint="What did Brooks later say about throwing away a whole first version, and how big is a prototype for one question?"
+  options={[
+    { text: 'Build the whole import once, quickly, and throw it away, since agents make a first version cheap.', why: 'Brooks later took back the advice for whole systems. A whole first version answers no question that was written down.' },
+    { text: 'Build a short script for the open question, write its answer into the spec, and delete it.', correct: true },
+    { text: 'Skip the prototype, since each component is checked before the next one and the checks find the problem.', why: 'The checks test what the spec says. If the spec has the wrong done mark, the checks pass on the wrong parser.' },
+  ]}>
+A teammate quotes "plan to throw one away" and proposes building the whole
+import twice. What does this lesson do instead?
+</Choice>
+
+<Sort id="prototype-or-not" phase="review"
+  objective="coding-with-agents/specifies-work/settles-with-a-prototype"
+  concepts={['throwaway-prototype']}
+  context="An engineer is specifying an import command for a small to-do program and sorts the open points: some a short throwaway program can settle, and some no program can."
+  title="Can a prototype settle it?"
+  hint="Does a short program print or show something that settles the point?"
+  buckets={['A short program can find it out', 'Only a decision settles it']}
+  items={[
+    { text: 'Whether the old file has done marks other than x', bucket: 0 },
+    { text: 'Whether the import is worth a new command', bucket: 1 },
+    { text: 'Whether reading a 50,000-line file takes under a second', bucket: 0 },
+    { text: 'Whether the colleague may import a second file later', bucket: 1 },
+    { text: 'How many lines of the old file are already in the list', bucket: 0 },
+  ]} />
+
+<Order id="prototype-steps" phase="review"
+  objective="coding-with-agents/specifies-work/settles-with-a-prototype"
+  concepts={['throwaway-prototype']}
+  context="The steps of settling one open question in a spec with a throwaway program that a coding agent writes, before the real component is built."
+  title="From open question to spec"
+  hint="What must exist before the agent writes anything, and what has to be in the spec before the code is gone?"
+  steps={[
+    'Write the open question down in one sentence',
+    'Brief the agent for the smallest program that answers it',
+    'Run the program and read what it prints',
+    'Write the answer into the spec and the test',
+    'Delete the program',
+  ]} />
+
+<Exercise stretch="Take a second open question that only a person can decide, and write down why no program answers it.">
+Take the spec you wrote in the exercise of *Let the agent interview you*,
+and pick one open question from it that a program can answer. If your
+spec has none, use the open question of `sample/SPEC.md` in your copy of
+that lesson's fixture: whether `archive list` shows the date. A program
+that prints five archived items both ways answers it. Write the question
+in one sentence. Start your coding agent in a scratch directory outside
+the fixture, so the prototype can't touch the real code, and brief it for
+the smallest program that answers the question, with what to leave out
+and the one file it may create. Run the program, write the answer and
+your decision into the spec, and delete the program. Fifteen minutes is
+enough. You do this so that a design question is settled by a fact, and
+the code that found the fact never reaches the system.
+
+A good result: the question fits in one sentence and was written before
+the brief. The program is one file with no tests, and it is gone. The
+spec states the answer, and the question is no longer under the open
+questions. Reflect: how long would a discussion of the same question
+have taken, and would it have ended with the same answer?
+</Exercise>
+
+<Recap>
+1. A throwaway prototype is a small program built to answer one design question, and it is deleted once it has (@Thomas 2019).
+2. Write the question down in one sentence before you ask for code. A program that answers no named question grows into a first version of the system.
+3. Brief the agent to leave out tests, error handling and structure, and to create one file. They are effort spent on code that you delete.
+4. Write the answer and your decision into the spec, and update the test, before the program is deleted. A fresh session reads the spec, not the chat.
+5. Keep the prototype small. Brooks later took back his advice to throw away a whole first version (@Brooks 1995), and the system grows one checked component at a time.
+</Recap>
+
+<Habit id="name-the-question-first">
+The next time you are about to argue about a design point with a colleague, ask whether a short program could settle it, and write the question down before anyone writes the program.
+</Habit>

@@ -1,5 +1,9 @@
 id: coding-with-agents/prototype-to-throw-away
 title: A prototype you throw away
+description: >-
+  Write down one design question, have a coding agent build the smallest program that answers it,
+  put the answer into the spec and the test, and delete the program before it can grow into the
+  system.
 mode: tutorial
 covers: coding-with-agents/specification
 serves: [coding-with-agents/specifies-work/settles-with-a-prototype]
@@ -7,8 +11,10 @@ introduces: [throwaway-prototype]
 assumes:
   - objective: coding-with-agents/specifies-work/is-interviewed-before-planning
     lesson: coding-with-agents/agent-interviews-you
+    section: asking-for-the-interview
   - objective: coding-with-agents/specifies-work/decomposes-into-components
     lesson: coding-with-agents/decomposing-the-work
+    section: one-responsibility-per-component
 extends-to: []
 after: [coding-with-agents/decomposing-the-work, coding-with-agents/agent-interviews-you]
 shorts: []
@@ -23,4 +29,14 @@ minutes: 15
 notes: >-
   Expert lesson. The prototype answers one question and is deleted. Brooks later retracted "plan to
   throw one away" for whole systems, so the lesson keeps the prototype small and the question named
-  before it is built.
+  before it is built. Built as the plan says. The question is the import spec's open question from
+  decomposing-the-work, which done marks the colleague's old file uses: the parser test there
+  assumes only `x `, and the file also uses `[x] `. The fixture is SPEC.md, old-list.txt and a
+  shipped sample/count_forms.py, the throwaway script that counts first words, so the output on
+  the page is checked. The learner's own agent writes count_forms.py next to it and the two are
+  compared, then both are deleted. The exercise uses the open question of the learner's spec from
+  the agent-interviews-you exercise, with that lesson's sample spec as the fallback. The page
+  names both earlier lessons by title instead of "the previous lesson". No vendor product behavior
+  is claimed, so the lesson sets no sources-checked or review-by. plan-then-test said "as the last
+  lesson taught" for ending a session, which this lesson now sits before, so it names
+  first-session instead.
