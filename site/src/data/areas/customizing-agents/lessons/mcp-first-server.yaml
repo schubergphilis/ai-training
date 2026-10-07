@@ -18,8 +18,8 @@ assumes:
 extends-to:
   - label: Model Context Protocol tutorial (AI Hero)
     href: https://www.aihero.dev/model-context-protocol-tutorial
-sources-checked: 2026-09-26
-review-by: 2027-03-26
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 after: [customizing-agents/mcp]
 shorts:
   - Local and remote transports and what each one means for credentials (Academy model-context-protocol-advanced-topics)
@@ -46,10 +46,16 @@ notes: >-
   directory, pinned to the npm version current on sources-checked. Claude Code answers `roots/list`
   with its launch directory and `--add-dir` directories, and the server's roots replace its argument
   list, so the page has the learner start the agent inside the copy. The `claude mcp add` syntax, the
-  roots behavior, the scope names, the `.mcp.json` approval prompt and the
-  tool-search default come from code.claude.com/docs/en/mcp, the `mcp__` rule forms from
+  roots behavior, the scope names, the `.mcp.json` approval prompt, the
+  tool-search default, the stdio negotiation default (MCP_PROTOCOL_NEGOTIATION=auto, and a feature-flag
+  rollout from v2.1.285) and that only TypeScript SDK 2 adds revision 2026-07-28 come from
+  code.claude.com/docs/en/mcp (section "MCP client runtimes"), the `mcp__` rule forms from
   code.claude.com/docs/en/permissions, and the package name, tool names and directory scoping from the
-  server's README. The spec claims were re-checked against revision 2026-07-28, which drops the
+  server's README. The server's SDK 1 dependency (^1.30.0 in the package file under src/filesystem of the
+  servers repository; SDK 1.32.1 names 2025-11-25 as its latest revision) makes it a legacy server,
+  and the stdio transport page of revision 2026-07-28, "Backward Compatibility", has a probing client
+  fall back to `initialize` when a legacy server answers its `server/discover` probe with an error or
+  not at all, so the exercise works whether Claude Code probes or not. The spec claims were re-checked against revision 2026-07-28, which drops the
   `initialize` handshake for a per-request `_meta` field and says roots guide a server without the
   protocol enforcing them. That revision deprecates roots (its deprecated-features registry), so the
   page says so and has the learner give the copy both as the argument and as the root. All must be
