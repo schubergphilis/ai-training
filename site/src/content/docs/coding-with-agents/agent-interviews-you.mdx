@@ -1,0 +1,331 @@
+import { Choice, MultiChoice, Order, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Habit, Prompt, Response } from '@components/lesson';
+
+A colleague asks for a change to the to-do program: "Done items clutter
+the list. Can you tidy it? I still want to see what I finished last
+month." The request sounds clear until you try to build it. Does "tidy"
+mean the `clear` command the program already has, which deletes done
+items? Or does it mean moving them somewhere they can still be read? In
+this lesson the agent interviews you about the feature before any plan
+exists. You answer its questions, and together you settle on the words
+for the design. At the end you check two files against those words: the
+spec, and the plan that a fresh session writes from it.
+
+*Deciding whether to build it at all* ended with success criteria a
+stranger could check. You can only write those once you know what the
+feature is. For a feature larger than one sentence, the Claude Code best
+practices page recommends that the agent interviews you first and writes
+a spec, and that a new session then works from that spec (@Claude Code best practices).
+The agent's questions bring out the decisions you haven't made yet, at a
+point where a change to them is still free.
+
+## The fixture
+
+The fixture is the to-do program from *Your first session with a coding
+agent*, some weeks later. It has a `clear` command and is split into three
+modules. It is in the course repository under
+`site/examples/coding-with-agents/agent-interviews-you/`. Copy that whole
+directory to a place of its own. The copy holds `fixture-repo/`, where the
+agent works, a script `check_terms.py` and a `sample/` directory that the
+second half of the lesson uses. The reset is to delete the copy and copy
+again. Change into `fixture-repo` and look at the list before you start.
+
+<Predict id="run-list" title="Show the list"
+  answer={`1. [ ] Buy milk
+  2. [x] Call the plumber
+  3. [x] Renew the passport
+  4. [ ] Water the plants
+  2 open, 2 done`} run="coding-with-agents/agent-interviews-you/list.py">
+Run this, and compare what you see with the output below.
+
+```sh
+python3 todo.py list
+```
+
+</Predict>
+
+Two of the four items are done. `python3 todo.py clear` would delete both,
+and the colleague wants to keep them. That gap between "tidy" and `clear`
+is the first thing an interview should find.
+
+## Asking for the interview
+
+A design interview is a session where the agent asks and you answer. It
+comes before the agent plans anything or writes any code. Start your coding agent in `fixture-repo`
+and give it a short description of the feature with the request to
+interview you. Ask for questions about behavior, edge cases, risks and
+trade-offs, and tell it to skip what it can read in the code. Tell it when
+to stop, and what to write when it does.
+
+```text
+I want a way to tidy the to-do list. Done items clutter it, but I still
+need to see what I finished last month. Before you plan anything or
+change any code, interview me about this feature. Ask one question at a
+time. Ask about how it should behave, the edge cases, what could go
+wrong, and the trade-offs, and don't ask what you can find out from the
+code. When a word could mean two different things, ask me which one I
+mean. Keep going until nothing is open. Then write TERMS.md, one line per
+term in the form "- **term**: meaning. Avoid: word, word.", and SPEC.md,
+which uses only those terms. Put what I left undecided under
+"Open questions" in SPEC.md.
+```
+
+In Claude Code, the best practices page suggests naming its
+`AskUserQuestion` tool in the request (@Claude Code best practices). The
+agent then asks its questions through that tool. Another agent asks in the
+chat, which works just as well.
+
+The exchange below is illustrative. It was written for this lesson and
+not recorded from a model. It shows the kind of first question that the
+request should produce.
+
+<Prompt model="illustrative" recorded="illustrative">
+(The request above.)
+</Prompt>
+<Response>
+The program already has `clear`, which deletes every done item. When you
+say "tidy", do you mean `clear`, or should the done items move somewhere
+you can still read them later?
+</Response>
+
+<Prompt model="illustrative" recorded="illustrative">
+Move them, to a file of their own. Call that "archive". `clear` stays as
+it is: it deletes, and it doesn't touch the archive.
+</Prompt>
+<Response>
+Understood. Should the archived items keep the numbers they had in the
+list, or does the list number the open items again from 1?
+</Response>
+
+The agent's first question found the word that could mean two things. Your
+answer chose one meaning and gave the new thing a name. The second question is a
+decision you might not have made before the interview. Answer each question
+with a decision. When you have none, say "not decided yet". The agent then
+lists the point under the open questions.
+
+<Pitfall title="An answer to get to the code">
+In one interview the agent asked whether archived items should record the
+date they were archived. The engineer wanted to get to the code and typed
+"yes, add the date". The spec now had a date field with its own format and
+time zone, and the fresh session built them. The `archive list`
+output grew a column that nobody had asked for, and the diff was twice the
+size it needed to be. The rule: an answer you make up to move on becomes a
+requirement the agent builds. Say "not decided yet", and the spec lists the
+point as open.
+</Pitfall>
+
+<Scenario id="undecided-answer" objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
+  concepts={['design-interview']}
+  context="An engineer has asked a coding agent to interview them about an archive feature for a small to-do program before any plan is written. At the end, the agent writes a spec with a section for open questions."
+  title="A question you have no answer for"
+  hint="Which answer leaves the spec saying only what you actually decided?"
+  options={[
+    { text: 'Say "Yes, do that", so that the interview keeps moving.', consequence: 'The spec now requires an automatic archive, and the fresh session builds it, with a counter and a test, for a choice you never made.' },
+    { text: 'Say "You decide", since the agent knows the code better.', consequence: 'The agent picks one, and the spec states it as a requirement. Nobody reads it as a guess, so nobody checks it.' },
+    { text: 'Say "Not decided yet", so it goes under the open questions.', correct: true, consequence: 'The spec lists the point as open. Nothing is built for it, and you decide it later, when someone has a reason to want it.' },
+    { text: 'Say "Stop asking and write the spec", since this is a detail.', consequence: 'The interview ends with points still open, and the agent fills every one of them with its own guesses.' },
+  ]}>
+The agent asks: "Should `archive` also run by itself when the list has
+more than 20 done items?" You haven't thought about it, and you have no view
+on it yet. What do you answer?
+</Scenario>
+
+## Writing down the terms
+
+During an interview the words drift. You say "done" and the agent says
+"completed". A sentence later the spec says "finished". Each word
+seems clear to whoever uses it. A fresh session that reads the spec sees
+three words and has to guess whether they name one thing or three, and
+some of its guesses are wrong.
+
+The fix is a shared vocabulary: one agreed meaning for each term of the
+feature, written down, and used the same way in the conversation, the spec,
+the plan, and the code. The idea comes from domain-driven design, a way of
+building software that Eric Evans described (@Evans 2003). His free reference
+summary says to use one language in speech, writing and code, and to treat
+a change in that language as a change to the design (@Evans DDD Reference).
+This lesson takes only that part: a short list of terms, in plain words,
+each with the words to avoid.
+
+The `sample/` directory in your copy holds the files an interview about the
+archive feature could end with. This is `sample/TERMS.md`:
+
+```md
+# Terms
+
+- **item**: one line of the to-do list, with its text and its done mark. Avoid: task, tasks, entry, entries.
+- **done item**: an item marked with `done`. Avoid: completed, finished.
+- **archive**: move every done item from the list to `archive.json`, where `archive list` shows it. Avoid: hide, hides, hidden.
+- **clear**: delete every done item from the list for good. It never touches `archive.json`. Avoid: purge, wipe.
+```
+
+The avoid words are the ones that came up in the interview for the same
+thing, or for a different thing that is easy to confuse with it. "Hide"
+is on the list because a hidden item is still in `todos.json`, and an
+archived one is not.
+
+## Checking the spec against the terms
+
+`check_terms.py` reads a term list and prints every line of another file
+that uses an avoided word. It matches whole words and ignores case. From
+the top of your copy, run it on the sample spec.
+
+<Predict id="check-sample-spec" title="Check the sample spec"
+  answer={`sample/SPEC.md:15: "task" where sample/TERMS.md says "item"
+  sample/SPEC.md:16: "completed" where sample/TERMS.md says "done item"
+  2 words to check`} run="coding-with-agents/agent-interviews-you/sample_check.py">
+Run this from the top of your copy, and compare what you see with the
+output below.
+
+```sh
+python3 check_terms.py sample/TERMS.md sample/SPEC.md
+```
+
+</Predict>
+
+Open `sample/SPEC.md` and read the two lines. Line 15 says `archive list`
+shows "the text of each task". That is a slip, and the fix is the word
+"item". Line 16 says "`clear` deletes the completed items and empties
+`archive.json`." The word is wrong, and the line also contradicts the term
+list, which says `clear` never touches the archive. A drifted word is
+sometimes a typo and sometimes a decision that the interview made one way
+and the spec wrote down another way. Read the whole line each time.
+
+<Choice id="drift-in-clear" objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
+  concepts={['shared-vocabulary']}
+  context="A term list for a to-do program's archive feature says that clear deletes every done item from the list for good and never touches archive.json. A script that checks a spec against the term list flags the word completed in one line of the spec."
+  title="The line about clear"
+  hint="Besides the flagged word, does the rest of the line agree with the term list?"
+  options={[
+    { text: 'Add "completed" to the meaning of done item, so that the check passes on the next run.', why: 'Two words for one thing are what the list exists to stop, and the line would still empty the archive.' },
+    { text: 'Read the line against the term list, settle with the agent what clear does, and rewrite the line.', correct: true },
+    { text: 'Change "completed" to "done" in that line, and run the check again until it reports nothing.', why: 'The check passes, but the line still says that clear empties the archive, which the term list rules out.' },
+    { text: 'Leave the line, because the agent that builds the feature knows that the two words mean the same.', why: 'A fresh session has only the files. It reads a spec and a term list that disagree, and it has to pick one.' },
+  ]}>
+The check prints `sample/SPEC.md:16: "completed" where sample/TERMS.md says
+"done item"`. The line is "`clear` deletes the completed items and empties
+`archive.json`." What do you do?
+</Choice>
+
+Fix both lines in the sample spec, run the check again, and it prints
+`no avoided words in sample/SPEC.md`. In your own interview, read and
+correct `TERMS.md` and `SPEC.md` the same way before anything else happens.
+Renaming a term after this point is a change to the design. Change the
+term list and the spec together.
+
+## Planning from the spec in a fresh session
+
+The best practices page suggests that a new session carries out the
+spec, because its context then holds the work and nothing of the long
+interview (@Claude Code best practices). Write the plan in a new session
+too. End the interview session, start a new one in `fixture-repo`, and ask for
+a plan that uses the term list.
+
+```text
+Read TERMS.md and SPEC.md. Write PLAN.md with the steps to build what
+SPEC.md describes, using the terms in TERMS.md and no other words for
+them. Don't change any code yet.
+```
+
+Then run the check on the plan, from the top of your copy:
+
+```sh
+python3 check_terms.py fixture-repo/TERMS.md fixture-repo/PLAN.md
+```
+
+An avoided word in the plan means one of two things. Either the plan
+slipped and you correct the word, or the spec left something open that the
+plan filled in with a guess. In the second case, the fix belongs in the
+spec first.
+
+<Order id="interview-steps" objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
+  concepts={['design-interview', 'shared-vocabulary']}
+  context="The steps of taking a small feature from a one-line request to a plan, with a coding agent that interviews the engineer first and a term list that both the spec and the plan follow."
+  title="From request to plan"
+  hint="Which file must exist and be correct before a session that knows nothing of the interview can use it?"
+  steps={[
+    'Ask the agent to interview you about the feature, before any plan',
+    'Answer each question with a decision, or with "not decided yet"',
+    'Have the agent write the term list and the spec',
+    'Read both files and correct them',
+    'Start a fresh session that writes the plan from the spec',
+    'Check the plan against the term list',
+  ]} />
+
+<Choice id="fresh-session-reads-two-words" phase="review"
+  objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
+  concepts={['shared-vocabulary']}
+  context="An engineer was interviewed by a coding agent about an archive feature for a to-do program. The term list says that archive moves done items to a separate file. The spec, written in the same session, uses archive in one place and hide in another."
+  title="Two words in one spec"
+  hint="What does a session that never saw the interview have to work from?"
+  options={[
+    { text: 'It treats the two words as one thing, because the spec is about one feature.', why: 'It might, but nothing in the files tells it so, and in this term list a hidden item is a different thing.' },
+    { text: 'It asks the engineer which one is meant before it writes any of the plan.', why: 'Some agents ask, and many go ahead. You cannot count on the question coming.' },
+    { text: 'It has to guess whether the two words mean one thing, and some guesses are wrong.', correct: true },
+  ]}>
+A fresh session reads this spec to write the plan. What happens with the
+two words?
+</Choice>
+
+<MultiChoice id="answers-that-are-decisions" phase="review"
+  objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
+  concepts={['design-interview']}
+  context="A coding agent is interviewing an engineer about an archive feature for a to-do program before it writes a spec. The engineer has no view yet on whether archive list should show the date each item was archived."
+  title="Which answers keep the spec honest?"
+  hint="Which answers tell the agent only what the engineer has actually decided?"
+  options={[
+    { text: '"Archived items go to archive.json, and the rest keep their order."', correct: true },
+    { text: '"Not decided yet. List the date under the open questions."', correct: true },
+    { text: '"Sure, show the date in the list, whatever is easiest to build."', why: 'The engineer has no view on the date, and this answer turns a passing word into a requirement.' },
+    { text: '"Use your own judgment for the date, and ask me the next one."', why: 'The agent decides, and the spec then states its choice as if the engineer had made it.' },
+  ]}>
+The agent asks two questions: where archived items go, and whether
+`archive list` shows the date. Which two of these answers keep the spec to
+what the engineer has decided?
+</MultiChoice>
+
+<Sort id="where-it-goes" phase="review"
+  objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
+  concepts={['design-interview', 'shared-vocabulary']}
+  context="At the end of a design interview about an archive feature for a to-do program, the agent writes two files: TERMS.md, a list of terms with their meaning and the words to avoid, and SPEC.md, with the behavior and a section for open questions."
+  title="Where does each point go?"
+  hint="Is the point the meaning of a word, a behavior that was decided, or something nobody decided?"
+  buckets={['TERMS.md', 'SPEC.md, behavior', 'SPEC.md, open questions']}
+  items={[
+    { text: 'Archive means moving done items to archive.json. Avoid: hide.', bucket: 0 },
+    { text: 'With no done items, archive prints "nothing to archive".', bucket: 1 },
+    { text: 'Whether archive list shows a date: the engineer said "not decided yet".', bucket: 2 },
+    { text: 'Clear deletes done items for good. Avoid: purge, wipe.', bucket: 0 },
+    { text: 'Open items keep their order and are numbered again from 1.', bucket: 1 },
+  ]} />
+
+<Exercise stretch="Ask the fresh session to build the plan, then run check_terms.py on the modules it changed, such as fixture-repo/todo.py and fixture-repo/store.py, and see whether the names in the code follow the term list too.">
+Reset your copy and let an agent interview you about one small feature for
+the to-do program. The archive above works, and so does a feature of your
+own, such as an undo for `done`. Use the request from this lesson. Answer every question with a
+decision or with "not decided yet", and stop when the agent has written
+`TERMS.md` and `SPEC.md`. Read both files, correct them, and run
+`check_terms.py` on the spec until it prints `no avoided words`. Then start a fresh
+session, have it write `PLAN.md` from the spec, and run the check on the
+plan. Twenty minutes is enough. You do this so the design is settled, in
+words that you and the agent share, before the agent proposes how to build
+it.
+
+A good result: the interview asked at least one question you had not
+thought of, and `TERMS.md` has three to six terms. The spec lists at least
+one open question or says why there are none. The check prints
+`no avoided words` for both the spec and the plan. Reflect: which question
+brought out a decision you had not made, and what would the agent have
+built if it had never asked?
+</Exercise>
+
+<Recap>
+1. For a feature larger than one sentence, ask the agent to interview you before it plans, and to write a spec when nothing is open (@Claude Code best practices).
+2. Answer each question with a decision, or with "not decided yet". An answer made up to move on becomes a requirement.
+3. Write the terms the interview settled into a short list, each with its meaning and the words to avoid, and use the same words in the spec, the plan and the code (@Evans DDD Reference).
+4. Check the spec and the plan against the term list. A drifted word is either a slip or a decision written down wrong, so read the whole line.
+5. Start the plan in a fresh session that works from the spec and the term list, without the interview in its context.
+</Recap>
+
+<Habit id="ask-for-the-interview">
+The next time you hand an agent a feature that takes more than one sentence to describe, ask it to interview you before it writes a plan.
+</Habit>
