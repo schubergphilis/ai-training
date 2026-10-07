@@ -128,7 +128,13 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    if not pushes(command):
+    try:
+        denied = pushes(command)
+    except Exception as error:
+        # A crash has to block the call, and exit code 1 doesn't block.
+        print(f"Blocked: the no-push hook failed on this command: {error!r}", file=sys.stderr)
+        return 2
+    if not denied:
         return 0
     decision = {
         "hookSpecificOutput": {

@@ -21,8 +21,9 @@ command, so a push inside `sh -c '...'`, inside backticks or `$(...)`, from a
 push word held in a variable (`X=push; git $X`), or inside a script gets
 past it.
 
-When the input isn't a tool call it can read, it writes a message to
-standard error and exits with 2, which also blocks the call.
+When the input isn't a tool call it can read, or when reading the command
+fails, it writes a message to standard error and exits with 2, which also
+blocks the call.
 """
 
 import json
@@ -86,7 +87,7 @@ def subcommand_pushes(words: "list[str]") -> bool:
         elif not (ASSIGNMENT.match(word) or (after_prefix and word.startswith("-"))):
             break
         i += 1
-    if i == len(words):
+    if i >= len(words):
         return False
     if expands(words[i]):
         # The program's name is only known after the shell expands it.
@@ -130,7 +131,13 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    if not pushes(command):
+    try:
+        denied = pushes(command)
+    except Exception as error:
+        # A crash has to block the call, and exit code 1 doesn't block.
+        print(f"Blocked: the no-push hook failed on this command: {error!r}", file=sys.stderr)
+        return 2
+    if not denied:
         return 0
     decision = {
         "hookSpecificOutput": {
