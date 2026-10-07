@@ -1,0 +1,240 @@
+import { Choice, MultiChoice, Match, Sort, Scenario, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+The last lesson wrote a release skill and saved it in the package at
+`.claude/skills/release/SKILL.md`. That file came with decisions the
+lesson made by default. One is who may start the skill. As written, the
+agent loads it when a request matches the description, and you can also
+start it by typing `/release`. The other is where the file is. The file
+is in the project's folder, so once it is committed the whole team has
+it. Nobody outside the repository does.
+
+This lesson makes both decisions on purpose. Who may start a skill is
+its invocation mode, and where it is installed is its skill scope. You
+don't run anything here. The examples are a few lines of front matter
+and a few folder paths, and the exercise is a decision you write down.
+
+## Who may start a skill
+
+In Claude Code, a skill with no extra settings can be started two ways.
+You type its name after a slash, or the model loads it when your request
+matches its description. Each of these front matter fields removes one
+of the two (@Claude Code skills):
+
+- `disable-model-invocation: true` takes the model out. Only a person
+  who types `/name` starts the skill. If the model tries to start it
+  anyway, Claude Code refuses the call.
+- `user-invocable: false` takes the person out. The skill is no longer
+  in the `/` menu, and typing its name doesn't run it. The model still
+  loads it when a request matches.
+
+The choice also decides what the skill costs before anyone uses it. A
+skill the model may start has its description in the context of every
+session, so the model can match requests against it. A skill only a
+person may start has no description in context, and nothing of it loads
+until someone types its name (@Claude Code skills).
+
+| Front matter | A person may start it | The model may start it | Description in every session |
+| --- | --- | --- | --- |
+| Neither field | Yes | Yes | Yes |
+| `disable-model-invocation: true` | Yes | No | No |
+| `user-invocable: false` | No | Yes | Yes |
+
+Make a skill person-only when a run has effects you want to time
+yourself. A deploy, a message to a channel other people read, and a
+deletion on a shared account are examples. A model-invoked skill starts
+whenever a request looks like its description, and a request can look
+like it on a day nobody meant to deploy. Claude Code's own page gives
+side effects as the reason for the field (@Claude Code skills). The
+release skill from the last lesson commits and tags, but it doesn't push.
+A wrong run stays on your machine, and `git` can undo it. Leaving it
+model-invoked is a fair choice. A version that also pushes the tag would
+be person-only.
+
+Leave the model in when the skill holds knowledge or a procedure that
+should apply whenever the work calls for it, such as the team's rules for
+writing a database migration. The model-only setting, `user-invocable:
+false`, is for a skill that a person wouldn't run as a command, such as notes on
+how an old module works, which the agent needs when it edits that module
+and a person never types.
+
+A sentence in the description such as "use only when the user asks" is
+text the model reads and weighs. It isn't a setting, so the description
+is still in context, and the model can still decide that a request
+matches. The field is what Claude Code enforces.
+
+These two fields are Claude Code's own. The open skill format lists
+`name`, `description`, `license`, `compatibility`, `metadata` and
+`allowed-tools` as its front matter fields, and none of them says who may
+start a skill (@Agent Skills spec). Claude Code's page also says that when
+you upload a skill to claude.ai, a field outside that list makes the
+upload fail (@Claude Code skills). When you move a skill to another
+product, check how that product decides who starts it.
+
+<Sort id="who-may-start-it" objective="customizing-agents/writes-skill/chooses-invocation-and-scope"
+  concepts={['invocation-mode']}
+  context="In Claude Code a skill can be left so the model starts it when a request matches its description, or set with disable-model-invocation so that only a person who types its name starts it. Each item is a skill a team plans to write."
+  title="Who should be able to start it?" hint="Does a run change something that other people see or depend on? If it does, who should pick the moment?"
+  buckets={['Only a person starts it', 'The model may start it']}
+  items={[
+    { text: 'Deploy the main branch to production', bucket: 0 },
+    { text: 'Apply the team rules for writing a new database migration', bucket: 1 },
+    { text: 'Post a summary of the week to the team chat channel', bucket: 0 },
+    { text: 'Explain how the old invoice export works when a task touches it', bucket: 1 },
+  ]} />
+
+<Pitfall title="The announcement that sent itself">
+A team writes a skill that drafts the release notes and emails them to
+the customer mailing list, and leaves the front matter at its defaults.
+One month on, a developer asks the agent to "write up what changed this
+week" for an internal meeting. The request matches the description, the
+model loads the skill, and the draft goes to customers. The steps were
+right, and the problem was the model's permission to start them. Give
+every skill that sends, publishes, deploys or deletes
+`disable-model-invocation: true` before you commit it.
+</Pitfall>
+
+## Where a skill is installed
+
+The folder a skill is in decides who has it. Claude Code reads skills
+from these places (@Claude Code skills):
+
+| Scope | Folder | Who has it |
+| --- | --- | --- |
+| Personal | `~/.claude/skills/<name>/SKILL.md` | You, in every project on this machine |
+| Project | `.claude/skills/<name>/SKILL.md` in the repository | Everyone who works in the repository, once it is committed |
+| Enterprise | `.claude/skills/<name>/SKILL.md` in the managed settings directory | Every user on the machines where the organization installs it |
+
+A plugin can also carry skills. The lesson on plugins covers those, and
+Claude Code gives each one the plugin's name as a prefix, so it never clashes
+with a skill in these folders (@Claude Code skills).
+
+A project skill is part of the repository. It changes in a commit, a
+reviewer reads the change, and a colleague who pulls the branch gets the
+same version you have. Put a skill there when the team needs it to work
+on that code, such as the release procedure of the package. A personal
+skill is only on your machine and changes when you edit it. It suits a
+habit of your own that you want in every project, such as the format you
+like for meeting notes.
+
+When two of these folders hold a skill with the same name, Claude Code
+runs one of them. Enterprise wins over personal, and personal wins over
+project (@Claude Code skills). A personal `release` skill in your home
+directory hides the team's `release` skill in the repository, and
+`/release` runs your copy, even when it is months out of date.
+
+<Match id="which-folder" objective="customizing-agents/writes-skill/chooses-invocation-and-scope"
+  concepts={['skill-scope']}
+  context="Claude Code reads personal skills from ~/.claude/skills/ on one machine, project skills from .claude/skills/ committed to a repository, and enterprise skills from the managed settings directory an organization installs on its machines."
+  title="Where does each skill go?" hint="Who needs the skill: one person in any project, everyone in one repository, or everyone in the organization?"
+  options={['The project, committed to the repository', 'Your own configuration in your home directory', 'The organization\'s managed settings directory']}
+  rows={[
+    { statement: 'The steps to rebuild this repository\'s test database, which every contributor needs', option: 0, why: 'Who needs the steps, and which folder do they all get when they clone the code?' },
+    { statement: 'The way you like to draft your own stand-up notes, in every project you work on', option: 1, why: 'Does anyone but you need this, and in which projects?' },
+    { statement: 'A security review the company requires on every developer machine', option: 2, why: 'Which folder reaches every machine, whatever repository is open?' },
+    { statement: 'The team\'s release procedure for this package', option: 0, why: 'Should a change to the release steps be reviewed with the code it releases?' },
+  ]}
+  rationale="Each skill goes in the folder that reaches exactly the people who need it, and a team skill goes where its changes are reviewed.">
+Match each skill to the folder it belongs in.
+</Match>
+
+<Scenario id="two-release-skills" objective="customizing-agents/writes-skill/chooses-invocation-and-scope"
+  concepts={['skill-scope']}
+  context="A repository has a project skill at .claude/skills/release/ that the team updated last week. A colleague still has an older skill with the same name, release, in ~/.claude/skills/ in their home directory, from before the project skill existed. Both are used in Claude Code."
+  title="The release that skips a step" hint="When a personal skill and a project skill have the same name, which one does Claude Code run?"
+  options={[
+    { text: 'Restart the session, so that Claude Code reads the updated project skill again.', consequence: 'The new session reads both folders again, and `/release` still runs the personal copy.' },
+    { text: 'Set `disable-model-invocation: true` on the project skill, so only a person can start it.', consequence: 'That changes who may start the project skill. When the colleague types `/release`, the personal copy still runs.' },
+    { text: 'Delete or rename the personal copy in the colleague\'s home directory.', correct: true, consequence: 'With no personal skill of that name left, `/release` runs the project skill, with the new step.' },
+    { text: 'Add the new step to the project skill\'s description, so the model sees it first.', consequence: 'The description of the project skill isn\'t what runs. The personal skill of the same name still does.' },
+  ]}>
+Last week the team added a changelog check to the project's release
+skill. When a colleague types `/release`, the agent skips that check, and
+on your machine it doesn't. What do you change?
+</Scenario>
+
+<Choice id="description-or-field" phase="review" objective="customizing-agents/writes-skill/chooses-invocation-and-scope"
+  concepts={['invocation-mode']}
+  context="A team's deploy skill in Claude Code has the default front matter, and its description ends with the sentence: Only use when the user explicitly asks to deploy. Claude Code has a front matter field, disable-model-invocation, that keeps the model from starting a skill."
+  title="A sentence or a setting?" hint="Which of the two is text the model reads and weighs, and which one does the software check?"
+  options={[
+    { text: 'It is enough, because Claude Code reads that sentence and blocks every start that the person didn\'t type.', why: 'The description is text the model reads to decide whether the skill applies. Only the field is a setting that Claude Code checks.' },
+    { text: 'It is enough when the skill is in the project folder, because project skills start only by their name.', why: 'The folder decides who has the skill. It doesn\'t decide who may start it.' },
+    { text: 'It isn\'t enough. The model can still judge that a request matches, so set disable-model-invocation.', correct: true },
+  ]}>
+Does that sentence keep the agent from starting a deploy on its own?
+</Choice>
+
+<Choice id="where-the-team-skill-goes" phase="review" objective="customizing-agents/writes-skill/chooses-invocation-and-scope"
+  concepts={['skill-scope']}
+  context="A developer wrote a skill in ~/.claude/skills/ in their home directory that runs the database migrations of one repository. The other three people on the team want to use it too, and they all use Claude Code in that repository."
+  title="The team wants your skill" hint="Which folder do all four people get from the repository, and where are changes to it reviewed?"
+  options={[
+    { text: 'Send each of them the file to copy into the skills folder in their own home directory.', why: 'Four copies change separately, nobody reviews an edit to one, and each copy hides a project skill of the same name later.' },
+    { text: 'Move the skill into the repository\'s skills folder and commit it, so the team reviews changes.', correct: true },
+    { text: 'Keep the skill in your home directory and add a line to the project instructions to use it.', why: 'The other agents can\'t load a file that is only on your machine, whatever the instructions say.' },
+  ]}>
+Where should the skill go now?
+</Choice>
+
+<MultiChoice id="what-person-only-changes" phase="review" objective="customizing-agents/writes-skill/chooses-invocation-and-scope"
+  concepts={['invocation-mode']}
+  context="In Claude Code, a report skill that someone runs a few times a year had the default front matter. Its owner adds disable-model-invocation: true to it."
+  title="What changes with the field" hint="The field changes who may start the skill. What does the model need in context to start a skill itself?"
+  options={[
+    { text: 'The model may still start the skill when a request matches its description closely.', why: 'With this field set, Claude Code refuses a start that comes from the model.' },
+    { text: 'The skill\'s description is no longer in the context of every session.', correct: true },
+    { text: 'The skill disappears from the `/` menu, so nobody can type its name.', why: 'That is what user-invocable: false does. This field keeps the skill in the menu.' },
+    { text: 'A person can still start the skill by typing its name after a slash.', correct: true },
+  ]}>
+Which two statements are true after the change?
+</MultiChoice>
+
+<Exercise stretch="List the skills in your own ~/.claude/skills/ folder and in the .claude/skills/ folder of a repository you work in. Is any name in both? If so, which one runs when you type it, and is that the one you want?">
+A team plans to add the skills below to one repository. For each one,
+write down who may start it (only a person, or the model as well) and
+where it goes (the project or your own home directory). Then write the
+folder path and the front matter line you would add. Write "none" when
+the defaults are right.
+
+1. A skill that opens a pull request and asks the two code owners to
+   review it.
+2. Your own rules for wording commit messages, which you follow in every
+   project and nobody else on the team uses.
+3. A skill that explains what each error code in this service's logs
+   means, for any task where the agent reads the logs.
+4. A skill that deletes the team's preview environments that are older
+   than a week, on the shared cloud account.
+
+A good result: skills 1 and 4 are person-only, with
+`disable-model-invocation: true`, because both act on things other people
+see or use. Skills 2 and 3 leave the model in and don't need a line. Skill 3
+could also be model-only with `user-invocable: false`, since nobody types
+it as a command. Skills 1, 3 and 4 go in the project's
+`.claude/skills/`, because the team needs them for this code, and skill
+2 goes in `~/.claude/skills/`. Which skill did you hesitate on, and was
+the doubt about who starts it or about who has it?
+</Exercise>
+
+<Recap>
+1. In Claude Code, a person and the model can both start a skill unless
+   the front matter says otherwise. `disable-model-invocation: true`
+   leaves only the person, and `user-invocable: false` leaves only the
+   model (@Claude Code skills).
+2. Make a skill person-only when a run deploys, sends, publishes or
+   deletes. A sentence in the description is advice to the model, and
+   the field is a rule Claude Code enforces.
+3. A skill the model may start has its description in every session. A
+   person-only skill costs no context until someone types its name
+   (@Claude Code skills).
+4. A project skill is committed to the repository and reaches the whole
+   team, and a personal skill in your home directory reaches only you, in
+   every project. When names clash, enterprise wins over personal and
+   personal over project (@Claude Code skills).
+5. The open skill format has no field for who starts a skill, so check
+   how each product decides it when you move a skill (@Agent Skills spec).
+</Recap>
+
+<Habit id="person-only-before-commit">
+Before you commit a skill that sends, deploys or deletes anything, check
+that its front matter says only a person may start it.
+</Habit>

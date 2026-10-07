@@ -1,7 +1,7 @@
 import { Choice, Match, Predict, Sort, Pitfall, Exercise, Recap, Habit, Prompt, Response, Order } from '@components/lesson';
 
-The last lesson ended with a release skill that works in the directory it
-was written in. This lesson runs it somewhere else: a clean clone, and a
+The lesson on writing your first skill ended with a release skill that
+works in the directory it was written in. This lesson runs it somewhere else: a clean clone, and a
 new session that has none of the conversation you had while you wrote it.
 Anthropic's guide to writing skills describes the same loop. One session
 helps you write the skill, a fresh one uses it on a real task, and you
@@ -51,9 +51,9 @@ git add .
 git commit -q -m "Import the notes package"
 ```
 
-The copy contains the release skill from the last lesson at
-`.claude/skills/release/SKILL.md`. Start your agent in `~/notes-clean`,
-in a new session, and type `/release 0.4.0`. In Claude Code the skill's
+The copy contains the release skill from the lesson on writing your
+first skill at `.claude/skills/release/SKILL.md`. Start your agent in
+`~/notes-clean`, in a new session, and type `/release 0.4.0`. In Claude Code the skill's
 directory name is the command you type (@Claude Code skills), and in
 another agent you can ask for release 0.4.0 in plain words. The skill
 changes files, commits and tags, and that's why it runs in this copy and
@@ -374,7 +374,7 @@ If you followed along with the walkthrough, your runs in `~/notes-clean`
 are the exercise, and you can go to the result below. Otherwise make a
 clean clone with the commands in the first section. They delete and
 recreate `~/notes-clean`, and the clone has the release skill from the
-last lesson in it. The skill edits `notes.py` and `CHANGELOG.md`, commits
+lesson on writing your first skill in it. The skill edits `notes.py` and `CHANGELOG.md`, commits
 and tags, so run it only in that copy, which has no remote to push to. In
 a new session, type `/release 0.4.0`, and write down each place in the
 transcript where the agent hesitated, asked you something or guessed. For

@@ -1,5 +1,9 @@
 id: customizing-agents/who-invokes-a-skill
 title: Who invokes a skill, and where it lives
+description: >-
+  Decide whether the agent may start a skill on its own or only a person may, what each choice costs
+  in context, and whether the skill belongs in the project, in your own configuration or with the
+  organization, including which one runs when two share a name.
 mode: explanation
 covers: customizing-agents/skills
 serves: [customizing-agents/writes-skill/chooses-invocation-and-scope]
@@ -7,7 +11,10 @@ introduces: [invocation-mode, skill-scope]
 assumes:
   - objective: customizing-agents/writes-skill/packages-a-procedure
     lesson: customizing-agents/first-skill
+    section: pass-one-the-directory-and-the-description
 extends-to: []
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 after: [customizing-agents/first-skill]
 shorts: []
 exercise:
@@ -18,3 +25,15 @@ exercise:
 sources: [Claude Code skills, Agent Skills spec]
 issue: 691
 minutes: 10
+notes: >-
+  Explanation lesson with no fixture. Vendor facts to re-check by review-by, all from
+  code.claude.com/docs/en/skills: the default that both the person and the model may start a skill,
+  disable-model-invocation (model blocked, description not in context, side effects as the reason),
+  user-invocable false (hidden from the slash menu, model still loads it), the table of locations
+  (enterprise, personal, project, plugin with a name prefix), the precedence enterprise over
+  personal over project, and the hard error when a claude.ai upload has a field outside the open
+  format. From agentskills.io/specification: the six front matter fields, none of which sets who may
+  start a skill. Changed from the plan: the exercise also asks for the front matter line and the
+  folder path, and the release skill from first-skill is discussed as a fair model-invoked case
+  because it commits and tags but doesn't push. The cross-references in first-skill and
+  testing-a-skill that said "the next lesson" and "the last lesson" now name the lesson.

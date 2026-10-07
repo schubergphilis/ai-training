@@ -1,7 +1,7 @@
 id: customizing-agents/testing-a-skill
 title: Testing a skill from a fresh session
 description: >-
-  Run the release skill from the last lesson in a clean clone and a new session, read the transcript
+  Run the release skill from the first-skill lesson in a clean clone and a new session, read the transcript
   for where the agent hesitated, asked or guessed, turn each place into a check, a failure step or a
   sharper success test, and run it again.
 mode: tutorial
