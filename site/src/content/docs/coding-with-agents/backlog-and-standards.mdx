@@ -111,15 +111,16 @@ night, and for a night without a rates file to be rejected.
 </Response>
 
 The commands run with the credentials you give the tool. If those are your
-own login, the agent has your rights in every repository you can reach.
-It can close issues and change labels there. Give the agent only the
-rights it needs. Reading issues and adding comments is enough for most
-work. If your tracker lets you make a token with fewer rights, use one for
-the agent. In Claude Code you can also run the session in Manual mode.
-Claude Code then asks you before most shell commands, and you read each
-`gh` command before it runs. From version 2.1.283, a session started in a terminal starts in
-auto mode by default, so you choose Manual mode on purpose with
-`claude --permission-mode default` (@Claude Code permission modes).
+own login, the agent has your rights in every repository you can reach. It
+can close issues and change labels there. Give the agent only the rights
+it needs. Reading issues and adding comments is enough for most work. If
+your tracker lets you make a token with fewer rights, use one for the
+agent. In Claude Code you can also run the session in Manual mode. Claude
+Code then asks you before most shell commands, and you read each `gh`
+command before it runs. From version 2.1.283, a session started in a
+terminal starts in auto mode by default, so you choose Manual mode on
+purpose with `claude --permission-mode default`
+(@Claude Code permission modes).
 
 <Scenario id="the-agent-took-the-blocked-issue" objective="coding-with-agents/works-in-team/keeps-the-backlog-reachable"
   concepts={['agent-reachable-backlog']}
@@ -225,12 +226,11 @@ The file also changes what a reviewer may block on. Google's code review
 guide for reviewers says that on questions of style, the team's style
 guide decides, and a style point the guide doesn't cover is the reviewer's
 personal preference. It suggests a prefix such as "Nit:" for a small
-improvement that the author doesn't have to make (@Google eng-practices). The guide
-treats design as more than taste, and a bug or a design problem can still
-block a change. For the
-conventions of the code, the standards file is the team's style guide. A
-broken rule from the file, or a failed check, blocks the change.
-Every other style point is a suggestion.
+improvement that the author doesn't have to make (@Google eng-practices).
+The guide treats design as more than taste, and a bug or a design problem
+can still block a change. For the conventions of the code, the standards
+file is the team's style guide. A broken rule from the file, or a failed
+check, blocks the change. Every other style point is a suggestion.
 
 That gives an agent reviewer a clear brief. Ask it to review the diff
 against `STANDARDS.md` and to mark a style finding as blocking only when
