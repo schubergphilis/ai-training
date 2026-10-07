@@ -1,0 +1,303 @@
+import { Choice, MultiChoice, Match, Predict, Sort, Scenario, Pitfall, Exercise, MorePractice, Recap, Habit } from '@components/lesson';
+
+The last lesson wrote a short `AGENTS.md` for `invoice-mailer`, the
+fictional Python service that renders invoices to PDF and sends them over
+SMTP. A year later the same file has 57 lines. Each line was added for a
+reason, and the agent now follows the file less well than it followed the
+short version. In this lesson we make it short again with two moves. We
+point at what only some tasks need, and we cut what no task needs.
+
+The files for this lesson are in
+`site/examples/customizing-agents/load-point-prune/` in the course
+repository. `AGENTS.long.md` is the long file, `AGENTS.pruned.md` is one
+pruned version of it, and `docs/` holds the files the pruned version points
+at. The loading rules here are Claude Code's, checked against its
+documentation on the date at the end of the lesson. Other agents load
+their files in other ways, and the method transfers.
+
+## Every loaded line is in every session
+
+Claude Code reads its instruction files at the start of every session
+(@Claude Code memory). Every line in them is in the context of every
+task, the one-line typo fix as well as the release. The [lesson on what
+tokens cost](/concepts/what-tokens-cost/#the-rule-that-got-buried) showed
+what that does to a rule: it competes with all the other text in the
+window, and a rule among many weighs less than a rule among few. The
+vendor gives the same advice for instruction files in its own words. A
+longer file takes more context, and the agent follows it less closely
+(@Claude Code memory).
+
+The choice for each piece of guidance is **loading versus pointing**.
+Loading puts the text in the instruction file, so it is in context
+whether the task needs it or not. Pointing puts one line in the file that
+says where the text is and when to read it, and the agent opens the file
+only when a task calls for it. Anthropic's engineering team describes the
+same split for agents in general. An agent can keep a short reference such
+as a file path and load what it points at with a tool at the moment it
+needs it. Claude Code works this way: its instruction files go into
+context at the start, and it finds the other files of the project with
+search tools as it works (@Anthropic context engineering).
+
+Load what nearly every task needs: the test command, the branch rule, the
+mistake the agent keeps making. Point at the rest. The vendor's examples
+of guidance to move out of the file are a procedure with many steps and a
+rule that matters for only one part of the code. Claude Code also has two
+places for those that load less often than the instruction file. A skill
+loads when you call it or when the agent decides it fits the task, and a
+rule file with a `paths` field loads only when the agent works with files
+that match it (@Claude Code memory).
+
+## An import still loads
+
+Claude Code lets an instruction file import another file with a line such
+as `@docs/release.md`. The import isn't a pointer. Claude Code expands
+the imported file into the context at start-up, next to the file that
+imports it, and the vendor says plainly that an import keeps a long file
+tidy without making it cheaper (@Claude Code memory). A path in a code
+span, such as `` `docs/release.md` ``, is plain text and doesn't import anything.
+The agent reads that file only if it decides to open it.
+
+`startup.py` in the lesson folder counts the lines each version of the
+file puts in context at the start of a session. It follows the import rule
+above, simplified. `AGENTS.pruned.md` points at two files with lines such
+as "To cut a release, read `docs/release.md` and follow it step by step".
+`AGENTS.imports.md` is the same file with each of those two lines replaced
+by an import.
+
+```sh
+cd <course-repo>/site/examples/customizing-agents/load-point-prune
+python3 startup.py
+```
+
+<Predict id="lines-at-start" objective="customizing-agents/configures-agent/chooses-load-or-point"
+  concepts={['loading-versus-pointing']}
+  context="A script counts the lines an instruction file puts in context when a session starts, adding the lines of every file it imports with @path. AGENTS.long.md has 57 lines and imports nothing. AGENTS.pruned.md has 20 lines and names docs/templates.md (7 lines) and docs/release.md (11 lines) in plain text. AGENTS.imports.md has 20 lines and imports those two files with @docs/templates.md and @docs/release.md."
+  title="How many lines load?" hint="Which of the two short files makes the agent read the two docs files before the first task?"
+  answer={`AGENTS.long.md: 57 lines at start
+  AGENTS.imports.md: 38 lines at start
+  AGENTS.pruned.md: 20 lines at start`} run="customizing-agents/load-point-prune/startup.py">
+`AGENTS.long.md` has 57 lines and imports nothing. `AGENTS.pruned.md` and
+`AGENTS.imports.md` have 20 lines each. `docs/templates.md` has 7 lines and
+`docs/release.md` has 11. The script prints one line per file, in the
+order long, imports, pruned, in the form `AGENTS.long.md: 57 lines at start`.
+What does it print?
+</Predict>
+
+The imports version is 20 lines when you read it and 38 lines in the
+context, and the 18 lines it imports are there for the typo fix as well.
+The pointer version is 20 lines in both places. The files in `docs/` cost
+nothing until a task touches a template or cuts a release.
+
+## A pointer says when
+
+A pointer works only when the agent opens the file it names, and the agent
+decides that from the pointer line alone. The vendor gives an example of
+this case. A `CLAUDE.md` that tells Claude in a sentence to read
+`AGENTS.md` gets `AGENTS.md` read only when Claude decides to open it
+(@Claude Code memory). So write the pointer as a condition and a
+place: "Before you change a file in `templates/`, read
+`docs/templates.md`." The condition is what the agent matches against the
+task. A bare "see `docs/`" gives it no task to match, and "always read
+`docs/release.md` first" makes it read the file in every session, which
+costs as much as loading it.
+
+<Choice id="best-release-pointer" objective="customizing-agents/configures-agent/chooses-load-or-point"
+  concepts={['loading-versus-pointing']}
+  context="A team moves a nine-step release procedure out of its instruction file into docs/release.md and keeps one line in the instruction file in its place. The agent is Claude Code, where a line that starts with @ imports the file at start-up."
+  title="Which line should stay?" hint="For each line, when does the agent read the procedure: in every session, only on a release, or never?"
+  options={[
+    { text: 'Always read `docs/release.md` before you start work.', why: 'The agent follows that in every session, so the nine steps are in context for every task again.' },
+    { text: 'See also the files in `docs/` for more detail.', why: 'This names no task and no file. The agent has nothing to match a release against, so it may never open the procedure.' },
+    { text: '@docs/release.md', why: 'An import expands the file into the context at start-up, so every session pays for the nine steps.' },
+    { text: 'To cut a release, read `docs/release.md` and follow it.', correct: true },
+  ]}>
+The procedure should be read when the task is a release, and at no other
+time. Which line should the instruction file keep?
+</Choice>
+
+<Match id="load-or-point-rows" phase="review" objective="customizing-agents/configures-agent/chooses-load-or-point"
+  concepts={['loading-versus-pointing']}
+  context="A team sorts the guidance in its coding agent's instruction file. Text in the file is in context in every session. A pointer is one line that names a file and says when to read it."
+  title="Load it or point at it?" hint="Does nearly every task need this, or only some tasks?"
+  options={['Keep it in the instruction file', 'Point at it with one line']}
+  rows={[
+    { statement: 'The test command, which nearly every task runs', option: 0, why: 'How often does a task finish without running the tests?' },
+    { statement: 'A 40-line guide to writing database migrations, used about once a month', option: 1, why: 'How many sessions pay for 40 lines that one task a month uses?' },
+    { statement: 'The rule that no change is ever committed straight to the main branch', option: 0, why: 'Which tasks end in a commit?' },
+    { statement: 'The style rules for PDF templates, needed only when a template changes', option: 1, why: 'Which tasks touch a template?' },
+  ]}
+  rationale="Nearly every task needs the test command and the branch rule, so they stay loaded. The migration guide and the template rules matter for some tasks, so one line points at each.">
+Match each piece of guidance to where it goes.
+</Match>
+
+<MultiChoice id="what-loads-at-start" phase="review" objective="customizing-agents/configures-agent/chooses-load-or-point"
+  concepts={['loading-versus-pointing']}
+  context="In Claude Code, the instruction file is read at the start of every session. A line that starts with @ followed by a path imports that file. A rule file scoped with a paths field loads later, when the agent works with matching files."
+  title="What is in context before the first task?" hint="For each one, does the agent read the text whatever the task is?"
+  options={[
+    { text: 'A line in the project instruction file', correct: true },
+    { text: 'A file the instruction file names in backticks in a pointer line', why: 'A path in a code span is plain text. The agent reads that file only if it decides to open it.' },
+    { text: 'A file the instruction file imports with `@docs/style.md`', correct: true },
+    { text: 'A rule file whose `paths` field matches only `templates/**`', why: 'A rule scoped with paths loads when the agent works with files that match it.' },
+  ]}>
+Which two of these are in the agent's context at the start of every
+session, whatever the task is? Select two.
+</MultiChoice>
+
+## Cut what does nothing
+
+Pointing makes the file shorter. **Pruning instructions** makes it shorter
+again, by deleting lines that no task needs. The vendor's test asks of
+each line whether the agent would get something wrong without it, and a
+line the agent wouldn't miss goes (@Claude Code best practices). The
+lines that fail the test are usually one of these.
+
+**A rule the agent follows anyway.** "Write clean, readable,
+well-documented code" describes what the agent does without it, and so
+does a line about a convention the agent already applies, such as type
+hints in a code base that has them everywhere.
+
+**A fact the code already states.** The formatter's configuration sets the
+quote style and the line length, so "use double quotes" and "keep lines
+under 100 characters" repeat it. The dependency list is in
+`pyproject.toml`, and the paragraph about the modules repeats the folder
+names. A copy of a fact can also go stale while the code changes, and then
+the agent has two sources that disagree.
+
+**A rule for a problem that has gone away.** "Keep the PDF library below
+version 52" was right when the crash happened. The project has used
+version 62 for a year, and the line now asks the agent to downgrade.
+
+**A line that contradicts another.** The long file says `uv run pytest`
+under Commands and `python -m pytest` under Rules. When two instructions
+contradict each other, Claude may follow either one (@Claude Code memory).
+Resolve a conflict by keeping one version, and keep what the cut line meant
+as well. The second line also said *when* to run the tests. The pruned
+file says that next to the right command.
+
+Claude Code can look for some of these lines for you. `/doctor
+prompt-audit` reports instructions that contradict each other or name
+files and commands that don't exist, and it changes nothing until you ask
+it to (@Claude Code memory). The audit finds candidates, and you still
+make the call on each line.
+
+<Sort id="keep-point-or-cut" objective="customizing-agents/configures-agent/prunes-instructions"
+  concepts={['pruning-instructions', 'loading-versus-pointing']}
+  context="The lines come from a long instruction file for a Python service that renders invoices and sends them by email. Without a test command in the file, the agent has guessed wrong ones. The formatter's configuration sets double quotes. The project has used version 62 of its PDF library for a year. The agent has added retries around mail calls before, and the mail queue already retries. Releases happen once a month, and templates change a few times a year."
+  title="Keep it, point at it, or cut it?" hint="For each line: would removing it cause a mistake, and if it would, does nearly every task need it?"
+  buckets={['Keep in the file', 'Move behind a pointer', 'Cut']}
+  items={[
+    { text: 'Do not add retries around SMTP calls. The queue already retries.', bucket: 0 },
+    { text: 'Test: `uv run pytest`', bucket: 0 },
+    { text: 'The nine steps for cutting a release', bucket: 1 },
+    { text: 'Regenerate the golden files for templates with `uv run pytest --update-golden`', bucket: 1 },
+    { text: 'Use double quotes for strings.', bucket: 2 },
+    { text: 'Keep the PDF library below version 52, which crashes on right-to-left text.', bucket: 2 },
+    { text: 'Write clean, readable, well-documented code.', bucket: 2 },
+  ]} />
+
+## Watch the sessions after the cut
+
+A pruning pass is a change to a prompt, and you test it the way you test
+any prompt change: run the usual tasks and watch what the agent does. The
+vendor's advice is to treat the instruction file like code, prune it
+regularly, and check whether the agent's behavior really changes
+(@Claude Code best practices). When a session goes wrong after the cut,
+the cut line that would have stopped it comes back, and only that line.
+
+<Scenario id="after-the-cut" objective="customizing-agents/configures-agent/prunes-instructions"
+  concepts={['pruning-instructions']}
+  context="A developer pruned a 57-line instruction file to 20 lines. One cut line said to run the tests with the wrong command before finishing, and it was cut because it contradicted the right test command elsewhere in the file. In the next five sessions the agent twice said a task was done without running the tests. Nothing else went wrong."
+  title="Two sessions skipped the tests" hint="Which cut line was doing a job, and which part of it?"
+  options={[
+    { text: 'Put the whole 57-line file back, because the cut broke something.', consequence: 'The tests run again, and so do the lines that did nothing. The wrong test command is back as well, so the conflict returns.' },
+    { text: 'Add "IMPORTANT" to every rule in the file, so the agent skips none of them.', consequence: 'When every line is marked, no line stands out, and the file still never says to run the tests before finishing.' },
+    { text: 'Add back when to run the tests, next to the right test command.', correct: true, consequence: 'The file grows by a few words. In the next sessions the agent runs `uv run pytest` before it says a task is done.' },
+    { text: 'Leave the file as it is. Two sessions out of five are noise.', consequence: 'The agent keeps finishing without tests in some sessions. Removing that line caused a mistake, which is the test for keeping it.' },
+  ]}>
+Two of five sessions after the cut ended without a test run. What do you
+change?
+</Scenario>
+
+<Choice id="the-line-test" phase="review" objective="customizing-agents/configures-agent/prunes-instructions"
+  concepts={['pruning-instructions']}
+  context="A developer goes through a coding agent's instruction file line by line to make it shorter, and needs one question to decide for each line whether it stays."
+  title="Which question decides?" hint="What is the instruction file for, from the agent's side?"
+  options={[
+    { text: 'Is the line still true for the project today?', why: 'A true line can still do nothing. "Write clean code" is true and changes no behavior.' },
+    { text: 'Would a new person on the team find the line useful?', why: 'A person and an agent need different things. The agent reads the code itself, and a line that helps a person read it may repeat what the code says.' },
+    { text: 'Would removing the line cause the agent to make a mistake?', correct: true },
+    { text: 'Is the line shorter than twenty words?', why: 'Length says nothing about whether a line does a job. A short line can be noise, and a longer one can stop a real mistake.' },
+  ]}>
+Which question decides whether a line stays in the file?
+</Choice>
+
+<MultiChoice id="which-lines-go" phase="review" objective="customizing-agents/configures-agent/prunes-instructions"
+  concepts={['pruning-instructions']}
+  context="A Python service has an instruction file for its coding agent. Its formatter's configuration sets the line length to 100. The service has used version 62 of its PDF library for a year. The agent has committed to the main branch before, and it has added retries around mail calls that the mail queue already retries."
+  title="Which lines go?" hint="For each line, what does the agent do if the line is gone?"
+  options={[
+    { text: 'Keep lines under 100 characters.', correct: true },
+    { text: 'Never commit to `main`. Branch as `feat/...` or `fix/...`.', why: 'The agent has committed to main before, so removing the line brings that mistake back.' },
+    { text: 'Do not add retries around SMTP calls. The queue already retries.', why: 'The agent has added those retries before. The line stops a real mistake.' },
+    { text: 'Keep the PDF library below version 52.', correct: true },
+  ]}>
+Which two of these can you cut from the file? Select two.
+</MultiChoice>
+
+<Pitfall title="Pointing at the rule every task needs">
+A team prunes its file and moves the branch rules into `docs/git.md`,
+behind the line "for branch naming, read `docs/git.md`". A week later the
+agent commits a fix straight to `main`. The task was a small fix, nothing
+about it mentioned branch naming, and the agent didn't open the file. Keep
+a rule that applies to nearly every task in the instruction file itself.
+Pointing is for detail that only some tasks need.
+</Pitfall>
+
+<Exercise stretch="Do the same pass on a copy of an instruction file from a project you work in, on a branch of its own. Then run three of your usual tasks with the pruned file and add back only the lines whose absence caused a mistake.">
+Copy the long file to a scratch folder outside the course repository. You
+edit the copy and leave the original alone:
+
+```sh
+mkdir -p ~/prune-me/docs
+cp <course-repo>/site/examples/customizing-agents/load-point-prune/AGENTS.long.md ~/prune-me/AGENTS.md
+```
+
+Go through `~/prune-me/AGENTS.md` line by line and mark each line *keep*,
+*point* or *cut*. Use these facts about the project. The formatter's
+configuration sets double quotes and a line length of 100. Every public
+function already has type hints. The project has used version 62 of its
+PDF library for a year. The agent has committed to `main` before, has
+edited `uv.lock` by hand, and has added retries around SMTP calls. Move
+each *point* group into its own file under `~/prune-me/docs/`, and replace
+it in `AGENTS.md` with one line that says when to read it and where it is.
+Delete every *cut* line.
+
+A good result is about 20 lines, with every rule the agent has broken
+still in it, the test command written once and correctly, and no `@`
+imports. Compare it with `AGENTS.pruned.md`, `docs/templates.md` and
+`docs/release.md` in the lesson folder, which are one answer, not the only
+one. Where your choice and the model answer differ on a line, say what
+mistake the agent would make without that line, or why it would make none. Which of your
+cuts would you check first in a real session, and why that one?
+</Exercise>
+
+<Recap>
+1. Every line in an instruction file is in context for every task, and a
+   long file gets followed less well than a short one (@Claude Code memory).
+2. Load what nearly every task needs, and point at the rest with one line
+   that says when to read the file and where it is.
+3. An `@path` import expands the file into the context at start-up, so it
+   makes the file tidier without making it cheaper (@Claude Code memory).
+4. Prune by asking of each line whether removing it would cause a mistake.
+   Cut rules the agent follows anyway, facts the code states, problems
+   that have gone away, and one of every pair of lines that contradict
+   each other (@Claude Code best practices).
+5. After a cut, run the usual tasks and add back only the line whose
+   absence caused a mistake.
+</Recap>
+
+<Habit id="delete-one-when-you-add-one">
+The next time you add a line to an instruction file, read the rest of the
+file and delete one line that no longer prevents a mistake.
+</Habit>
