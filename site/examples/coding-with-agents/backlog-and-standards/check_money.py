@@ -10,9 +10,11 @@ This script makes that rule a check that a CI step can run:
 It prints one line for each call to `float(` in the code, skipping
 comments, strings and this file itself, and exits with status 1 when it
 finds one. With no findings it prints `no findings` and exits with
-status 0. The check is crude on purpose: it flags every `float(` call,
-so a file that needs a float for something other than money is the
-moment to make the check narrower.
+status 0. A file that Python's tokenizer can't read, such as one with a
+bracket that is never closed, stops the check with one line that names
+the file and exit status 2. The check is crude on purpose: it flags
+every `float(` call, so a file that needs a float for something other
+than money is the moment to make the check narrower.
 """
 
 import os
@@ -44,7 +46,12 @@ def main(argv):
     for path in paths:
         if os.path.abspath(path) == os.path.abspath(__file__):
             continue
-        for number, line in findings(path):
+        try:
+            found = findings(path)
+        except (tokenize.TokenError, SyntaxError) as error:
+            print(f"{path}: not valid Python, so it can't be checked: {error}")
+            return 2
+        for number, line in found:
             print(f"{path}:{number}: money as float, use decimal.Decimal: {line}")
             count += 1
     if count == 0:
