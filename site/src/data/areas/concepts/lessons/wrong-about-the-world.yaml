@@ -1,5 +1,8 @@
 id: concepts/wrong-about-the-world
 title: Wrong about the world, or wrong about the text
+description: >-
+  Two kinds of wrong answer, one wrong about the world and one wrong about the text you gave the
+  model, and the check that finds each kind.
 mode: explanation
 covers: concepts/limits
 serves: [concepts/explains-models/names-failure-modes]
@@ -7,7 +10,10 @@ introduces: [factuality-and-faithfulness]
 assumes:
   - objective: concepts/explains-models/names-failure-modes
     lesson: concepts/how-models-work
-extends-to: []
+    section: failure-modes-named
+extends-to:
+  - label: Spotting a hallucination
+    href: /safety/spotting-hallucination/
 after: [concepts/straight-answer]
 shorts: []
 exercise:
@@ -22,4 +28,9 @@ notes: >-
   Safety/spotting-hallucination teaches how to catch invented specifics. This lesson adds the
   distinction between the two kinds and which check finds each: an outside source for factuality,
   the input itself for faithfulness. The survey groups remedies by cause, so the lesson doesn't
-  pair a remedy with each kind.
+  pair a remedy with each kind. The page follows the survey's taxonomy (sections 2.3.1 and 2.3.2:
+  factual contradiction and fabrication; instruction, context and logical inconsistency), its
+  detection methods per kind (4.1.1 and 4.1.2) and its grouping of mitigation by cause (section 5),
+  checked against the arXiv HTML of 2311.05232 on 2026-10-07. The memo exchange is illustrative. The
+  graded Sort on the page is the five-item sort the plan named, and the Exercise has the learner
+  sort five more answers and write the check for each.

@@ -1,0 +1,226 @@
+import { Choice, MultiChoice, Match, Sort, Pitfall, Exercise, Recap, Prompt, Response } from '@components/lesson';
+
+The lesson on how models work named
+[hallucination](/concepts/how-models-work/#failure-modes-named): fluent,
+confident text with nothing behind it. A wrong answer can be wrong in two
+different ways, though. It can be wrong about the world, such as a date
+that never happened. It can also be wrong about the text you gave the
+model, such as a summary that changes a date in the memo you pasted. In
+this lesson we split one wrong summary into those two kinds and find the
+check that catches each one.
+
+## One summary, four mistakes
+
+You paste a short memo into a chat assistant and ask for a summary. The
+exchange below is illustrative: the author wrote it to show the pattern,
+and a real model makes different mistakes.
+
+<Prompt model="illustrative" recorded="illustrative">
+Summarize this memo in two bullet points, and say which country the
+offsite is in.
+
+Memo: The team offsite moves from 12 March to 19 March. It is held in
+our Lisbon office. The budget is capped at 4,000 euros. The office manager
+books the rooms.
+</Prompt>
+<Response>
+
+```text
+- The offsite moves from 12 March to 26 March, one week later
+  than planned, and takes place in the Lisbon office.
+- The budget is capped at 4,000 euros.
+- The office manager books the rooms and the flights.
+
+The offsite is in Spain, since Lisbon is the capital of Spain.
+```
+
+</Response>
+
+The reply reads well, and it gets four things wrong.
+
+- It gives 26 March, and the memo says 19 March.
+- It says the move is one week, and 12 to 26 March is two weeks. The reply
+  contradicts itself.
+- It has three bullet points, and you asked for two. The third one adds
+  flights, which the memo never mentions.
+- It puts Lisbon in Spain. Lisbon is the capital of Portugal.
+
+The first three mistakes you can find with the memo alone. The fourth
+one you can't, because the memo never says which country Lisbon is in.
+
+## Two kinds of hallucination
+
+A survey of research on hallucination in large language models sorts
+these mistakes into two groups, and the names of the groups are
+factuality and faithfulness (@Huang 2025).
+
+A **factuality** error is wrong about the world. The survey splits it
+into two cases. In the first, the claim is about something real and gets
+it wrong, such as the wrong person named as the inventor of a device, or
+Lisbon placed in Spain. In the second, the claim can't be checked against
+anything that exists, such as a quote from a person who never said it or
+a reference to a paper nobody wrote (@Huang 2025).
+
+A **faithfulness** error departs from what the user gave the model. The
+survey names three cases (@Huang 2025):
+
+- The output ignores the instruction, such as three bullet points where
+  you asked for two.
+- The output contradicts the text it was given, such as 26 March where
+  the memo says 19 March, or flights that the memo doesn't mention.
+- The output contradicts itself, such as "one week later" next to two
+  dates that are two weeks apart.
+
+So the summary above has one factuality error and three faithfulness
+errors. A faithfulness error can sound true. "The office manager books
+the flights" is a reasonable thing for an office manager to do, and it
+can even be true in your company. It is still a mistake in this
+summary. A summary reports what the memo says, and the memo doesn't say
+it.
+
+<Sort id="world-or-text" objective="concepts/explains-models/names-failure-modes"
+  concepts={['factuality-and-faithfulness']}
+  context="Each item is one mistake in a reply from a chat assistant. Each item says what the user gave the model: a document, an instruction, or only a question."
+  title="Wrong about the world, or about the input?"
+  hint="Could you find this mistake with the user's input and the reply alone, or do you need to know something the input doesn't say?"
+  buckets={['Wrong about the world (factuality)', 'Departs from the input or from itself (faithfulness)']}
+  items={[
+    { text: 'Given a memo that says the meeting is on Tuesday, the reply says Wednesday.', bucket: 1 },
+    { text: 'Asked with no document for the boiling point of water at sea level, the reply says 90 °C.', bucket: 0 },
+    { text: 'Asked for one sentence, the reply is five sentences long.', bucket: 1 },
+    { text: 'Asked with no document for research on remote work, the reply cites a study that was never published.', bucket: 0 },
+    { text: 'The reply says the agenda has two items, then lists three.', bucket: 1 },
+  ]} />
+
+## Which check finds each kind
+
+The two kinds need different checks, and this is the reason to tell them
+apart.
+
+To find a **factuality** error, you check the claim against a source
+outside the chat, such as a reference work or the official page.
+The survey describes detection methods that split an answer into single
+facts and look each one up in a trusted source of knowledge (@Huang 2025).
+Asking the same model isn't that check. The survey notes that a model
+isn't a reliable store of facts (@Huang 2025).
+
+To find a **faithfulness** error, you compare the output with the input:
+the instruction you wrote and the text you pasted. The survey describes
+detection methods that measure how many of the facts in the output also
+appear in the source content (@Huang 2025). For you, that means reading
+the memo and the summary side by side. This check doesn't need outside
+knowledge, and outside knowledge doesn't help. A web search can tell you a
+lot about Lisbon, and nothing about which date this memo gave. The lesson on
+[spotting a hallucination](/safety/spotting-hallucination/) runs this
+check on a summary of a council report.
+
+The two checks don't replace each other. A summary can be faithful to a
+memo that is itself wrong. An outside source is the check that catches
+that. An answer can be true about the world and still unfaithful, like
+the flights that the office manager may well book.
+
+The survey groups the ways to reduce hallucination by their cause in
+the training data, the training and the way the model generates text
+(@Huang 2025), so it doesn't give one remedy for each kind. What you can
+do as a user is know which check a claim needs.
+
+<Choice id="which-check-finds-it" objective="concepts/explains-models/names-failure-modes"
+  concepts={['factuality-and-faithfulness']}
+  context="A user pasted a contract into a chat assistant and asked for the notice period. The reply says three months. The user wants to know whether that is what the contract says."
+  title="Which check finds it?"
+  hint="Is the question about the world, or about one document you already have?"
+  options={[
+    { text: 'Search the web for the usual notice period in contracts of this kind.', why: 'A usual period says nothing about this contract. The answer has to match the text you pasted.' },
+    { text: 'Ask the same assistant whether it is sure, in a new chat.', why: 'The model is not a reliable store of facts, and a new chat has never seen the contract.' },
+    { text: 'Find the clause on notice in the contract and read it.', correct: true },
+    { text: 'Ask a second assistant the same question about notice periods.', why: 'A second model without the contract can only guess what is usual. It never sees the clause.' },
+  ]}>
+
+You paste a contract into a chat assistant and ask for the notice period.
+It answers "three months". Which check tells you whether that answer is
+right for this contract?
+
+</Choice>
+
+<Pitfall title="Checking a summary against the web">
+You ask an assistant for a short version of a supplier's letter, and it
+says the price goes up by 5 percent from January. That sounds plausible.
+A web search shows that prices in that market rose about 5 percent this
+year, so you send the summary on. The letter said 8 percent
+from April. The search answered a question about the world, and the
+mistake was about the letter. Rule: when the model worked from a text
+you gave it, check its output against that text first.
+</Pitfall>
+
+<MultiChoice id="spot-the-faithfulness-errors" phase="review" objective="concepts/explains-models/names-failure-modes"
+  concepts={['factuality-and-faithfulness']}
+  context="A factuality error is wrong about the world. A faithfulness error departs from what the user gave the model: the instruction, the text it was handed, or what the output said earlier."
+  title="Which errors are about the input?"
+  hint="Which of these could you find with the input alone, without knowing anything else?"
+  options={[
+    { text: 'You ask for a reply in French, and the model answers in English.', correct: true },
+    { text: 'Asked with no document when a well-known bridge opened, the model says 1950, and it opened in 1937.', why: 'The prompt gave no date, so the error is about the world. Only an outside source shows it.' },
+    { text: 'You paste a report that names six cities, and the summary lists seven.', correct: true },
+    { text: 'Asked with no document for reading tips, the model names a real-looking book that no library holds.', why: 'Nothing in the input mentioned the book. The claim is about the world, and a search finds no such book.' },
+  ]}>
+
+Which two of these mistakes are faithfulness errors?
+
+</MultiChoice>
+
+<Match id="match-the-check" phase="review" objective="concepts/explains-models/names-failure-modes"
+  concepts={['factuality-and-faithfulness']}
+  context="A factuality error is wrong about the world, and a faithfulness error departs from what the user gave the model. Each row is one mistake in a chat reply."
+  title="Which check finds it?"
+  hint="Where is the standard that the claim fails: outside the chat, or in what you gave the model?"
+  options={['Look it up in a source outside the chat', 'Compare it with the instruction and the text you gave the model']}
+  rows={[
+    { statement: 'The model says a law took effect in 2019, and you gave it no text.', option: 0, why: 'Nothing in the chat states the year, so the standard is outside it.' },
+    { statement: 'You asked for a table, and the model wrote a paragraph.', option: 1, why: 'The standard is the instruction you wrote.' },
+    { statement: 'The summary of your notes gives a deadline your notes never mention.', option: 1, why: 'The standard is the notes you pasted.' },
+    { statement: 'You gave the model no text, and it quotes a speech that has no record anywhere.', option: 0, why: 'Only an outside search shows that no such speech exists.' },
+  ]}
+  rationale="The kind of error decides the check: an outside source for factuality, the input for faithfulness.">
+Match each mistake to the check that finds it.
+</Match>
+
+<Exercise stretch="Paste a short email you wrote into a chat assistant, ask for a two-line summary and one fact about a place or a date the email names, and sort every mistake you find in the reply the same way.">
+
+Copy the wrong answers below, all from chat assistants, into a note,
+and for each one write two things: the kind of error (factuality or
+faithfulness) and the check that finds it, in one line, such as "compare
+with paragraph two of the report".
+
+```text
+1. Asked to translate a menu, the reply adds a dish the menu doesn't have.
+2. Asked who wrote a well-known novel, the reply names the wrong author.
+3. Asked for three options, the reply gives five.
+4. Asked about a city's population, the reply quotes a census that was
+   never held.
+5. Asked to summarize a letter, the reply says the letter was signed by
+   the manager, and later in the same reply that nobody signed it.
+```
+
+It takes about ten minutes. A good result puts 2 and 4 under factuality
+and 1, 3 and 5 under faithfulness. Each check line for factuality names
+an outside source you would open, and each line for faithfulness names
+the part of the input you would compare with. Reflection: for answer 5,
+do you need the letter to see the mistake, or the reply alone?
+
+</Exercise>
+
+<Recap>
+
+1. A factuality error is wrong about the world: a real thing described
+   wrongly, or a claim nothing can confirm, such as a quote nobody said
+   (@Huang 2025).
+2. A faithfulness error departs from what you gave the model: it ignores
+   the instruction, contradicts the text you pasted, or contradicts
+   itself (@Huang 2025).
+3. Check a factuality claim against a source outside the chat. Check a
+   faithfulness claim against your own input, side by side.
+4. A faithful answer can still be wrong about the world, and a true
+   statement can still be unfaithful, so a claim that matters may need
+   both checks.
+
+</Recap>
