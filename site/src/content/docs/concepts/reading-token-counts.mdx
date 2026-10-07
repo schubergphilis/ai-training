@@ -11,7 +11,7 @@ agent. You install and run nothing: every count on the page is in a table.
 The [lesson on what every token costs](/concepts/what-tokens-cost/#what-a-token-costs)
 priced one call. The [lesson on one prompt and many
 requests](/concepts/one-prompt-many-requests/#what-is-in-each-request)
-showed that each request carries the whole history so far. This lesson puts
+showed that each request holds the whole history so far. This lesson puts
 the two together.
 
 ## Two counts on every request
@@ -20,11 +20,10 @@ Every reply from a model comes with a short usage report, and that report
 holds two counts, the **input and output tokens** of the request
 (@Claude docs messages). The vendor bills by these counts.
 
-The input count is everything the request sent to the model. That is the
+The input count is everything the request sent to the model. It's the
 instructions, the tool descriptions if the assistant has tools, the history
-of the conversation and the new message. The tool descriptions count as
-input on every request that carries them, and so do the tool results that
-come back (@Claude docs pricing).
+of the conversation and the new message. The tool descriptions are input
+tokens, and so are the tool results that come back (@Claude docs pricing).
 
 The output count is everything the model wrote. That includes the visible
 answer and a request for a tool. A model that thinks before it answers
@@ -37,14 +36,14 @@ reads it (@Claude docs messages).
 The two counts have different prices. On the vendor's price list an
 output token costs five times as much as an input token, on every model
 (@Claude docs pricing), and the example prices in the lesson on what every
-token costs follow the same pattern. So the same total can mean two very
+token costs follow the same pattern. So the same total can mean two
 different bills. Read the two counts apart, and price each one.
 
 Some usage reports split the input count further: tokens written to a cache,
 tokens read from it, and the rest. Together those parts are the whole input
-(@Claude docs messages). A coding agent shows the same split on its usage
-screen for a session (@Claude Code costs). A later lesson in this course
-explains the cache. In this lesson every request is billed at the normal
+(@Claude docs messages). The usage screen of one coding agent shows the
+same split for a session (@Claude Code costs). The cache is the subject of
+a later lesson in this course. In this lesson every request is billed at the normal
 input price.
 
 <Choice id="where-the-bill-comes-from" objective="concepts/reasons-about-cost/reads-token-counts"
@@ -110,7 +109,7 @@ total                                        16,037   1,215   $0.0962   $0.0365 
 Read the table one column at a time. The output column goes up and down
 with the length of each answer. The input column only goes up. Request 1
 sent the instructions and one question. Request 2 sent those again, plus
-the first answer, plus the pasted notes. Each request after that carried
+the first answer, plus the pasted notes. Each request after that held
 everything before it, because the model keeps nothing between requests and
 the earlier messages are passed in again with each new one
 (@Claude docs messages).
@@ -152,8 +151,8 @@ Why did request 5 cost about twice as much as request 1?
 
 ## One prompt to an agent
 
-A chat sends one request for each message you type. An agent sends one
-request for each step of its loop. The cost guide of one coding agent says
+A chat sends one request for each message you type, and an agent sends one
+for each step of its loop. The cost guide of one coding agent says
 it sends the full conversation with every request, plus one more request
 each time a batch of tool results comes back (@Claude Code costs). So one
 prompt to an agent can fill several rows of a usage report.
@@ -209,24 +208,25 @@ to unrelated work, because text from the old task is paid for again with
 each new message (@Claude Code costs).
 
 When you need to keep going on the same task, some tools can compact the
-conversation: they ask the model to summarize the history and carry on from
-the summary. That makes the requests after it smaller. The summary itself
-is one large request, because the model has to read the whole conversation
-to write it. A new conversation costs nothing (@Claude Code costs).
+conversation: they ask the model to write a short version of the history
+and continue from that. The requests after the summary are smaller. The
+summary request itself is large, since the model reads the whole
+conversation for it, and a fresh start with a new conversation is free
+(@Claude Code costs).
 
 <Scenario id="new-task-same-chat" objective="concepts/reasons-about-cost/explains-growing-cost"
   concepts={['growing-session-cost']}
   context="A chat has been open all morning and holds a long history about one email, including two pasted documents. The person now has an unrelated question about booking a train."
   title="The next question is about something else"
-  hint="What will every request after this one carry, and does the new question need any of it?"
+  hint="What will every request after this one hold, and does the new question need any of it?"
   options={[
-    { text: 'Ask in the same chat, so the assistant has more context to work with.', consequence: 'Every request about the train now carries the whole email conversation. It costs more each time and adds nothing the train question needs.' },
+    { text: 'Ask in the same chat, so the assistant has more context to work with.', consequence: 'Every request about the train now holds the whole email conversation. It costs more each time and adds nothing the train question needs.' },
     { text: 'Ask the assistant to forget the email first, then ask about the train.', consequence: 'The request to forget is one more message in the history. The email conversation is still sent with every request after it.' },
-    { text: 'Open a new chat and ask about the train there.', correct: true, consequence: 'The first request carries only the instructions and the question. The email chat is still there to go back to.' },
+    { text: 'Open a new chat and ask about the train there.', correct: true, consequence: 'The first request holds only the instructions and the question. The email chat is still there to go back to.' },
     { text: 'Ask the assistant to summarize the chat, then ask about the train.', consequence: 'The summary is one large request that reads the whole history, and the summary of the email then goes with every train question.' },
   ]}>
 
-You have spent the morning on one email in a single chat. Now you want to
+You have spent the morning on one email in one chat. Now you want to
 ask about booking a train for next week, which has nothing to do with the
 email. What do you do?
 
@@ -239,7 +239,7 @@ The bill barely moves. The usage report shows why: the output counts were a
 few hundred tokens a request, and the input counts were tens of thousands,
 because a reference document was attached to every conversation and the
 conversations ran all day. The rule: read the input and the output counts
-before you guess, and look at what the input carries before you shorten the
+before you guess, and look at what the input holds before you shorten the
 answers.
 </Pitfall>
 
@@ -316,7 +316,7 @@ usage report. Why?
   options={[
     { text: 'The usage report shows four requests for this one prompt.', correct: true },
     { text: 'The usage report shows one request, because the person typed one prompt.', why: 'The harness sends a new request after each tool result, so one prompt fills several rows.' },
-    { text: 'The last request carries the listing and both files as input.', correct: true },
+    { text: 'The last request holds the listing and both files as input.', correct: true },
     { text: 'Every request has about the same input, because the instructions are the same.', why: 'The instructions are the same, but the history grows with every result.' },
   ]}>
 
@@ -363,7 +363,7 @@ your own last long chat, which pasted text did you pay for most often?
    requests included (@Claude docs messages).
 2. An output token costs several times an input token, so read the two
    counts apart and price each one (@Claude docs pricing).
-3. Each request in a conversation carries the whole history, so the input
+3. Each request in a conversation holds the whole history, so the input
    count only goes up. A short question late in a long chat can cost more
    than a long one at the start (@Claude Code costs).
 4. An agent sends a request for every step of its loop, and every tool
