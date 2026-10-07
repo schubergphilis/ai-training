@@ -10,6 +10,7 @@ workflow, and it decides which call runs next. No call decides that.
 """
 
 import sys
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
@@ -60,6 +61,8 @@ def fake_classify(email: str) -> str:
 
 def fake_refund(email: str) -> str:
     order_id = order_id_in(email)
+    if order_id not in ORDERS:
+        return "(no known order, the email goes to a person)"
     days = ORDERS[order_id]["days_since_delivery"]
     if days <= REFUND_DAYS:
         return f"Your refund for order {order_id} is on its way."
@@ -191,10 +194,10 @@ def step_parallel() -> None:
     email = EMAILS["c2"]
     with ThreadPoolExecutor(max_workers=3) as pool:
         votes = list(pool.map(lambda n: model("vote", f"{n}|{email}"), range(3)))
-    winner = max(set(votes), key=votes.count)
+    winner, count = Counter(votes).most_common(1)[0]
     print("  votes, email c2, refund or replacement?")
     print(f"    votes: {' '.join(votes)}")
-    print(f"    majority: {winner}, {votes.count(winner)} of {len(votes)}")
+    print(f"    majority: {winner}, {count} of {len(votes)}")
     print(f"    model calls: {len(calls)}, {timing(len(calls))}")
 
 
