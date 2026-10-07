@@ -91,8 +91,11 @@ def main() -> None:
     rows = requests()
     for number, (label, input_tokens, written, read, output) in enumerate(rows, start=1):
         lines.append(line(f"{number}. {label}", input_tokens, written, read, output))
-    totals = [sum(row[i] for row in rows) for i in range(1, 5)]
-    lines.append(line("total", totals[0], totals[1], totals[2], totals[3]))
+    total_input = sum(row[1] for row in rows)
+    total_written = sum(row[2] for row in rows)
+    total_read = sum(row[3] for row in rows)
+    total_output = sum(row[4] for row in rows)
+    lines.append(line("total", total_input, total_written, total_read, total_output))
     print("\n".join(lines))
 
 
