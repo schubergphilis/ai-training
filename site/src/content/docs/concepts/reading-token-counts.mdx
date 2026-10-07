@@ -29,15 +29,16 @@ The output count is everything the model wrote. That includes the visible
 answer and a request for a tool. A model that thinks before it answers
 writes its thinking as tokens too, and those are billed as output tokens
 (@Claude Code costs). So the output count can be larger than the answer you
-see. Both counts differ from the count of words on the screen, since the
-vendor turns the request into its own format before the model reads it
-(@Claude docs messages).
+see. Neither count is a count of words, because a token is a piece of
+text and not a word. The counts also include text you don't see, because
+the vendor turns the request into its own format before the model reads
+it (@Claude docs messages).
 
-The two counts have different prices. On the vendor's price list an
-output token costs five times as much as an input token, on every model
-(@Claude docs pricing), and the example prices in the lesson on what every
+The two counts have different prices. On one vendor's price list an
+output token costs five times as much as an input token, on every model it
+lists (@Claude docs pricing), and the example prices in the lesson on what every
 token costs follow the same pattern. So the same total can mean two
-different bills. Read the two counts apart, and price each one.
+different bills. Read the two counts separately, and price each one.
 
 Some usage reports split the input count further: tokens written to a cache,
 tokens read from it, and the rest. Together those parts are the whole input
@@ -106,7 +107,8 @@ request                                       input  output   input $  output $ 
 total                                        16,037   1,215   $0.0962   $0.0365   $0.1327
 ```
 
-Read the table one column at a time. The output column goes up and down
+The total row prices the summed counts, so a column added up by hand can
+differ from it by $0.0001. Read the table one column at a time. The output column goes up and down
 with the length of each answer. The input column only goes up. Request 1
 sent the instructions and one question. Request 2 sent those again, plus
 the first answer, plus the pasted notes. Each request after that held
@@ -124,17 +126,19 @@ The two pasted documents are in that input, and they were paid for again in
 every request after they arrived.
 
 The row below is the same subject-line question asked
-alone in a new chat, with only the instructions in front of it. A subject
-line written that way knows nothing about the email, so this row is for the
-price only.
+alone in a new chat, with only the instructions in front of it. The model
+then sees nothing of the email, so this row is for the price only.
 
 ```text
 question 5 alone, in a new chat                 512      15   $0.0031   $0.0004   $0.0035
 ```
 
+The same question costs $0.0321 at the end of the chat and $0.0035 alone,
+about nine times as much.
+
 <Choice id="why-the-last-cost-more" objective="concepts/reasons-about-cost/explains-growing-cost"
   concepts={['growing-session-cost', 'stateless-model']}
-  context="A chat had five requests. Two of them pasted documents. Request 1 was a one-line question with 515 input and 400 output tokens. Request 5 was a one-line question with 5,277 input and 15 output tokens."
+  context="A chat had five requests. Two of them added a document. Request 1 was a one-line question with 515 input and 400 output tokens. Request 5 was a one-line question with 5,277 input and 15 output tokens."
   title="Why did request 5 cost more?"
   hint="What did the assistant send along with the fifth question?"
   options={[
@@ -176,8 +180,8 @@ total                                         6,930     200   $0.0416   $0.0060 
 The person typed one line, and the report has three rows. The first two
 outputs are short, because a request for a tool is short. The input of
 request 3 is more than twice that of request 2, because the full note came
-back as a tool result and went into the history. Had the agent gone on to
-a fourth step, the note would have been in that request too.
+back as a tool result and went into the history. If the agent had gone on
+to a fourth step, the note would have been in that request too.
 
 <Choice id="how-many-rows" objective="concepts/reasons-about-cost/explains-growing-cost"
   concepts={['growing-session-cost', 'model-request']}
@@ -186,7 +190,7 @@ a fourth step, the note would have been in that request too.
   hint="Count the replies the model wrote, the final answer included."
   options={[
     { text: 'One request, because the person gave the agent one instruction.', why: 'The instruction starts the run. The harness sends a new request after each tool result.' },
-    { text: 'Eleven requests, one for each tool the agent used.', why: 'Each tool call was in its own reply, and the answer needed one more reply after the last result.' },
+    { text: 'Eleven requests, one for each tool the agent used.', why: 'Which reply held the answer, and did it come after the last tool result?' },
     { text: 'Two requests, one before the tools ran and one after.', why: 'The tools ran one at a time, each in its own step, so each result went back in a request of its own.' },
     { text: 'Twelve requests, one for each tool and one for the answer.', correct: true },
   ]}>
@@ -200,7 +204,7 @@ report for this instruction?
 ## Starting fresh
 
 The history is what makes a late request expensive, so the cheapest way to
-lower it is to drop it. When you move to a task that has nothing to do with
+lower the cost is to drop the history. When you move to a task that has nothing to do with
 the conversation so far, start a new conversation. The old history adds to
 the cost of every new request and gives the new task nothing it needs. The
 vendor's cost advice for its coding agent gives the same rule for a switch
@@ -209,10 +213,10 @@ each new message (@Claude Code costs).
 
 When you need to keep going on the same task, some tools can compact the
 conversation: they ask the model to write a short version of the history
-and continue from that. The requests after the summary are smaller. The
-summary request itself is large, since the model reads the whole
-conversation for it, and a fresh start with a new conversation is free
-(@Claude Code costs).
+and continue from that. The requests after the summary are smaller.
+Making the summary is itself one large request, because the model has to
+read the whole history to write it. Opening a new conversation costs
+nothing by itself (@Claude Code costs).
 
 <Scenario id="new-task-same-chat" objective="concepts/reasons-about-cost/explains-growing-cost"
   concepts={['growing-session-cost']}
@@ -360,9 +364,9 @@ your own last long chat, which pasted text did you pay for most often?
 1. Every request reports two counts. Input tokens are everything the
    request sent: instructions, tool descriptions, the history and the new
    message. Output tokens are everything the model wrote, thinking and tool
-   requests included (@Claude docs messages).
+   requests included (@Claude docs pricing) (@Claude Code costs).
 2. An output token costs several times an input token, so read the two
-   counts apart and price each one (@Claude docs pricing).
+   counts separately and price each one (@Claude docs pricing).
 3. Each request in a conversation holds the whole history, so the input
    count only goes up. A short question late in a long chat can cost more
    than a long one at the start (@Claude Code costs).
