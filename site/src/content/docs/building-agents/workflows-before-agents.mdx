@@ -3,8 +3,8 @@ import { Choice, Match, Predict, Sort, Pitfall, Exercise, Recap, Habit } from '@
 In this lesson we run three fixed arrangements of model calls for a small
 shop that answers customer emails. In each one the code decides which call
 comes next, and the model only writes the text of each call. After that we
-look at what kind of task those arrangements can't hold, and that needs an
-agent that chooses its own steps.
+look at a kind of task that fixed code can't hold, and that needs an agent
+that chooses its own steps.
 
 In [Stopping the loop on purpose](/building-agents/stopping-the-loop/) the
 model chose every tool call, and the harness rules decided when the run
@@ -12,10 +12,10 @@ ended. Here the order of the calls is written in the program before the
 first email arrives. The model calls are fake: functions written by hand
 that read a prompt name and some text and return text. Every run prints
 the same result. The complete program is
-`site/examples/building-agents/workflows-before-agents/workflows.py` in the
-repository. Copy the `workflows-before-agents` folder, and each step below
-is `python3 workflows.py <step>`. No application programming interface
-(API) key is needed.
+`site/examples/building-agents/workflows-before-agents/workflows.py` in
+the repository. Copy the `workflows-before-agents` folder, and run each
+step below inside your copy as `python3 workflows.py <step>`. No
+application programming interface (API) key is needed.
 
 ## Who decides the next step
 
@@ -26,17 +26,18 @@ developers wrote. In an agent, the model directs the process itself and
 picks the tools it uses as it goes. The article advises starting with the
 simplest thing that works. Often that's one model call, prepared well,
 with retrieved text and a few examples in the prompt. Add steps only when
-the simpler version doesn't do the job well enough, because each step adds time and cost
-(@Anthropic effective agents).
+the simpler version doesn't do the job well enough, because each step
+adds time and cost (@Anthropic effective agents).
 
 Between one call and an agent are the workflow patterns: fixed
 arrangements of model calls, inside one task, where code controls the
-order. This lesson runs a chain, a route, and parallel calls.
-A fourth, a draft-and-critique loop, gets its own lesson later in this
-part. When the parts of the task are whole agents that hand work to each
-other, the design is a multi-agent system, and the
-[Orchestration and multi-agent](/building-agents/orchestrating-agents/)
-part of the course covers it.
+order. This lesson runs a chain, a route, and parallel calls. A fourth, a
+draft-and-critique loop, gets
+[its own lesson later in this part](/building-agents/reflection/). When
+the parts of the task are whole agents that hand work to each other, the
+design is a multi-agent system. The lesson
+[Orchestration in code or by a model](/building-agents/orchestrating-agents/)
+opens the part of the course that covers it.
 
 ## A chain with a gate
 
@@ -148,18 +149,18 @@ none of them a class of their own.
 Parallel calls come in two forms (@Anthropic effective agents). Sectioning
 splits the work into independent parts and runs them at once. For example,
 one call writes the reply while another checks the email for something a
-person must handle. Voting asks one question three or five times and
-combines the answers. A judgment that one call can get wrong becomes more
+person must handle. Voting asks one question several times and combines
+the answers. A judgment that one call can get wrong becomes more
 reliable that way. The article recommends parallel calls for parts that
 can run side by side to save time, or for a judgment that needs more than
 one attempt to trust (@Anthropic effective agents).
 
 In the shop, email `c1` mentions a card number, and the `screen` call runs
-next to the `reply` call. Email `c2` doesn't say whether the
-customer wants a refund or a replacement. Three `vote` calls answer that
-question, and the shop acts on the answer that most of them give. The fixture counts 2 seconds per model
-call. The seconds are an assumption written by hand, to compare one way of
-running the calls with the other.
+next to the `reply` call. Email `c2` doesn't say whether the customer
+wants a refund or a replacement. Three `vote` calls answer that question,
+and the shop acts on the answer that most of them give. The fixture counts
+2 seconds per model call. The seconds are an assumption written by hand,
+to compare one way of running the calls with the other.
 
 <Predict id="run-parallel" title="Sections and votes"
   answer={`parallel, at 2 s per model call
@@ -198,9 +199,9 @@ majority.
     { statement: 'For each new product, write a description and then translate the description into German.', option: 0, why: 'Does the second call need the output of the first?' },
     { statement: 'Send each support email to the prompt for billing, for delivery or for returns.', option: 1, why: 'Does each email take the same path, or does the kind of email decide the prompt?' },
     { statement: 'Check a contract for four kinds of risky clause, with one call per kind, and join the findings.', option: 2, why: 'Does any of the four checks need the result of another?' },
-    { statement: 'Find why one customer sees the wrong price, where each record you read decides which record to read next.', option: 3, why: 'Could you write down the steps before the first record is read?' },
+    { statement: 'Find why one customer sees the wrong price, where each record you read decides which record to read next.', option: 3, why: 'Could you list the records to read, or draw the path through them, before the first one is read?' },
   ]}
-  rationale="When code can list the steps before the task starts, a workflow holds them. A task whose next step depends on what the last one found needs a model to choose.">
+  rationale="When you can draw every path through the task before it starts, even one with a branch, code can hold it as a workflow. When nobody can list the possible steps in advance, a model has to choose them.">
 
 Match each task to the arrangement that fits it.
 
@@ -209,20 +210,24 @@ Match each task to the arrangement that fits it.
 ## When the task needs an agent
 
 Each pattern so far has a path that you can draw before the first email
-arrives. An agent fits a task where you can't. The article names open
-problems, where nobody can say in advance how many steps they take, and
-where a fixed path can't be written down (@Anthropic effective agents). An
-agent is the loop from the earlier lessons: the model calls tools, reads
-what they return, and decides the next step until it is done or a stop rule
-ends the run.
+arrives, branches included. The route picks one of four paths, and the
+chain either stops at the gate or goes on. Each of those paths is in the
+code. An agent fits a task where you can't draw the paths. Think of a
+search for the cause of a fault: each finding opens new places to look,
+and the count of steps is unknown at the start. The article keeps agents
+for tasks like that, where nobody knows the number of steps or the path
+before the work begins (@Anthropic effective agents). An agent is the loop
+from the earlier lessons: the model calls tools, reads what they return,
+and decides the next step until it is done or a stop rule ends the run.
 
 That freedom has a price. An agent costs more to run, and a wrong early
-step can make the steps after it go wrong too. The article advises testing it a
-lot in an environment where its mistakes do no harm, with limits on what it
-can do (@Anthropic effective agents). So the question for a new task is
-whether you can write its steps down today. If you can, write them as code
-and call the model inside each step. If the steps depend on what the task
-finds, you need an agent, and its stop rules from the earlier lesson.
+step can make the steps after it go wrong too. The article advises
+testing it a lot in an environment where its mistakes do no harm, with
+limits on what it can do (@Anthropic effective agents). So the question
+for a new task is whether you can list its possible steps today and draw
+the paths between them. If you can, write them as code and call the model
+inside each step. If nobody can list them before the task starts, you
+need an agent, and its stop rules from the earlier lesson.
 
 <Choice id="what-calls-for-an-agent" objective="building-agents/orchestrates-agents/picks-a-pattern"
   concepts={['workflow-patterns']}
@@ -232,7 +237,7 @@ finds, you need an agent, and its stop rules from the earlier lesson.
   options={[
     { text: 'The task needs four or more model calls before it can give the answer.', why: 'A chain can run any number of calls in an order that code sets.' },
     { text: 'The task calls a tool, such as an order lookup, along the way.', why: 'Code can call a tool too, the way the gate in the chain looked up the order.' },
-    { text: 'Which step comes next is known only once the earlier steps return.', correct: true },
+    { text: 'Nobody can list the possible next steps before the task starts.', correct: true },
     { text: 'A wrong answer would cost the shop a lot of money.', why: 'A costly mistake argues for a path you can test and review, which a fixed workflow gives.' },
   ]}>
 
@@ -246,9 +251,9 @@ A team chains two calls: one reads the customer's email and pulls out the
 order number, and the next writes the reply from it. The code passes the
 first output to the second call without a check, so on an email without
 an order number the first call returns `none` and the second writes a
-confident reply about a replacement for an order that doesn't exist. Put a check in code between
-the calls, and send what fails the check to a person, the way the shop's
-`gate` did with email `a2`.
+confident reply about a replacement for an order that doesn't exist. Put
+a check in code between the calls, and send what fails the check to a
+person, the way the shop's `gate` did with email `a2`.
 </Pitfall>
 
 <Exercise stretch="Add an email to EMAILS that the classify call sends to repair, add it to the list in step_route, and run python3 workflows.py route. Then change VOTES so that replacement wins, and run the parallel step again.">
@@ -275,8 +280,8 @@ the output of the first and the steps never change. Task two is a route,
 because the language of the question decides which prompt answers it.
 Task three is parallel calls of the sectioning kind, because the three
 criteria don't depend on each other. Task four needs an agent, because
-which file to open and what to change next depend on what the last test
-run printed, and nobody can list the steps in advance. Which of the first
+nobody can list the files to open or the changes to try before the first
+test run, and each run opens new places to look. Which of the first
 three would you move to an agent if its inputs changed, and what change
 would it take?
 
@@ -294,8 +299,9 @@ would it take?
    sends it to a prompt per class. Parallel calls split a task into
    independent sections, or ask one question more than once and act on
    the answer most calls give (@Anthropic effective agents).
-4. A task needs an agent when its next step depends on what the earlier
-   steps found, so nobody can write the path in advance. The agent then
+4. A task needs an agent when nobody can list its possible steps or draw
+   its paths before it starts. A branch that code can write down, as in
+   a route, is still a workflow. The agent then
    costs more and needs stop rules and testing where its mistakes do no
    harm (@Anthropic effective agents).
 
@@ -324,9 +330,9 @@ The next time you put one model call after another, write down what code checks 
   title="Does this task need an agent?"
   hint="Could the team write the three steps into the program today?"
   options={[
+    { text: 'No, because the steps are known and the same for every contract.', correct: true },
     { text: 'Yes, because the task uses a model to read the contracts.', why: 'A workflow uses the model inside its steps too. The model reading the text says nothing about who decides the order.' },
     { text: 'Yes, because the check against the register calls a tool.', why: 'Code can call the register directly between two model calls, the way a gate does.' },
-    { text: 'No, because the steps are known and the same for every contract.', correct: true },
     { text: 'No, because a model should never be part of a system that writes records.', why: 'Model calls inside fixed steps are what a workflow is. The question is who decides the steps.' },
   ]}>
 

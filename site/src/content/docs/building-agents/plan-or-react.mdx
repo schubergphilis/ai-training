@@ -8,6 +8,8 @@ steps. At the end we split a large goal into levels of plans and look
 at what gets lost where two patterns meet.
 
 The patterns come from the earlier lessons of this part.
+[Workflows before agents](/building-agents/workflows-before-agents/) fixed
+the order of the model calls in code.
 [Reasoning before each action](/building-agents/react/) decided one step
 at a time from the result of the step before.
 [A second pass that critiques the first](/building-agents/reflection/)
@@ -52,9 +54,10 @@ one way to put a bound on the run.
 ## A fixed workflow or an agent
 
 Anthropic's engineering article on building agents draws a similar line
-between two kinds of system (@Anthropic effective agents). In a
-workflow, code that the developers wrote decides the path of model calls
-and tool calls. In an agent, the model decides its own steps and which
+between two kinds of system, as in
+[Workflows before agents](/building-agents/workflows-before-agents/)
+(@Anthropic effective agents). In a workflow, code that the developers
+wrote decides the path of model calls and tool calls. In an agent, the model decides its own steps and which
 tools to use. Its advice is to build the smallest system that does the
 job and to add parts only when the job asks for them. A workflow suits
 a task whose steps are clear in advance, and it behaves the same way on
