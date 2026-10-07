@@ -42,7 +42,8 @@ project's `CLAUDE.md` gives the opposite one. Given two instructions
 that disagree, Claude may act on either of them (@Claude Code memory). A
 third line that says "follow the project, not the skill" only adds one
 more instruction to weigh. The fix is to remove the conflict, and the
-place to remove it is your copy of the skill. The project's rule stays as it is.
+place to remove it is your copy of the skill. The project's rule stays
+as it is.
 
 The `allowed-tools` line also works against the project. The tools it
 lists are pre-approved for the turn in which the skill starts, so Claude
@@ -81,9 +82,9 @@ What does the team change?
 A refusal does more than stop one action. When a hook or a person blocks
 an action and says why, the reason goes back to the model, and the agent
 plans its next step with it. We call this **steering by rejection**. The
-reason is the only part of the hook the agent sees at that moment, so
-it should say what the rule is and which way is open. Here is what Claude gets
-back from each kind of refusal in Claude Code.
+reason is the only part of the hook the agent sees at that moment, so it
+should say what the rule is and which way is open. Here is what Claude
+gets back from each kind of refusal in Claude Code.
 
 - A PreToolUse hook can print a JSON decision of `deny` with a
   `permissionDecisionReason`. Claude Code prevents the call and shows
@@ -145,16 +146,17 @@ agent its next step. It also asks the agent not to look for another way,
 for a reason the next section shows. `pushes` splits the command into
 words the way a shell does, which removes the quotes, and into
 subcommands at shell operators such as `;`, `&&`, `|` and `&`. It joins
-a line that ends in a backslash to the next one. In each subcommand it
-skips leading `NAME=value` assignments and words such as `env` and
-`nohup` that start the next word as a program. It checks that the
-program is `git` by any path, skips git's own options such as `-C .`,
-and returns true when git's command is `push`. When the shell would
-expand that word first, as in `{push,}` or `$CMD`, the hook can't know
-the result, so it returns true if the rest of the subcommand contains
-`push`. When the input isn't a tool call it can read, the hook
-exits with 2 and writes why to standard error. A broken hook then blocks
-the call.
+a line that ends in an unescaped backslash to the next one, as the shell
+does. In each subcommand it skips leading `NAME=value` assignments and
+words such as `env` and `nohup` that start the next word as a program,
+with their options. It checks that the program is `git` by any path,
+skips git's own options such as `-C .`, and returns true when git's
+command is `push`. The shell expands a word such as `{push,}` or `$CMD`
+before it runs the command. When the program or git's command is such a
+word, the hook can't know the result, so it returns true if the rest of
+the subcommand contains `push`. When the input isn't a tool call it can
+read, the hook exits with 2 and writes why to standard error. A broken
+hook then blocks the call.
 
 The fixture `deny.py` pipes the hook the call that the skill's step 3
 would make, the same way the exercise does by hand.
@@ -232,25 +234,25 @@ Place each refusal in the bucket it belongs to.
 
 ## What a bare refusal leaves open
 
-A refusal without a reason still blocks the one call. What it doesn't
-do is tell the agent what to do next, and the next step may be the same
+A refusal without a reason still blocks the one call. What it doesn't do
+is tell the agent what to do next, and the next step may be the same
 action in another form. A Bash rule compares a pattern with the command
-as Claude wrote it. The permissions page lists forms that a
-deny rule for `Bash(git push *)` doesn't stop, such as
-`git -C . push origin main`, `git -c push.default=current push origin main`
-and `git 'push' origin main`. By the page's own account, such a rule
-covers the way Claude usually writes the command, and it doesn't guard
-the program itself (@Claude Code permissions).
+as Claude wrote it. The permissions page lists forms that a deny rule
+for `Bash(git push *)` doesn't stop, such as
+`git -C . push origin main`,
+`git -c push.default=current push origin main` and
+`git 'push' origin main`. By the page's own account, such a rule covers
+the way Claude usually writes the command, and it doesn't guard the
+program itself (@Claude Code permissions).
 
 The vendor pages don't say what Claude does after a refusal that gives
 no reason. What follows is our inference from the documented limits of
 Bash rules. An agent that is still trying to finish the task, and that
-doesn't know the rule, may try a second spelling of the same command.
-If that spelling is one the rule doesn't match, the rule doesn't stop
-it, and only the permission prompt stands between that push and the
-remote. A reason
-that names the open route gives it a better move than the second
-spelling. The exercise lets you watch both cases.
+doesn't know the rule, may try a second spelling of the same command. If
+that spelling is one the rule doesn't match, the rule doesn't stop it,
+and only the permission prompt stands between that push and the remote.
+A reason that names the open route gives it a better move than the
+second spelling. The exercise lets you watch both cases.
 
 A hook is code, so it can catch more spellings than a pattern can. The
 fixture `spellings.py` holds eleven commands against the same hook: nine
@@ -280,11 +282,13 @@ its full path, an empty `-C` directory (which git reads as the current
 one), a line wrapped with a backslash, `env` in front of git, and a word
 that the shell expands to `push`. The push through `sh -c` gets through:
 the hook sees `sh`, and the push is inside a quoted string that it
-doesn't read. A push inside backticks, as in ``echo `git push` ``, or in
-a script such as `./publish.sh`, would get through as well. So the hook
-makes the refusal and its reason reach the agent for the spellings it
-reads, and we expect the reason to make a search for another spelling
-less likely. Neither one is a boundary. For a limit that doesn't depend on the command text, the
+doesn't read. The hook also misses a push inside backticks, as in
+``echo `git push` ``, or inside `$(...)`. It misses a push word held in
+a variable, as in `X=push; git $X`, and a script such as `./publish.sh`
+that pushes. So the hook makes the refusal and its reason reach the
+agent for the spellings it reads, and we expect the reason to make a
+search for another spelling less likely. Neither the rule nor the hook
+is a boundary. For a limit that doesn't depend on the command text, the
 permissions page points to the sandbox (@Claude Code permissions). For a
 push in particular, the remote can refuse it, whatever ran the command.
 
@@ -309,7 +313,7 @@ Which two changes should the team make?
     { text: 'The agent ran in a permission mode that skips deny rules, so only the first push was refused.', why: 'The first push was refused by the same rule in the same session, so the mode didn\'t switch the rule off.' },
     { text: 'The deny rule expired after the first match, so the second push was matched against no rule.', why: 'A deny rule stays in the settings and is checked on every call. It doesn\'t expire after one match.' },
     { text: 'The rule matches command text and missed that spelling, and the bare refusal gave no other route.', correct: true },
-    { text: 'The second push came from a subagent, and permission rules are checked only in the main session.', why: 'A subagent inherits the permission rules of the main conversation, so the same rule applied. The rule missed the spelling of the command.' },
+    { text: 'The second push came from a subagent, and permission rules are checked only in the main session.', why: 'Claude Code\'s built-in subagents inherit the main conversation\'s permission rules, so a subagent doesn\'t explain it. The rule missed the spelling of the command.' },
   ]}>
 Why did the second push reach the remote?
 </Choice>
@@ -335,12 +339,11 @@ rule `Bash(git push *)` to the project settings. They left the skill as
 it was. In the next session the skill asked for the push, the rule
 refused it, and the agent tried `git -C . push`, which the rule doesn't
 match. The developer approved the prompt for it, sure that the rule
-refused every push, and the branch reached the remote before review.
-The rule did its one job, and the skill still asked for the push in
-every session. Remove the
-conflict from your copy of the skill, and refuse with a reason that
-names the open route, so the agent has a better move than a second
-spelling.
+refused every push, and the branch reached the remote before review. The
+rule did its one job, and the skill still asked for the push in every
+session. Remove the conflict from your copy of the skill, and refuse
+with a reason that names the open route, so the agent has a better move
+than a second spelling.
 </Pitfall>
 
 <Exercise stretch="Remove both folders and make a fresh copy with the same steps. In it, run git rm -q CLAUDE.md and commit, so the agent learns nothing about the rule, and change REASON in the hook to the single word Blocked. Start the session with CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude, so that no note from the first run tells the agent the rule, and send the same prompt. Write down every command the agent tries after the refusal, and run the remote check again.">
@@ -373,18 +376,18 @@ echo '{"tool_input": {"command": "git push -u origin HEAD"}}' | python3 .claude/
 Start `claude` in `~/no-push`, accept the workspace trust dialog, and
 check `/hooks`. Claude Code holds back hooks from settings files until
 you accept it (@Claude Code hooks). It applies the skill's
-`allowed-tools` either way (@Claude Code skills). Then send: "Add Water the plants to todo.txt, then
-use the ship-branch skill." The skill can only change files and run git
-in this copy. In a second terminal, run
+`allowed-tools` either way (@Claude Code skills). Then send: "Add Water
+the plants to todo.txt, then use the ship-branch skill." The skill can
+only change files and run git in this copy. In a second terminal, run
 `git -C ~/no-push-remote.git rev-list --all --count`.
 
 A good result: the commit is in `git log` of the copy, the remote check
 prints `0`, and the agent's reply says the branch is ready for a person
 to push. Then make the fix from the first section in your copy of the
 skill, and send the prompt again in a new session. Note whether a push
-is attempted this time. Fifteen minutes is enough. Reflection: which skill or prompt
-in your own projects asks for something your project forbids, and what
-would the reason in its refusal say?
+is attempted this time. Fifteen minutes is enough. Reflection: which
+skill or prompt in your own projects asks for something your project
+forbids, and what would the reason in its refusal say?
 </Exercise>
 
 <Recap>

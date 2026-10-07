@@ -9,14 +9,17 @@ with 0, which means no objection.
 
 The hook splits the command into words the way a shell does, so quotes are
 removed, and into subcommands at shell operators such as `;`, `&&`, `|` and
-`&`, and at line breaks that no backslash continues. In each subcommand it
+`&`, and at line breaks. A line that ends in an unescaped backslash is joined
+to the next one first, the way the shell joins it. In each subcommand it
 skips leading `NAME=value` assignments and words such as `env` or `nohup`
-that run the next word as the command, checks that the program is `git` (by
-any path), skips git's own options, and denies when git's command is `push`.
-When the program or git's command is a word the shell would expand first,
-such as `{push,}` or `$CMD`, it denies when the rest of the subcommand
-contains `push`. It reads only the text of the command, so a push inside
-`sh -c '...'`, inside backticks or inside a script gets past it.
+that run the next word as the command, with their options, checks that the
+program is `git` (by any path), skips git's own options, and denies when
+git's command is `push`. When the program or git's command is a word the
+shell would expand first, such as `{push,}` or `$CMD`, it denies when the
+rest of the subcommand contains `push`. It reads only the text of the
+command, so a push inside `sh -c '...'`, inside backticks or `$(...)`, from a
+push word held in a variable (`X=push; git $X`), or inside a script gets
+past it.
 
 When the input isn't a tool call it can read, it writes a message to
 standard error and exits with 2, which also blocks the call.
@@ -41,12 +44,18 @@ OPERATOR_CHARS = set("();<>|&")
 # Words that run the rest of the line as a command, as in `env git push`.
 # Their own options, such as `time -p`, are skipped with them.
 PREFIX_WORDS = {"env", "command", "time", "nohup", "exec", "builtin", "{", "!"}
+# Options of a prefix word that take their value as the next word, such as
+# `env -u HOME git push` and `exec -a name git push`.
+PREFIX_OPTIONS_WITH_VALUE = {"-u", "-a"}
+# A backslash before a line break, when an even number of backslashes (zero
+# or more) comes before it. `x\\` + line break ends in an escaped backslash.
+CONTINUATION = re.compile(r"(?<!\\)((?:\\\\)*)\\\n")
 
 
 def subcommands(command: str) -> "list[list[str]]":
     """The words of each subcommand. Raises ValueError on unbalanced quotes."""
-    # A backslash before a line break continues the line, so join those first.
-    text = command.replace("\\\n", "").replace("\n", ";")
+    # An unescaped backslash before a line break continues the line, so join it first.
+    text = CONTINUATION.sub(r"\1", command).replace("\n", ";")
     lexer = shlex.shlex(text, posix=True, punctuation_chars=True)
     lexer.whitespace_split = True
     result: list[list[str]] = [[]]
@@ -72,6 +81,8 @@ def subcommand_pushes(words: "list[str]") -> bool:
         word = words[i]
         if word in PREFIX_WORDS:
             after_prefix = True
+        elif after_prefix and word in PREFIX_OPTIONS_WITH_VALUE:
+            i += 1
         elif not (ASSIGNMENT.match(word) or (after_prefix and word.startswith("-"))):
             break
         i += 1
