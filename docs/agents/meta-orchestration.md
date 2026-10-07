@@ -478,15 +478,15 @@ by it. Each issue has exactly one kind label (`issue-tracker.md`,
 
 - `lessons`: the planned lessons, from their plan files.
 - `content`: the `content` issues that no plan file claims.
-- `code`: the `code` issues that no plan file claims, `bug` issues first. Each builder gets the
-  code collision notes and each branch a `code-reviewer`, and the
-  standing approval applies as for any wave. A code run can be open next
-  to a lessons or content run, and "Files the other run touches" under
-  "Concurrent runs" keeps the two apart.
-- `harness`: the `harness` issues that no plan file claims, 4 per wave by default, since every
-  issue adds items to the one checklist the maintainer works through by
-  hand. It builds and reviews like a code run and merges only after a
-  restart, as the next section describes.
+- `code`: the `code` issues that no plan file claims, `bug` issues
+  first. Each builder gets the code collision notes and each branch a
+  `code-reviewer`, and the standing approval applies as for any wave. A
+  code run can be open next to a lessons or content run, and "Files the
+  other run touches" under "Concurrent runs" keeps the two apart.
+- `harness`: the `harness` issues that no plan file claims, 4 per wave
+  by default, since every issue adds items to the one checklist the
+  maintainer works through by hand. It builds and reviews like a code
+  run and merges only after a restart, as the next section describes.
 
 ## Harness runs
 
