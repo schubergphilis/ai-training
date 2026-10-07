@@ -24,7 +24,11 @@ exercise:
     Have a new session review a change the first session wrote, against the specification, and sort
     its findings into ones to fix, ones to reject and ones to turn into a rule.
 sources:
-  [Claude Code best practices, Claude Code subagents, Claude Code memory, Claude Code permission modes]
+  - Claude Code best practices
+  - Claude Code subagents
+  - Claude Code memory
+  - Claude Code permission modes
+  - Claude Code permissions
 issue: 680
 minutes: 12
 sources-checked: 2026-10-07
@@ -33,11 +37,13 @@ notes: >-
   The change under review is the prepared due-dates branch from reviewing-the-diff, built by that
   lesson's build.py, so the learner already knows its five planted problems and can judge the
   reviewer against them. The fixture check_findings.py loads reviewing-the-diff/_common.py by path
-  and runs the command behind five of the seven illustrative findings; finding 6 (2026-02-30
+  and runs the command behind five of the seven illustrative findings. Finding 6 (2026-02-30
   accepted) is refuted because the standard library's date parser rejects it. The plan assumed only
-  reviewing-the-diff, and the rule bucket builds on project-instructions "Fix it once, in the file", so that lesson is
-  a second assumes entry. Sources added past the plan: Claude Code subagents (a subagent runs in its
-  own context), Claude Code memory (CLAUDE_CODE_DISABLE_AUTO_MEMORY) and Claude Code permission
-  modes (Manual mode reads without a prompt), all for the exercise setup. The best-practices facts
-  used are the writer/reviewer paragraph, the adversarial review step with its prompt parts and the
-  /code-review skill, and the callout that a reviewer asked for gaps finds some in sound work.
+  reviewing-the-diff, and the rule bucket builds on project-instructions "Fix it once, in the file",
+  so that lesson is a second assumes entry. Sources added past the plan: Claude Code subagents (a
+  subagent runs in its own context, a fork inherits the conversation), Claude Code memory
+  (CLAUDE_CODE_DISABLE_AUTO_MEMORY), Claude Code permission modes (Manual mode reads without a
+  prompt) and Claude Code permissions (read-only commands such as git diff run without a prompt),
+  all for the exercise setup. The best-practices facts used are the writer/reviewer paragraph, the
+  adversarial review step with its prompt parts and the /code-review skill, and the callout that a
+  reviewer asked for gaps finds some in sound work.
