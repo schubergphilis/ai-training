@@ -14,6 +14,9 @@ assumes:
   - objective: using-agents/delegates-and-checks/adjusts-mid-task
     lesson: using-agents/adjusting-the-brief
     section: changing-a-limit-between-runs
+  - objective: coding-with-agents/specifies-work/defines-success
+    lesson: coding-with-agents/deciding-what-to-build
+    section: writing-down-what-success-requires
 extends-to:
   - label: Tracer bullets (AI Hero)
     href: https://www.aihero.dev/tracer-bullets

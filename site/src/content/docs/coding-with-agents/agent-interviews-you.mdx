@@ -12,11 +12,11 @@ spec, and the plan that a fresh session writes from it.
 
 *Deciding whether to build it at all* ended with success criteria a
 stranger could check. You can only write those once you know what the
-feature is. For a feature larger than one sentence, the Claude Code best
+feature is. For a larger feature, the Claude Code best
 practices page recommends that the agent interviews you first and writes
 a spec, and that a new session then works from that spec (@Claude Code best practices).
 The agent's questions bring out the decisions you haven't made yet, at a
-point where a change to them is still free.
+point where a change to them is still cheap.
 
 ## The fixture
 
@@ -27,7 +27,26 @@ modules. It is in the course repository under
 directory to a place of its own. The copy holds `fixture-repo/`, where the
 agent works, a script `check_terms.py` and a `sample/` directory that the
 second half of the lesson uses. The reset is to delete the copy and copy
-again. Change into `fixture-repo` and look at the list before you start.
+again. Working in a copy also keeps the course's own instruction files out
+of the session, because Claude Code, for example, loads the instruction
+files in every directory above the one it starts in (@Claude Code memory).
+
+Claude Code's auto memory is on by default in local sessions. It saves
+notes that the agent writes for itself and loads them into the next session
+of the same project. It files the notes under the git repository, or
+under the project root outside one (@Claude Code memory). In this lesson a
+note from the interview would reach the fresh session that is meant to
+start without it, and a reset copy at the same path would load the notes
+again. So start every Claude Code session in this lesson with auto memory
+turned off:
+
+```sh
+CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude
+```
+
+With another agent, check whether it keeps notes between sessions, and
+turn that off for this lesson. Now change into `fixture-repo` and look at
+the list before you start.
 
 <Predict id="run-list" title="Show the list"
   answer={`1. [ ] Buy milk
@@ -50,8 +69,8 @@ is the first thing an interview should find.
 ## Asking for the interview
 
 A design interview is a session where the agent asks and you answer. It
-comes before the agent plans anything or writes any code. Start your coding agent in `fixture-repo`
-and give it a short description of the feature with the request to
+comes before the agent plans anything or writes any code. Start your coding
+agent in `fixture-repo`, with auto memory off as above, and give it a short description of the feature with the request to
 interview you. Ask for questions about behavior, edge cases, risks and
 trade-offs, and tell it to skip what it can read in the code. Tell it when
 to stop, and what to write when it does.
@@ -71,8 +90,8 @@ which uses only those terms. Put what I left undecided under
 
 In Claude Code, the best practices page suggests naming its
 `AskUserQuestion` tool in the request (@Claude Code best practices). The
-agent then asks its questions through that tool. Another agent asks in the
-chat, which works just as well.
+agent then asks its questions through that tool. Another agent asks its
+questions in the chat.
 
 The exchange below is illustrative. It was written for this lesson and
 not recorded from a model. It shows the kind of first question that the
@@ -122,7 +141,7 @@ point as open.
     { text: 'Say "Yes, do that", so that the interview keeps moving.', consequence: 'The spec now requires an automatic archive, and the fresh session builds it, with a counter and a test, for a choice you never made.' },
     { text: 'Say "You decide", since the agent knows the code better.', consequence: 'The agent picks one, and the spec states it as a requirement. Nobody reads it as a guess, so nobody checks it.' },
     { text: 'Say "Not decided yet", so it goes under the open questions.', correct: true, consequence: 'The spec lists the point as open. Nothing is built for it, and you decide it later, when someone has a reason to want it.' },
-    { text: 'Say "Stop asking and write the spec", since this is a detail.', consequence: 'The interview ends with points still open, and the agent fills every one of them with its own guesses.' },
+    { text: 'Say "Stop asking and write the spec", since this is a detail.', consequence: 'The interview ends with points still open, and the agent fills the points it never asked about with its own guesses.' },
   ]}>
 The agent asks: "Should `archive` also run by itself when the list has
 more than 20 done items?" You haven't thought about it, and you have no view
@@ -166,15 +185,17 @@ archived one is not.
 ## Checking the spec against the terms
 
 `check_terms.py` reads a term list and prints every line of another file
-that uses an avoided word. It matches whole words and ignores case. From
-the top of your copy, run it on the sample spec.
+that uses an avoided word. It matches whole words and ignores case. Leave
+the interview session running in its own terminal, and open a second
+terminal for the script. Change into the top of your copy there and run
+the script on the sample spec.
 
 <Predict id="check-sample-spec" title="Check the sample spec"
   answer={`sample/SPEC.md:15: "task" where sample/TERMS.md says "item"
   sample/SPEC.md:16: "completed" where sample/TERMS.md says "done item"
   2 words to check`} run="coding-with-agents/agent-interviews-you/sample_check.py">
-Run this from the top of your copy, and compare what you see with the
-output below.
+Run this in the second terminal, from the top of your copy, and compare
+what you see with the output below.
 
 ```sh
 python3 check_terms.py sample/TERMS.md sample/SPEC.md
@@ -206,8 +227,22 @@ The check prints `sample/SPEC.md:16: "completed" where sample/TERMS.md says
 `archive.json`." What do you do?
 </Choice>
 
-Fix both lines in the sample spec, run the check again, and it prints
-`no avoided words in sample/SPEC.md`. In your own interview, read and
+Fix both lines in `sample/SPEC.md`. Change "task" to "item" in line 15,
+and rewrite line 16 as "`clear` deletes the done items and leaves
+`archive.json` as it is." Then run the check again.
+
+<Predict id="check-fixed-spec" title="Check the fixed spec"
+  answer="no avoided words in sample/SPEC.md" run="coding-with-agents/agent-interviews-you/fixed_check.py">
+Run the same command in the second terminal after the two fixes, and
+compare what you see with the output below.
+
+```sh
+python3 check_terms.py sample/TERMS.md sample/SPEC.md
+```
+
+</Predict>
+
+In your own interview, read and
 correct `TERMS.md` and `SPEC.md` the same way before anything else happens.
 Renaming a term after this point is a change to the design. Change the
 term list and the spec together.
@@ -217,8 +252,8 @@ term list and the spec together.
 The best practices page suggests that a new session carries out the
 spec, because its context then holds the work and nothing of the long
 interview (@Claude Code best practices). Write the plan in a new session
-too. End the interview session, start a new one in `fixture-repo`, and ask for
-a plan that uses the term list.
+too. End the interview session, start a new one in `fixture-repo` with
+auto memory still off, and ask for a plan that uses the term list.
 
 ```text
 Read TERMS.md and SPEC.md. Write PLAN.md with the steps to build what
@@ -226,7 +261,8 @@ SPEC.md describes, using the terms in TERMS.md and no other words for
 them. Don't change any code yet.
 ```
 
-Then run the check on the plan, from the top of your copy:
+When the plan is written, run the check on it in the second terminal, from
+the top of your copy:
 
 ```sh
 python3 check_terms.py fixture-repo/TERMS.md fixture-repo/PLAN.md
@@ -254,12 +290,12 @@ spec first.
 <Choice id="fresh-session-reads-two-words" phase="review"
   objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
   concepts={['shared-vocabulary']}
-  context="An engineer was interviewed by a coding agent about an archive feature for a to-do program. The term list says that archive moves done items to a separate file. The spec, written in the same session, uses archive in one place and hide in another."
+  context="An engineer was interviewed by a coding agent about an archive feature for a to-do program. The term list says that archive moves done items to a separate file, and it doesn't mention hide. The spec, written in the same session, uses archive in one place and hide in another."
   title="Two words in one spec"
   hint="What does a session that never saw the interview have to work from?"
   options={[
-    { text: 'It treats the two words as one thing, because the spec is about one feature.', why: 'It might, but nothing in the files tells it so, and in this term list a hidden item is a different thing.' },
-    { text: 'It asks the engineer which one is meant before it writes any of the plan.', why: 'Some agents ask, and many go ahead. You cannot count on the question coming.' },
+    { text: 'It treats the two words as one thing, because the spec is about one feature.', why: 'It might, but nothing in the files tells it so, and the term list gives hide no meaning at all.' },
+    { text: 'It asks the engineer which one is meant before it writes any of the plan.', why: 'It might ask, and it might go ahead. You cannot count on the question coming.' },
     { text: 'It has to guess whether the two words mean one thing, and some guesses are wrong.', correct: true },
   ]}>
 A fresh session reads this spec to write the plan. What happens with the
@@ -269,7 +305,7 @@ two words?
 <MultiChoice id="answers-that-are-decisions" phase="review"
   objective="coding-with-agents/specifies-work/is-interviewed-before-planning"
   concepts={['design-interview']}
-  context="A coding agent is interviewing an engineer about an archive feature for a to-do program before it writes a spec. The engineer has no view yet on whether archive list should show the date each item was archived."
+  context="A coding agent is interviewing an engineer about an archive feature for a to-do program before it writes a spec. The engineer has decided that archived items go to archive.json and that the open items keep their order. The engineer has no view yet on whether archive list should show the date each item was archived."
   title="Which answers keep the spec honest?"
   hint="Which answers tell the agent only what the engineer has actually decided?"
   options={[
@@ -299,12 +335,22 @@ what the engineer has decided?
   ]} />
 
 <Exercise stretch="Ask the fresh session to build the plan, then run check_terms.py on the modules it changed, such as fixture-repo/todo.py and fixture-repo/store.py, and see whether the names in the code follow the term list too.">
-Reset your copy and let an agent interview you about one small feature for
-the to-do program. The archive above works, and so does a feature of your
-own, such as an undo for `done`. Use the request from this lesson. Answer every question with a
-decision or with "not decided yet", and stop when the agent has written
-`TERMS.md` and `SPEC.md`. Read both files, correct them, and run
-`check_terms.py` on the spec until it prints `no avoided words`. Then start a fresh
+Reset your copy and let an agent interview you about an undo for `done`:
+a way to take back a `done 3` typed by mistake. Start the session with
+auto memory off, and use the request from this lesson with its first two
+sentences replaced by one or two sentences about the undo. Answer every
+question with a decision or with "not decided yet", and stop when the
+agent has written `TERMS.md` and `SPEC.md`. Read both files and correct
+them. Then run the check in the second terminal, from the top of your
+copy, until it prints `no avoided words`:
+
+```sh
+python3 check_terms.py fixture-repo/TERMS.md fixture-repo/SPEC.md
+```
+
+If it prints `no terms found`, `TERMS.md` doesn't use the line form the
+request asked for, so ask the agent to rewrite it in that form. A line it
+reports as `not in the term form` has the same fix. Then start a fresh
 session, have it write `PLAN.md` from the spec, and run the check on the
 plan. Twenty minutes is enough. You do this so the design is settled, in
 words that you and the agent share, before the agent proposes how to build
@@ -319,7 +365,7 @@ built if it had never asked?
 </Exercise>
 
 <Recap>
-1. For a feature larger than one sentence, ask the agent to interview you before it plans, and to write a spec when nothing is open (@Claude Code best practices).
+1. For a larger feature, ask the agent to interview you before it plans, and to write a spec when nothing is open (@Claude Code best practices).
 2. Answer each question with a decision, or with "not decided yet". An answer made up to move on becomes a requirement.
 3. Write the terms the interview settled into a short list, each with its meaning and the words to avoid, and use the same words in the spec, the plan and the code (@Evans DDD Reference).
 4. Check the spec and the plan against the term list. A drifted word is either a slip or a decision written down wrong, so read the whole line.
