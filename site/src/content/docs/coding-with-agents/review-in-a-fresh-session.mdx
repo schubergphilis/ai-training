@@ -34,10 +34,9 @@ session (@Claude Code subagents). Tell the writing session to give it the
 diff, the spec and the criteria. Its own account of the work stays out.
 A fork is different: it is a subagent that starts with the whole
 conversation so far, and a fork isn't a fresh reviewer
-(@Claude Code subagents). A bundled `/code-review` skill gives the current
-diff to a new subagent that looks for bugs. It checks the diff for bugs,
-so a review against your spec needs a brief that you write
-(@Claude Code best practices).
+(@Claude Code subagents). A bundled `/code-review` skill has a new
+subagent check the diff for bugs, so a review against your spec needs a
+brief that you write (@Claude Code best practices).
 
 <Choice id="who-reviews" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
   concepts={['fresh-context-review']}
@@ -289,11 +288,12 @@ note from an earlier session and saves none of its own
 read files without a prompt (@Claude Code permission modes). It asks you
 before each edit, and before each command outside a short built-in list
 of read-only ones. Read-only git commands such as `git diff` are on it
-and run without a prompt (@Claude Code permissions). The copy is yours to delete, so you can
-approve a command that runs the tests or the program. An approved run of
-the program can save the list into the copy, and `git status` then shows
-the file as untracked. Refuse every edit, because this session reports
-and doesn't fix. Type the brief from this lesson as your first message.
+and run without a prompt (@Claude Code permissions). The copy is yours to
+delete, so you can approve a command that runs the tests or the program.
+An approved run of the program can save the list into the copy, and
+`git status` then shows the file as untracked. Refuse every edit, because
+this session reports and doesn't fix. Type the brief from this lesson as
+your first message.
 
 Sort what comes back into three lists: fix, reject, and fix with a rule.
 Check each finding that names a command before you sort it, and write one
