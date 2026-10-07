@@ -22,8 +22,10 @@ It reads `AGENTS.md` only when there is no `CLAUDE.md`,
 `.claude/CLAUDE.md` or `CLAUDE.local.md` in the directory you start it in
 or in any directory above it (@Claude Code memory). The content is the
 same either way, so the common pattern is to write `AGENTS.md` and make
-`CLAUDE.md` a symlink to it, or to have one contain one line pointing at
-the other.
+`CLAUDE.md` a symlink to it, or to give `CLAUDE.md` the one line
+`@AGENTS.md`, which imports the file. A `CLAUDE.md` that only asks in
+words for `AGENTS.md` to be read gets it read only when Claude decides to
+open it (@Claude Code memory).
 
 The file is the briefing you would give a capable contractor on their
 first morning. They can read code. They can't know which command

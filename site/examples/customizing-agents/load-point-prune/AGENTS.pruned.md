@@ -1,6 +1,6 @@
 # invoice-mailer
 
-Renders invoices to PDF and sends them over SMTP. Python 3.13, uv.
+Renders invoices to PDF and sends them over SMTP.
 
 ## Commands
 

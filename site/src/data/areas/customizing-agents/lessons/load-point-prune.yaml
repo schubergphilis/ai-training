@@ -1,8 +1,8 @@
 id: customizing-agents/load-point-prune
 title: Load it, point at it, or cut it
 description: >-
-  Take a long instruction file, keep what nearly every task needs, point at the rest with one line
-  each, and cut every line whose removal would cause no mistake.
+  Take a long instruction file and make it short: keep what nearly every task needs, move what only
+  some tasks need behind a one-line pointer, and delete the lines the agent would not miss.
 mode: tutorial
 covers: customizing-agents/instructions
 serves: [customizing-agents/configures-agent/chooses-load-or-point, customizing-agents/configures-agent/prunes-instructions]
@@ -41,7 +41,8 @@ notes: >-
   path-scoped rules and skills load on demand, conflicting lines may be followed either way,
   /doctor prompt-audit) come from code.claude.com/docs/en/memory, and the line test and testing by
   watching behavior from code.claude.com/docs/en/best-practices. Re-check both by review-by. The
-  competency behavior that cites the context engineering article for "a bare path is often skipped"
-  is not stated there, so the page grounds the pointer wording in the memory page's sentence about a
-  CLAUDE.md that tells Claude in words to read AGENTS.md, and cites the article only for
-  just-in-time loading.
+  context engineering article is cited only for just-in-time loading. The pointer wording rests on
+  the memory page's sentence about a CLAUDE.md that tells Claude in words to read AGENTS.md, and the
+  matching configures-agent behavior now cites that page instead of the article. Unlike the
+  instructions lesson's model answer, the pruned file drops the structure section, because the
+  sample's layout paragraph only repeats the folder names.
