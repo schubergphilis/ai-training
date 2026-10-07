@@ -31,13 +31,16 @@ notes: >-
   Picks up the loop where concepts/agent-loop leaves it and slows it down to single requests, so the
   tokens-and-cost lessons can rely on the model being stateless. "Turn" keeps the meaning the live
   lessons give it, one round trip inside the loop: a request, its reply and the tool run that follows.
-  Foundations page, so the learner runs nothing, and every log is a text fence. The first log is the
-  first transcript of concepts/agent-loop rewritten as what the harness sent, and the page says it was
-  written for the lesson. No fixture, because no number on the page is computed: the request and
-  history counts are read off the logs. Sections later lessons can point at: what-is-in-each-request
-  (the three parts of a request and the growing history, for concepts/reading-token-counts),
+  Where the Messages API says turn for one message, the page says message. Foundations page, so the
+  learner runs nothing, and every log is a text fence. The first log is the first transcript of
+  concepts/agent-loop rewritten as what the harness sent, and the page says it was written for the
+  lesson. No fixture, because no number on the page is computed: the request and history counts are
+  read off the logs. Sections later lessons can point at: what-is-in-each-request (the three parts of
+  a request and the growing history, for concepts/reading-token-counts),
   the-model-keeps-nothing-between-requests (stateless-model) and model-harness-environment. The
   harness concept stays introduced by concepts/assistant-or-agent, the next lesson. This page names it
   as the software that sends the requests and runs the tools, and the back references in
-  assistant-or-agent now name the toy agent lesson as the lesson before last. Changed from the plan:
-  extends-to links the vendor agent loop page.
+  assistant-or-agent now name the toy agent lesson as the lesson before last. The objective covers
+  three ideas (counting requests, statelessness, and which part did a step), so the three review
+  alternates each test all three on one short log, and none of them tests only one idea. Changed from
+  the plan: extends-to links the vendor agent loop page.
