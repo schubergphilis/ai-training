@@ -68,8 +68,8 @@ objectives:
         example: The release procedure moves from the instruction file into a skill, and the file keeps
           "to cut a release, use the release skill".
       - claim: The learner writes a pointer that says when to follow it as well as where it goes.
-        why: The agent decides from the pointer alone whether to open the file, so a bare path is often
-          skipped (@Anthropic context engineering).
+        why: A file that an instruction only asks the agent to read is read when the agent decides to
+          open it, so the pointer has to tell it when (@Claude Code memory).
         example: '"Before changing the database schema, read `docs/migrations.md`" instead of "see also
           `docs/`".'
       - claim: The learner knows that an import which pulls a file in at start-up still loads it.
