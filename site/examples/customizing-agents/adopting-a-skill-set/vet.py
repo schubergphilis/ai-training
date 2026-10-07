@@ -7,7 +7,8 @@ Add skill names to look at those only:    python3 vet.py workbench plan-ticket r
 
 The script only reads files. It never runs a script of the set, and it
 installs nothing. It reads the skills at `skills/<name>/SKILL.md`, which
-is where most published sets keep them. For the set it prints:
+is where most published sets keep them, and stops with a message when the
+directory has no skills there. For the set it prints:
 
 - the first line of a license file at the top of the set, or `none`
 - each plugin that `.claude-plugin/marketplace.json` lists, with its
@@ -23,15 +24,37 @@ is where most published sets keep them. For the set it prints:
 The license of a skill is the first line of a license file in its
 directory. Without a file, it is the `license` field of the front matter,
 and without either it is `none stated`. A script is a file with a
-`.py`, `.sh`, `.js`, `.mjs`, `.cjs` or `.ts` suffix, or a file that may be
-executed. When you name skills, the script also lists their script files,
-so you know which ones to open.
+`.py`, `.sh`, `.js`, `.mjs`, `.cjs` or `.ts` suffix. The script doesn't
+look at the execute bit, because some file systems set it on every file.
+A script with another suffix or none is not counted, so look through the
+folder of each skill you pick. When you name skills, the script also
+lists their script files, so you know which ones to open.
 
 A skill with `disable-model-invocation: true` in its front matter adds
 nothing to the context until you invoke it, so it counts as 0 tokens.
 
-The token count uses the same rule as `measure.py` in the lesson "Loading
-only what the skill needs": about four characters per token. A word of up
+The rules it copies, and the vendor pages that state them, as checked on
+2026-10-07:
+
+- A plugin keeps each skill in its own directory under `skills/`, as
+  `skills/<name>/SKILL.md`:
+  https://code.claude.com/docs/en/plugins/components
+- A marketplace entry can list its skill directories in a `skills` field
+  of `plugins[]` in `.claude-plugin/marketplace.json`:
+  https://code.claude.com/docs/en/plugins/marketplace-reference
+- The `license` front matter field holds a license name or the name of a
+  license file next to the skill: https://agentskills.io/specification
+- With `disable-model-invocation: true`, the description is not in the
+  context, and Claude can't start the skill by itself:
+  https://code.claude.com/docs/en/skills
+- `allowed-tools` lists the tools Claude may use without asking during
+  the turn that invokes the skill: https://code.claude.com/docs/en/skills
+- The name and description of every skill that Claude may start are in
+  the context on every turn: https://code.claude.com/docs/en/plugins
+
+The token count counts the name and the description, the same text as
+`inventory.py` in the lesson "Reading a plugin before you install it",
+with the same rule: about four characters per token. A word of up
 to six characters is one token, a longer word is one token per four
 characters (rounded up), and every punctuation mark is a token of its own.
 Only the vendor's tokenizer gives the exact count.
@@ -39,7 +62,6 @@ Only the vendor's tokenizer gives the exact count.
 
 import json
 import math
-import os
 import re
 import sys
 from pathlib import Path
@@ -104,7 +126,7 @@ def scripts(skill: Path) -> "list[str]":
     for path in skill.rglob("*"):
         if not path.is_file():
             continue
-        if path.suffix in SCRIPT_SUFFIXES or os.access(path, os.X_OK):
+        if path.suffix in SCRIPT_SUFFIXES:
             found.append(path.relative_to(skill).as_posix())
     return sorted(found)
 
@@ -154,7 +176,15 @@ def plugin_lines(skill_set: Path) -> "list[str]":
 
 def report(skill_set: Path, picked: "list[str]") -> "list[str]":
     """Return the lines of the report for a skill set and the skills picked from it."""
+    if not skill_set.is_dir():
+        raise SystemExit(f"not a directory: {skill_set}")
     skills = sorted(p.parent for p in (skill_set / "skills").glob("*/SKILL.md"))
+    if not skills:
+        raise SystemExit(
+            f"no skills/<name>/SKILL.md files in {skill_set}; "
+            "if the set keeps its skills elsewhere, read its folders by hand"
+        )
+    picked = list(dict.fromkeys(picked))
     known = {p.name for p in skills}
     missing = [name for name in picked if name not in known]
     if missing:
