@@ -297,3 +297,5 @@ Dodds
 Pocock
 aihero
 Vercel
+pathlib
+splitlines
