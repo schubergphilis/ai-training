@@ -172,7 +172,7 @@ with two runs.
 
 <Sort id="new-kind-or-known-kind" objective="building-agents/evaluates-agents/grows-the-set-from-use"
   concepts={['trace-driven-evaluation', 'golden-sets']}
-  context="A handbook assistant searches the handbook for one page, and then answers with a sentence from that page, or says not found when no sentence shares two words with the question. Every item of its golden set gets a right answer today, apart from these. One asks about holiday, a word the handbook does not use, so the search does not return the leave page, and the set accepts not found. One asks where to keep passwords: the search returns the security page, which answers it, but the best sentence shares only one word with the question, so the agent says not found, and the set accepts that. One asks who approves a laptop for a team: the search returns the laptop page, and the answer needs a second lookup, the team page. Six ask about things the handbook does not cover, and each gets not found. A kind of failure means the step where the run went wrong, and what went wrong there."
+  context="A handbook assistant searches the handbook for one page, and then answers with a sentence from that page, or says not found when no sentence shares two words with the question. Every item of its golden set gets a right answer today, apart from these. Two ask about holiday and days off, words the handbook does not use, so the search does not return the leave page, and the set accepts not found. One asks where to keep passwords: the search returns the security page, which answers it, but the best sentence shares only one word with the question, so the agent says not found, and the set accepts that. One asks who approves a laptop for a team: the search returns the laptop page, and the answer needs a second lookup, the team page. Six ask about things the handbook does not cover, and each gets not found. A kind of failure means the step where the run went wrong, and what went wrong there."
   title="New kind or known kind?"
   hint="For each failure, is there an item in the set that would fail on the same mistake, or would every item still pass?"
   buckets={['The set has a case of this kind', 'A new kind: add a case']}
@@ -436,7 +436,7 @@ python3 traces.py week 2
 
 </Predict>
 
-<Exercise stretch="Run python3 traces.py ask stricter with the question of each new case. Which of the new kinds of both weeks does the stricter prompt fix, and which part of the agent would a fix for the others change?">
+<Exercise stretch="Run python3 traces.py ask stricter with the question of each new case. Which of the new kinds of both weeks does the stricter prompt fix, and which part of the agent would a fix for the other change?">
 
 In your copy, with x07 and x08 added, read the sample of week 2 with
 `python3 traces.py week 2`, and label each run good or bad against the
@@ -460,10 +460,11 @@ word "passwords". Run w2-07 has the kind of x07 and x08, an uncovered
 question answered with a rule that shares two words with it. These
 three runs add to the counts of kinds that the set has. In w2-05 and
 w2-14 the search also returns the right page, and the agent quotes the
-wrong sentence on it. The set has no item of that kind. The two new cases are routine items, with the page
-and a phrase from the right sentence, such as `30 days` for w2-05. Week 2
-has no personal data in its questions, and the employee numbers stay out
-of the set. These are the two rows of a good result:
+wrong sentence on it. The set has no item of that kind. The two new
+cases are routine items, with the page and a phrase from the right
+sentence, such as `30 days` for w2-05. Week 2 has no personal data in its
+questions, and the employee numbers stay out of the set. These are the
+two rows of a good result:
 
 ```text
 r13,routine,When are claims for a work trip due?,expenses.txt,30 days,no,no,trace w2-05: quoted the meals sentence
