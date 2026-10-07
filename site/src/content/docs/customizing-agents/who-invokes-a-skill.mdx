@@ -31,7 +31,10 @@ The choice also decides what the skill costs before anyone uses it. A
 skill the model may start has its description in the context of every
 session, so the model can match requests against it. A skill only a
 person may start has no description in context, and nothing of it loads
-until someone types its name (@Claude Code skills).
+until someone types its name (@Claude Code skills). A skill with no
+side effects that helps only rarely, such as a report you run a few
+times a year, still puts its description in every session in between
+while the model may start it. Making it person-only removes that cost.
 
 | Front matter | A person may start it | The model may start it | Description in every session |
 | --- | --- | --- | --- |
@@ -52,10 +55,10 @@ be person-only.
 
 Leave the model in when the skill holds knowledge or a procedure that
 should apply whenever the work calls for it, such as the team's rules for
-writing a database migration. The model-only setting, `user-invocable:
-false`, is for a skill that a person wouldn't run as a command, such as notes on
-how an old module works, which the agent needs when it edits that module
-and a person never types.
+writing a database migration. The model-only setting,
+`user-invocable: false`, is for a skill that a person wouldn't run as a
+command, such as notes on how an old module works, which the agent needs
+when it edits that module and a person never types.
 
 A sentence in the description such as "use only when the user asks" is
 text the model reads and weighs. It isn't a setting, so the description
@@ -104,9 +107,10 @@ from these places (@Claude Code skills):
 | Project | `.claude/skills/<name>/SKILL.md` in the repository | Everyone who works in the repository, once it is committed |
 | Enterprise | `.claude/skills/<name>/SKILL.md` in the managed settings directory | Every user on the machines where the organization installs it |
 
-A plugin can also carry skills. The lesson on plugins covers those, and
-Claude Code gives each one the plugin's name as a prefix, so it never clashes
-with a skill in these folders (@Claude Code skills).
+A plugin can also carry skills. [The lesson on
+plugins](/customizing-agents/plugins/) covers those. Claude Code gives
+each plugin skill the plugin's name as a prefix, so it never clashes with
+a skill in these folders (@Claude Code skills).
 
 A project skill is part of the repository. It changes in a commit, a
 reviewer reads the change, and a colleague who pulls the branch gets the
@@ -166,7 +170,7 @@ Does that sentence keep the agent from starting a deploy on its own?
 
 <Choice id="where-the-team-skill-goes" phase="review" objective="customizing-agents/writes-skill/chooses-invocation-and-scope"
   concepts={['skill-scope']}
-  context="A developer wrote a skill in ~/.claude/skills/ in their home directory that runs the database migrations of one repository. The other three people on the team want to use it too, and they all use Claude Code in that repository."
+  context="You wrote a skill in ~/.claude/skills/ in your home directory that runs the database migrations of one repository. The other three people on your team want to use it too, and they all use Claude Code in that repository."
   title="The team wants your skill" hint="Which folder do all four people get from the repository, and where are changes to it reviewed?"
   options={[
     { text: 'Send each of them the file to copy into the skills folder in their own home directory.', why: 'Four copies change separately, nobody reviews an edit to one, and each copy hides a project skill of the same name later.' },
@@ -225,7 +229,8 @@ the doubt about who starts it or about who has it?
    the field is a rule Claude Code enforces.
 3. A skill the model may start has its description in every session. A
    person-only skill costs no context until someone types its name
-   (@Claude Code skills).
+   (@Claude Code skills). For a rarely used skill that saving can
+   decide the choice, even when the skill has no side effects.
 4. A project skill is committed to the repository and reaches the whole
    team, and a personal skill in your home directory reaches only you, in
    every project. When names clash, enterprise wins over personal and
@@ -235,6 +240,6 @@ the doubt about who starts it or about who has it?
 </Recap>
 
 <Habit id="person-only-before-commit">
-Before you commit a skill that sends, deploys or deletes anything, check
-that its front matter says only a person may start it.
+Before you commit a skill that sends, publishes, deploys or deletes
+anything, check that its front matter says only a person may start it.
 </Habit>
