@@ -4,11 +4,12 @@ For the lesson "Load it, point at it, or cut it".
 
 Run it from this directory:   python3 startup.py
 
-It follows Claude Code's import rule as the memory documentation states it,
+It follows Claude Code's import rule as the memory documentation states it
+(https://code.claude.com/docs/en/memory, "Import additional files"),
 simplified: an `@path` outside a code span or a fenced code block is expanded
 at start-up, the path is relative to the file that holds it, and imports nest
-at most four hops deep. A path the file only names, such as `docs/release.md`
-in backticks, adds nothing, because the agent reads that file only when it
+at most four hops deep. A path without the `@`, such as `docs/release.md` in
+a pointer line, adds nothing, because the agent reads that file only when it
 decides to open it.
 """
 
