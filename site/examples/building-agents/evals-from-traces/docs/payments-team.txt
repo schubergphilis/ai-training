@@ -1,0 +1,1 @@
+Payments team. The payments team builds the checkout and billing services. The cost center owner of the payments team is Maria Duarte, head of platform.
