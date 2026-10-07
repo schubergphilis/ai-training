@@ -1,0 +1,398 @@
+import { Choice, Match, MultiChoice, Predict, Sort, Scenario, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
+
+A colleague installs a skill called `ship-branch` in your project. It
+commits the finished work and then pushes the branch. Your project has a
+rule that agents never push: a person reviews each branch and pushes it.
+In this lesson we keep that rule in charge. We take the conflict out of
+our copy of the skill and add a hook that refuses the push with a
+reason. Then we check that the agent takes another route after the
+refusal.
+
+The skill is invented for the course, and so is the small project it
+runs in. Both are in the course repository at
+`site/examples/customizing-agents/project-stays-in-charge/`, next to the
+hook. The events, the JSON fields and the rule syntax are Claude Code's,
+checked against the vendor's documentation on the date at the end of the
+lesson (@Claude Code hooks) (@Claude Code permissions).
+
+## When a skill and the project disagree
+
+Here is the skill. It asks for the one thing the project's `CLAUDE.md`
+forbids.
+
+```markdown
+---
+name: ship-branch
+description: Commit the finished work and publish the branch. Use when the user says the work is done or asks to ship it.
+license: Apache-2.0
+allowed-tools: Bash(git add *) Bash(git commit *) Bash(git push *)
+---
+
+# Ship the branch
+
+1. Run `git status` and check that only the files of this task changed.
+2. Stage those files and commit them with a short message in the imperative.
+3. Push the branch with `git push -u origin HEAD`, so the work is never only
+   on this machine.
+4. Report the branch name and the commit.
+```
+
+Step 3 works against the project. It is an instruction, and the
+project's `CLAUDE.md` gives the opposite one. When two instructions
+contradict each other, Claude may follow either one (@Claude Code memory).
+A third line that says "follow the project, not the skill" only adds one
+more instruction to weigh. The fix is to remove the conflict, and the place to remove it
+is your copy of the skill. The project's rule stays as it is.
+
+The `allowed-tools` line also works against the project. During the turn that
+starts the skill, Claude may use the tools it lists without asking you.
+So the skill's author has pre-approved `git push` in your project
+(@Claude Code skills). The grant goes through the normal permission
+flow, and deny and ask rules still override it (@Claude Code skills). A
+PreToolUse hook that exits with 2 stops the call before the permission
+rules are checked, so an allow rule can't make the call run
+(@Claude Code permissions). A deny decision in the hook's JSON output
+prevents the call too (@Claude Code hooks). So the project's hooks and
+permission rules decide, and the skill's front matter doesn't widen
+them.
+
+For `ship-branch`, delete step 3 and `Bash(git push *)` from your copy,
+and write down the version you copied, as
+[Adopting a published skill set](/customizing-agents/adopting-a-skill-set/#take-two-skills-at-a-time)
+did for two skills. The next update of the skill may bring the step
+back, and the agent may still try a push on its own. The project needs a
+control that holds whatever the skill says, and the rest of this lesson
+builds one.
+
+<Scenario id="skill-asks-to-push" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
+  concepts={['steering-by-rejection', 'allowlists']}
+  context="A team installs a Claude Code skill whose steps say to push the branch after the commit, and whose allowed-tools field lists Bash(git push *). The project's CLAUDE.md says that agents never push and that a person reviews and pushes each branch. The session runs in the default permission mode, which Claude Code labels Manual."
+  title="The skill that pushes" hint="Which of these leaves two instructions that disagree, and which control still decides when the skill's turn has pre-approved the push?"
+  options={[
+    { text: 'Add a line to CLAUDE.md saying that the project rules override every installed skill.', consequence: 'Now three instructions disagree, and Claude may follow the skill. The allowed-tools grant still lets the push run without a prompt.' },
+    { text: 'Keep both files as they are, and rely on the default mode to ask before every git push.', consequence: 'During the skill\'s turn, allowed-tools pre-approves the push, so the default mode never asks. The branch is pushed.' },
+    { text: 'Remove the push step and its grant from your copy of the skill, and add a hook that refuses a push.', correct: true, consequence: 'The conflict is gone from the text, and a push the agent tries anyway is refused, with a reason, before it runs.' },
+    { text: 'Delete the push rule from CLAUDE.md, because the skill is the newer of the two instructions.', consequence: 'The conflict is gone, but so is the project\'s rule. The skill now decides how the team publishes work.' },
+  ]}>
+What does the team change?
+</Scenario>
+
+## A refusal the agent can act on
+
+A refusal does more than stop one action. When a hook or a person blocks
+an action and says why, the reason goes back to the model, and the agent
+plans its next step with it. We call this **steering by rejection**. The
+reason is the only part of your rule the agent sees at that moment, so
+it says what the rule is and which way is open. Here is what Claude gets
+back from each kind of refusal in Claude Code.
+
+- A PreToolUse hook can print a JSON decision of `deny` with a
+  `permissionDecisionReason`. Claude Code prevents the call and shows
+  Claude the reason (@Claude Code hooks).
+- A hook that exits with 2 blocks the same way, and its text on standard
+  error becomes the reason (@Claude Code hooks).
+- When you answer No to a permission prompt, you can press Tab and type a
+  comment. Claude Code sends the comment to Claude as the reason, and
+  Claude goes on working. A No without a comment on a prompt in the main
+  conversation stops the turn (@Claude Code permissions).
+- A deny rule in `permissions.deny`, such as `Bash(git push *)`, blocks
+  every call that matches. A rule is a tool name and a pattern, so it
+  has no place for a reason of yours (@Claude Code permissions).
+
+[Writing a hook that blocks a mistake](/customizing-agents/first-hook/)
+used the exit code and standard error. This hook uses the JSON form. It
+exits with 0 and prints a `hookSpecificOutput` object with the event
+name, the decision and the reason, the fields the hooks reference gives
+for PreToolUse (@Claude Code hooks). Here is the core of it. The
+complete file is
+`site/examples/customizing-agents/project-stays-in-charge/no_push_guard.py`.
+
+```python
+REASON = (
+    "This project doesn't let agents run git push. A person reviews each branch "
+    "and pushes it. Leave your commits on the current branch, don't look for "
+    "another way to push, and tell the user which branch is ready."
+)
+
+
+def main() -> int:
+    try:
+        call = json.load(sys.stdin)
+        command = call["tool_input"]["command"]
+        if not isinstance(command, str):
+            raise TypeError("command must be a string")
+    except (ValueError, KeyError, TypeError):
+        print(
+            "Blocked: the no-push hook couldn't read the tool call it was given.\n"
+            "Check the hook's entry in .claude/settings.local.json.",
+            file=sys.stderr,
+        )
+        return 2
+    if not pushes(command):
+        return 0
+    decision = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": REASON,
+        }
+    }
+    print(json.dumps(decision, indent=2))
+    return 0
+```
+
+The reason names the rule, says who does the push instead, and gives the
+agent its next step. It also asks the agent not to look for another way,
+for a reason the next section shows. `pushes` splits the command into
+words the way a shell does, which removes the quotes, and into
+subcommands at `;`, `&&`, `||`, `|` and `&`. In each subcommand it skips
+leading `NAME=value` assignments, checks that the program is `git` by any
+path, skips git's own options such as `-C .`, and returns true when git's
+command is `push`. When the input isn't a tool call it can read, the hook
+exits with 2 and writes why to standard error. A broken hook then blocks
+the call.
+
+The fixture `deny.py` pipes the hook the call that the skill's step 3
+would make, the same way the exercise does by hand.
+
+<Predict id="the-deny-decision" title="The hook, fed the push"
+  answer={`{
+    "hookSpecificOutput": {
+      "hookEventName": "PreToolUse",
+      "permissionDecision": "deny",
+      "permissionDecisionReason": "This project doesn't let agents run git push. A person reviews each branch and pushes it. Leave your commits on the current branch, don't look for another way to push, and tell the user which branch is ready."
+    }
+  }
+  exit code 0`} run="customizing-agents/project-stays-in-charge/deny.py">
+From the root of the course repository, run
+`python3 site/examples/customizing-agents/project-stays-in-charge/deny.py`
+and compare what you see with the output below.
+</Predict>
+
+The exit code is 0 and the call is still refused, because the decision
+is in the JSON. Register the hook in `.claude/settings.local.json` of
+your copy, with the `Bash` matcher and the exec form from the last
+lesson.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/no_push_guard.py"]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This entry has no `if` field, and without one the hook runs for every
+Bash command that the matcher picks (@Claude Code hooks). The script
+reads only the text of the command and doesn't start another program,
+so it returns as soon as it has read the command.
+
+<Choice id="reason-that-steers" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
+  concepts={['steering-by-rejection', 'hooks']}
+  context="A Claude Code PreToolUse hook refuses every git push in a project where a person reviews and pushes each branch. Claude sees only the text in permissionDecisionReason, and nothing else about the rule. Four versions of that text are proposed."
+  title="Which reason steers the agent?" hint="After the refusal, does the agent know what the rule is and which move is still open?"
+  options={[
+    { text: 'Agents don\'t push in this project. Commit on the branch and tell the user it is ready.', correct: true },
+    { text: 'git push isn\'t allowed for agents in this repository. Use another command to publish.', why: 'The text asks the agent to find a way around the rule. Another spelling of the push may be the command it tries next.' },
+    { text: 'The remote isn\'t ready for this branch yet. Wait a minute, then run the same push again.', why: 'The rule still holds a minute later. The agent retries the push and gets the same refusal.' },
+    { text: 'Blocked by no_push_guard.py, the PreToolUse hook that is set in the local settings.', why: 'The agent learns which hook fired. Nothing says what the rule is or what to do instead.' },
+  ]}>
+Which text should the hook put in `permissionDecisionReason`?
+</Choice>
+
+<Sort id="what-claude-gets-back" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
+  concepts={['steering-by-rejection', 'hooks', 'allowlists']}
+  context="In Claude Code, an action can be refused in several ways: by a PreToolUse hook, by a deny rule in the permission settings, or by the user at a permission prompt, where pressing Tab opens a comment field. Each item is one refusal of the same git push."
+  title="What does Claude get back?" hint="For each refusal, is there a place where you wrote text that Claude Code passes on?"
+  buckets={['Claude gets a reason you wrote', 'Claude gets no reason you wrote']}
+  items={[
+    { text: 'A hook prints a deny decision with a permissionDecisionReason', bucket: 0 },
+    { text: 'A deny rule Bash(git push *) in the project settings matches', bucket: 1 },
+    { text: 'You answer No at the prompt and type a comment after Tab', bucket: 0 },
+    { text: 'A hook exits with code 2 and writes a message to standard error', bucket: 0 },
+    { text: 'You answer No at the prompt in the main conversation, without a comment', bucket: 1 },
+  ]}>
+Place each refusal in the bucket it belongs to.
+</Sort>
+
+## What a bare refusal leaves open
+
+A refusal without a reason still blocks the one call. What it doesn't
+do is tell the agent what to do next, and the next step may be the same
+action in another form. A Bash permission rule matches the text of the
+command that Claude writes. The permissions page lists forms that a
+deny rule for `Bash(git push *)` doesn't stop, such as
+`git -C . push origin main`, `git -c push.default=current push origin main`
+and `git 'push' origin main`. By the page's own account, such a rule
+covers the way Claude usually writes the command, and it doesn't guard
+the program itself (@Claude Code permissions).
+
+The vendor pages don't say what Claude does after a refusal that gives
+no reason. What follows is our inference from the documented limits of
+Bash rules. An agent that is still trying to finish the task, and that
+doesn't know the rule, may try a second spelling of the same command.
+If that spelling is one the rule doesn't match, the push runs. A reason
+that names the open route gives it a better move than the second
+spelling. The exercise lets you watch both cases.
+
+A hook is code, so it can catch more spellings than a pattern can. The
+fixture `spellings.py` holds seven commands against the same hook: five
+spellings of a push, a push through `sh -c`, and a `git log` that only
+mentions the word.
+
+<Predict id="seven-spellings" title="Seven commands against the hook"
+  answer={`git push origin main: deny
+  git -C . push origin main: deny
+  git -c push.default=current push origin main: deny
+  git 'push' origin main: deny
+  /usr/bin/git push origin main: deny
+  sh -c 'git push origin main': allow
+  git log --oneline --grep push: allow`} run="customizing-agents/project-stays-in-charge/spellings.py">
+From the root of the course repository, run
+`python3 site/examples/customizing-agents/project-stays-in-charge/spellings.py`
+and compare what you see with the output below.
+</Predict>
+
+The three forms from the vendor's table are refused, and so is git by
+its full path. The sixth line gets through: the hook sees `sh`, and the
+push is inside a quoted string that it doesn't read. A script such as
+`./publish.sh` that pushes would get through as well. So the hook makes
+the refusal and its reason reach the agent in the usual cases, and the
+reason makes a search for another spelling unlikely. Neither one is a
+boundary. For a limit that doesn't depend on the command text, the
+permissions page points to the sandbox (@Claude Code permissions). For a
+push in particular, the remote can refuse it, whatever ran the command.
+
+<MultiChoice id="what-keeps-the-project-in-charge" phase="review" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
+  concepts={['steering-by-rejection', 'allowlists']}
+  context="A project's CLAUDE.md says that agents never run git push. An installed Claude Code skill says to push after each commit, and its allowed-tools field lists Bash(git push *). Four changes are proposed."
+  title="Which changes keep the project in charge?" hint="Which changes remove the disagreement from the text, and which control acts before the push runs, whatever the skill says?"
+  options={[
+    { text: 'Remove the push step and Bash(git push *) from the team\'s copy of the skill.', correct: true },
+    { text: 'Add a line to CLAUDE.md that says the project overrides every installed skill.', why: 'That adds one more instruction to weigh, and Claude may still follow the skill. The allowed-tools grant stays.' },
+    { text: 'Add a PreToolUse hook that denies git push and says what to do instead.', correct: true },
+    { text: 'Ask the skill author to mention the push rule of the project in the skill.', why: 'The rule then exists in two files you don\'t both control, and the next update of the skill can drop it.' },
+  ]}>
+Which two changes should the team make?
+</MultiChoice>
+
+<Choice id="the-push-that-got-through" phase="review" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
+  concepts={['steering-by-rejection', 'allowlists']}
+  context="A project has the Claude Code deny rule Bash(git push *) and no hook. An agent's git push origin main was refused with no reason from the project. Its next command was git -C . push origin main, and the branch reached the remote."
+  title="The push that got through" hint="What does a Bash rule match against, and what did the agent know about the rule after the first refusal?"
+  options={[
+    { text: 'The agent ran in a permission mode that skips deny rules, so only the first push was refused.', why: 'The first push was refused by the same rule in the same session, so the mode didn\'t switch the rule off.' },
+    { text: 'The deny rule expired after the first match, so the second push was matched against no rule.', why: 'A deny rule stays in the settings and is checked on every call. It doesn\'t expire after one match.' },
+    { text: 'The rule matches command text and missed that spelling, and the bare refusal gave no other route.', correct: true },
+    { text: 'The second push came from a subagent, and permission rules are checked only in the main session.', why: 'Nothing in the story involves a subagent. The rule missed the spelling of the command.' },
+  ]}>
+Why did the second push reach the remote?
+</Choice>
+
+<Match id="which-control-fits" phase="review" objective="customizing-agents/adopts-a-skill-set/keeps-the-project-in-charge"
+  concepts={['steering-by-rejection', 'hooks']}
+  context="A team uses Claude Code with an installed skill that disagrees with the project's rule that agents never push. Each row is one job the team wants done. The options are four controls: an edit to the team's copy of the skill, a PreToolUse hook, an answer at a permission prompt, and a check on the server that holds the repository."
+  title="Which control fits the job?" hint="Does the job change the text the agent reads, refuse a call with a reason before it runs, or hold whatever ran the command?"
+  options={['Edit the copy of the skill', 'A PreToolUse hook that denies with a reason', 'No at the prompt, with a comment', 'The remote refuses the push']}
+  rows={[
+    { statement: 'Take the push step out of the instructions the agent reads', option: 0, why: 'Which control changes the text itself?' },
+    { statement: 'Refuse every git push the agent tries, and say what to do instead', option: 1, why: 'Which control runs before each call, with no person present?' },
+    { statement: 'Refuse one push you see in a prompt, and tell the agent why', option: 2, why: 'Which control is a person answering at that moment?' },
+    { statement: 'Stop a push that a script or sh -c ran, whatever its text', option: 3, why: 'Which control doesn\'t read the command text at all?' },
+  ]}
+  rationale="The edit removes the conflict, the hook and the prompt refuse with a reason the agent can use, and the remote holds when a command gets past the text checks.">
+Match each job to the control that does it.
+</Match>
+
+<Pitfall title="The deny rule that said nothing">
+A team saw that an installed skill pushed branches, and added the deny
+rule `Bash(git push *)` to the project settings. They left the skill as
+it was. In the next session the skill asked for the push, the rule
+refused it, and the agent tried `git -C . push`, which the rule doesn't
+match. The branch reached the remote before review. The rule did its one
+job, and the skill still asked for the push in every session. Remove the
+conflict from your copy of the skill, and refuse with a reason that
+names the open route, so the agent has a better move than a second
+spelling.
+</Pitfall>
+
+<Exercise stretch="Remove both folders and make a fresh copy with the same steps. In it, run git rm -q CLAUDE.md and commit, so the agent learns nothing about the rule, and change REASON in the hook to the single word Blocked. Start the session with CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude, so that no note from the first run tells the agent the rule, and send the same prompt. Write down every command the agent tries after the refusal, and run the remote check again.">
+Make the copy from the root of your clone of the course repository. It
+holds the project, the `ship-branch` skill, the hook, and a remote that's
+a local folder, so a push that gets through goes nowhere else. If
+`~/no-push` or `~/no-push-remote.git` exists from an earlier try, remove
+it first.
+
+```sh
+cp -R site/examples/customizing-agents/project-stays-in-charge/fixture-repo ~/no-push
+mkdir -p ~/no-push/.claude/hooks ~/no-push/.claude/skills
+cp site/examples/customizing-agents/project-stays-in-charge/no_push_guard.py ~/no-push/.claude/hooks/
+cp -R site/examples/customizing-agents/project-stays-in-charge/ship-branch ~/no-push/.claude/skills/
+git init -q --bare ~/no-push-remote.git
+cd ~/no-push
+mv CLAUDE.sample.md CLAUDE.md
+git init -q && git add -A && git commit -q -m "fixture"
+git remote add origin ~/no-push-remote.git
+```
+
+Leave the skill as it is for now, so the conflict is there. Test the
+hook by hand, then create `.claude/settings.local.json` with the entry
+above.
+
+```sh
+echo '{"tool_input": {"command": "git push -u origin HEAD"}}' | python3 .claude/hooks/no_push_guard.py; echo "exit code $?"
+```
+
+Start `claude` in `~/no-push`, accept the workspace trust dialog, and
+check `/hooks`. Claude Code holds back hooks from settings files until
+you accept it (@Claude Code hooks). It applies the skill's
+`allowed-tools` either way (@Claude Code skills). Then send: "Add Water the plants to todo.txt, then
+use the ship-branch skill." The skill can only change files and run git
+in this copy. In a second terminal, run
+`git -C ~/no-push-remote.git rev-list --all --count`.
+
+A good result: the commit is in `git log` of the copy, the remote check
+prints `0`, and the agent's reply says the branch is ready for a person
+to push. Then make the fix from the first section in your copy of the
+skill, and send the prompt again in a new session. Note whether a push
+is attempted this time. Fifteen minutes is enough. Reflection: which skill or prompt
+in your own projects asks for something your project forbids, and what
+would the reason in its refusal say?
+</Exercise>
+
+<Recap>
+1. When a skill contradicts the project's instructions, Claude may follow
+   either one (@Claude Code memory). Remove the conflict in your copy of
+   the skill, and leave the project's rule as it is.
+2. A skill's `allowed-tools` can pre-approve a command for its turn, and
+   deny and ask rules still override it (@Claude Code skills). A
+   PreToolUse hook that exits with 2 blocks the call even when an allow
+   rule matches (@Claude Code permissions).
+3. A PreToolUse hook can deny a call with a JSON decision, and Claude
+   sees its `permissionDecisionReason` (@Claude Code hooks). A No with a
+   comment at a prompt sends the comment the same way
+   (@Claude Code permissions).
+4. A Bash rule matches command text and misses other spellings of the
+   same command (@Claude Code permissions). That a bare refusal invites
+   such a spelling is our inference, so give a reason that names the
+   open route.
+5. Rules and hooks both read command text, and a push inside `sh -c`
+   gets past both (@Claude Code permissions). For a limit that holds whatever ran the command, use
+   the sandbox or a check outside the agent.
+</Recap>
+
+<Habit id="refuse-with-a-reason">
+The next time you deny an agent's action, at a prompt or in a hook, say
+in one sentence what the rule is and what the agent should do instead.
+</Habit>
