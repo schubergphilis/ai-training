@@ -10,6 +10,9 @@ instead of `nothing overdue`, a malformed date is refused with the message but
 exit status 0, `render.py` drops the `nothing to do` line and the test for it
 is deleted, `store.py` gets a new default file name, and `test_clear.py` is
 reformatted.
+
+`review-in-a-fresh-session/check_findings.py` loads this module by path and
+calls `in_copy`, so a change to the branch or to `in_copy` reaches that lesson.
 """
 
 import os
