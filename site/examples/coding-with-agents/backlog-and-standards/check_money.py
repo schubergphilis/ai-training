@@ -7,27 +7,30 @@ This script makes that rule a check that a CI step can run:
 
     python3 check_money.py importer.py
 
-It prints one line for each line of code that calls `float(`, ignoring
-comments, and exits with status 1 when it finds one. With no findings it
-prints `no findings` and exits with status 0. The check is crude on
+It prints one line for each call to `float(` in the code, skipping
+comments, strings and this file itself, and exits with status 1 when it
+finds one. With no findings it prints `no findings` and exits with status 0. The check is crude on
 purpose: it flags every `float(` call, so a file that needs a float for
 something other than money is the moment to make the check narrower.
 """
 
-import re
+import os
 import sys
-
-CALL = re.compile(r"\bfloat\(")
+import tokenize
 
 
 def findings(path):
-    """Return (line number, line) for each code line that calls float()."""
+    """Return (line number, line) for each line of code that calls float().
+
+    The tokenize module reads the file as Python reads it, so a `float(` in
+    a comment or inside a string is not a call and is not reported.
+    """
     found = []
-    with open(path, encoding="utf-8") as handle:
-        for number, line in enumerate(handle, start=1):
-            code = line.split("#", 1)[0]
-            if CALL.search(code):
-                found.append((number, line.strip()))
+    with open(path, "rb") as handle:
+        tokens = list(tokenize.tokenize(handle.readline))
+    for token, after in zip(tokens, tokens[1:]):
+        if token.type == tokenize.NAME and token.string == "float" and after.string == "(":
+            found.append((token.start[0], token.line.strip()))
     return found
 
 
@@ -38,6 +41,8 @@ def main(argv):
         return 2
     count = 0
     for path in paths:
+        if os.path.abspath(path) == os.path.abspath(__file__):
+            continue
         for number, line in findings(path):
             print(f"{path}:{number}: money as float, use decimal.Decimal: {line}")
             count += 1
