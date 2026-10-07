@@ -1,8 +1,8 @@
 import { Choice, MultiChoice, Order, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Habit } from '@components/lesson';
 
-*Splitting the work into components the agent can build one at a time*
-wrote the acceptance test for the import parser, and that test treats a
-line that starts with `x ` as a done item. The rule came from the
+In *Splitting the work into components the agent can build one at a
+time* you wrote the acceptance test for the import parser, and that test
+treats a line that starts with `x ` as a done item. The rule came from the
 colleague who asked for the feature. They remember their old app writing
 `x `, and nobody has looked at the file. In this lesson we check that
 rule before the parser is built. We write down the one question, have
@@ -15,19 +15,20 @@ mark or two is a fact about the file, and a short program finds it out
 faster than a meeting does. Thomas and Hunt call this a prototype built
 to learn: it answers a question, it can leave out completeness and
 robustness, and it is thrown away when the question is answered
-(@Thomas 2019). With a coding agent, such a program takes a minute to
-write, so trying the idea often costs less than discussing it.
+(@Thomas 2019). With a coding agent, such a program takes little time
+to write, so trying the idea often costs less than discussing it.
 
 ## The fixture
 
 The fixture is in the course repository under
 `site/examples/coding-with-agents/prototype-to-throw-away/`. Copy that
-whole directory to a place of its own and change into the copy. It holds
-`SPEC.md`, the spec for the `import` command of the to-do program, and
-`old-list.txt`, a copy of the colleague's old file. A `sample/` directory
-holds a script that the second half of the lesson uses. The other files
-are for the course's own checks. The reset is to delete the copy and copy
-again.
+whole directory to a place of its own. The copy holds `fixture-repo/`,
+where the agent works, and a `sample/` directory with a script that the
+second half of the lesson uses. `fixture-repo/` holds `SPEC.md`, the spec
+for the `import` command of the to-do program, and `old-list.txt`, a copy
+of the colleague's old file. The other files are for the course's own
+checks. Change into `fixture-repo` for every step of this lesson. The
+reset is to delete the copy and copy again.
 
 The spec ends with this section:
 
@@ -50,8 +51,8 @@ question, and deleted once it has. The question comes first, written in
 one sentence, before you ask for any code. Without it, the agent builds
 whatever seems useful: a parser, then a test for the parser, then a
 command that calls it. That's a first version of the import, built
-without the components and checks that *Splitting the work into
-components the agent can build one at a time* designed.
+without the components and checks that you designed in *Splitting the
+work into components the agent can build one at a time*.
 
 A prototype can answer a question when the program prints the answer,
 such as a count or two outputs side by side.
@@ -77,8 +78,8 @@ question for a throwaway prototype?
 
 ## The smallest program that answers it
 
-Start your coding agent in the copy and give it the question, and say
-what the program reads and prints. Say what to leave out, too. Tests,
+Start your coding agent in `fixture-repo` and give it the question, and
+say what the program reads and prints. Say what to leave out, too. Tests,
 error handling and structure are effort spent on code that you delete,
 and a brief that doesn't mention them leaves that choice to the agent.
 Say also that it may create one file and change nothing else.
@@ -86,8 +87,8 @@ Say also that it may create one file and change nothing else.
 ```text
 Read SPEC.md. Its open question is which done marks old-list.txt uses.
 Write a throwaway script, count_forms.py, that answers only that. It reads
-old-list.txt (hard-code the name), counts the blank lines, and prints how
-many lines start with each first word, most common first, the top five.
+old-list.txt (hard-code the name) and prints how many lines start with
+each first word, most common first, the top five.
 No tests, no error handling, no command-line options. Create only
 count_forms.py, and don't start on the import.
 ```
@@ -103,34 +104,31 @@ from collections import Counter
 from pathlib import Path
 
 lines = Path("old-list.txt").read_text(encoding="utf-8").splitlines()
-blank = sum(1 for line in lines if not line.strip())
 words = Counter(line.split()[0] for line in lines if line.strip())
-print(f"{len(lines)} lines, {blank} blank")
 for word, count in words.most_common(5):
     print(f"{word}: {count}")
 ```
 
 The file name is hard-coded, and the whole file is read at once. It has
-no functions, tests, or checks. In the parser each of those would be a
-defect, and for one run on a file of 37 lines none of them matters.
+no functions or tests. In the parser each of those would be a defect, and
+for one run on a short file none of them matters.
 
 <Predict id="run-the-prototype" title="Run the course's prototype"
-  answer={`37 lines, 3 blank
-  x: 10
+  answer={`x: 10
   [x]: 4
   Buy: 3
   Book: 2
   Call: 2`} run="coding-with-agents/prototype-to-throw-away/sample_run.py">
-Run this from the top of your copy, and compare what you see with the
-output below.
+Run this in `fixture-repo`, and compare what you see with the output
+below.
 
 ```sh
-python3 sample/count_forms.py
+python3 ../sample/count_forms.py
 ```
 
 </Predict>
 
-Run the script your agent wrote the same way, with
+Run the script your agent wrote in the same directory, with
 `python3 count_forms.py`. Its format may differ, and the counts for `x`
 and `[x]` should be the same. If they differ, one of the two scripts is
 wrong, and reading both against `old-list.txt` tells you which.
@@ -165,13 +163,38 @@ out of the open questions:
    lines).
 ```
 
-The acceptance test from *Splitting the work into components the agent
-can build one at a time* gets one more input line, such as
-`"[x] Pay the bill"`, so that it fails on a parser that knows only `x `.
-Then delete both scripts:
+The acceptance test changes with the spec. It is the `test_importer.py`
+that you wrote in your copy of the fixture of *Splitting the work into
+components the agent can build one at a time*. Give it one more input
+line and its expected item:
+
+```python
+    def test_parse_lines_keeps_text_and_done_mark_and_skips_blank_lines(self):
+        lines = [
+            "Buy milk",
+            "",
+            "x Call the plumber",
+            "  Water the plants  ",
+            "[x] Pay the bill",
+        ]
+        self.assertEqual(
+            importer.parse_lines(lines),
+            [
+                {"text": "Buy milk", "done": False},
+                {"text": "Call the plumber", "done": True},
+                {"text": "Water the plants", "done": False},
+                {"text": "Pay the bill", "done": True},
+            ],
+        )
+```
+
+A parser that knows only `x ` returns the last line as an open item with
+the text `[x] Pay the bill`, so the test fails on it. You change the test
+before the parser is briefed, and the brief's "Do not change the test"
+still holds for the agent. Then delete both scripts, from `fixture-repo`:
 
 ```sh
-rm count_forms.py sample/count_forms.py
+rm count_forms.py ../sample/count_forms.py
 ```
 
 The answer is in the spec, where a fresh session and a reviewer read it.
@@ -187,8 +210,9 @@ marked its done items. The script worked, so the engineer asked the agent
 to add the import command around it. The script had a hard-coded path and
 no tests, and it was now the parser. A month later a colleague ran the
 import on their own laptop, and it stopped with an error about a path
-that existed only on the engineer's laptop. The rule: a prototype answers its question and is deleted, and
-the parser is built from the spec, with its own test.
+that existed only on the engineer's laptop. The rule: a prototype
+answers its question and is deleted, and the parser is built from the
+spec, with its own test.
 </Pitfall>
 
 <Scenario id="keep-the-script" objective="coding-with-agents/specifies-work/settles-with-a-prototype"
@@ -200,7 +224,7 @@ the parser is built from the spec, with its own test.
     { text: 'Ask the agent to add tests to the script and grow it into the parser.', consequence: 'The parser starts from code written to be deleted, with a hard-coded path and a whole-file read, and the tests are written to fit it.' },
     { text: 'Delete the script and tell the agent about [x] at the start of the next session.', consequence: 'The answer is in one chat. The spec still says x only, and the next session that reads the spec builds the old rule.' },
     { text: 'Move the script to a prototypes folder in the repository, in case it is useful later.', consequence: 'The script stays in the code base, nobody remembers which question it answered, and someone imports from it a month later.' },
-    { text: 'Write the [x] rule into the spec, add an [x] line to the test, and delete the script.', correct: true, consequence: 'The spec and the test carry the answer. The parser is built from them in a fresh session, and the script is gone.' },
+    { text: 'Write the [x] rule into the spec, add an [x] case to the test, and delete the script.', correct: true, consequence: 'The spec and the test carry the answer. The parser is built from them in a fresh session, and the script is gone.' },
   ]}>
 The script printed `x: 10` and `[x]: 4`. The colleague says: "It works.
 Keep it and turn it into the parser." What do you do?
@@ -259,7 +283,7 @@ import twice. What does this lesson do instead?
     'Write the open question down in one sentence',
     'Brief the agent for the smallest program that answers it',
     'Run the program and read what it prints',
-    'Write the answer into the spec and the test',
+    'Write the answer into the spec and add a case to the test',
     'Delete the program',
   ]} />
 
@@ -268,14 +292,15 @@ Take the spec you wrote in the exercise of *Let the agent interview you*,
 and pick one open question from it that a program can answer. If your
 spec has none, use the open question of `sample/SPEC.md` in your copy of
 that lesson's fixture: whether `archive list` shows the date. A program
-that prints five archived items both ways answers it. Write the question
+that prints five archived items both ways shows you the two forms. The
+answer is then your decision, which you write into the spec. Write the question
 in one sentence. Start your coding agent in a scratch directory outside
 the fixture, so the prototype can't touch the real code, and brief it for
 the smallest program that answers the question, with what to leave out
 and the one file it may create. Run the program, write the answer and
 your decision into the spec, and delete the program. Fifteen minutes is
-enough. You do this so that a design question is settled by a fact, and
-the code that found the fact never reaches the system.
+enough. You do this so that a design question is settled by what a
+program shows, and the code that showed it never reaches the system.
 
 A good result: the question fits in one sentence and was written before
 the brief. The program is one file with no tests, and it is gone. The
@@ -285,10 +310,10 @@ have taken, and would it have ended with the same answer?
 </Exercise>
 
 <Recap>
-1. A throwaway prototype is a small program built to answer one design question, and it is deleted once it has (@Thomas 2019).
+1. A throwaway prototype is a small program built to learn, and it is thrown away once it has answered its question (@Thomas 2019).
 2. Write the question down in one sentence before you ask for code. A program that answers no named question grows into a first version of the system.
 3. Brief the agent to leave out tests, error handling and structure, and to create one file. They are effort spent on code that you delete.
-4. Write the answer and your decision into the spec, and update the test, before the program is deleted. A fresh session reads the spec, not the chat.
+4. Write the answer and your decision into the spec, and add a case for it to the acceptance test, before the program is deleted. A fresh session reads only the spec.
 5. Keep the prototype small. Brooks later took back his advice to throw away a whole first version (@Brooks 1995), and the system grows one checked component at a time.
 </Recap>
 
