@@ -69,13 +69,16 @@ def is_error(result) -> bool:
 
 
 def ask_person(name, args, read=input) -> dict:
-    """Shows the call and every argument, then asks. Anything but y is a refusal."""
+    """Shows the call and every argument, then asks. Anything but y, or no input, is a refusal."""
     print(f"approve? {name}")
     for key, value in args.items():
         print(f"  {key} = {value!r}")
-    if read("allow? [y/n] ").strip() == "y":
-        return {"allow": True}
-    return {"allow": False, "reason": read("reason: ").strip()}
+    try:
+        if read("allow? [y/n] ").strip() == "y":
+            return {"allow": True}
+        return {"allow": False, "reason": read("reason: ").strip()}
+    except EOFError:
+        return {"allow": False, "reason": "no answer"}
 
 
 def run(question, tools=TOOLS, model=fake_model, approve=ask_person, max_steps=5, max_errors=2):
