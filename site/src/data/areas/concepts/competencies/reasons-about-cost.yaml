@@ -59,7 +59,8 @@ objectives:
       - claim: The learner keeps the level fixed within one conversation and changes it only between kinds
           of work.
         why: Changing the effort level between requests can invalidate the prompt cache, so the next
-          request pays the full price for the whole history (@Claude docs effort).
+          request writes the whole history to the cache again, at a little more than the normal input
+          price (@Claude docs effort) (@Claude docs pricing).
         example: The learner sets the level when starting the review session and leaves it there, and uses
           another level in a separate drafting session.
   - id: concepts/reasons-about-cost/explains-prompt-caching
@@ -71,7 +72,7 @@ objectives:
         why: The cache stores the opening part of a request, and any difference ends the match at that
           point (@Claude docs prompt-caching).
         example: The learner explains why two requests with the same long document but a different
-          first instruction both pay the full price.
+          first instruction both write the document to the cache instead of reading it.
       - claim: The learner puts content that stays the same at the start of a request and content that
           changes at the end.
         why: A change invalidates the cache from that point on, so changing text near the start wastes
