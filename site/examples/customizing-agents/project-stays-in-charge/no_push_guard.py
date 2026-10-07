@@ -8,11 +8,11 @@ shows Claude the reason. For any other command it prints nothing and exits
 with 0, which means no objection.
 
 The hook splits the command into words the way a shell does, so quotes are
-removed, and into subcommands at `;`, `&&`, `||`, `|` and `&`. In each
-subcommand it skips leading `NAME=value` assignments, checks that the program
-is `git` (by any path), skips git's own options, and denies when git's
-command is `push`. It reads only the text of the command, so a push inside
-`sh -c '...'` or inside a script gets past it.
+removed, and into subcommands at shell operators such as `;`, `&&`, `|` and
+`&`, and at line breaks. In each subcommand it skips leading `NAME=value`
+assignments, checks that the program is `git` (by any path), skips git's own
+options, and denies when git's command is `push`. It reads only the text of
+the command, so a push inside `sh -c '...'` or inside a script gets past it.
 
 When the input isn't a tool call it can read, it writes a message to
 standard error and exits with 2, which also blocks the call.
