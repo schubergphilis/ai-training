@@ -55,8 +55,8 @@ notes: >-
   servers repository; SDK 1.32.1 names 2025-11-25 as its latest revision) makes it a legacy server,
   and the stdio transport page of revision 2026-07-28, "Backward Compatibility", has a probing client
   fall back to `initialize` when a legacy server answers its `server/discover` probe with an error or
-  not at all, so the exercise works whether Claude Code probes or not. The spec claims were re-checked against revision 2026-07-28, which drops the
-  `initialize` handshake for a per-request `_meta` field and says roots guide a server without the
+  not at all, so the exercise works whether Claude Code probes or not. The spec claims were
+  re-checked against revision 2026-07-28, which drops the `initialize` handshake for a per-request `_meta` field and says roots guide a server without the
   protocol enforcing them. That revision deprecates roots (its deprecated-features registry), so the
   page says so and has the learner give the copy both as the argument and as the root. All must be
   re-checked by review-by, the spec revision included.
