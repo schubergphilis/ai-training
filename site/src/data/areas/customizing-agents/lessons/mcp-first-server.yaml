@@ -40,23 +40,23 @@ minutes: 15
 notes: >-
   Introduces no concept: hands-on for server, client and transport, which the live lesson introduces.
   The fixtures under site/examples/customizing-agents/mcp-first-server/ are a stdlib stand-in for a
-  file-system server over stdio with three read-only tools, so CI asserts the `tools/list` and `tools/call`
-  exchange without npm or the network. The exercise connects the real reference server
+  file-system server over stdio with three read-only tools, so CI asserts the `tools/list` and
+  `tools/call` exchange without npm or the network. The exercise connects the real reference server
   (@modelcontextprotocol/server-filesystem) through npx, scoped to a copy of the fixture's handbook
-  directory, pinned to the npm version current on sources-checked. Claude Code answers `roots/list`
-  with its launch directory and `--add-dir` directories, and the server's roots replace its argument
-  list, so the page has the learner start the agent inside the copy. The `claude mcp add` syntax, the
-  roots behavior, the scope names, the `.mcp.json` approval prompt, the
-  tool-search default, the stdio negotiation default (MCP_PROTOCOL_NEGOTIATION=auto, and a feature-flag
-  rollout from v2.1.285) and that only TypeScript SDK 2 adds revision 2026-07-28 come from
-  code.claude.com/docs/en/mcp (section "MCP client runtimes"), the `mcp__` rule forms from
-  code.claude.com/docs/en/permissions, and the package name, tool names and directory scoping from the
-  server's README. The server's SDK 1 dependency (^1.30.0 in the package file under src/filesystem of the
-  servers repository; SDK 1.32.1 names 2025-11-25 as its latest revision) makes it a legacy server,
-  and the stdio transport page of revision 2026-07-28, "Backward Compatibility", has a probing client
-  fall back to `initialize` when a legacy server answers its `server/discover` probe with an error or
-  not at all, so the exercise works whether Claude Code probes or not. The spec claims were
-  re-checked against revision 2026-07-28, which drops the `initialize` handshake for a per-request `_meta` field and says roots guide a server without the
+  directory, pinned to the npm version current on sources-checked. Claude Code answers `roots/list` with
+  its launch directory and `--add-dir` directories, and the server's roots replace its argument list, so
+  the page has the learner start the agent inside the copy. The `claude mcp add` syntax, the roots
+  behavior, the scope names, the `.mcp.json` approval prompt, the tool-search default, the stdio
+  negotiation default (MCP_PROTOCOL_NEGOTIATION=auto, and a feature-flag rollout from v2.1.285) and that
+  only TypeScript SDK 2 adds revision 2026-07-28 come from code.claude.com/docs/en/mcp (section "MCP
+  client runtimes"), the `mcp__` rule forms from code.claude.com/docs/en/permissions, and the package
+  name, tool names and directory scoping from the server's README. The server's SDK 1 dependency
+  (^1.30.0 in the package file under src/filesystem of the servers repository; SDK 1.32.1 names
+  2025-11-25 as its latest revision) makes it a legacy server, and the stdio transport page of revision
+  2026-07-28, "Backward Compatibility", has a probing client fall back to `initialize` when a legacy
+  server answers its `server/discover` probe with an error or not at all, so the exercise works whether
+  Claude Code probes or not. The spec claims were re-checked against revision 2026-07-28, which drops
+  the `initialize` handshake for a per-request `_meta` field and says roots guide a server without the
   protocol enforcing them. That revision deprecates roots (its deprecated-features registry), so the
   page says so and has the learner give the copy both as the argument and as the root. All must be
   re-checked by review-by, the spec revision included.
