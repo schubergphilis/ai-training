@@ -1,5 +1,9 @@
 id: concepts/reading-token-counts
 title: Reading the token counts
+description: >-
+  Read the input and output token counts of every request in a short chat and in one prompt to an
+  agent, see why a one-line question late in a conversation costs more than the same question at
+  the start, and learn when to start a new conversation.
 mode: tutorial
 covers: concepts/tokens-and-cost
 serves: [concepts/reasons-about-cost/reads-token-counts, concepts/reasons-about-cost/explains-growing-cost]
@@ -7,8 +11,10 @@ introduces: [input-and-output-tokens, growing-session-cost]
 assumes:
   - objective: concepts/explains-models/explains-generation
     lesson: concepts/what-tokens-cost
+    section: what-a-token-costs
   - objective: concepts/recognizes-agents/follows-one-prompt
     lesson: concepts/one-prompt-many-requests
+    section: what-is-in-each-request
 extends-to: []
 after: [concepts/what-tokens-cost, concepts/one-prompt-many-requests]
 shorts: []
@@ -18,9 +24,24 @@ exercise:
     Read the input and output token counts of each request in a short session, and explain why the
     last question cost more than the first.
 sources: [Claude docs messages, Claude Code costs, Claude docs pricing]
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 issue: 683
 minutes: 15
+proofs: [concepts/reading-token-counts/session_usage.py]
 notes: >-
   A foundations lesson, so the counts are shown as a usage screen or a table, never a terminal. The
   model-family-and-size and cost-and-latency concepts stay in concepts/what-tokens-cost, and this
-  lesson builds on them.
+  lesson builds on them. Foundations page: every usage report is a text fence, and the fixture
+  site/examples/concepts/reading-token-counts/session_usage.py prints each of them, so it is listed
+  in proofs. The token counts are round illustrative numbers and the prices are the example prices
+  for a large model from concepts/what-tokens-cost, and the page says both. The vendor claims (the
+  two counts in every usage report, thinking billed as output, tool descriptions and results
+  billed as input, output five times input on every model in the price list, the full
+  conversation sent with every request, clearing between unrelated tasks, compaction as one large
+  request) were checked against the Messages, Pricing and Manage costs pages on 2026-10-07. The
+  cache split of the input count is named once and left to concepts/caching-and-effort, which
+  introduces prompt-caching. The exercise is a usage report on the page that the learner reads on
+  paper. Changed from the plan: an agent section reuses the toy run of
+  concepts/one-prompt-many-requests, for the behavior of counting an agent's requests, and the
+  page has a habit. extends-to stays empty, because the next lesson on caching is not live.
