@@ -36,7 +36,10 @@ def check(server_file):
     print(f"stdout line: {shown}")
     try:
         response = json.loads(line)
-        print(f"parsed: yes, isError: {response['result']['isError']}")
+        if "error" in response:
+            print(f"parsed: yes, error: {response['error']['message']}")
+        else:
+            print(f"parsed: yes, isError: {response['result']['isError']}")
     except json.JSONDecodeError as error:
         print(f"parsed: no ({error.msg})")
     server.stdin.close()

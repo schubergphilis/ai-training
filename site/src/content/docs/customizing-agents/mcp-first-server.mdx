@@ -21,7 +21,8 @@ starts the server as a child process and exchanges one message per line
 over the process's standard input and output, in JSON-RPC, a format for
 Remote Procedure Calls (RPC) in JSON. The server may log to standard error,
 and it may write nothing else to standard output (@MCP specification).
-The lesson [Logging from a stdio server](/customizing-agents/logging-from-a-stdio-server/) shows what breaks when it writes anything else.
+The lesson [Logging from a stdio server](/customizing-agents/logging-from-a-stdio-server/)
+shows what breaks when it writes anything else.
 Revisions up to 2025-11-25 open a session with an `initialize` handshake
 in which client and server agree on a protocol version and exchange their
 capabilities. Revision 2026-07-28 has no handshake: each request puts

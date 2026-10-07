@@ -1,8 +1,8 @@
 import { Choice, Predict, Sort, Scenario, Pitfall, Exercise, Recap } from '@components/lesson';
 
-In this lesson one debug line breaks a tool server, and we find out why
-the client can't read the server's reply. The fix changes where the line
-goes. Then we read the log of the real file-system server while an agent
+In this lesson one debug line breaks a tool server for our test client,
+and we find out why that client can't read the server's reply. The fix
+changes where the line goes. Then we read the log of the real file-system server while an agent
 calls it.
 
 The previous lesson connected the reference file-system server of the
@@ -17,7 +17,8 @@ On the stdio transport the client starts the server as a child process.
 The server reads requests from its standard input and writes its
 messages to its standard output, one message per line in JSON-RPC, the
 JSON format for Remote Procedure Calls (RPC) that MCP uses. The
-specification allows nothing else on standard output. A server that wants
+specification says a server must not write anything to standard output
+that isn't a valid MCP message. A server that wants
 to log writes to standard error instead, and the client may show that
 stream, pass it on or drop it. The client also shouldn't take output on
 standard error as a sign that something failed (@MCP specification).
@@ -59,8 +60,12 @@ python3 call_server.py
 The server worked. It got the request, ran the tool and wrote a correct
 reply. But `print` writes to standard output by default, so the debug
 line went out first, on the line where the client waits for its reply.
-The client can't parse `debug: ...` as JSON-RPC. The server did its
-work, and all the client got was a line it can't read.
+The client can't parse `debug: ...` as JSON-RPC, although the server did
+its work. What a client does with a line like that is left to the
+client by the specification. `check.py` stops at the first line it can't
+parse. Another
+client may drop the line, report an error and read on. Either way the
+server broke the rule, and you can't count on one outcome.
 
 <Choice id="why-the-client-failed" objective="customizing-agents/connects-tools-safely/adds-a-tool"
   concepts={['stdio-logging', 'transport']}
@@ -108,8 +113,9 @@ client gets a clean stream.
 MCP also has a logging feature inside the protocol, a `notifications/message`
 the server sends to the client. Revision 2026-07-28 deprecates it, and
 its registry of deprecated features tells a stdio server to log to
-standard error instead (@MCP deprecated features). So standard error is
-the one place for a stdio server's log, whatever your client does with it.
+standard error instead (@MCP deprecated features). So on stdio,
+standard error is the place for the server's log, whatever your client
+does with it.
 
 <Scenario id="fix-the-debug-line" objective="customizing-agents/connects-tools-safely/adds-a-tool"
   concepts={['stdio-logging', 'server']}
@@ -119,7 +125,7 @@ the one place for a stdio server's log, whatever your client does with it.
     { text: 'Delete the print statement, since a stdio server is not allowed to print anything at all.', consequence: 'The agent connects again, and the information they needed for the other bug is gone. The next time they debug, the print comes back.' },
     { text: 'Keep the print statement, and write the debug line to standard error.', correct: true, consequence: 'Standard output carries only replies, the client parses each one, and the debug line is where they can read it.' },
     { text: 'Wrap the debug line in a JSON object, so that the client can parse every line it reads.', consequence: 'The line parses as JSON, and it is still not a valid MCP message, which the specification forbids on standard output. The client gets a message it never asked for.' },
-    { text: 'Send the debug line to the client as an MCP log notification, inside the protocol.', consequence: 'It may work with their client today. Revision 2026-07-28 deprecates that feature and tells a stdio server to log to standard error.' },
+    { text: 'Send the debug line to the client as an MCP log notification, inside the protocol.', consequence: 'Revision 2026-07-28 tells new servers not to adopt that feature, and a server may send the notification only when the client asks for a log level, so the line may never arrive.' },
   ]}>
 A colleague's stdio server stopped working with their agent after they
 added a `print` of a debug line before each reply. They still need the
@@ -135,12 +141,12 @@ server through `sh -c` with `2>>` and a file name, and `sh` appends
 everything the server writes to standard error to that file. Standard
 output stays connected to the agent.
 
-The reference file-system server writes its own messages to standard
-error. Its source prints a line when it starts on stdio, and a line when
-it replaces its allowed directories with the roots the client sent
-(@MCP filesystem server). It doesn't log each tool call. This is
-its log from a run on October 7, 2026, with version 2026.8.31 and a
-small test client that sent one root:
+The reference file-system server replaces its allowed directories with
+the roots the client sends (@MCP filesystem server), and it writes its
+own messages to standard error. This is its standard error from a run on
+October 7, 2026, with version 2026.8.31 and a small test client that
+sent one root and then called a tool. The run logged the start on stdio
+and the switch to the roots, and nothing for the tool call:
 
 ```text
 Secure MCP Filesystem Server running on stdio
@@ -150,6 +156,8 @@ Updated allowed directories from MCP roots: 1 valid directories
 The previous lesson showed that Claude Code sends the directory you
 started it in as a root (@Claude Code mcp), so under Claude Code the
 second line tells you the server took its scope from that directory.
+The line counts the directories, so if it says anything other than 1,
+remove the server before you ask the agent anything.
 On that run `npx` also wrote two `npm notice` lines of its own to
 standard error, so your file may hold lines like those too.
 
@@ -183,24 +191,27 @@ calls work. What do the lines tell you?
 </Choice>
 
 <Pitfall title="A library that prints">
-A developer adds a library to their stdio server, and the library prints
-a one-line banner to standard output the first time it is used. In their
-own test they start the server in a terminal, type a request, and read
-the reply by eye, so the banner looks like harmless extra text. In the
-agent the first tool call fails with a parse error that names neither
-the banner nor the library. The rule: on a stdio server, only the code
-that writes protocol messages writes to standard output. Send every other
-line to standard error, and test the server with a client that parses
-each line, as `check.py` does.
+A developer adds a library to their stdio server, and the library writes
+a short banner to standard output the first time it is used, with no
+newline after it. In their own test they start the server in a terminal,
+type a request, and read the reply by eye, so the banner looks like
+harmless extra text in front of the reply. For the agent, the banner and
+the reply are one line, and that line isn't a valid message, so the
+reply is lost whatever the client does with a bad line. The call fails
+or never returns. The rule: on a stdio server, only the code that writes
+protocol messages writes to standard output. Send every other line to
+standard error, and test the server with a client that parses its
+output, as `check.py` does with the first line.
 </Pitfall>
 
 <Exercise stretch="Add a log line to your fixed copy of server.py that prints the path of each call to standard error, and run call_server.py again to check the stream is still clean.">
-Fix the bug, then read a real server's log. Copy both fixture directories
-next to each other, so `server.py` still finds the stand-in, and run the
+Fix the bug, then read a real server's log. From the root of the course
+repository, copy both fixture directories next to each other into an
+empty directory, so `server.py` still finds the stand-in, and run the
 client against the broken server in the copy:
 
 ```sh
-mkdir /tmp/stdio-log
+mkdir -p /tmp/stdio-log
 cp -r site/examples/customizing-agents/mcp-first-server site/examples/customizing-agents/logging-from-a-stdio-server /tmp/stdio-log/
 cd /tmp/stdio-log/logging-from-a-stdio-server
 python3 call_server.py
@@ -223,14 +234,15 @@ claude mcp add handbook-log -- sh -c 'exec npx -y @modelcontextprotocol/server-f
 claude
 ```
 
-In a second terminal, run `tail -f /tmp/stdio-log/server.log`. Ask the
+In a second terminal, run `tail -F /tmp/stdio-log/server.log`. Ask the
 agent to list the files in the handbook and change nothing, and watch the
 log while it works. A good result: the log has the two lines shown
 above, the agent's list has the four handbook files, and none of the log
 lines showed up in the agent's replies. When you're done, remove the server
 with `claude mcp remove handbook-log` (@Claude Code mcp). Then ask
 yourself: if the server had printed those lines to standard output
-instead, what would the agent have shown you?
+instead, how would you have found out, and would you have found out at
+all?
 </Exercise>
 
 <Recap>
@@ -239,8 +251,9 @@ instead, what would the agent have shown you?
    client may show, keep or drop, and which isn't a sign of failure
    (@MCP specification).
 2. A `print` writes to standard output by default, so one debug line
-   arrives where the client expects a reply and the client can't parse
-   it. The server did its work, and the client sees a broken stream.
+   arrives where the client expects a message. What happens next is up
+   to the client: the test client here stops, and another may drop the
+   line and report an error. The rule is broken in either case.
 3. The fix is to write the line to standard error, which keeps the
    information. MCP revision 2026-07-28 deprecates the in-protocol
    logging feature and points stdio servers to standard error
