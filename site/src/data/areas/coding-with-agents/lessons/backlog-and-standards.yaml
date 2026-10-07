@@ -3,7 +3,7 @@ title: A backlog and standards the agent can read
 description: >-
   Move a two-part spec into the issue tracker as two issues with a "blocked by" link that an agent
   reads through `gh`, then turn a finding that came up in two reviews into a line in a standards file
-  or a check, and block reviews only on the file or a failed check.
+  or a check, and block on style only for a rule in the file or a failed check.
 mode: tutorial
 covers: coding-with-agents/team
 serves: [coding-with-agents/works-in-team/keeps-the-backlog-reachable, coding-with-agents/works-in-team/turns-findings-into-rules]

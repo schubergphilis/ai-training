@@ -53,9 +53,9 @@ the browser, under **Relationships** in the sidebar.
 In another tracker, look for the same two parts, perhaps under other
 names: a ticket with a body, and a link type for "this one waits for that
 one".
-Use the link type, and not a sentence in the body such as "do this after
-the rates one". A person reads the sentence, but the tracker can only mark
-the issue as blocked when the link is set.
+Use the link type. A person reads a sentence in the body such as "do this
+after the rates one", but only a link lets the tracker mark the issue as
+blocked.
 
 <MultiChoice id="what-a-new-session-can-read" objective="coding-with-agents/works-in-team/keeps-the-backlog-reachable"
   concepts={['agent-reachable-backlog']}
@@ -66,7 +66,7 @@ the issue as blocked when the link is set.
     { text: 'The spec, kept in the notes app on the lead\'s laptop', why: 'The agent and the rest of the team can\'t reach a private note. Someone has to paste it in, every time.' },
     { text: 'A "blocked by" link from the second issue to the first', correct: true },
     { text: 'The order of the two parts, agreed in last week\'s call', why: 'A decision made in a call is only in the memory of the people who were there. Nothing records it for the next session.' },
-    { text: 'The spec you pasted into an agent session last week', why: 'That text was in the context of last week\'s session. A new session starts without it.' },
+    { text: 'The spec you pasted in full into last week\'s session', why: 'That text was in the context of last week\'s session. A new session starts without it.' },
   ]}>
 Which of these can a new agent session in the project use without anyone
 pasting text into it? Select two.
@@ -76,9 +76,10 @@ pasting text into it? Select two.
 
 The agent reaches the tracker through the same command-line tool. The
 vendor guide for Claude Code recommends command-line tools as the way to
-work with outside services that costs the least context, and names `gh`
-for GitHub (@Claude Code best practices). An agent that doesn't know a tool
-can read its `--help` first. These are the commands the agent needs here:
+work with outside services that costs the least context, names `gh` for
+GitHub, and suggests that the agent read the `--help` of a tool it doesn't
+know yet (@Claude Code best practices). These are the commands the agent
+needs here:
 
 ```sh
 gh issue list
@@ -97,12 +98,12 @@ specific model's words.
 
 <Prompt model="illustrative" recorded="illustrative">
 The open issues in this repository are the backlog. Use `gh issue list`
-and `gh issue view` to find the open issue that no other open issue
-blocks, and tell me its number, its title and what it blocks. Don't change
-any issue yet.
+and `gh issue view` to find the open issue that can start now, because
+its blockers are closed. Tell me its number, its title, and
+what it blocks. Don't change any issue yet.
 </Prompt>
 <Response>
-There are two open issues. Issue 2, "Import a past night with its own
+The repository has two open issues. Issue 2, "Import a past night with its own
 rates", is blocked by issue 1. Issue 1, "Keep the rates of each night",
 has no blocker and blocks issue 2. So issue 1 is the one to start. Its
 "done when" list asks for `rates/2026-09-14.json` to be read for that
@@ -110,12 +111,12 @@ night, and for a night without a rates file to be rejected.
 </Response>
 
 The commands run with the credentials you give the tool. If those are your
-own login, the agent can do in the tracker whatever you can do, such as
-closing issues and changing labels. Give the agent only the rights it
-needs. Reading issues and adding comments is enough for most work. If your
+own login, the agent has your rights in every repository you can reach.
+It can close issues and change labels there. Give the agent only
+the rights it needs. Reading issues and adding comments is enough for most work. If your
 tracker lets you make a token with fewer rights, use one for the agent. In
-Claude Code you can also run the session in Manual mode, where Claude Code
-asks you before most shell commands, so you read each `gh` command before
+Claude Code you can also run the session in Manual mode. Claude Code then
+asks you before most shell commands, and you read each `gh` command before
 it runs. From version 2.1.283, a session started in a terminal starts in
 auto mode by default, so you choose Manual mode on purpose with
 `claude --permission-mode default` (@Claude Code permission modes).
@@ -130,7 +131,7 @@ auto mode by default, so you choose Manual mode on purpose with
     { text: 'Set a "blocked by" link from the rerun issue to the rates issue, then ask the agent again.', correct: true, consequence: 'The tracker marks the rerun issue as blocked. This session and every later one sees the link and starts with the rates issue.' },
     { text: 'Tell the agent to always take the open issue with the lowest number, since it is usually the first.', consequence: 'The numbers follow the order in which issues were written, and that isn\'t the order of the work. The next spec breaks the rule.' },
   ]}>
-The agent says: "Issue 2 is open and nothing blocks it, so I will start
+The agent says: "Issue 2 is open and nothing blocks it, so I am starting
 there." You know issue 2 needs issue 1 first. What do you do?
 </Scenario>
 
@@ -170,10 +171,9 @@ Some findings don't need a line, because a script can find them. The
 `float` comment is one. The [hooks and CI lesson](/coding-with-agents/ci-and-hooks/)
 showed how a rule that must hold every time becomes a hook or a CI step,
 and a repeated finding can take the same path. This check flags every call
-to `float(` in the files it is given. It is crude on purpose: it catches
-the mistake the reviews found, and if the code ever needs
-a float for something other than money, that is the day to make it
-narrower.
+to `float(` in the files it is given. It is crude on purpose. When the code
+one day needs a float for something other than money, make the check
+narrower then.
 
 <Predict id="run-the-money-check" title="The finding as a check"
   answer={`$ python3 check_money.py importer.py
@@ -207,15 +207,15 @@ imported file loads at launch and takes context the same way
 <Match id="where-each-finding-goes" objective="coding-with-agents/works-in-team/turns-findings-into-rules"
   concepts={['standards-file']}
   context="A team keeps a standards file of rules that no tool checks, and a CI job that runs its checks on every pull request. Four review comments are on the table."
-  title="Where does each finding go?" hint="Has the finding come up before, and could a script find it on its own?"
+  title="Where does each finding go?" hint="Is the finding a defect or a style point, has it come up before, and could a script find it on its own?"
   options={['Fix it in this change only', 'A line in the standards file', 'A check in the CI job', 'A suggestion that doesn\'t block']}
   rows={[
-    { statement: 'A typo in one log message, found for the first time', option: 0, why: 'Has this come up in any earlier review?' },
+    { statement: 'A total that adds one export twice, found for the first time', option: 0, why: 'A wrong total is a defect. Has this one come up in any earlier review?' },
     { statement: 'Error messages that don\'t name the file, found in a second review', option: 1, why: 'It came back, and can a script tell whether a message names the right file?' },
     { statement: 'An amount converted with float(), found in a second review', option: 2, why: 'Could a short script find every case without a person reading the code?' },
     { statement: 'A reviewer would name a function differently, and no rule covers names', option: 3, why: 'Which rule in the file does the change break?' },
   ]}
-  rationale="A finding seen once is fixed in the change. When it comes back, it goes into the standards file, or into a check when a script can find it. A point no rule covers is a suggestion.">
+  rationale="A defect seen for the first time is fixed in the change. When it comes back, it goes into the standards file, or into a check when a script can find it. A point no rule covers is a suggestion.">
 Match each review finding to what the team does with it.
 </Match>
 
@@ -228,16 +228,16 @@ personal preference. It suggests a prefix such as "Nit:" for a small
 improvement that the author doesn't have to make (@Google eng-practices). The guide
 treats design as more than taste, and a bug or a design problem can still
 block a change. For the
-conventions of the code, the standards file plays the part of the style
-guide: a broken rule from the file, or a failed check, blocks the change.
+conventions of the code, the standards file is the team's style guide. A
+broken rule from the file, or a failed check, blocks the change.
 Every other style point is a suggestion.
 
 That gives an agent reviewer a clear brief. Ask it to review the diff
-against `STANDARDS.md`, to mark a finding as blocking only when it names
-the rule it breaks, and to write every other style point as a "Nit:". A
-reviewer, human or agent, that blocks on taste makes the rules in the file
-worth less, because the author can no longer tell the rules from the
-preferences.
+against `STANDARDS.md` and to mark a finding as blocking only when it
+names the rule it breaks. Every other style point it writes as a "Nit:".
+When a reviewer, human or agent, blocks on taste, the author can no longer
+tell the rules in the file from the preferences, and starts to treat both
+as optional.
 
 <Choice id="the-reviewer-blocks-on-a-name" objective="coding-with-agents/works-in-team/turns-findings-into-rules"
   concepts={['standards-file']}
@@ -275,7 +275,7 @@ changes the tracker before it runs.
     { text: 'A "blocked by" link between two issues', bucket: 0 },
     { text: 'The plan the lead wrote in a private note', bucket: 1 },
     { text: 'A decision on the order, made in a call', bucket: 1 },
-    { text: 'The spec as it was pasted into yesterday\'s session', bucket: 1 },
+    { text: 'The full spec, as it was pasted into yesterday\'s session', bucket: 1 },
   ]} />
 
 <Choice id="how-the-order-is-kept" phase="review" objective="coding-with-agents/works-in-team/keeps-the-backlog-reachable"
@@ -335,6 +335,7 @@ new repository in place of `<url>`. `gh auth status` tells you whether
 `gh` is logged in.
 
 ```sh
+cd ~/backlog-me
 git remote add origin <url>
 git push -u origin main
 ```
@@ -344,7 +345,9 @@ lesson, the second one blocked by the first. Then start Claude Code inside
 `~/backlog-me` in Manual mode with `claude --permission-mode default`, and
 give it the brief from the transcript. Read each `gh` command before you
 approve it. The brief asks for a report only, and `gh` runs with your own
-login, so refuse any command that would change an issue.
+login, which reaches every repository you can reach. So approve only
+`gh issue list` and `gh issue view`, and refuse every other `gh` command
+and any `git push`.
 
 Then turn one finding into a rule. Take a finding that came up in two
 reviews in your own team, or use the `float` finding from this lesson. If
@@ -352,7 +355,8 @@ no script can find it, write it as a line in a `STANDARDS.md` and add
 `@STANDARDS.md` to a `CLAUDE.md`. If a script can find it, make it a check,
 such as `python3 check_money.py importer.py` as a step in a CI job like the
 one in the hooks and CI lesson. Commit the result on a branch and open a
-pull request for it. Twenty minutes is enough.
+pull request for it. Twenty minutes is enough for the issues and a line in
+the standards file. The CI step takes longer, and it is extra.
 
 A good result has two issues with a "blocked by" link between them, an
 agent that named the rates issue as the one to start without anyone
