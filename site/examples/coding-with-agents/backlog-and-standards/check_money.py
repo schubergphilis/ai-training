@@ -9,9 +9,10 @@ This script makes that rule a check that a CI step can run:
 
 It prints one line for each call to `float(` in the code, skipping
 comments, strings and this file itself, and exits with status 1 when it
-finds one. With no findings it prints `no findings` and exits with status 0. The check is crude on
-purpose: it flags every `float(` call, so a file that needs a float for
-something other than money is the moment to make the check narrower.
+finds one. With no findings it prints `no findings` and exits with
+status 0. The check is crude on purpose: it flags every `float(` call,
+so a file that needs a float for something other than money is the
+moment to make the check narrower.
 """
 
 import os
