@@ -13,7 +13,7 @@ assumes:
     lesson: coding-with-agents/deciding-what-to-build
     section: writing-down-what-success-requires
 extends-to:
-  - label: Domain-Driven Design Reference (Eric Evans)
+  - label: Domain-Driven Design Reference (Eric Evans), the Ubiquitous Language pattern
     href: https://www.domainlanguage.com/ddd/reference/
 after: [coding-with-agents/deciding-what-to-build]
 shorts: []
@@ -22,7 +22,7 @@ exercise:
   brief: >-
     Ask an agent to interview you about a small feature until the two of you agree on the design,
     then write down the terms you settled on and check that the plan it writes uses them.
-sources: [Claude Code best practices, Evans 2003, Evans DDD Reference]
+sources: [Claude Code best practices, Claude Code memory, Evans 2003, Evans DDD Reference]
 sources-checked: 2026-10-07
 review-by: 2027-04-07
 issue: 677
@@ -32,10 +32,14 @@ notes: >-
   lesson cuts it into components. The shared vocabulary is the list of terms the interview fixes,
   in plain words, without the rest of domain-driven design. Built as written in the plan. The
   fixture is the three-module to-do program copied from decomposing-the-work, and the feature is an
-  archive command that is designed in the page and never built. The term list format and
-  `check_terms.py` are this lesson's own, so a learner can check a spec and a plan for drifted
-  words. The interview exchange is illustrative. Evans 2003 is cited only for the name ubiquitous
-  language, which the free Evans DDD Reference (CC BY 4.0) also gives, and every other claim about
-  it is from that reference. The page names deciding-what-to-build instead of saying "the
-  previous lesson", and decomposing-the-work now names deciding-what-to-build instead
-  of "the last lesson".
+  archive command that is designed in the page and never built. The exercise uses a different
+  feature, an undo for done, so the learner doesn't run the same interview twice. The term list
+  format and `check_terms.py` are this lesson's own, so a learner can check a spec and a plan for
+  drifted words. The interview exchange is illustrative. Evans 2003 is cited only for domain-driven
+  design as the idea's origin. What the page says about one language in speech, writing and code,
+  and a change in the language being a change to the design, is from the free Evans DDD Reference
+  (CC BY 4.0), whose pattern is named only in the extends-to label because Vale rejects the word on
+  the page. Every Claude Code session runs with CLAUDE_CODE_DISABLE_AUTO_MEMORY=1, so the fresh
+  session starts without notes from the interview (Claude Code memory). The page names
+  deciding-what-to-build instead of saying "the previous lesson", and decomposing-the-work now names
+  it instead of "the last lesson", with an assumes entry for it.
