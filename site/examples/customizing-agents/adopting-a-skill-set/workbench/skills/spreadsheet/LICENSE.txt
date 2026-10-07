@@ -1,0 +1,4 @@
+Copyright 2026 The workbench authors. All rights reserved.
+
+You may read these files and use this skill with the workbench plugin.
+You may not copy, change or share any part of it.
