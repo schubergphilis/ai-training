@@ -184,11 +184,10 @@ which they call tracer code (@Artima tracer bullets).
 <Pitfall title="The prototype that became the parser">
 An engineer had an agent write a quick script to see how an old file
 marked its done items. The script worked, so the engineer asked the agent
-to add the import command around it. The script read the whole file into
-memory, had a hard-coded path and no tests, and it was now the parser. A
-month later a colleague imported a much larger file, and the import
-stopped with an error about a path that existed only on the engineer's
-laptop. The rule: a prototype answers its question and is deleted, and
+to add the import command around it. The script had a hard-coded path and
+no tests, and it was now the parser. A month later a colleague ran the
+import on their own laptop, and it stopped with an error about a path
+that existed only on the engineer's laptop. The rule: a prototype answers its question and is deleted, and
 the parser is built from the spec, with its own test.
 </Pitfall>
 
