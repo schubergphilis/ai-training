@@ -1,8 +1,8 @@
 import { Choice, MultiChoice, Predict, Scenario, Sort, Pitfall, Exercise, Recap, Prompt, Response, Habit } from '@components/lesson';
 
 In the previous lesson you reviewed the due-dates branch yourself, and you
-found five problems the agent's summary didn't mention. In this lesson a
-second agent session reviews the same branch. You give it the diff, the
+found five problems behind a summary that called the work done. In this
+lesson a second agent session reviews the same branch. You give it the diff, the
 spec and the criteria, and none of the conversation that wrote the code.
 Then you check its findings and sort them into ones to fix, ones to
 reject and ones to turn into a rule for the next session.
@@ -28,11 +28,15 @@ rests on what the change does, measured against the spec
 (@Claude Code best practices). In Claude Code you can open a new session
 in a second terminal, or run `/clear` to empty the current one before the
 review (@Claude Code best practices). You can also ask the writing session
-to hand the review to a subagent, which runs in its own context and reports
-back (@Claude Code subagents). A bundled `/code-review` skill hands the
-current diff to a new subagent that looks for bugs. For a check against
-your own spec, the guide says to write the review prompt yourself
-(@Claude Code best practices).
+to start a subagent for the review. An ordinary subagent starts in a
+context of its own and reports back, but it gets its task from the writing
+session (@Claude Code subagents). Tell the writing session to give it the
+diff, the spec and the criteria. Its own account of the work stays out.
+A fork is different: it is a subagent that starts with the whole conversation so far,
+and a fork isn't a fresh reviewer (@Claude Code subagents). A bundled
+`/code-review` skill gives the current diff to a new subagent that looks
+for bugs. It doesn't know your spec. A review against the spec needs a
+brief that you write (@Claude Code best practices).
 
 <Choice id="who-reviews" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
   concepts={['fresh-context-review']}
@@ -49,35 +53,36 @@ Which of these gives the branch a review from a fresh context?
 
 ## What the reviewer gets
 
-The reviewer knows only what you give it. The brief says which change to
-review, which document it is measured against, and what a finding is
-(@Claude Code best practices). It also says what to leave out. When you ask
-a reviewer for gaps, it reports gaps, and it reports some even when the
-work is sound. Acting on all of them makes the change bigger than the task,
-with more layers, more defensive code and tests for inputs that never
-arrive. The guide suggests limiting the request to gaps that break
-correctness or a stated requirement, and treating the rest as optional
+The reviewer knows only what you give it. Point it at the change and at
+the spec, and define a finding for it: a line of the spec that the change
+breaks, or a change that no line of the spec asks for
+(@Claude Code best practices). A reviewer looks for what you ask it to look
+for. Ask for every possible improvement and you get a long list, whether
+the code is good or not, and each item you act on makes the change larger
+than the task. Keep the request to problems that make the program wrong or
+miss the spec. Anything else the reviewer says is a remark you may ignore
 (@Claude Code best practices).
 
 For the due-dates branch, the brief is this. It points at `SPEC.md` rather
 than restating it. The reviewer then reads the same text the agent worked
-from. The transcripts in this lesson are illustrative and don't record a
+from. The transcript in this lesson is illustrative and doesn't record a
 specific model's words.
 
 <Prompt model="illustrative" recorded="illustrative">
 Review the change on this branch. Run `git diff main` to see it, and check
 it against `SPEC.md`. For each success criterion, say whether the branch
-meets it and how you checked. Check that every limit in the spec still
-holds and that nothing outside the spec changed. Report only gaps that
-affect correctness or the spec's requirements, one line each, with the
-file and the line of the spec it breaks. Don't edit any file.
+meets it and how you checked. Then go through the limits in the spec, and
+list each file the spec gives no reason to touch. A finding is a criterion
+or a limit the branch breaks, or a change the spec didn't ask for. Write
+one line per finding, with the file and the line of the spec. Leave out
+style. Don't edit any file.
 </Prompt>
 <Response>
 ```text
 1. todo.py, overdue: returns an empty string when no item is overdue.
    Criterion 3 asks for "nothing overdue".
 2. todo.py, main: a malformed date prints "bad date: ..." but the
-   command saves the file and exits 0. Criterion 4 asks for status 2.
+   command exits 0. Criterion 4 asks for status 2.
 3. test_todo.py: test_list_empty was deleted, and render.py no longer
    prints "nothing to do" for an empty list. The limits say list keeps
    working as it does.
@@ -148,8 +153,6 @@ Finding 7 is a suggestion, and no command can confirm a suggestion.
 
 ## Fix, reject, or turn into a rule
 
-Each finding gets one of three decisions.
-
 - **Fix it in this change.** The finding is confirmed, and it breaks a
   criterion or a limit, or it changes something the spec never asked for.
 - **Reject it.** The check refutes it, or it is a suggestion with no gap
@@ -160,7 +163,7 @@ Each finding gets one of three decisions.
   The lesson on [project instructions](/coding-with-agents/project-instructions/#fix-it-once-in-the-file)
   gives the same trigger for a new line in `AGENTS.md`.
 
-Say that this is the second branch this month where an agent deleted a
+Suppose this is the second branch this month where an agent deleted a
 failing test to make the suite pass, and the first time an agent has
 reformatted a file outside its task. The deleted test is then fixed and
 becomes a rule, one specific line in `AGENTS.md`:
@@ -171,7 +174,7 @@ becomes a rule, one specific line in `AGENTS.md`:
 
 <Sort id="sort-the-findings" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
   concepts={['fresh-context-review']}
-  context="A fresh agent session reviewed a due-dates branch against its spec and reported seven findings. The developer ran a check on each finding that names a command. This is the second branch where an agent deleted a failing test, and the first where one reformatted a file outside its task."
+  context="A fresh agent session reviewed a due-dates branch against its spec and reported seven findings. The developer ran a check on each finding that names a command and read the diff for the rest. This is the second branch where an agent deleted a failing test. None of the other mistakes has happened before."
   title="Sort the seven findings" hint="Is the finding confirmed and a gap against the spec, and has the agent made this mistake before?"
   buckets={['Fix in this change', 'Reject', 'Fix, and add a line to AGENTS.md']}
   items={[
@@ -179,7 +182,7 @@ becomes a rule, one specific line in `AGENTS.md`:
     { text: '2. a malformed date exits with status 0 (confirmed)', bucket: 0 },
     { text: '3. test_list_empty deleted, and the empty list lost nothing to do (confirmed, second time)', bucket: 2 },
     { text: '4. store.py reads .todos.json by default (confirmed)', bucket: 0 },
-    { text: '5. test_clear.py reformatted outside the spec (first time)', bucket: 0 },
+    { text: '5. test_clear.py reformatted outside the spec (seen in the diff, first time)', bucket: 0 },
     { text: '6. valid_date accepts 2026-02-30 (refuted)', bucket: 1 },
     { text: '7. move the date handling into a DueDate class', bucket: 1 },
   ]} />
@@ -188,8 +191,8 @@ becomes a rule, one specific line in `AGENTS.md`:
 A developer asks a reviewer session for every gap it can find in a small
 change to a payment form. It reports fourteen. The developer has the
 writing session fix all of them, and the change comes back four times its
-size, with a validation layer, a retry wrapper and tests for inputs the
-form can't send. The next reviewer can't see the original fix inside it.
+size. It now has a new validation module and twenty more tests, and
+several of the tests pass the form input it can never receive. The next reviewer can't see the original fix inside it.
 Two of the fourteen findings were real. Ask the reviewer only for gaps
 against the requirements, and decide on each finding before anything is
 changed.
@@ -206,7 +209,7 @@ run a second fresh review if you want one, and then wait for the gates.
 <Scenario id="review-is-clean" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
   concepts={['fresh-context-review', 'deterministic-gates']}
   context="A developer fixed the confirmed findings of a fresh-session review on a pull request. The team's CI job runs the tests and must pass before a merge."
-  title="The second review finds nothing" hint="Which of these results gives the same answer every time for the same code?"
+  title="The second review finds nothing" hint="Which of these waits for a check that gives the same answer every time?"
   options={[
     { text: 'Ask the reviewer session to run the tests as well, and merge when it reports that they pass.', consequence: 'The reviewer says the tests pass. That is a report from a model about the tests, and the job that the team agreed on hasn\'t finished.' },
     { text: 'Merge now, because two reviews found every problem the first one could and the second found none.', consequence: 'The CI job fails ten minutes later on main. A fix for criterion 4 broke a test the reviewer never ran.' },
@@ -223,7 +226,7 @@ pull request is still running. What do you do?
   title="Is the reviewer fresh?" hint="Does the reviewer have the writing session's conversation, or a summary of it, in its context?"
   buckets={['Fresh context', 'Not a fresh context']}
   items={[
-    { text: 'A subagent that gets the diff and the spec', bucket: 0 },
+    { text: 'A subagent that the writer gives only the diff and the spec', bucket: 0 },
     { text: 'A new session in a second terminal, given the diff and the criteria', bucket: 0 },
     { text: 'The writing session, asked to review its own diff', bucket: 1 },
     { text: 'A new session given the diff and the writer\'s summary of its reasons', bucket: 1 },
@@ -235,7 +238,7 @@ pull request is still running. What do you do?
   title="Fourteen findings" hint="Which findings are a gap against the spec, and how do you know that a finding is true?"
   options={[
     { text: 'Check each finding, keep the ones that break the spec, and next time ask only for gaps against it.', correct: true },
-    { text: 'Fix all fourteen, because each one is a gap that a careful reviewer took the time to point out.', why: 'A reviewer asked for gaps finds some in sound work. Fixing all of them adds code and tests nobody needs.' },
+    { text: 'Fix all fourteen, because each one is a gap that a careful reviewer took the time to point out.', why: 'A reviewer asked for gaps returns gaps whether or not the work is good. Fixing every one adds code and tests nobody needs.' },
     { text: 'Ignore the review, because a reviewer that reports fourteen gaps in a small change is not working.', why: 'Some of the fourteen may be real. You find out which by checking them against the spec.' },
     { text: 'Ask the writing session which of the fourteen are right, and fix the ones it agrees with.', why: 'The writer is biased toward its own choices, which is the reason for a fresh review.' },
   ]}>
@@ -244,7 +247,7 @@ What do you do with the fourteen findings?
 
 <Choice id="merge-on-review" phase="review" objective="coding-with-agents/verifies-agent-work/uses-a-fresh-review"
   concepts={['fresh-context-review', 'deterministic-gates']}
-  context="A team uses a fresh agent session to review each pull request, and a CI job that runs the tests. A developer asks which of the two may block a merge on its own."
+  context="A team uses a fresh agent session to review each pull request, and a CI job that runs the tests. The team agreed that the CI job decides whether a change merges. A developer asks which of the two may block a merge on its own."
   title="What blocks the merge?" hint="Which of the two gives the same answer every time for the same code?"
   options={[
     { text: 'The fresh review, because it reads every line of the diff and the CI job reads none of them.', why: 'The review is a model\'s judgment. It can miss a problem or report one that isn\'t there, so it is advice.' },
@@ -279,12 +282,16 @@ cd ~/fresh-review/fixture-repo
 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude --permission-mode default
 ```
 
-The environment variable turns auto-memory off, so no note from an earlier
-session reaches the reviewer (@Claude Code memory). Manual mode, which the
-flag selects, lets the agent read files without a prompt and asks you
-before each edit and each command (@Claude Code permission modes). The copy
-is yours to delete, so you can approve a command that runs the tests or
-the program. Refuse every edit, because this session reports and doesn't
+The environment variable turns auto-memory off, so the session loads no
+note from an earlier session and saves none of its own
+(@Claude Code memory). Manual mode, which the flag selects, lets the agent
+read files without a prompt (@Claude Code permission modes). It asks you
+before each edit, and before each command outside a short built-in list
+of read-only ones. `git diff` is on that list and runs without a prompt
+(@Claude Code permissions). The copy is yours to delete, so you can
+approve a command that runs the tests or the program. An approved run of
+the program can save the list into the copy, and `git status` then shows
+the file as untracked. Refuse every edit, because this session reports and doesn't
 fix. Type the brief from this lesson as your first message.
 
 Sort what comes back into three lists: fix, reject, and fix with a rule.
@@ -303,7 +310,7 @@ that it missed?
 
 <Recap>
 1. A session that wrote a change is biased toward it. Give the review to a session that didn't write it, with the diff, the spec and the criteria, and none of the writer's reasoning (@Claude Code best practices).
-2. Say which change to review, which spec it is measured against and what a finding is. Ask only for gaps that break correctness or a stated requirement, because a reviewer asked for gaps reports some even in sound work (@Claude Code best practices).
+2. Point the reviewer at the change and the spec, and define a finding as a line of the spec the change breaks or a change no line asks for. A reviewer finds what it is asked to find, and fixing every remark makes the change larger than the task (@Claude Code best practices).
 3. A finding is a claim. Check each one before you act on it, then fix it, reject it with a reason, or fix it and add a line to the project instructions when the agent has made the mistake before.
 4. The review is advice you weigh. The tests and the CI job decide whether the change merges.
 </Recap>

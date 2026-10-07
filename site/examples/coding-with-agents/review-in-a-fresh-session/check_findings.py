@@ -23,10 +23,11 @@ COMMON = os.path.join(os.path.dirname(HERE), "reviewing-the-diff", "_common.py")
 
 def load_common():
     name = "reviewing_the_diff_common"
+    if not os.path.exists(COMMON):
+        raise SystemExit(f"cannot load {COMMON}: run this from a clone of the course repository")
     loader = importlib.machinery.SourceFileLoader(name, COMMON)
     spec = importlib.util.spec_from_loader(name, loader)
-    if spec is None:
-        raise SystemExit(f"cannot load {COMMON}")
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     # No __pycache__ next to the other lesson's fixtures.
     sys.dont_write_bytecode = True
@@ -63,23 +64,29 @@ def main(repo: str) -> int:
     lines = []
 
     result = run(repo, "overdue", todo_file=committed, today="2026-09-30")
-    verdict = "refuted" if result.stdout == "nothing overdue\n" else "confirmed"
+    verdict = "confirmed" if result.returncode == 0 and result.stdout == "\n" else "refuted"
     lines.append(f"1. overdue, nothing due: prints {shown(result.stdout)}, {verdict}")
 
     result = run(repo, "due", "1", "tomorrow", todo_file=committed)
-    verdict = "refuted" if result.returncode == 2 else "confirmed"
+    verdict = "confirmed" if result.returncode == 0 else "refuted"
     lines.append(f"2. due 1 tomorrow: exit status {result.returncode}, {verdict}")
 
     result = run(repo, "list", todo_file=empty)
-    verdict = "refuted" if result.stdout == "nothing to do\n" else "confirmed"
+    verdict = (
+        "confirmed" if result.returncode == 0 and result.stdout == "0 open, 0 done\n" else "refuted"
+    )
     lines.append(f"3. list, empty list: prints {shown(result.stdout)}, {verdict}")
 
     result = run(repo, "list", todo_file=None)
-    verdict = "refuted" if "Buy milk" in result.stdout else "confirmed"
+    verdict = (
+        "confirmed" if result.returncode == 0 and "Buy milk" not in result.stdout else "refuted"
+    )
     lines.append(f"4. list, TODO_FILE unset: prints {shown(result.stdout)}, {verdict}")
 
     result = run(repo, "due", "1", "2026-02-30", todo_file=committed)
-    verdict = "refuted" if result.stdout.startswith("bad date:") else "confirmed"
+    verdict = (
+        "confirmed" if result.returncode == 0 and result.stdout.startswith("due #1:") else "refuted"
+    )
     lines.append(f"6. due 1 2026-02-30: prints {shown(result.stdout)}, {verdict}")
 
     print("\n".join(lines))
