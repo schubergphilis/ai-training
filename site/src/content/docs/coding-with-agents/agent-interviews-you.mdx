@@ -38,15 +38,16 @@ under the project root outside one (@Claude Code memory). In this lesson a
 note from the interview would reach the fresh session that is meant to
 start without it, and a reset copy at the same path would load the notes
 again. So start every Claude Code session in this lesson with auto memory
-turned off:
+turned off. Change into `fixture-repo` first, because this command starts
+the agent in the directory you run it from:
 
 ```sh
 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude
 ```
 
 With another agent, check whether it keeps notes between sessions, and
-turn that off for this lesson. Now change into `fixture-repo` and look at
-the list before you start.
+turn that off for this lesson. Before you start the agent, look at the
+list from `fixture-repo`.
 
 <Predict id="run-list" title="Show the list"
   answer={`1. [ ] Buy milk

@@ -18,7 +18,7 @@ import re
 import sys
 
 TERM_LINE = re.compile(
-    r"^[-*] \*\*(?P<term>[^*]+?)(?::\*\*|\*\*[^:]*:)\s.*?\bavoid:\s*(?P<avoid>.+?)\.?\s*$",
+    r"^[-*] \*\*(?P<term>[^*]+?)(?::\*\*|\*\*[^:]*:)\s.*\bavoid:\s*(?P<avoid>.+?)\.?\s*$",
     re.IGNORECASE,
 )
 # Backticks, straight quotes and curly quotes, written as escapes.
@@ -26,7 +26,8 @@ QUOTES = "`'\"\u2018\u2019\u201c\u201d"
 
 
 def looks_like_term(line: str) -> bool:
-    return line.startswith(("- ", "* ")) and ("**" in line or "avoid" in line.lower())
+    is_list_line = line.startswith(("- ", "* ")) or re.match(r"\d+[.)] ", line) is not None
+    return is_list_line and ("**" in line or "avoid" in line.lower())
 
 
 def read_lines(path: str) -> list[str]:
@@ -49,7 +50,7 @@ def read_terms(path: str) -> list[tuple[str, str]]:
                 print(f"{path}:{number}: not in the term form, skipped: {line}", file=sys.stderr)
             continue
         term = match.group("term").strip()
-        for word in match.group("avoid").split(","):
+        for word in re.split(r"[,;]", match.group("avoid")):
             word = word.strip().strip(QUOTES).strip()
             if word:
                 pairs.append((word, term))
