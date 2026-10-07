@@ -95,10 +95,10 @@ With tool search on, Claude Code still sends every definition in the
 request, and marks the held-back ones with a `defer_loading` field
 (@Claude Code llm gateway protocol). In the Claude API, every
 definition, deferred or not, is in the request's `tools` list on every
-request, and the field decides only what enters the context. A definition that search loads stays in the conversation
-for later turns, and it is billed as input tokens, the same as a
-definition that was loaded upfront (@Claude docs tool-search-tool).
-
+request, and the field decides only what enters the context. A
+definition that search loads stays in the conversation for later turns,
+and it is billed as input tokens, the same as a definition that was
+loaded upfront (@Claude docs tool-search-tool).
 ## One query, two ways
 
 Now the query. We want the open bugs about login. The server has
