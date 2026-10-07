@@ -1,5 +1,9 @@
 id: coding-with-agents/agent-interviews-you
 title: Let the agent interview you
+description: >-
+  Have the agent interview you about a feature before any plan exists, answer with decisions or "not
+  decided yet", write the settled terms down, and check that the spec and a fresh session's plan use
+  them.
 mode: tutorial
 covers: coding-with-agents/specification
 serves: [coding-with-agents/specifies-work/is-interviewed-before-planning]
@@ -7,7 +11,10 @@ introduces: [design-interview, shared-vocabulary]
 assumes:
   - objective: coding-with-agents/specifies-work/defines-success
     lesson: coding-with-agents/deciding-what-to-build
-extends-to: []
+    section: writing-down-what-success-requires
+extends-to:
+  - label: Domain-Driven Design Reference (Eric Evans)
+    href: https://www.domainlanguage.com/ddd/reference/
 after: [coding-with-agents/deciding-what-to-build]
 shorts: []
 exercise:
@@ -16,9 +23,19 @@ exercise:
     Ask an agent to interview you about a small feature until the two of you agree on the design,
     then write down the terms you settled on and check that the plan it writes uses them.
 sources: [Claude Code best practices, Evans 2003, Evans DDD Reference]
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 issue: 677
 minutes: 15
 notes: >-
   The interview comes before decomposing-the-work: it settles what the feature is, and the next
   lesson cuts it into components. The shared vocabulary is the list of terms the interview fixes,
-  in plain words, without the rest of domain-driven design.
+  in plain words, without the rest of domain-driven design. Built as written in the plan. The
+  fixture is the three-module to-do program copied from decomposing-the-work, and the feature is an
+  archive command that is designed in the page and never built. The term list format and
+  `check_terms.py` are this lesson's own, so a learner can check a spec and a plan for drifted
+  words. The interview exchange is illustrative. Evans 2003 is cited only for the name ubiquitous
+  language, which the free Evans DDD Reference (CC BY 4.0) also gives, and every other claim about
+  it is from that reference. The page names deciding-what-to-build instead of saying "the
+  previous lesson", and decomposing-the-work now names deciding-what-to-build instead
+  of "the last lesson".
