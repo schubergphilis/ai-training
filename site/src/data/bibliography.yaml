@@ -1367,6 +1367,13 @@ Claude Code llm gateway:
   author: Anthropic
   license: Proprietary
   url: https://code.claude.com/docs/en/llm-gateway
+Claude Code llm gateway protocol:
+  type: reference
+  title: Claude Code gateway compatibility guide
+  container: Claude Code documentation
+  author: Anthropic
+  license: Proprietary
+  url: https://code.claude.com/docs/en/llm-gateway-protocol
 Claude Code claude directory:
   type: reference
   title: Explore the .claude directory

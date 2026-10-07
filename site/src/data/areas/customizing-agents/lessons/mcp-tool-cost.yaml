@@ -17,8 +17,8 @@ assumes:
 extends-to:
   - label: How to kill the bloat in Claude Code's system prompt (AI Hero)
     href: https://www.aihero.dev/how-to-kill-the-bloat-in-claude-codes-system-prompt
-sources-checked: 2026-09-26
-review-by: 2027-03-26
+sources-checked: 2026-10-07
+review-by: 2027-04-07
 after: [customizing-agents/mcp-first-server]
 shorts:
   - On-demand tool loading and why disabling unused servers is still the control (Academy claude-code-101)
@@ -39,6 +39,7 @@ sources:
   - Claude Code commands
   - Claude Code permissions
   - Claude docs tool-search-tool
+  - Claude Code llm gateway protocol
 issue: 173
 minutes: 15
 notes: >-
@@ -48,9 +49,12 @@ notes: >-
   three measurement scripts that estimate tokens at four characters per token, the rule of thumb from
   concepts/context-window. The second assumes entry is there because the page names the mcp-first-server
   lesson and its exercise copies that lesson's handbook fixture and server command. The tool search
-  default, its upfront fallbacks and ENABLE_TOOL_SEARCH come from code.claude.com/docs/en/mcp; that a
-  loaded definition stays in the conversation and counts as input tokens from the API's tool search
-  page; /context from the context-window and commands pages; /clear from the commands page; prefer the
+  default, its upfront fallbacks and ENABLE_TOOL_SEARCH come from code.claude.com/docs/en/mcp; that every
+  definition, deferred or not, is sent in the request's tools array, that defer_loading decides only
+  what enters the context, and that a loaded definition stays in the conversation and counts as input
+  tokens from the API's tool search page; that Claude Code sends defer_loading tool fields with tool
+  search on from code.claude.com/docs/en/llm-gateway-protocol; /context from the context-window and
+  commands pages; /clear from the commands page; prefer the
   CLI and disable unused servers, and prompt caching, from code.claude.com/docs/en/costs; the bare
   deny rule that removes a tool from context from code.claude.com/docs/en/permissions. The tools/list
   fields were re-checked against MCP specification revision 2026-07-28, and the deprecation of roots in
