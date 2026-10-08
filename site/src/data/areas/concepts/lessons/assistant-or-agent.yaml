@@ -26,5 +26,5 @@ notes: >-
   Foundations page with no fixture: every example is prose about products, and the checkpoints
   classify product descriptions. The page opens with "In the last lesson" about concepts/agent-loop,
   which is live, so assumes names its first section. AEC-01 is cited for ideas in our own words, so
-  NOTICE.md gets no new entry. DLAI-11 and Academy claude-platform-101 are linked and paraphrased
+  THIRD_PARTY.md gets no new entry. DLAI-11 and Academy claude-platform-101 are linked and paraphrased
   only.

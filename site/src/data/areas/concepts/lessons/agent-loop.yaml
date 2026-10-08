@@ -30,4 +30,4 @@ notes: >-
   when it prints a line that no text fence on the page shows (#311). The engineering version with the code
   is building-agents/agent-loop, linked from extends-to. The pitfall's half-written file is prose
   about an agent with a write tool, which the toy doesn't have. AEC-01 is cited for ideas in our own
-  words, so NOTICE.md gets no new entry.
+  words, so THIRD_PARTY.md gets no new entry.
