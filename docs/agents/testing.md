@@ -98,9 +98,10 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
   Add names and jargon to `cspell-words.txt`, grouped, one per line, and
   never a British spelling. Inline code spans are skipped, so identifiers
   need no entry. A misspelling that a lesson shows on purpose goes in an
-  inline comment with its reason on the page that uses it, such as
-  `{/* cspell:ignore labtop -- the traces show this typo */}` in MDX, and
-  never in `cspell-words.txt`, which would accept it in every file.
+  inline `{/* cspell:ignore labtop */}` comment on the page that uses it,
+  with the reason in a separate comment because cspell ignores every word
+  after `ignore`. It never goes in `cspell-words.txt`, which would accept
+  it in every file.
 - **Vale** (`mise run prose`): errors fail the build, style warnings print
   and are the house style. Fix a warning by rewriting unless the rewrite
   reads worse. The style packages are gitignored, so a fresh clone or
