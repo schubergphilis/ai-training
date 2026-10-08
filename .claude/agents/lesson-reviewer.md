@@ -24,6 +24,21 @@ the diff first, then the changed files in the worktree, then
 `docs/agents/writing-a-lesson.md` and spec S03 (`docs/spec/S03-*.md`)
 for the rules the change must meet.
 
+Read `review.diff` one file at a time, and never read it whole without
+`offset` and `limit` (#740):
+
+1. Find where each file starts. Call Grep with the pattern
+   `^diff --git`, the path of `review.diff`, `output_mode: "content"`
+   and `-n: true`. Each result is the line number of one changed file's
+   `diff --git a/<file> b/<file>` header.
+2. Read each file's part with Read on `review.diff`: `offset` is that
+   file's line number, and `limit` is the next file's line number minus
+   this one. For the last file, use a `limit` of 300 and read on until
+   Read returns no more lines.
+3. When one file's part is longer than about 300 lines (about 20,000
+   characters), read it in steps of 300 lines, adding 300 to `offset`
+   each time.
+
 ## What to check
 
 - **Prose and structure** against `writing-a-lesson.md` and S03: the
