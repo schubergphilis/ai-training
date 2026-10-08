@@ -174,8 +174,8 @@ printed.
    Also run
    `gh issue list -l ready-for-human -s open -L 500 --json number,createdAt`.
    The list is newest first, so the oldest issue is the one with the
-   earliest `createdAt`. When it is more than seven days old, add one line to
-   that message: `The oldest ready-for-human issue is <days> days old (#<n>). Run /triage when there is time.`
+   earliest `createdAt`. When it is more than seven days old, add one line
+   to that message: `The oldest ready-for-human issue is <days> days old (#<n>). Run /triage when there is time.`
    This line is a reminder too, and the run goes on
    (`docs/agents/triage.md`, "Backlog pass").
 
