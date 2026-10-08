@@ -636,7 +636,14 @@ fails:
    repeat the lines of the stop message. Then `git fetch origin`, and
    the branch's `HEAD` equals `origin/wave/<name>-<k>` and the PR's head
    (`gh pr view <n> --json headRefOid,state`, with state `OPEN`). When
-   they differ, stop and say which.
+   they differ, stop and say which. When the state is `MERGED`, the
+   session that merged stopped after the merge of step 5 and before step
+   6 wrote the `merged` line. Skip the head comparison and steps 3 to 5,
+   since that session ran the checklist and merged only on the
+   maintainer's yes, and go on with step 6 in this worktree on the merged
+   branch. Step 2 still holds, because step 6 edits the run issue body
+   from the run file. When the state is `CLOSED`, stop and say that PR
+   #<n> was closed without a merge.
 2. **The run file.** "Starting a run" step 3 has rebuilt
    `.scratch/run-<name>.md` in this worktree from the run issue, and
    every body edit passes "Before each body edit" as usual.
@@ -667,7 +674,9 @@ fails:
    issues are the ones the merged PR closes, without the run issue's own
    number
    (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number | select(. != <run>)'`).
-   Then check the run issue as "The run issue after a merge" says. Under
+   Then check the run issue as "The run issue after a merge" says. After
+   the `MERGED` route of step 1, "Starting a run" step 3 has already
+   reopened a run issue the merge closed, so the check prints `OPEN`. Under
    `--only`, remove the merged issues from `Remaining --only`. The
    collision notes were copied when the `open` report came. Close the
    run when a stop condition holds (under `--only`, an empty `Remaining --only`), as

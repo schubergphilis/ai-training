@@ -528,7 +528,11 @@ wave is never merged in the session that built it:
 6. **After the merge**, the dispatcher runs the checklist items that
    need the merge, closes the run when a stop condition holds, and tells
    the maintainer to quit and start again in the main checkout. The run
-   goes on there with `/wave --resume <Name>`, or it has closed.
+   goes on there with `/wave --resume <Name>`, or it has closed. When the
+   session stops after the merge and before this step, the run issue
+   still ends with the `awaiting restart` line. The next
+   `/wave --resume <Name>` in the wave worktree finds the PR merged,
+   skips the checklist and the merge question, and does this step there.
 
 A harness run starts only when no other `dispatcher-run` issue is open,
 and while it is open, `/wave` refuses to start any other run and names
