@@ -97,7 +97,10 @@ coverage). They cover `scripts/`, `tests/` and the Python fixtures under
 - **Spelling** is American English, checked by cspell (`mise run spell`).
   Add names and jargon to `cspell-words.txt`, grouped, one per line, and
   never a British spelling. Inline code spans are skipped, so identifiers
-  need no entry.
+  need no entry. A misspelling that a lesson shows on purpose goes in an
+  inline comment with its reason on the page that uses it, such as
+  `{/* cspell:ignore labtop -- the traces show this typo */}` in MDX, and
+  never in `cspell-words.txt`, which would accept it in every file.
 - **Vale** (`mise run prose`): errors fail the build, style warnings print
   and are the house style. Fix a warning by rewriting unless the rewrite
   reads worse. The style packages are gitignored, so a fresh clone or
