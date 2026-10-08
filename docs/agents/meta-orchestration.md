@@ -517,7 +517,8 @@ wave is never merged in the session that built it:
    `wave <k>: awaiting restart, PR #<n>` on the run issue, and stops with
    "harness wave awaiting restart". Its last message gives the PR number
    and the lines to run: quit, then
-   `cd ../ai-training-wt/wave/<name>-<k>`,
+   `cd <worktree root>/wave/<name>-<k>` (`mise run worktree-root` prints
+   the root),
    `claude -n "wave <name> harness <yyyy-mm-dd>"` and
    `/wave --resume <Name>`.
 5. **Restart in the wave worktree.** The new session loads the harness
