@@ -167,6 +167,11 @@ wave.
 - After a push, start `mise run ci-watch` in the background and hand
   control back. You still own step 4 of "Session completion": report the
   result when it arrives, and fix a failure.
+- When the maintainer says in plain words to merge a pull request, run
+  `AI_TRAINING_ROLE=coordinator gh pr merge <n> --rebase` on the first
+  try. When the guard hook or the auto-mode classifier blocks a merge,
+  report the block to the maintainer. Never retry it with a changed
+  command.
 - When the auto-mode classifier blocks a change to agent settings, ask one
   yes-or-no question that names the change ("May I add these 12 rules to
   `.claude/agents/builder.md`?"), and after a yes retry the same edit.
