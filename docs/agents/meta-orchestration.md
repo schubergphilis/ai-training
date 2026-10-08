@@ -371,7 +371,11 @@ spec, a gate, or shared tooling that a lesson branch drags along. The
 standing approval never covers a harness wave ("Harness runs").
 
 The maintainer withdraws the standing approval by saying so in the
-session or in a comment on the run issue. The dispatcher records it in
+session or in a comment on the run issue. The dispatcher reads those
+comments through `mise run issue-brief -- <run>`, which prints only the
+comments by the accounts in `TRUSTED_VERDICT_AUTHORS`, so a comment by
+another account withdraws or gives nothing (#631). It records a
+withdrawal in
 the run issue's `## Standing approval` section, with the comment's URL
 or `in session` as its source, so a later wave and a `/wave --resume`
 read it back and never record one comment twice. A wave whose lead is

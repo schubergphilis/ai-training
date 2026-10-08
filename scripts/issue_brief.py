@@ -7,8 +7,10 @@ Prints the issue's title, state, labels and body, and only the comments
 by an account in TRUSTED_VERDICT_AUTHORS (scripts/wave_status.py).
 Comments whose first line starts with `Decision` or `Triage`, the triage
 record of docs/agents/triage.md, come first, then the other trusted
-comments, each group oldest first. It prints how many comments by other
-accounts it dropped, and never their text.
+comments, each group oldest first, each with its URL. It prints how many
+comments by other accounts it dropped, and never their text. The wave
+dispatcher reads the run issue through it too, so a standing-approval
+comment by another account never reaches it (#631).
 
 Anyone can comment on a public issue, and an agent that reads every
 comment (`gh issue view <n> --comments`) reads an outsider's instruction
@@ -55,6 +57,7 @@ class Comment:
     author: str
     created_at: str
     body: str
+    url: str = ""
 
 
 @dataclass(frozen=True)
@@ -113,7 +116,12 @@ def parse_issue(output: str) -> Issue:
             labels=tuple(_text(label["name"]) for label in labels),
             body=_text(data["body"]),
             comments=tuple(
-                Comment(_login(c.get("author")), _text(c.get("createdAt")), _text(c.get("body")))
+                Comment(
+                    _login(c.get("author")),
+                    _text(c.get("createdAt")),
+                    _text(c.get("body")),
+                    _text(c.get("url")),
+                )
                 for c in comments
             ),
         )
@@ -153,8 +161,10 @@ def brief(issue: Issue, trusted: Sequence[str] = TRUSTED_VERDICT_AUTHORS) -> str
         lines += [
             "",
             f"--- comment {i} of {len(ordered)}: {comment.author}, {comment.created_at}{kind} ---",
-            comment.body.strip(),
         ]
+        if comment.url:
+            lines.append(f"URL: {comment.url}")
+        lines.append(comment.body.strip())
     lines += [
         "",
         "--- end ---",
