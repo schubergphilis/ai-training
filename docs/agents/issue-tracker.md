@@ -22,8 +22,9 @@ An agent that builds or reviews an issue reads it with
 `mise run issue-brief -- <number>` (`scripts/issue_brief.py`, #606). It
 prints the title, the labels, the body and only the comments by the
 accounts in `TRUSTED_VERDICT_AUTHORS` (`scripts/wave_status.py`), with
-`Decision` and `Triage` comments first, and counts the other comments
-without their text. It withholds the body when another account opened
+`Decision` and `Triage` comments first and each with its URL, and counts
+the other comments without their text. The wave dispatcher reads the
+run issue's standing-approval comments the same way (#631). It withholds the body when another account opened
 the issue. Anyone can comment on a public issue, so
 `gh issue view --comments` puts an outsider's text in the agent's
 context, and the review hooks reject it.
