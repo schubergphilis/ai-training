@@ -328,6 +328,27 @@ printed.
    /rename wave <name> <kind> <yyyy-mm-dd>
    ```
 
+4. **Keep the machine awake.** A new run and a resumed run both do this
+   step. The `Run ended:` route of step 3 skips it, and so does the
+   `awaiting restart` route of step 2, which does it in "Resuming after
+   a restart", step 2. When `uname` prints anything other than `Darwin`,
+   skip the step. On macOS, `$PPID` in a Bash tool call is the Claude
+   Code process itself, in the foreground and with `run_in_background`,
+   so `caffeinate -w $PPID` ends when this session ends. Check it first
+   with `ps -o comm= -p $PPID`, which prints `claude`. When it prints
+   anything else, skip the step and say so in your next message, because
+   `caffeinate` would wait on the wrong process. Then
+   `pgrep -f -x "caffeinate -i -w $PPID"` lists a `caffeinate` this
+   session already started. When it prints nothing, run
+   `caffeinate -i -w $PPID` with `run_in_background`. It keeps the
+   machine from idle sleep until "When the run ends" stops it or the
+   session quits. Leave every other `caffeinate` alone, since the
+   maintainer may run their own. The leads and builders run in the same
+   Claude Code process and see the same `$PPID`, so only the dispatcher
+   runs these commands. `caffeinate -i` doesn't keep the machine awake
+   when the lid closes, so tell the maintainer in your next message that
+   the lid must stay open during the run.
+
 ## One tick of the loop
 
 1. **Pull.** `git pull --rebase` on `main`. You commit nothing, so the
@@ -662,7 +683,12 @@ fails:
    say which.
 2. **The run file.** "Starting a run" step 3 has rebuilt
    `.scratch/run-<name>.md` in this worktree from the run issue, and
-   every body edit passes "Before each body edit" as usual.
+   every body edit passes "Before each body edit" as usual. Then keep
+   the machine awake as "Starting a run", step 4 says, which that route
+   skipped: on macOS, start `caffeinate -i -w $PPID` with
+   `run_in_background` and remind the maintainer to keep the lid open.
+   The `caffeinate` of the session that built the wave ended when that
+   session quit.
 3. **The checklist.** Read the `## After the restart` section of the PR
    body (`gh pr view <n> --json body -q .body`) and run every item in
    order, up to the item for the maintainer's merge decision. Run each
@@ -815,6 +841,15 @@ every issue that already holds its release comment, so it posts each
 comment once.
 A run issue closed by hand skips this section, so its claims stay until
 someone releases them as below.
+
+Last, once the run issue is closed, stop the `caffeinate` of "Starting a run",
+step 4. On macOS, run
+`for p in $(pgrep -f -x "caffeinate -i -w $PPID"); do kill $p; done`.
+The exact match stops only the `caffeinate` that waits on this
+session's Claude Code process, so a `caffeinate` the maintainer started
+keeps running. Never run `pkill caffeinate`. The background task then
+reports exit code 143, which is the `kill` and no failure. On a stop
+that leaves the run open, the `caffeinate` runs until the session quits.
 
 ### Releasing the claims
 
