@@ -123,7 +123,7 @@ has nothing to say.
 
 - Git remote is GitHub, `schubergphilis/ai-training`. Use `gh`.
 - Issues and labels: `docs/agents/issue-tracker.md`. Triage with the
-  maintainer: `docs/agents/triage.md`.
+  maintainer: `docs/agents/triage.md`, run by the `/triage` skill.
 - Many builders and reviewers in parallel: `docs/agents/orchestration.md`.
   Wave after wave from one session: `docs/agents/meta-orchestration.md`,
   run by the `/wave` skill.
