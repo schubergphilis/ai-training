@@ -9,9 +9,7 @@ repository.
 A builder in a wave, or one a lead spawned, follows
 `.claude/agents/builder.md`, "Setup and done" and "Rules". Its list
 "Where this repo differs from the `build` and `complete` skills" says
-where those rules replace the steps below. In short, a builder hands
-back a pushed branch, opens a pull request only when its prompt asks for
-one, and never merges.
+where those rules replace the steps below.
 
 ## Interactive session
 
@@ -31,9 +29,10 @@ the steps in this order.
     Conventional Commit, and end it with the two attribution lines from
     `AGENTS.md`, "Process", and no `Signed-off-by`. Add `Closes #<n>.`
     when the commit finishes an issue.
-05. **Push.** The first push of a branch is `git push -u origin <branch>`.
-    For each later push, run `git fetch origin` and
-    `git rebase origin/main`, then `git push --force-with-lease`. A rebase
+05. **Push.** Before each push, run `git fetch origin` and
+    `git rebase origin/main`. The first push of a branch is
+    `git push -u origin <branch>`. Each later push is
+    `git push --force-with-lease`. A rebase
     rewrites the branch. GitHub rejects a plain `git push` after it, and
     `--force` can drop commits that someone else pushed.
 06. **Pull request.** Open it with `gh pr create`. The body ends with
@@ -52,9 +51,11 @@ the steps in this order.
     own worktree with `git worktree remove <path>`. Once #737 is merged, use
     `mise run worktree-cleanup` for this. Never run `git stash`, because
     every worktree shares one stash and `guard-bash` blocks it.
-10. **CI on `main`.** Watch the run that the merge starts on `main`, for
-    example with `mise run ci-watch` in a checkout of `main`. Whoever
-    finds `main` red fixes it, whatever caused it.
+10. **CI on `main`.** Watch the run that the merge starts on `main`: run
+    `mise run ci-watch` in the main checkout, which is on branch `main`. A
+    detached worktree has no current branch, so `ci-watch` there doesn't
+    find the run on `main`. Whoever finds `main` red fixes it, whatever
+    caused it.
 11. **Issues.** Follow `docs/agents/issue-tracker.md` and
     `docs/agents/triage.md`. Each follow-up becomes an issue, created with
     `--parent <n>` when a review of issue `<n>` named it. A cosmetic nit
