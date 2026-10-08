@@ -633,17 +633,17 @@ fails:
 1. **Place.** `git rev-parse --show-toplevel` is
    `/Users/lsimons/git/lsimons/ai-training-wt/wave/<name>-<k>` and
    `git branch --show-current` is `wave/<name>-<k>`. Otherwise stop and
-   repeat the lines of the stop message. Then `git fetch origin`, and
-   the branch's `HEAD` equals `origin/wave/<name>-<k>` and the PR's head
-   (`gh pr view <n> --json headRefOid,state`, with state `OPEN`). When
-   they differ, stop and say which. When the state is `MERGED`, the
-   session that merged stopped after the merge of step 5 and before step
-   6 wrote the `merged` line. Skip the head comparison and steps 3 to 5,
-   since that session ran the checklist and merged only on the
-   maintainer's yes, and go on with step 6 in this worktree on the merged
+   repeat the lines of the stop message. Then `git fetch origin` and
+   read the PR's state (`gh pr view <n> --json headRefOid,state`). When
+   it is `CLOSED`, stop and say that PR #<n> was closed without a merge.
+   When it is `MERGED`, a session stopped after the merge and before
+   step 6 wrote the `merged` line, or the PR was merged by hand. A merge
+   can't be undone, so tell the maintainer that PR #<n> was found merged,
+   skip steps 3 to 5 and go on with step 6 in this worktree on the merged
    branch. Step 2 still holds, because step 6 edits the run issue body
-   from the run file. When the state is `CLOSED`, stop and say that PR
-   #<n> was closed without a merge.
+   from the run file. When it is `OPEN`, the branch's `HEAD` equals
+   `origin/wave/<name>-<k>` and the PR's head. When they differ, stop and
+   say which.
 2. **The run file.** "Starting a run" step 3 has rebuilt
    `.scratch/run-<name>.md` in this worktree from the run issue, and
    every body edit passes "Before each body edit" as usual.
