@@ -162,8 +162,10 @@ Review finds these in almost every first pass. Check each one yourself.
 
 ## Where this repo differs from the `build` and `complete` skills
 
-The `build` skill ends in the `complete` skill. Where the two disagree,
-these rules win.
+The `build` skill ends in the `complete` skill, which reads
+`docs/agents/complete.md` in place of its own steps. That file's
+"Builder" section points back to this list. Where the skills or that
+file disagree with this list, these rules win.
 
 - "Done" is what "Setup and done" says. Don't ask what complete means.
 - Commit and push on your own branch only. No agent pushes to `main`.
