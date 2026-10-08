@@ -7,7 +7,8 @@ only after the maintainer adds its `UserPromptSubmit` entry there (#373),
 since agents may not edit that file.
 
 - `guard-bash.sh`, PreToolUse on Bash. It exits 2 with a reason that names
-  the alternative for a force push, any push to `main`, `gh pr merge`
+  the alternative for a force push, any push to `main` of this repository
+  (a worktree or a clone of it included, #731), `gh pr merge`
   outside the wave lead, the dispatcher or a coordinator, `git stash` in
   every worktree (all but `list` and `show`), `git reset --hard`,
   `git checkout -- .` or `git restore .` in the main checkout, a

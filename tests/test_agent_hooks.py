@@ -72,7 +72,11 @@ def test_ordinary_and_lease_pushes_of_a_branch_pass(command: str) -> None:
 
 @pytest.mark.parametrize(
     "command",
-    ["git push origin main", "git push origin HEAD:main", "git push origin x:refs/heads/main"],
+    [
+        "git push origin main",
+        "git push origin HEAD:main",
+        "git push origin x:refs/heads/main",
+    ],
 )
 def test_push_to_main_is_rejected(command: str) -> None:
     reason = check(command)
@@ -89,6 +93,195 @@ def test_no_role_may_push_main() -> None:
     assert check("AI_TRAINING_ROLE=dispatcher git push origin main") is not None
     assert check("git push origin main", env={"AI_TRAINING_ROLE": "dispatcher"}) is not None
     assert check("AI_TRAINING_ROLE=wave-lead git push origin main") is not None
+
+
+# The push-to-`main` rule applies to this repository only (#731).
+THIS_URL = "https://github.com/o/this.git"
+
+
+@pytest.fixture
+def repos(tmp_path: Path) -> Path:
+    """`home` with a worktree `wt`, a `clone` of it, and an unrelated repository `other`."""
+    for name, url in [("home", THIS_URL), ("other", "https://github.com/o/other.git")]:
+        (tmp_path / name).mkdir()
+        git("init", "-q", "-b", "main", cwd=tmp_path / name)
+        git("remote", "add", "origin", url, cwd=tmp_path / name)
+        git(
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@example.com",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "base",
+            cwd=tmp_path / name,
+        )
+    git("worktree", "add", "-q", "-b", "feat/1-x", str(tmp_path / "wt"), cwd=tmp_path / "home")
+    (tmp_path / "clone").mkdir()
+    git("init", "-q", "-b", "main", cwd=tmp_path / "clone")
+    git("remote", "add", "upstream", "git@github.com:O/this", cwd=tmp_path / "clone")
+    return tmp_path
+
+
+def push_check(command: str, cwd: Path, env: dict[str, str] | None = None) -> str | None:
+    home = str(cwd.parent / "home") if (cwd.parent / "home").exists() else str(cwd / "home")
+
+    def other(where: str, args: Sequence[str]) -> bool:
+        return agent_hooks.other_repository(where, args, home)
+
+    return agent_hooks.check_command(command, str(cwd), env or {}, in_main, on_branch("x"), other)
+
+
+@pytest.mark.parametrize(
+    ("command", "cwd"),
+    [
+        ("git push origin main", "home"),
+        ("git push origin main", "wt"),
+        ("git -C home push origin main", "."),
+        ("git -C wt push origin main", "."),
+        ("git -C ../wt push origin HEAD:main", "other"),
+        ("cd home && git push origin main", "."),
+        ("cd ../wt && git push origin main", "other"),
+        ("git -C clone push upstream main", "."),
+        ("git -C missing push origin main", "."),
+        ("git -C home/missing push origin main", "."),
+    ],
+)
+def test_push_to_main_is_rejected_in_this_repository_and_its_worktrees(
+    repos: Path, command: str, cwd: str
+) -> None:
+    reason = push_check(command, repos / cwd)
+    assert reason is not None
+    assert "no agent pushes to `main`" in reason
+
+
+@pytest.mark.parametrize(
+    ("command", "cwd"),
+    [
+        ("git -C other push origin main", "."),
+        ("git -C ../other push origin main", "home"),
+        ("git push origin main", "other"),
+        ("cd ../other && git push origin main", "wt"),
+        ("git -C other push", "."),
+        ("git -C other push -o ci.skip origin main", "."),
+        ("git -C other push -- origin main", "."),
+        ("git -C other push https://github.com/o/other main", "."),
+    ],
+)
+def test_push_to_main_of_another_repository_passes(repos: Path, command: str, cwd: str) -> None:
+    assert push_check(command, repos / cwd) is None
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        # Targets the shell, zsh in the Bash tool, would change.
+        "git -C $OTHER push origin main",
+        "git -C ${OTHER} push origin main",
+        "git -C ot* push origin main",
+        "git -C othe? push origin main",
+        "git -C {other,home} push origin main",
+        "git -C 'other(/)' push origin main",
+        "git -C =other push origin main",
+        "git -C $=OTHER push origin main",
+        "git -C other~ push origin main",
+        "cd $OTHER && git push origin main",
+        # Directory and repository moves the guard doesn't follow.
+        "cd other && git push origin main",
+        "cd other x && git push origin main",
+        "cd other; cd; git push origin main",
+        "cd ./other && pushd ../home && git push origin main",
+        "cd ./other && (cd ../home && git push origin main)",
+        "cd ./other && source ../go-home && git push origin main",
+        "cd ./other && . ../go-home && git push origin main",
+        "cd ./other && eval 'cd ../home' && git push origin main",
+        "GIT_DIR=home/.git git -C other push origin main",
+        "git --git-dir=home/.git -C other push origin main",
+        "git -c remote.origin.url=x -C other push origin main",
+        "GIT_CONFIG_COUNT=1 git -C other push origin main",
+        # Pushes from another repository to this one.
+        f"git -C other push {THIS_URL} main",
+        "git -C other push git@github.com:O/this main",
+        "git -C other push ssh://git@github.com:22/o/this main",
+        "git -C other push ./home main",
+        "git -C other push file:///x/home main",
+        "git -C other push --repo origin main",
+    ],
+)
+def test_push_to_main_keeps_blocking_when_the_target_is_unclear(repos: Path, command: str) -> None:
+    assert push_check(command, repos) is not None
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["GIT_DIR", "GIT_WORK_TREE", "GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_PARAMETERS"],
+)
+def test_push_to_main_keeps_blocking_with_a_git_variable_in_the_hook_environment(
+    repos: Path, name: str
+) -> None:
+    env = {name: str(repos / "home" / ".git")}
+    assert push_check("git -C other push origin main", repos, env) is not None
+
+
+def test_the_users_global_git_config_file_keeps_the_exception(repos: Path) -> None:
+    env = {"GIT_CONFIG_GLOBAL": os.devnull}
+    assert push_check("git -C other push origin main", repos, env) is None
+
+
+def test_other_git_rules_still_apply_in_another_repository(repos: Path) -> None:
+    assert push_check("git -C other push --force origin main", repos) is not None
+    assert push_check("git -C other push origin --delete main", repos) is not None
+    assert push_check("git -C other push --no-verify origin main", repos) is not None
+
+
+def test_push_check_errors_keep_the_rule_on_and_exit_2(
+    repos: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert agent_hooks.other_repository(
+        str(repos / "other"), ["origin", "main"], str(repos / "home")
+    )
+
+    def broken(*_args: object, **_kwargs: object) -> str:
+        raise RuntimeError("git is gone")
+
+    monkeypatch.setattr(agent_hooks, "git_out", broken)
+    assert not agent_hooks.other_repository(
+        str(repos / "other"), ["origin", "main"], str(repos / "home")
+    )
+    event = {"tool_input": {"command": "git -C other push origin main"}, "cwd": str(repos)}
+    code, message = agent_hooks.guard_bash(event, {})
+    assert code == 2
+    assert "no agent pushes to `main`" in message
+
+
+def test_guard_bash_applies_the_push_rule_to_the_repository_of_the_hook(repos: Path) -> None:
+    here = str(Path(agent_hooks.__file__).resolve().parent)
+    blocked = {"tool_input": {"command": "git push origin main"}, "cwd": here}
+    assert agent_hooks.guard_bash(blocked, {})[0] == 2
+    moved = {"tool_input": {"command": f"git -C {here} push origin main"}, "cwd": str(repos)}
+    assert agent_hooks.guard_bash(moved, {})[0] == 2
+    other = {"tool_input": {"command": "git -C other push origin main"}, "cwd": str(repos)}
+    assert agent_hooks.guard_bash(other, {}) == (0, "")
+
+
+@pytest.mark.parametrize(
+    ("url", "key"),
+    [
+        ("https://github.com/O/this.git", "github.com/o/this"),
+        ("https://user@github.com/o/this/", "github.com/o/this"),
+        ("ssh://git@github.com:22/o/this.git", "github.com/o/this"),
+        ("git@github.com:o/this.git", "github.com/o/this"),
+        ("github.com:o/this", "github.com/o/this"),
+        ("/srv/git/this.git", None),
+        ("../this", None),
+        ("file:///srv/git/this", None),
+        ("origin", None),
+    ],
+)
+def test_url_key_reduces_remote_urls_to_host_and_path(url: str, key: str | None) -> None:
+    assert agent_hooks.url_key(url) == key
 
 
 def test_merge_needs_a_merging_role() -> None:
@@ -781,7 +974,8 @@ def test_main_checkout_and_branch_lookups_against_a_real_repository(repo: Path) 
 def test_default_lookups_block_stash_in_every_worktree(repo: Path) -> None:
     assert agent_hooks.check_command("git stash", str(repo / "main"), {}) is not None
     assert agent_hooks.check_command("git stash", str(repo / "wt"), {}) is not None
-    assert agent_hooks.check_command("git push", str(repo / "main"), {}) is not None
+    # A push to `main` of a repository other than this one passes (#731).
+    assert agent_hooks.check_command("git push", str(repo / "main"), {}) is None
 
 
 def test_hook_messages_name_the_worktree_root_next_to_the_main_checkout(repo: Path) -> None:

@@ -58,7 +58,10 @@ No agent runs `mise run branch-cleanup` (scripts/branch_cleanup.py), not
 even as a dry run: it is for human maintainers only.
 
 No agent pushes to `main` (#353): every change reaches it through a pull
-request. `gh pr merge` is allowed only when `AI_TRAINING_ROLE` names a
+request. The rule covers this repository, its worktrees and its clones. A
+push from another repository (`git -C ../other push origin main`) passes
+when the guard can show that it goes elsewhere, and keeps blocking when it
+can't (#731). `gh pr merge` is allowed only when `AI_TRAINING_ROLE` names a
 role that may merge, either in the hook's environment or as a prefix on
 the command itself (`AI_TRAINING_ROLE=wave-lead gh pr merge`).
 """
@@ -292,7 +295,8 @@ def pushes_main(args: Sequence[str], branch: str) -> bool:
     if not refspecs:
         return branch == MAIN_BRANCH
     for spec in refspecs:
-        dest = spec.lstrip("+").split(":")[-1]
+        # A subshell's `)` stays on the last word: `(git push origin main)`.
+        dest = spec.lstrip("+").rstrip(")").split(":")[-1]
         if dest in {MAIN_BRANCH, f"refs/heads/{MAIN_BRANCH}"}:
             return True
         if dest == "HEAD" and branch == MAIN_BRANCH:
@@ -347,6 +351,136 @@ def force_push(args: Sequence[str]) -> bool:
             return True
     positional = [a for a in args if not a.startswith("-")]
     return any(spec.startswith("+") for spec in positional[1:])
+
+
+# This checkout: the push-to-`main` rule protects the repository the hook
+# script is in, its worktrees and its clones (#731).
+HOOK_HOME = str(Path(__file__).resolve().parent)
+# A character that makes the shell, zsh in the Bash tool, change a path
+# word: an expansion, a glob or glob qualifier, quoting, or zsh's `=cmd`.
+# A target directory with one in it can't be resolved from the text.
+SHELL_SPECIAL = re.compile(r"[$`*?\[\]{}()!^#=~\\\"'<>|;&]")
+# Commands and variables that move the directory or the repository git
+# uses in a way `split_segments` doesn't follow (`(` starts a subshell).
+UNTRACKED_MOVES = re.compile(
+    r"\b(pushd|popd|chdir|eval|source|GIT_DIR|GIT_WORK_TREE|GIT_COMMON_DIR|GIT_CONFIG\w*)\b"
+    r"|\(|(^|[;&|\n])\s*\.\s"
+)
+GIT_REPOSITORY_VARS = frozenset({"GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR"})
+# Config set per command, which can rewrite a remote URL. `GIT_CONFIG_GLOBAL`
+# names the user's own file, which applies to both repositories alike.
+GIT_CONFIG_VARS = re.compile(r"GIT_CONFIG_(COUNT|KEY_\d+|VALUE_\d+|PARAMETERS)")
+SCP_URL = re.compile(r"^(?:[^@/:]+@)?([^/:]+):(.+)$")
+
+
+def git_out(path: str, *args: str, missing_ok: bool = False) -> str:
+    """The stdout of `git -C <path> <args>`. With `missing_ok`, exit 1 means "nothing set"."""
+    done = subprocess.run(
+        ["git", "-C", path, *args], capture_output=True, text=True, check=False, timeout=10
+    )
+    if done.returncode != 0 and not (missing_ok and done.returncode == 1):
+        raise subprocess.CalledProcessError(done.returncode, done.args)
+    return done.stdout
+
+
+def url_key(url: str) -> str | None:
+    """`host/path` for a remote URL, lower case and without `.git`, or None for a local path.
+
+    `https://github.com/o/r.git`, `ssh://git@github.com/o/r` and
+    `git@github.com:o/r.git` all give `github.com/o/r`
+    (https://git-scm.com/docs/git-push, "GIT URLS").
+    """
+    if "://" in url:
+        scheme, _, rest = url.partition("://")
+        if scheme.lower() == "file":
+            return None
+        host, _, path = rest.partition("/")
+        host = host.rsplit("@", 1)[-1].split(":", 1)[0]
+    else:
+        match = SCP_URL.match(url)
+        if match is None:
+            return None
+        host, path = match.groups()
+    path = path.strip("/").removesuffix(".git").strip("/")
+    return f"{host}/{path}".lower()
+
+
+def remote_keys(path: str) -> set[str | None]:
+    """The `url_key` of every fetch and push URL of every remote of the repository at `path`."""
+    keys: set[str | None] = set()
+    for name in git_out(path, "remote").split():
+        keys.add(url_key(git_out(path, "ls-remote", "--get-url", name).strip()))
+        pushurls = git_out(path, "config", "--get-all", f"remote.{name}.pushurl", missing_ok=True)
+        keys.update(url_key(u) for u in pushurls.split())
+    return keys
+
+
+def push_repository(args: Sequence[str]) -> str | None:
+    """The `<repository>` argument of `git push`, or None when there is none."""
+    skip_next = False
+    for arg in args:
+        if skip_next:
+            skip_next = False
+        elif arg == "--":
+            return None
+        elif arg in PUSH_VALUE_FLAGS:
+            skip_next = True
+        elif not arg.startswith("-"):
+            return arg
+    return None
+
+
+def other_repository(path: str, args: Sequence[str], home: str = HOOK_HOME) -> bool:
+    """True only when a `git push` at `path` provably goes to another repository (#731).
+
+    The repository at `path` must have another git common dir than the
+    one at `home`, and none of its remotes, nor the `<repository>`
+    argument, may name a remote of `home`, so a clone of this repository
+    still counts as this one. A local-path remote, a `--repo` option, a
+    path the shell would change, and any git error or exception count as
+    this repository, so the rule keeps blocking.
+    """
+    try:
+        if SHELL_SPECIAL.search(path) or any(a.startswith("--repo") for a in args):
+            return False
+        common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
+        target = Path(git_out(path, *common).strip()).resolve()
+        if target == Path(git_out(home, *common).strip()).resolve():
+            return False
+        theirs = remote_keys(path)
+        repository = push_repository(args)
+        if repository is not None and repository not in git_out(path, "remote").split():
+            theirs.add(url_key(repository))
+        return None not in theirs and not theirs & remote_keys(home)
+    except Exception:  # Any failure keeps the rule on, so the hook exits 2.
+        return False
+
+
+def follows_directory(segments: Sequence[Segment], env: Mapping[str, str]) -> bool:
+    """True when `split_segments` knows the directory and repository of every segment.
+
+    A `cd` without one plain argument, or with a relative one that `CDPATH`
+    could resolve elsewhere, and a git variable in the hook's environment
+    that picks the repository or sets config make it False (#731).
+    """
+    if any(name in GIT_REPOSITORY_VARS or GIT_CONFIG_VARS.fullmatch(name) for name in env):
+        return False
+    for seg in segments:
+        if seg.words[0] == "cd" and (
+            len(seg.words) != 2 or not seg.words[1].startswith(("/", "./", "../"))
+        ):
+            return False
+    return True
+
+
+def only_dash_c(words: Sequence[str]) -> bool:
+    """True when the git options before the subcommand are `-C <dir>` pairs only."""
+    rest = list(words[1:])
+    while rest and rest[0].startswith("-"):
+        if rest[0] != "-C" or len(rest) < 2:
+            return False
+        rest = rest[2:]
+    return True
 
 
 def sleep_seconds(words: Sequence[str]) -> float:
@@ -781,8 +915,13 @@ def check_segment(
     env: Mapping[str, str],
     main_checkout: Callable[[str], bool],
     branch_of: Callable[[str], str],
+    other_repo: Callable[[str, Sequence[str]], bool] = other_repository,
 ) -> str | None:
-    """The reason a simple command is rejected, or None when it may run."""
+    """The reason a simple command is rejected, or None when it may run.
+
+    The push-to-`main` rule doesn't apply when `other_repo` says the push
+    goes to another repository (#731).
+    """
     words = segment.words
     waited = sleep_seconds(words)
     if waited > MAX_SLEEP_SECONDS:
@@ -824,7 +963,11 @@ def check_segment(
                 "Force push: use `git push --force-with-lease` on your own branch instead, "
                 "and never on a branch another branch is stacked on."
             )
-        if pushes_main(rest, branch_of(where)) and role_of(segment, env) not in PUSH_MAIN_ROLES:
+        if (
+            pushes_main(rest, branch_of(where))
+            and role_of(segment, env) not in PUSH_MAIN_ROLES
+            and not (only_dash_c(words) and other_repo(where, rest))
+        ):
             return (
                 "Push to `main`: no agent pushes to `main`. Push your own branch and open "
                 "a pull request. A dispatcher keeps its record in its run issue, not in git."
@@ -854,9 +997,12 @@ def check_command(
     env: Mapping[str, str],
     main_checkout: Callable[[str], bool] = is_main_checkout,
     branch_of: Callable[[str], str] = current_branch,
+    other_repo: Callable[[str, Sequence[str]], bool] = other_repository,
 ) -> str | None:
     """The reason a Bash command is rejected, or None when it may run."""
     segments = split_segments(command, cwd)
+    if UNTRACKED_MOVES.search(command) or not follows_directory(segments, env):
+        other_repo = lambda _where, _args: False  # noqa: E731 - can't tell, so the rule applies
     if is_gh_poll_loop(segments):
         return (
             "A loop that calls `gh` and waits is a poll loop. Wait in one blocking call "
@@ -873,7 +1019,7 @@ def check_command(
             "needs no poll either."
         )
     for segment in segments:
-        reason = check_segment(segment, env, main_checkout, branch_of)
+        reason = check_segment(segment, env, main_checkout, branch_of, other_repo)
         if reason:
             return reason
     return None
