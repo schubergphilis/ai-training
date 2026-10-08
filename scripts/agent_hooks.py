@@ -60,10 +60,11 @@ even as a dry run: it is for human maintainers only.
 No agent pushes to `main` (#353): every change reaches it through a pull
 request. The rule covers this repository, its worktrees and its clones. A
 push from another repository (`git -C ../other push origin main`) passes
-when the guard can show that it goes elsewhere, and keeps blocking when it
-can't (#731). `gh pr merge` is allowed only when `AI_TRAINING_ROLE` names a
-role that may merge, either in the hook's environment or as a prefix on
-the command itself (`AI_TRAINING_ROLE=wave-lead gh pr merge`).
+only as one simple `git` command whose target the guard can show is
+elsewhere, and keeps blocking in every other form (#731). `gh pr merge`
+is allowed only when `AI_TRAINING_ROLE` names a role that may merge,
+either in the hook's environment or as a prefix on the command itself
+(`AI_TRAINING_ROLE=wave-lead gh pr merge`).
 """
 
 import contextlib
@@ -73,6 +74,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -254,15 +256,53 @@ def git_args(words: Sequence[str], cwd: str) -> tuple[list[str], str] | None:
     return rest, here
 
 
+# Claude Code gives the guard hook 10 seconds (`.claude/settings.json`), and
+# a hook that runs out of time doesn't block. Every git call of one hook run
+# shares this budget, so a slow git ends the call first and the rule stays
+# on (#731).
+GIT_BUDGET_SECONDS = 5.0
+
+
+class GitDeadline:
+    """The time left for the git calls of one hook run, from `start` to `stop`."""
+
+    def __init__(self) -> None:
+        self.end: float | None = None
+
+    def start(self) -> None:
+        self.end = time.monotonic() + GIT_BUDGET_SECONDS
+
+    def stop(self) -> None:
+        self.end = None
+
+    def left(self) -> float:
+        """Seconds left, or `subprocess.TimeoutExpired` when none are."""
+        if self.end is None:
+            return GIT_BUDGET_SECONDS
+        remaining = self.end - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired("git", GIT_BUDGET_SECONDS)
+        return remaining
+
+
+GIT_DEADLINE = GitDeadline()
+
+
 def is_main_checkout(path: str) -> bool:
-    """True when `path` is inside the repository's first worktree (not a linked one)."""
+    """True when `path` is inside the repository's first worktree (not a linked one).
+
+    A timeout counts as the main checkout, so the rules for it stay on.
+    """
     try:
         out = subprocess.run(
             ["git", "-C", path, "rev-parse", "--absolute-git-dir", "--git-common-dir"],
             capture_output=True,
             text=True,
             check=True,
+            timeout=GIT_DEADLINE.left(),
         ).stdout.split()
+    except subprocess.TimeoutExpired:
+        return True
     except OSError, subprocess.CalledProcessError:
         return False
     if len(out) != 2:
@@ -272,14 +312,20 @@ def is_main_checkout(path: str) -> bool:
 
 
 def current_branch(path: str) -> str:
-    """The checked-out branch at `path`, or "" when there is none."""
+    """The checked-out branch at `path`, or "" when there is none.
+
+    A timeout counts as `main`, so a plain `git push` stays blocked.
+    """
     try:
         return subprocess.run(
             ["git", "-C", path, "branch", "--show-current"],
             capture_output=True,
             text=True,
             check=True,
+            timeout=GIT_DEADLINE.left(),
         ).stdout.strip()
+    except subprocess.TimeoutExpired:
+        return MAIN_BRANCH
     except OSError, subprocess.CalledProcessError:
         return ""
 
@@ -360,85 +406,106 @@ HOOK_HOME = str(Path(__file__).resolve().parent)
 # word: an expansion, a glob or glob qualifier, quoting, or zsh's `=cmd`.
 # A target directory with one in it can't be resolved from the text.
 SHELL_SPECIAL = re.compile(r"[$`*?\[\]{}()!^#=~\\\"'<>|;&]")
-# Commands and variables that move the directory or the repository git
-# uses in a way `split_segments` doesn't follow (`(` starts a subshell).
-UNTRACKED_MOVES = re.compile(
-    r"\b(pushd|popd|chdir|eval|source|GIT_DIR|GIT_WORK_TREE|GIT_COMMON_DIR|GIT_CONFIG\w*)\b"
-    r"|\(|(^|[;&|\n])\s*\.\s"
-)
+# Text that makes a command more than one simple git command: an operator,
+# a newline, a subshell, a group, a substitution or a redirect.
+COMPOUND = re.compile(r"[;&|\n(){}<>`]")
+GIT_VARIABLE = re.compile(r"GIT_(DIR|WORK_TREE|COMMON_DIR|CONFIG)")
 GIT_REPOSITORY_VARS = frozenset({"GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR"})
 # Config set per command, which can rewrite a remote URL. `GIT_CONFIG_GLOBAL`
 # names the user's own file, which applies to both repositories alike.
 GIT_CONFIG_VARS = re.compile(r"GIT_CONFIG_(COUNT|KEY_\d+|VALUE_\d+|PARAMETERS)")
-SCP_URL = re.compile(r"^(?:[^@/:]+@)?([^/:]+):(.+)$")
+# `owner/repo` at the end of a URL or scp-style address, `.git` optional.
+OWNER_REPO = re.compile(r"[/:]([^/:]+)/([^/:]+?)(?:\.git)?/?$")
 
 
 def git_out(path: str, *args: str, missing_ok: bool = False) -> str:
     """The stdout of `git -C <path> <args>`. With `missing_ok`, exit 1 means "nothing set"."""
     done = subprocess.run(
-        ["git", "-C", path, *args], capture_output=True, text=True, check=False, timeout=10
+        ["git", "-C", path, *args],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=GIT_DEADLINE.left(),
     )
     if done.returncode != 0 and not (missing_ok and done.returncode == 1):
         raise subprocess.CalledProcessError(done.returncode, done.args)
     return done.stdout
 
 
-def url_key(url: str) -> str | None:
-    """`host/path` for a remote URL, lower case and without `.git`, or None for a local path.
+def owner_repo(url: str) -> str | None:
+    """`owner/repo` of a remote URL, lower case and without `.git`, or None.
 
-    `https://github.com/o/r.git`, `ssh://git@github.com/o/r` and
-    `git@github.com:o/r.git` all give `github.com/o/r`
-    (https://git-scm.com/docs/git-push, "GIT URLS").
+    The host is left out, so an ssh host alias, `ssh.github.com:443` and an
+    `insteadOf` shorthand of one repository give the same key. A local path
+    or a `file://` URL gives None.
     """
-    if "://" in url:
-        scheme, _, rest = url.partition("://")
-        if scheme.lower() == "file":
-            return None
-        host, _, path = rest.partition("/")
-        host = host.rsplit("@", 1)[-1].split(":", 1)[0]
-    else:
-        match = SCP_URL.match(url)
-        if match is None:
-            return None
-        host, path = match.groups()
-    path = path.strip("/").removesuffix(".git").strip("/")
-    return f"{host}/{path}".lower()
+    remote = "://" in url or re.match(r"^[^/]+:", url) is not None
+    if url.lower().startswith("file:") or not remote:
+        return None
+    match = OWNER_REPO.search(url)
+    if match is None:
+        return None
+    return f"{match.group(1)}/{match.group(2)}".lower()
 
 
-def remote_keys(path: str) -> set[str | None]:
-    """The `url_key` of every fetch and push URL of every remote of the repository at `path`."""
+def push_keys(path: str) -> set[str | None]:
+    """The `owner_repo` of every push URL of every remote of the repository at `path`.
+
+    `git remote get-url --push --all` lists the URLs a push goes to, with
+    `insteadOf` and `pushInsteadOf` applied (https://git-scm.com/docs/git-remote).
+    """
     keys: set[str | None] = set()
     for name in git_out(path, "remote").split():
-        keys.add(url_key(git_out(path, "ls-remote", "--get-url", name).strip()))
-        pushurls = git_out(path, "config", "--get-all", f"remote.{name}.pushurl", missing_ok=True)
-        keys.update(url_key(u) for u in pushurls.split())
+        urls = git_out(path, "remote", "get-url", "--push", "--all", name).split()
+        keys.update(owner_repo(url) for url in urls)
     return keys
 
 
 def push_repository(args: Sequence[str]) -> str | None:
-    """The `<repository>` argument of `git push`, or None when there is none."""
+    """The `<repository>` argument of `git push`, or None when there is none.
+
+    git stops reading options at `--` and reads the next word as the
+    repository (https://git-scm.com/docs/git-push).
+    """
     skip_next = False
+    options = True
     for arg in args:
         if skip_next:
             skip_next = False
-        elif arg == "--":
-            return None
-        elif arg in PUSH_VALUE_FLAGS:
+        elif options and arg == "--":
+            options = False
+        elif options and arg in PUSH_VALUE_FLAGS:
             skip_next = True
-        elif not arg.startswith("-"):
+        elif not options or not arg.startswith("-"):
             return arg
     return None
+
+
+def push_config_moves(path: str, remotes: Sequence[str]) -> bool:
+    """True when the config at `path` can send a push somewhere its remotes don't name.
+
+    That is any `url.<base>.pushInsteadOf`, and a `branch.<name>.pushRemote`,
+    `branch.<name>.remote` or `remote.pushDefault` that isn't a remote name
+    (https://git-scm.com/docs/git-config).
+    """
+    if git_out(path, "config", "--get-regexp", r"^url\..*\.pushinsteadof$", missing_ok=True):
+        return True
+    pattern = r"^(branch\..*\.(pushremote|remote)|remote\.pushdefault)$"
+    values = git_out(path, "config", "--get-regexp", pattern, missing_ok=True)
+    return any(line.split(" ", 1)[-1] not in remotes for line in values.splitlines() if " " in line)
 
 
 def other_repository(path: str, args: Sequence[str], home: str = HOOK_HOME) -> bool:
     """True only when a `git push` at `path` provably goes to another repository (#731).
 
-    The repository at `path` must have another git common dir than the
-    one at `home`, and none of its remotes, nor the `<repository>`
-    argument, may name a remote of `home`, so a clone of this repository
-    still counts as this one. A local-path remote, a `--repo` option, a
-    path the shell would change, and any git error or exception count as
-    this repository, so the rule keeps blocking.
+    The repository at `path` must have another git common dir than the one
+    at `home`. The push's `<repository>` argument, when it has one, must be
+    a remote name of that repository. None of its remotes may push to the
+    `owner/repo` of a remote of `home`, so a clone of this repository still
+    counts as this one. A URL or path as the argument, a URL without an
+    `owner/repo`, push config that moves the target, a path the shell would
+    change, a timeout, and any git error or exception count as this
+    repository, so the rule keeps blocking.
     """
     try:
         if SHELL_SPECIAL.search(path) or any(a.startswith("--repo") for a in args):
@@ -447,30 +514,38 @@ def other_repository(path: str, args: Sequence[str], home: str = HOOK_HOME) -> b
         target = Path(git_out(path, *common).strip()).resolve()
         if target == Path(git_out(home, *common).strip()).resolve():
             return False
-        theirs = remote_keys(path)
+        remotes = git_out(path, "remote").split()
         repository = push_repository(args)
-        if repository is not None and repository not in git_out(path, "remote").split():
-            theirs.add(url_key(repository))
-        return None not in theirs and not theirs & remote_keys(home)
+        if repository is not None and repository not in remotes:
+            return False
+        if push_config_moves(path, remotes):
+            return False
+        theirs = push_keys(path)
+        return None not in theirs and not theirs & push_keys(home)
     except Exception:  # Any failure keeps the rule on, so the hook exits 2.
         return False
 
 
-def follows_directory(segments: Sequence[Segment], env: Mapping[str, str]) -> bool:
-    """True when `split_segments` knows the directory and repository of every segment.
+def one_git_command(command: str, segments: Sequence[Segment], env: Mapping[str, str]) -> bool:
+    """True when the command is one simple `git` command whose target the guard can read.
 
-    A `cd` without one plain argument, or with a relative one that `CDPATH`
-    could resolve elsewhere, and a git variable in the hook's environment
-    that picks the repository or sets config make it False (#731).
+    No operator, newline, subshell, group, substitution, redirect or
+    assignment prefix, and no git variable that picks the repository or sets
+    config, in the command or in the hook's environment. Only then does the
+    push-to-`main` rule look for another repository, because the guard's
+    model of `cd` and other directory changes can differ from the shell's
+    (#731).
     """
     if any(name in GIT_REPOSITORY_VARS or GIT_CONFIG_VARS.fullmatch(name) for name in env):
         return False
-    for seg in segments:
-        if seg.words[0] == "cd" and (
-            len(seg.words) != 2 or not seg.words[1].startswith(("/", "./", "../"))
-        ):
-            return False
-    return True
+    if COMPOUND.search(command.strip()) or GIT_VARIABLE.search(command):
+        return False
+    return (
+        len(segments) == 1
+        and not segments[0].assignments
+        and segments[0].role is None
+        and segments[0].words[0] == "git"
+    )
 
 
 def only_dash_c(words: Sequence[str]) -> bool:
@@ -1001,7 +1076,7 @@ def check_command(
 ) -> str | None:
     """The reason a Bash command is rejected, or None when it may run."""
     segments = split_segments(command, cwd)
-    if UNTRACKED_MOVES.search(command) or not follows_directory(segments, env):
+    if not one_git_command(command, segments, env):
         other_repo = lambda _where, _args: False  # noqa: E731 - can't tell, so the rule applies
     if is_gh_poll_loop(segments):
         return (
@@ -1032,6 +1107,7 @@ def guard_bash(event: Mapping[str, Any], env: Mapping[str, str]) -> tuple[int, s
     if not isinstance(command, str):
         return 0, ""
     cwd = event.get("cwd")
+    GIT_DEADLINE.start()
     try:
         reason = check_command(command, cwd if isinstance(cwd, str) else str(Path.cwd()), env)
     except UnknownHomeError as error:
@@ -1039,6 +1115,8 @@ def guard_bash(event: Mapping[str, Any], env: Mapping[str, str]) -> tuple[int, s
     except ValueError as error:
         # Such as a null character in a path, which `os` and `subprocess` refuse.
         reason = unreadable(f"text it can't read ({error})", "remove any unusual character.")
+    finally:
+        GIT_DEADLINE.stop()
     if reason:
         return 2, f"Blocked by .claude/hooks/guard-bash.sh: {reason}"
     return 0, ""
