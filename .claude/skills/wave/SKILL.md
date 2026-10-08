@@ -330,8 +330,8 @@ printed.
    so `caffeinate -w $PPID` ends when this session ends. Check it first
    with `basename "$(ps -o comm= -p $PPID)"`, which prints `claude`
    (`ps` prints the full path when the session was started by one). When
-   it prints anything else, skip the step and say so in your next message, because
-   `caffeinate` would wait on the wrong process. Then
+   it prints anything else, skip the step and say so in your next
+   message, because `caffeinate` would wait on the wrong process. Then
    `pgrep -f -x "caffeinate -i -w $PPID"` lists a `caffeinate` this
    session already started. When it prints nothing, run
    `caffeinate -i -w $PPID` with `run_in_background`. It keeps the
@@ -681,8 +681,8 @@ fails:
    "Starting a run", step 4, which that route skipped, with all its
    checks: the `uname` check, the `basename` check of `$PPID`, the
    `pgrep` check, then `caffeinate -i -w $PPID` with `run_in_background`
-   and the reminder to keep the lid open. The `caffeinate` of the session that built the wave ended when that
-   session quit.
+   and the reminder to keep the lid open. The `caffeinate` of the
+   session that built the wave ended when that session quit.
 3. **The checklist.** Read the `## After the restart` section of the PR
    body (`gh pr view <n> --json body -q .body`) and run every item in
    order, up to the item for the maintainer's merge decision. Run each
@@ -836,14 +836,15 @@ comment once.
 A run issue closed by hand skips this section, so its claims stay until
 someone releases them as below.
 
-Last, once the run issue is closed, stop the `caffeinate` of "Starting a run",
-step 4. On macOS, run
+Last, once the run issue is closed, stop the `caffeinate` of "Starting a
+run", step 4. On macOS, run
 `for p in $(pgrep -f -x "caffeinate -i -w $PPID"); do kill $p; done`.
-The exact match stops only the `caffeinate` that waits on this
-session's Claude Code process, so a `caffeinate` the maintainer started
-keeps running. Never run `pkill caffeinate`. The background task then
-reports exit code 143. The `kill` causes this code, so it isn't a failure. On a stop
-that leaves the run open, the `caffeinate` runs until the session quits.
+The exact match stops only the `caffeinate` that waits on this session's
+Claude Code process, so a `caffeinate` the maintainer started keeps
+running. Never run `pkill caffeinate`. The background task then reports
+exit code 143. The `kill` causes this code, so it isn't a failure. On a
+stop that leaves the run open, the `caffeinate` runs until the session
+quits.
 
 ### Releasing the claims
 
