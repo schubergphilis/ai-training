@@ -609,11 +609,12 @@ step 1).
 When a harness wave stops awaiting restart, your last message gives the
 PR number, says that the PR body's `After the restart` checklist is what
 the next session runs, and gives these lines to run, with the wave's
-values and today's date filled in:
+values and today's date filled in, and `<worktree root>` replaced by
+the absolute path that `mise run worktree-root` prints:
 
 ```text
 /exit
-cd /Users/lsimons/git/lsimons/ai-training-wt/wave/<name>-<k>
+cd <worktree root>/wave/<name>-<k>
 claude -n "wave <name> harness <yyyy-mm-dd>"
 /wave --resume <Name>
 ```
@@ -621,7 +622,7 @@ claude -n "wave <name> harness <yyyy-mm-dd>"
 It says what to expect: the new session loads the agent files and hooks
 of the wave branch. The resume then works through the PR's
 checklist without the `main` preflight, and asks whether to merge. When the wave worktree is missing, the line after `/exit` is
-`git -C /Users/lsimons/git/lsimons/ai-training worktree add ../ai-training-wt/wave/<name>-<k> wave/<name>-<k>`.
+`git -C /Users/lsimons/git/lsimons/ai-training worktree add <worktree root>/wave/<name>-<k> wave/<name>-<k>`.
 
 ### Resuming after a restart
 
@@ -631,7 +632,7 @@ message started. Do these steps in order and stop at the first that
 fails:
 
 1. **Place.** `git rev-parse --show-toplevel` is
-   `/Users/lsimons/git/lsimons/ai-training-wt/wave/<name>-<k>` and
+   `<worktree root>/wave/<name>-<k>` and
    `git branch --show-current` is `wave/<name>-<k>`. Otherwise stop and
    repeat the lines of the stop message. Then `git fetch origin`, and
    the branch's `HEAD` equals `origin/wave/<name>-<k>` and the PR's head
@@ -675,7 +676,7 @@ fails:
    maintainer to quit and start again in the main checkout, with the
    lines `/exit`, `cd /Users/lsimons/git/lsimons/ai-training`,
    `git pull --rebase`,
-   `git worktree remove ../ai-training-wt/wave/<name>-<k>` and `claude`,
+   `git worktree remove <worktree root>/wave/<name>-<k>` and `claude`,
    then `/wave --resume <Name>` when the run is still open. List the
    checklist items after the merge decision for that new session, whose
    results go on the PR as a comment.

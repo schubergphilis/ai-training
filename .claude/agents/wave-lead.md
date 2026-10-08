@@ -33,7 +33,8 @@ Spawn agents by name and by nothing else:
 
 - `builder`, one per issue, at most six at once. Its prompt is the issue
   number, the branch `feat/<issue>-<slug>`, the worktree
-  `../ai-training-wt/feat/<issue>-<slug>`, the collision list that matches
+  `<worktree root>/feat/<issue>-<slug>`, as an absolute path with the root
+  that `mise run worktree-root` prints, the collision list that matches
   the issue (the lessons list for a lesson or content issue and the nits
   row, the code list for a code issue, and both lists for any issue that
   asks for changes to lesson or content files and to code), the filing
@@ -45,8 +46,8 @@ Spawn agents by name and by nothing else:
   for a branch with code changes, whatever the issue's label says. A
   branch that changes lesson prose and code gets both.
   Before you spawn a reviewer, create its worktree detached at the branch
-  tip (`../ai-training-wt/review-<run>-<issue>`) and write the diff into it with
-  `cd ../ai-training-wt/review-<run>-<issue> && git diff origin/main...origin/feat/<issue>-<slug> > review.diff`.
+  tip (`<worktree root>/review-<run>-<issue>`) and write the diff into it with
+  `cd <worktree root>/review-<run>-<issue> && git diff origin/main...origin/feat/<issue>-<slug> > review.diff`.
   `<run>` is the run's name in lower case, as in the wave branch
   (`wave/lemur-2` gives `review-lemur-460`), so `git worktree list` shows
   which run created a review worktree. Its
@@ -126,7 +127,7 @@ doesn't linger in the maintainer's agent list.
 
 ## Integration
 
-Keep the wave branch in `../ai-training-wt/<wave branch>`, created from
+Keep the wave branch in `<worktree root>/<wave branch>`, created from
 `origin/main`, and rebase each approved branch `--onto` it exactly as
 `orchestration.md` shows. Start every command for a worktree with
 `cd <worktree> && <command>`, or name the worktree in it
@@ -214,7 +215,7 @@ in the wave worktree before the merge.
   Your report's `For the maintainer` line names the PR and says it is
   awaiting restart.
 - Finish as "Finishing" says for the feat and review worktrees, but keep
-  the wave worktree `../ai-training-wt/<wave branch>`, clean, on the wave
+  the wave worktree `<worktree root>/<wave branch>`, clean, on the wave
   branch at the pushed PR head. The maintainer's next session starts in
   it.
 
@@ -296,7 +297,7 @@ stopped before it could report. Don't restart the wave:
 4. Spawn only what is missing. A builder for a `revise` branch works in a
    fresh worktree checked out on the branch, and the review comment is its
    whole brief. That worktree goes at the listed
-   `../ai-training-wt/feat/<issue>-<slug>` path, after you remove the old
+   `<worktree root>/feat/<issue>-<slug>` path, after you remove the old
    one there with `git worktree remove --force <path>`, so "Finishing"
    lists it.
 5. Continue from there. If a pull request for the wave branch is already
@@ -309,11 +310,11 @@ approval ("Standing approval"), remove the worktrees of your own wave
 and no others. A harness wave has no merge in your session, and it keeps
 its wave worktree ("Harness waves").
 Build the list of paths from your prompt's table:
-`../ai-training-wt/feat/<issue>-<slug>` for each issue of the wave (both
-halves of a split issue), the `../ai-training-wt/review-<run>-<issue>`
+`<worktree root>/feat/<issue>-<slug>` for each issue of the wave (both
+halves of a split issue), the `<worktree root>/review-<run>-<issue>`
 worktrees you created for those issues (`-1` and `-2` for the halves of a
 split issue), and
-`../ai-training-wt/<wave branch>`. Remove them with one
+`<worktree root>/<wave branch>`. Remove them with one
 `git worktree remove --force <path>` per listed path. Never remove by a
 glob, a prefix or a name pattern, and never by matching names from
 `git worktree list`: another run's worktrees can be in the same directory

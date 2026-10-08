@@ -51,7 +51,7 @@ both, so the builder and the reviewer never talk to each other.
 
    - the issue number;
    - the branch name (`feat/<issue>-<slug>`) and the worktree path,
-     `../ai-training-wt/feat/<issue>-<slug>`;
+     `<worktree root>/feat/<issue>-<slug>`, as an absolute path;
    - the definition of done beyond the agent file's: in per-pull-request
      mode, a pull request against `main` whose body says `Closes #N`,
      GitHub CI green (it runs the e2e walkthrough that `fast` leaves out),
@@ -165,7 +165,7 @@ the revisions and re-checks follow it there.
 The coordinator keeps the integration branch, `wave/<n>-<slug>` (under
 `/wave`, `wave/<name>-<k>` after the run's name, see
 `meta-orchestration.md`), in a dedicated worktree created from `main`
-(`git worktree add ../ai-training-wt/wave/3-course-plans -b wave/3-course-plans origin/main`). When a
+(`git worktree add <worktree root>/wave/3-course-plans -b wave/3-course-plans origin/main`). When a
 branch is approved, it is rebased onto the wave branch rather than merged
 into it. The wave history then has no merge commits, and the later rebase
 merge into `main` keeps one commit per change:
@@ -307,10 +307,12 @@ The cases that come up:
 
 ## Scratch space and worktrees
 
-Every agent worktree goes under one directory next to the repository,
-`../ai-training-wt/<branch>`, so a builder for `feat/12-x` works in
-`../ai-training-wt/feat/12-x`. A reviewer's worktree has the run's name
-in it, `../ai-training-wt/review-<run>-<issue>` (`review-lemur-460`), so
+Every agent worktree goes under one directory, the worktree root, as
+`<worktree root>/<branch>`. `mise run worktree-root` prints the root as an
+absolute path: `ai-training-wt` next to the main checkout, or
+`/tmp/ai-training-wt` inside claude-docker. A builder for `feat/12-x` works in
+`<worktree root>/feat/12-x`. A reviewer's worktree has the run's name
+in it, `<worktree root>/review-<run>-<issue>` (`review-lemur-460`), so
 `git worktree list` shows which run created it. At the end of the wave the
 lead removes only the paths of its own wave, listed from its prompt, with
 one `git worktree remove --force <path>` per path, never by a pattern, and
@@ -333,7 +335,7 @@ return the changes another agent stashed in its own worktree. To compare
 with the base, an agent commits its work in progress. It can also save
 the work with `git diff HEAD > .scratch/x.patch` and restore it with
 `git apply`, or run `git worktree add --detach` for a separate checkout
-under `../ai-training-wt/`. Untracked files aren't in that patch unless
+under `<worktree root>/`. Untracked files aren't in that patch unless
 `git add -N` marks them first.
 
 The Bash guard hook (`.claude/hooks/README.md`) rejects a force push, any
@@ -342,6 +344,26 @@ dispatcher or a coordinator, and `git stash` in every worktree except
 `git stash list` and `git stash show`. It rejects `git reset --hard`,
 `git checkout -- .` or `git restore .` only in the main checkout. The
 wave lead and a coordinator prefix a merge with `AI_TRAINING_ROLE=<role>`.
+
+### Inside claude-docker
+
+An agent runs inside claude-docker when the environment variable
+`CLAUDE_DOCKER_FLAGS` is set, even to an empty value. The main checkout
+there is `/workspaces/ai-training`, and `/workspaces` is read-only, so
+`mise run worktree-root` prints `/tmp/ai-training-wt`. That directory is
+storage local to the container, and run Xerus measured it as faster than
+the shared mount: `mise run setup` took 11 s against 52 s. Scratch files
+still go in the `.scratch/` of the agent's own worktree. These rules
+also hold inside the container:
+
+- Never run `git worktree prune`. The container shares `.git` with the
+  host, so the host's worktrees look prunable inside the container and
+  the container's `/tmp` worktrees look prunable on the host. A prune on
+  either side deletes the records of the other side's worktrees.
+- `.git/config` is a separate read-only bind mount, so every write to it
+  fails with `could not write config file ... Device or resource busy`.
+  That includes `git push -u`, `git branch --set-upstream-to` and
+  `git config`. Push with `git push origin HEAD:refs/heads/<branch>`.
 
 ## What a builder prompt says about history
 
