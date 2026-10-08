@@ -21,9 +21,14 @@ else is delegated.
 
 The agents are defined in `.claude/agents/`, and the coordinator spawns
 them by name, so the model, the effort, the turn limit and the tools come
-from the file and not from the prompt. A builder takes one issue, one
-branch and one pull request from start to merge, including every revision
-and rebase. It has every tool except `Agent`. A reviewer does one review
+from the file and not from the prompt. A builder takes one issue and one
+branch, and keeps that branch through every revision and rebase. In the
+integration mode the waves use, it pushes the branch and opens no pull
+request, and the coordinator collects the approved branches on one
+integration branch ("Integration branches for content waves"). In
+per-pull-request mode, the exception, the builder also opens the pull
+request, and the coordinator merges it. A builder never merges. It has
+every tool except `Agent`. A reviewer does one review
 pass and returns it as its final text, and the coordinator posts it. The
 `lesson-reviewer` has no shell and no edit tools, and the `code-reviewer`
 has a shell that a hook limits to read-only review commands
@@ -117,7 +122,7 @@ both, so the builder and the reviewer never talk to each other.
    quality gates, a refactor everyone touches), merge it first and freeze
    `main` until it lands, then let the rest rebase once onto the result.
 
-6. **Finish.** Update the front page status, flip the issues that were
+6. **Finish.** Flip the issues that were
    blocked on now-merged work, and remove the agent worktrees, leaving the
    branches in place. Report what merged, what review caught, and what is
    left.
@@ -196,12 +201,16 @@ The cases that come up:
   the branch joins the wave if the pull request is still open or waits for
   the next one. Nothing on the wave branch depends on it.
 - **A rebase conflict between branches in the wave.** The rebase of the
-  second branch stops on the conflict. The coordinator doesn't resolve it.
+  second branch stops on the conflict. Outside the S02 and bibliography
+  cases at the end of this item, the coordinator doesn't resolve it.
   It runs `git rebase --abort`, which leaves the wave worktree as it was,
   and tells the builder whose branch came second to redo the `--onto`
   rebase in that worktree, resolve the conflict there, and run the
   `branch -f` and `checkout` lines itself. The first branch is left as it
-  was rebased.
+  was rebased. The coordinator resolves an add/add conflict in the S02
+  source table itself, by keeping every line in course order. After the
+  rebases it also drops one copy of a duplicate bibliography key that
+  `mise run data` reports (`.claude/agents/wave-lead.md`).
 - **A follow-up after the branch is on the wave.** A builder that pushes
   one more commit to its own branch, after a review finding on the wave
   pull request, tells the coordinator the SHA. The coordinator

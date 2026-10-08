@@ -78,6 +78,10 @@ Review finds these in almost every first pass. Check each one yourself.
 
 - Keep scratch files in `.scratch/` in your worktree, never under `/tmp`.
 
+- Read a file with the Read tool before you Edit it, and read it again
+  after any other tool changed it. Edit fails with "File has not been
+  read yet" or "modified since read" otherwise.
+
 - Never run `git stash`, in any worktree. Every worktree of the clone
   shares one stash (`refs/stash`), so a pop can return another builder's
   changes. To compare with the base, commit work in progress. Otherwise

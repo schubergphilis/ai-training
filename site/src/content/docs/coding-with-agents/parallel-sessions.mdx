@@ -329,7 +329,10 @@ side, and the repository's page on orchestration describes how
   branch, one at a time in the order they were approved, and runs the full
   check on the result before it opens one pull request. When a branch
   conflicts, the coordinator stops the rebase and sends the branch back to
-  the builder who wrote it, and doesn't resolve the conflict itself.
+  the builder whose branch came second, and doesn't resolve the conflict
+  itself. There is one exception. When two branches add lines to the same
+  table of sources, the coordinator keeps the lines of both, and when they
+  add the same entry to the shared bibliography, it drops one copy.
 
 <MultiChoice id="lines-of-the-docs-brief" objective="coding-with-agents/works-in-team/runs-parallel-work"
   concepts={['parallel-sessions', 'worktrees']}
