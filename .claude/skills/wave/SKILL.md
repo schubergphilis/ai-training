@@ -171,6 +171,12 @@ printed.
    When the newest review issue is more than seven days old, or there is
    none, add one line to that message: `The last harness review was <date> (#<n>). Run /harness-review when there is time.` The line is only a
    reminder, and the run goes on (`docs/agents/harness-review.md`).
+   Also run
+   `gh issue list -l ready-for-human -s open -L 500 --json number,createdAt`.
+   When the oldest of them is more than seven days old, add one line to
+   that message: `The oldest ready-for-human issue is <days> days old (#<n>). Run /triage when there is time.`
+   This line is a reminder too, and the run goes on
+   (`docs/agents/triage.md`, "Backlog pass").
 
    Then run the harness exclusivity check,
    `mise run run-name -- --exclusive <kind>` for a new run with its
