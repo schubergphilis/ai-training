@@ -40,7 +40,8 @@
       "Edit(./osv-scanner.toml)"
     ],
     "deny": [
-      "Edit(./.claude/settings.json)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",      "Edit(./.claude/settings.json)",
       "Bash(gh repo delete*)",
       "Bash(gh api *-X=DELETE*)",
       "Bash(gh api *-X DELETE*)",
