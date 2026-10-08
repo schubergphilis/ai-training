@@ -653,7 +653,7 @@ and spec S02 "Source material" has the per-source table for topic
 content. In short:
 
 - `agent-engineer-course` (Apache-2.0) and Diátaxis (CC BY-SA) content may
-  be adapted with attribution and an entry in `NOTICE.md`.
+  be adapted with attribution and an entry in `THIRD_PARTY.md`.
 - CS50 (CC BY-NC-SA) may be cited and its ideas used, but its text may not
   be adapted (verbatim inclusion only, marked per page).
 - Claude Academy (`academy.claude.com`, cited as `Academy <slug>`) may be
