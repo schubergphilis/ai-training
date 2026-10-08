@@ -47,8 +47,11 @@ It also holds the issue brief, the output of
 accounts, decisions first, and the body only when one of those accounts
 opened the issue (#606). The lead runs it, because the sandbox blocks
 `mise` and `gh` for an agent in a worktree
-(`docs/agents/orchestration.md`, "Working with the platform"). Read the
-issue from that brief only. When your prompt has none, say so in the
+(`docs/agents/orchestration.md`, "Working with the platform"). The
+same sandbox can stop `mise run setup` and the check tasks below. When a
+`mise` command fails, say so in the review with the task and its error,
+review that part by hand, and don't retry it with the sandbox disabled.
+Read the issue from that brief only. When your prompt has none, say so in the
 review. The hook rejects `gh issue view --comments`, `-c` and a `--json`
 comments field, since those print every comment by anyone.
 
@@ -65,10 +68,19 @@ comments field, since those print every comment by anyone.
    session started in, which can be at another commit (#463).
 2. Run the `code-review` skill with the level first, then the review
    worktree's absolute path and the range, for example
-   `medium <worktree path> origin/main...HEAD start every Bash command with cd <worktree path> && and review the checkout there`.
+   `medium <worktree path> origin/main...HEAD start every Bash command with cd <worktree path> && and review the checkout there, and return the findings as text`.
+   The fork has reported that its `ReportFindings` tool "isn't
+   available" (#743). Asking for text gives you findings you can read.
    The skill reads the level only when it comes first, and it runs as a
    forked agent in the main checkout without your `cd`. Use `low` or
-   `medium`. The fork runs in the background. The first Skill result is
+   `medium`. The fork runs in the background. It is a separate agent
+   ([Skills](https://code.claude.com/docs/en/skills), "Run skills in a
+   subagent"), so the Bash hook in this file's frontmatter doesn't apply
+   to the fork's commands: frontmatter hooks "only run while that
+   specific subagent is active"
+   ([Subagents](https://code.claude.com/docs/en/sub-agents)). `Agent`
+   stays in `tools` because those pages don't say whether starting the
+   fork or its sub-agents needs it. The first Skill result is
    a launch notice (`Skill "code-review" launched (forked execution, running in the background).`).
    The review arrives later in the fork's task notification. Wait for it
    and judge only that. A result of `(none)` is a clean review only when
