@@ -8,13 +8,13 @@ disable-model-invocation: true
 You are the DISPATCHER of `docs/agents/meta-orchestration.md`. You run in
 the main checkout, `/Users/lsimons/git/lsimons/ai-training`, on `main`,
 except when you resume a harness wave after the restart ("Resuming after a
-restart" in `harness-runs.md`), which runs in the wave's worktree. You
-don't edit code or run the site's checks, you commit nothing outside
-that resume, and you hold one short report per wave. Read
-`docs/agents/meta-orchestration.md` once before the first wave.
-The wave lead prompt is the template next to this
-file, `.claude/skills/wave/wave-lead-prompt.md`, and its collision notes
-are the canonical list. You loop until a stop condition, and you never
+restart" in `.claude/skills/wave/harness-runs.md`), which runs in the
+wave's worktree. You don't edit code or run the site's checks, you commit
+nothing outside that resume, and you hold one short report per wave. Read
+`docs/agents/meta-orchestration.md` once before the first wave. The wave
+lead prompt is the template next to this file,
+`.claude/skills/wave/wave-lead-prompt.md`, and its collision notes are the
+canonical list. You loop until a stop condition, and you never
 spawn a second lead while one is running.
 
 ## Arguments
@@ -49,9 +49,9 @@ flags themselves keep them.
   issue while the run goes. Each lead posts its follow-ups, as issue
   titles and bodies, in one comment on the run issue, and you file them
   all when the run ends (see "When the run ends" in
-  `when-the-run-ends.md`). Use it for an
-  unattended run, so the loop has a fixed amount of work and never grows
-  its own queue.
+  `.claude/skills/wave/when-the-run-ends.md`). Use it for an unattended
+  run, so the loop has a fixed amount of work and never grows its own
+  queue.
 - `--resume <Name>`: continue the open run with that name, with the
   arguments its run issue holds. Other arguments are ignored once the
   `--kind` value check has passed, so a valid kind that differs from the
@@ -232,9 +232,10 @@ printed.
    closing keyword before the session that merged could reopen it ("The
    run issue after a merge"). The script gives it only when no comment on
    it by `lsimons` or `lsimons-bot` is a stop comment, one that starts
-   with `Run ended:` ("When the run ends" in `when-the-run-ends.md`) or
-   `Stop condition:` (the first line most runs before 2026-09-30 used). For a run closed by hand, or
-   one with a stop comment, it exits 1 and says the run has ended, and
+   with `Run ended:` ("When the run ends" in
+   `.claude/skills/wave/when-the-run-ends.md`) or `Stop condition:` (the
+   first line most runs before 2026-09-30 used). For a run closed by hand,
+   or one with a stop comment, it exits 1 and says the run has ended, and
    step 1 stops. Reopen the issue with the comment "The run issue after a
    merge" gives, with the PR of `closedBy` as `PR #<n>`, followed by the
    attribution lines:
@@ -303,7 +304,8 @@ printed.
       the stderr, so no half-opened run blocks the next one, and stop and
       show the stderr.
       That close comment is the stop comment of "When the run ends"
-      (`when-the-run-ends.md`), and nothing else of that section applies to a run that never started.
+      (`.claude/skills/wave/when-the-run-ends.md`), and nothing else of
+      that section applies to a run that never started.
    4. When its `takenBy` isn't null, an older open run got the same name
       first: close your issue with a comment saying so, and go back to
       step 2 with the name `run-name` prints now and the same file. Never
@@ -337,24 +339,26 @@ printed.
 4. **Keep the machine awake.** A new run and a resumed run both do this
    step. The `Run ended:` route of step 3 skips it, and so does the
    `awaiting restart` route of step 2, which does it in "Resuming after
-   a restart" (`harness-runs.md`), step 2. When `uname` prints anything other than `Darwin`,
-   skip the step. On macOS, `$PPID` in a Bash tool call is the Claude
-   Code process itself, in the foreground and with `run_in_background`,
-   so `caffeinate -w $PPID` ends when this session ends. Check it first
-   with `basename "$(ps -o comm= -p $PPID)"`, which prints `claude`
-   (`ps` prints the full path when the session was started by one). When
-   it prints anything else, skip the step and say so in your next
-   message, because `caffeinate` would wait on the wrong process. Then
+   a restart" (`.claude/skills/wave/harness-runs.md`), step 2. When
+   `uname` prints anything other than `Darwin`, skip the step. On macOS,
+   `$PPID` in a Bash tool call is the Claude Code process itself, in the
+   foreground and with `run_in_background`, so `caffeinate -w $PPID` ends
+   when this session ends. Check it first with
+   `basename "$(ps -o comm= -p $PPID)"`, which prints `claude` (`ps`
+   prints the full path when the session was started by one). When it
+   prints anything else, skip the step and say so in your next message,
+   because `caffeinate` would wait on the wrong process. Then
    `pgrep -f -x "caffeinate -i -w $PPID"` lists a `caffeinate` this
    session already started. When it prints nothing, run
    `caffeinate -i -w $PPID` with `run_in_background`. It keeps the
    machine from idle sleep until "When the run ends"
-   (`when-the-run-ends.md`) stops it or the session quits. Leave every other `caffeinate` alone, since the
-   maintainer may run their own. The leads and builders run in the same
-   Claude Code process and see the same `$PPID`, so only the dispatcher
-   runs these commands. `caffeinate -i` doesn't keep the machine awake
-   when the lid closes, so tell the maintainer in your next message that
-   the lid must stay open during the run.
+   (`.claude/skills/wave/when-the-run-ends.md`) stops it or the session
+   quits. Leave every other `caffeinate` alone, since the maintainer may
+   run their own. The leads and builders run in the same Claude Code
+   process and see the same `$PPID`, so only the dispatcher runs these
+   commands. `caffeinate -i` doesn't keep the machine awake when the lid
+   closes, so tell the maintainer in your next message that the lid must
+   stay open during the run.
 
 ## One tick of the loop
 
@@ -497,8 +501,8 @@ printed.
    - `{{TABLE}}`: the picker's Markdown output, with the nits row appended
      to the table when there is one.
    - `{{FILING}}`: read `.claude/skills/wave/filing-paragraphs.md` and
-     take one of its two paragraphs, as written, with the run issue's
-     number filled in.
+     take one of its two quoted paragraphs, as written, with the run
+     issue's number filled in.
    - `{{RESUME}}`: for a new wave, `This is a fresh wave.` For a resume
      (step 3), these three sentences: `You are RESUMING <NAME> wave <k> on branch <branch>.` `A previous lead stopped before reporting.` `Follow "Resuming a half-done wave" in your agent file before anything else.`
    - `{{APPROVAL}}`: first record any withdrawal or new approval the
@@ -597,7 +601,7 @@ printed.
      merged PR closes, without the run issue's own number
      (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number | select(. != <run>)'`),
      from `Remaining --only`, as "Resuming after a restart" step 6
-     (`harness-runs.md`) does.
+     (`.claude/skills/wave/harness-runs.md`) does.
      Then treat the wave as `merged` and go to step 1, and give the CI
      result in your next message. On no, replace the line with
      `wave <k>: open, PR #<n>` and stop as on any other `open`. An `open` with any other reason is the
@@ -635,8 +639,8 @@ reopen the run issue with a comment that says why, before you decide
 whether a stop condition holds:
 `gh issue reopen <run> --comment "GitHub closed this run issue when PR #<n> merged, because the PR's text names it after a closing keyword. The dispatcher reopens it and closes it itself when the run ends."`,
 followed by the attribution lines. "When the run ends"
-(`when-the-run-ends.md`) then closes it
-with its own comment when the run ends. When the session stops between
+(`.claude/skills/wave/when-the-run-ends.md`) then closes it with its own
+comment when the run ends. When the session stops between
 the merge and this check, `/wave --resume <Name>` finds the closed run
 issue and reopens it with the same comment ("Starting a run", step 3).
 
@@ -659,8 +663,9 @@ Stop, and say which one it was, when:
   harness wave, step 8);
 - the harness exclusivity check refuses the run ("Starting a run"
   step 1 or step 3.3), or the `--kind` value check refuses the value;
-- a step of "Resuming after a restart" (`harness-runs.md`) fails, or
-  the maintainer declines the merge there;
+- a step of "Resuming after a restart"
+  (`.claude/skills/wave/harness-runs.md`) fails, or the maintainer
+  declines the merge there;
 - the maintainer says stop.
 
 At every stop, read `.claude/skills/wave/when-the-run-ends.md` before
