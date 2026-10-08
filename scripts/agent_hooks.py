@@ -76,7 +76,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
-from worktree_root import WorktreeRootError, worktree_root
+# The import can fail when Python doesn't put scripts/ on the path, such as
+# under PYTHONSAFEPATH=1. An uncaught ImportError would make every hook
+# exit 1, and Claude Code runs a command after exit 1, so the hook then
+# only loses the resolved root in its messages (#698).
+try:
+    import worktree_root
+except ImportError:
+    worktree_root = None
 
 ROLE_VAR = "AI_TRAINING_ROLE"
 PUSH_MAIN_ROLES: frozenset[str] = frozenset()
@@ -357,13 +364,17 @@ def sleep_seconds(words: Sequence[str]) -> float:
 def worktree_root_hint(where: str, env: Mapping[str, str]) -> str:
     """The worktree root seen from `where`, for a message (#698).
 
-    When git can't tell where the main checkout is, the hint names the task
-    that prints the root instead, so the message never raises.
+    When git can't tell where the main checkout is, or `worktree_root` didn't
+    import, the hint names the task that prints the root instead, so the
+    message never raises.
     """
+    fallback = "the worktree root (`mise run worktree-root` prints it)"
+    if worktree_root is None:
+        return fallback
     try:
-        return f"`{worktree_root(where, env)}/`"
-    except WorktreeRootError:
-        return "the worktree root (`mise run worktree-root` prints it)"
+        return f"`{worktree_root.worktree_root(where, env)}/`"
+    except worktree_root.WorktreeRootError:
+        return fallback
 
 
 def stash_reason(

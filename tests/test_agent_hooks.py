@@ -1543,6 +1543,36 @@ def test_guard_hook_script_blocks_the_unknown_home_of_449(tmp_path: Path) -> Non
     assert "`~nosuchuser`" in run.stderr
 
 
+@pytest.mark.parametrize("command", ["git stash", "git -C {a,b} stash"])
+def test_guard_hook_script_blocks_without_the_worktree_root_module(
+    tmp_path: Path, command: str
+) -> None:
+    # PYTHONSAFEPATH=1 keeps scripts/ off the path, so `import worktree_root`
+    # fails. The hook must still block with exit 2, since exit 1 doesn't (#698).
+    hook = Path(__file__).resolve().parents[1] / ".claude" / "hooks" / "guard-bash.sh"
+    event = {"tool_input": {"command": command}, "cwd": str(tmp_path)}
+    run = subprocess.run(
+        [str(hook)],
+        input=json.dumps(event),
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "PYTHONSAFEPATH": "1"},
+    )
+    assert run.returncode == 2
+    assert "Traceback" not in run.stderr
+    assert "shares one stash" in run.stderr
+    assert "`mise run worktree-root` prints it" in run.stderr
+
+
+def test_hook_hint_falls_back_when_the_module_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(agent_hooks, "worktree_root", None)
+    hint = agent_hooks.worktree_root_hint("/", {"CLAUDE_DOCKER_FLAGS": ""})
+    assert hint == "the worktree root (`mise run worktree-root` prints it)"
+
+
 # More spellings that got past the #414 and #415 checks (#448).
 
 
