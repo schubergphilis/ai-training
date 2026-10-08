@@ -38,7 +38,9 @@ where this repo overrides that skill.
    nothing else unless the issue names it.
 4. Done means: the self-check below passes, `mise run fast` is green,
    the branch is rebased on `origin/main` and pushed, and your final text
-   says what you did and every call you made. No pull request unless your
+   says what you did and every call you made. For an issue whose title
+   starts with `Lesson:`, that final text also holds the `Self-check:`
+   block below. No pull request unless your
    prompt asks for one. Every fix commit after a review runs `mise run fast`
    again before its push.
 
@@ -67,6 +69,24 @@ Review finds these in almost every first pass. Check each one yourself.
 - A nit held back for another run's open pull request is re-checked
   right before the push, because that pull request can merge while you
   work.
+
+For an issue whose title starts with `Lesson:`, your final text shows
+the evidence for this check in a block that starts with the line
+`Self-check:` (#727). The wave lead sends a lesson hand-back without it
+back to you before any reviewer starts. The block has these parts:
+
+- **Vendor claims.** Each claim about how a vendor's product behaves,
+  with the URL of the page that states it.
+- **Checkpoints.** For each graded checkpoint (one with an `objective`),
+  one line per wrong option: the argument you tried for it and why it
+  fails. A graded `Predict` has no options, so give its line the other
+  outputs a learner could predict from the stem and `context` alone, and
+  why the page rules each one out.
+- **Order.** Each `assumes` entry and each "previous lesson" pointer,
+  with the course file and the position you checked it against.
+
+Write `none` under a part that has nothing to list. A part left out
+counts as a missing block.
 
 ## Rules
 
