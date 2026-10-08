@@ -14,20 +14,24 @@ file holds what is the same for every wave. `AGENTS.md` is already loaded,
 so don't `cat` it. Before you start, read these sections of the
 orchestration docs and no others. Find each section's line range with
 `grep -n '^## ' <file>`, and read that range with the Read tool. A range
-runs to the next level-two heading, so it includes the `###` parts under it.
+runs to the next level-two heading, or to the end of the file, so it
+includes the `###` parts under it.
 
 - `docs/agents/orchestration.md`, "Integration branches for content
-  waves" and "Scratch space and worktrees".
+  waves", "What collides, and how to avoid it", "Working with the
+  platform" and "Scratch space and worktrees".
+- `docs/agents/meta-orchestration.md`, "Concurrent runs".
 - For a harness wave, `docs/agents/meta-orchestration.md`, "Harness
   runs".
 
-This file already holds the lead's part of the other sections, such as
-the standing approval and the waiting rule, so never read either file
-whole.
+The other sections are about the dispatcher, a coordinator outside a
+wave, or rules this file already gives the lead, such as the standing
+approval and the waiting rule. So never read either file whole.
 
-Cap long command output with `| tail -n 80` or a `--jq` filter. When a
-tool result is too long and is saved to a file, read a line range of
-that file with the Read tool, never the whole file.
+Cap long command output with `| tail -n 80` or a `--jq` filter. A pipe
+hides the command's exit status, so judge the result by the last lines
+it prints. When a tool result is too long and is saved to a file, read a
+line range of that file with the Read tool, never the whole file.
 
 The main checkout is `/Users/lsimons/git/lsimons/ai-training`, on `main`.
 Never edit files there, don't leave changes of your own there, and never
