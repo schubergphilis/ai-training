@@ -127,6 +127,8 @@ has nothing to say.
 - Many builders and reviewers in parallel: `docs/agents/orchestration.md`.
   Wave after wave from one session: `docs/agents/meta-orchestration.md`,
   run by the `/wave` skill.
+- Gate, push, pull request, CI and merge: `docs/agents/complete.md`,
+  read by the `complete` skill.
 - A follow-up a review or a wave report names, and an improvement the
   maintainer defers, become GitHub issues before the session ends (or, in
   `/wave --no-filing`, when the run ends). A cosmetic nit left open on a
@@ -165,7 +167,7 @@ These rules are for a session the maintainer works in directly, outside a
 wave.
 
 - After a push, start `mise run ci-watch` in the background and hand
-  control back. You still own step 4 of "Session completion": report the
+  control back. You still own step 5 of "Session completion": report the
   result when it arrives, and fix a failure.
 - When the maintainer says in plain words to merge a pull request, run
   `AI_TRAINING_ROLE=coordinator gh pr merge <n> --rebase` on the first
@@ -195,8 +197,14 @@ every change reaches it through a pull request.
 
 1. `mise run fast` (or `mise run ci`)
 2. Commit everything; don't leave the working tree dirty
-3. `git pull --rebase origin main`, then `git push` your branch
-4. `mise run ci-watch`; on failure `gh run view --log-failed`, fix, repeat
+3. `git fetch origin` and `git rebase origin/main`, then
+   `git push --force-with-lease` your branch (`git push -u origin <branch>`
+   for its first push)
+4. Open a pull request with `gh pr create`
+5. `mise run ci-watch`; on failure `gh run view --log-failed`, fix, repeat
+
+`docs/agents/complete.md` has the full steps, and the `complete` skill
+reads it.
 
 Never stop before CI is green.
 
