@@ -58,9 +58,15 @@ since agents may not edit that file.
   calls) and no option but `-F` and `-v`. `git branch` passes only when
   it lists: no option outside the listing ones and no branch name
   unless `-l`, `--list` or a filter such as `--contains` makes it a
-  pattern. `git ls-remote` passes without `--upload-pack` or a
-  `<transport>::` repository. A `for` loop over task names in
-  `REVIEW_TASKS` passes when its whole body is `mise run $t` (#732).
+  pattern. `git ls-remote` passes with no repository or a remote name
+  such as `origin`, so no URL, `host:path`, local path or
+  `<transport>::` repository, and without `--upload-pack`. A `$` or a
+  substitution in an argument of `git diff`, `git log`, `git show`,
+  `git range-diff`, `git branch` or `git ls-remote` is rejected, since
+  `$x` can be `--output=f` or `--upload-pack=...`. A `for` loop over task
+  names in `REVIEW_TASKS` passes when its whole body is `mise run $t` and
+  the loop name is one lower-case letter or `task`: zsh's `$_` is the
+  last argument of the command before the loop (#732).
   It also rejects `git -c` and
   `git --config-env`, `--output` on `git diff`, `git log`, `git show` and
   `git range-diff`,

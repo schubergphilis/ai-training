@@ -9,20 +9,23 @@ Five entry points, each reading the hook's JSON event on stdin:
 - `review-bash` (PreToolUse on Bash in the `code-reviewer` agent,
   `.claude/agents/code-reviewer.md`, #348) allows only the read-only
   commands a review needs: `git diff|log|show|status|ls-files|range-diff`,
-  `git branch` that lists, `git ls-remote` without `--upload-pack`,
-  `gh pr diff|view`, `gh issue view`, `mise tasks`, `mise run` of a check
-  task in `REVIEW_TASKS`, `cd`, `ls`, `grep`, `cat`, `echo`, `head`,
-  `tail`, `wc`, `sort`, `uniq`, `cut`, `od`, `sed -n` with print scripts
-  (`p`, `!p`), `awk` with a program that has no `system`, `getline`,
-  `>`, `|` or `@` and no option but `-F` and `-v`, `for` loops over
-  these, and a `for` loop over task names in `REVIEW_TASKS` whose whole
-  body is `mise run $task` (#732), with no redirect to a file. The
-  command inside each `$(...)`, backtick pair or process substitution is
-  checked the same way. `git -c`, `git --output` and assignments (`NAME=value`) are
-  rejected. Anything else exits 2, and so does a command it can't read.
-  A backtick body is unescaped before the check, a `for` loop over an
-  upper-case name or `path` and an unquoted here-document are rejected,
-  and a brace expansion counts with escaped or quoted text in it (#448).
+  `git branch` that lists, `git ls-remote` of a remote name with no option
+  that runs a program, `gh pr diff|view`, `gh issue view`, `mise tasks`,
+  `mise run` of a check task in `REVIEW_TASKS`, `cd`, `ls`, `grep`, `cat`,
+  `echo`, `head`, `tail`, `wc`, `sort`, `uniq`, `cut`, `od`, `sed -n` with
+  print scripts (`p`, `!p`), `awk` with a program that has no `system`,
+  `getline`, `>`, `|` or `@` and no option but `-F` and `-v`, `for` loops
+  over these, and a `for` loop over task names in `REVIEW_TASKS` whose
+  whole body is `mise run $t`, with `t` one letter or `task` (#732), with
+  no redirect to a file. The command inside each `$(...)`, backtick pair
+  or process substitution is checked the same way. `git -c`,
+  `git --output` and assignments (`NAME=value`) are rejected, and so is a
+  `$` or a substitution in an argument of
+  `git diff|log|show|range-diff|branch|ls-remote`. Anything else exits 2,
+  and so does a command it can't read. A backtick body is unescaped before the
+  check, a `for` loop over an upper-case name or `path` and an unquoted
+  here-document are rejected, and a brace expansion counts with escaped or
+  quoted text in it (#448).
 - `security-bash` (PreToolUse on Bash in the `security-reviewer` agent,
   `.claude/agents/security-reviewer.md`, #495) applies the `review-bash`
   rules and also allows `mise run audit`, `site-audit` and `vuln`, and
@@ -1523,8 +1526,11 @@ def git_branch_lists(args: Sequence[str]) -> bool:
     A word that isn't an option names a branch to create, unless `-l`,
     `--list` or a filter (`--contains`, `--merged`, `--points-at`) makes
     it a pattern. git accepts a long option by a unique prefix, so only the
-    full names count.
+    full names count. A `$` or a substitution in a word is the shell's to
+    decide, so it is rejected (#732 review).
     """
+    if any(UNKNOWN_WORD & set(word) for word in args):
+        return False
     lists = False
     patterns: list[str] = []
     i = 0
@@ -1563,19 +1569,31 @@ GIT_LS_REMOTE_OPTIONS = frozenset(
 )
 
 
-def git_ls_remote_reads(args: Sequence[str]) -> bool:
-    """True for `git ls-remote` without an option that runs a program.
+# A remote name as `git remote add` writes one. A URL, an scp-style
+# `host:path`, a `<transport>::<address>` (`ext::` runs a command) and a
+# local path all have a `/`, `:` or `@`, or start with a `.` (#732 review).
+GIT_REMOTE_NAME = re.compile(r"[A-Za-z0-9_-][A-Za-z0-9._-]*")
 
-    A repository of the form `<transport>::<address>` runs the remote helper
-    `git-remote-<transport>`, such as `ext::` that runs a command, so a
-    word with `::` is rejected too.
+
+def git_ls_remote_reads(args: Sequence[str]) -> bool:
+    """True for `git ls-remote` of a configured remote, without an option that runs a program.
+
+    The repository is left out or is a remote name such as `origin`. Any
+    other host could receive data in its name or path, so a reviewer
+    can't send text out through it (#732 review). The words after the
+    repository are patterns. A `$` or a substitution in any word is the
+    shell's to decide (`$x` can be `--upload-pack=...`), so it is rejected.
     """
-    return all(
-        (word in GIT_LS_REMOTE_OPTIONS or word.startswith("--sort="))
-        if word.startswith("-")
-        else "::" not in word
-        for word in args
-    )
+    if any(UNKNOWN_WORD & set(word) for word in args):
+        return False
+    operands: list[str] = []
+    for word in args:
+        if word.startswith("-"):
+            if word not in GIT_LS_REMOTE_OPTIONS and not word.startswith("--sort="):
+                return False
+        else:
+            operands.append(word)
+    return not operands or GIT_REMOTE_NAME.fullmatch(operands[0]) is not None
 
 
 def git_sets_config(options: Sequence[str]) -> bool:
@@ -1640,8 +1658,10 @@ def review_allows(words: Sequence[str], scope: ReviewScope = CODE_REVIEW) -> boo
             return False
         if args[0] == "ls-remote" and not git_ls_remote_reads(args[1:]):
             return False
+        # A `$x` or a substitution can become `--output=f` (#732 review).
         return not git_sets_config(words[1 : len(words) - len(args)]) and not (
-            args[0] in GIT_OUTPUT_COMMANDS and any(map(is_git_output_option, args[1:]))
+            args[0] in GIT_OUTPUT_COMMANDS
+            and any(is_git_output_option(word) or UNKNOWN_WORD & set(word) for word in args[1:])
         )
     return any(tuple(words[: len(allowed)]) == allowed for allowed in REVIEW_COMMANDS)
 
@@ -1658,6 +1678,9 @@ def review_segments(command: str, globs: bool = False) -> list[Segment]:
     return split_segments(mark_expansions(harmless, globs), ".", strict=True, keep_assignments=True)
 
 
+TASK_LOOP_NAME = re.compile(r"[a-z]|task")
+
+
 def task_loop_bodies(segments: Sequence[Segment], scope: ReviewScope) -> set[int]:
     """The indexes of the `mise run $t` segments that are a task loop's whole body.
 
@@ -1666,7 +1689,10 @@ def task_loop_bodies(segments: Sequence[Segment], scope: ReviewScope) -> set[int
     or a glob in the list makes a word the shell's to decide, and that word
     is not a task name (#732). Any other body, such as a second command
     that could change `$t`, leaves `mise run $t` to the usual check, which
-    rejects it.
+    rejects it. The loop name is `task` or one lower-case letter, which zsh
+    5.9 doesn't use for a parameter of its own (`${(k)parameters}`): `$_` is
+    the last argument of the command before the loop, and `argv`, `match`,
+    `reply` or `status` don't hold the loop value either (#732 review).
     """
     bodies: set[int] = set()
     for i in range(len(segments) - 2):
@@ -1680,6 +1706,8 @@ def task_loop_bodies(segments: Sequence[Segment], scope: ReviewScope) -> set[int
         ):
             continue
         name = words[1]
+        if not TASK_LOOP_NAME.fullmatch(name):
+            continue
         runs = (["mise", "run", f"{EXPANSION}{name}"], ["mise", "run", f"{EXPANSION}{{{name}}}"])
         if body.words in runs and body.role is None and end.words == ["done"]:
             bodies.add(i + 1)
@@ -1745,12 +1773,13 @@ def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
             shown = shown.replace(SUBSTITUTION, "$(...)")
             return (
                 f"`{shown}` is not a review command. A reviewer runs only {allowed}, "
-                "git branch only to list, git ls-remote without --upload-pack, sed -n with p "
+                "git branch only to list, git ls-remote of a remote name, sed -n with p "
                 "or !p scripts, awk with no system, "
                 "getline, >, | or @ in the program and no option but -F and -v, for loops "
                 "over these, cd, mise run with one "
                 f"of {task_list}, a for loop over those tasks whose whole body is "
-                "mise run $task, and mise run issue-brief -- <issue>. A reviewer never edits."
+                "mise run $t (loop name task or one letter), and mise run issue-brief -- "
+                "<issue>. A reviewer never edits."
             )
     return None
 
