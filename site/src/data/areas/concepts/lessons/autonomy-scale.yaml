@@ -29,6 +29,6 @@ notes: >-
   concepts/assistant-or-agent, which is live, so assumes names its harness section. The three
   permission settings are Claude Code's manual, acceptEdits and bypassPermissions modes, described in
   plain words with no mode names or flags, and the pitfall's claim about the built-in starting mode
-  is from the same vendor page. AEC-01 and DLAI-11 are cited for ideas in our own words, so NOTICE.md
+  is from the same vendor page. AEC-01 and DLAI-11 are cited for ideas in our own words, so THIRD_PARTY.md
   gets no new entry. Academy ai-fluency-framework-foundations from the issue is not cited because the
   page uses nothing from it.

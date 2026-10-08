@@ -39,5 +39,5 @@ notes: >-
   output. The memory tool, context editing and compaction claims were checked against the three
   Claude Platform pages on 2026-09-25, and no vendor limit is quoted. The plan's Academy
   claude-platform-101 source was replaced by those public vendor pages, and no Academy text is used.
-  AEC-05 is cited for ideas in our own words, so NOTICE.md gets no new entry. The assumes entry for
+  AEC-05 is cited for ideas in our own words, so THIRD_PARTY.md gets no new entry. The assumes entry for
   defines-a-tool covers the search tool the page gives the agent.
