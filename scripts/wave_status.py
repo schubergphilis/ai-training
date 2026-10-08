@@ -52,10 +52,11 @@ builder reply after it and no lead re-check after that reply is
 The dispatcher posts `Claimed by run <Name>, wave <k>` on every issue it
 picks (.claude/skills/wave/SKILL.md, "Claim"), sometimes with a
 parenthetical after it (#457). When the run ends before the wave merges,
-it posts `Claim released by run <Name>, wave <k> (...)` ("Releasing the
-claims", #602). A trusted comment whose first line is exactly one of
-the two, and whose other lines are blank or attribution lines, is
-a claim (#507). A claim applies to no branch: it is no builder reply,
+it posts `Claim released by run <Name>, wave <k> (...)`
+(.claude/skills/wave/when-the-run-ends.md, "Releasing the claims", #602).
+A trusted comment whose first line is exactly one of the two, and whose
+other lines are blank or attribution lines, is a claim (#507).
+A claim applies to no branch: it is no builder reply,
 it doesn't finish an `Unfinished:` branch and it doesn't clear a lead
 re-check. Any other wording, such as `Claimed by run` in a fence, in
 the middle of a sentence, or with a `Branch:` line, a code fence or any
@@ -169,10 +170,11 @@ CLAIM_LINE = re.compile(
 )
 
 # The first line of a wave lead's follow-ups comment on the run issue under
-# `--no-filing`, `Follow-ups from OCELOT wave 3` (.claude/skills/wave/SKILL.md,
-# "Filing"), optionally with a trailing colon, as a Markdown heading, or in
-# bold with the colon inside (`**Follow-ups from OCELOT wave 3:**`). Group 1
-# or 3 is the run's name in capitals, group 2 or 4 the wave. Case-sensitive,
+# `--no-filing`, `Follow-ups from OCELOT wave 3`
+# (.claude/skills/wave/filing-paragraphs.md, "Filing paragraphs"),
+# optionally with a trailing colon, as a Markdown heading, or in bold with
+# the colon inside (`**Follow-ups from OCELOT wave 3:**`). Group 1 or 3 is
+# the run's name in capitals, group 2 or 4 the wave. Case-sensitive,
 # as the lead writes it.
 _FOLLOW_UPS = "Follow-ups from ([A-Z]+) wave ([1-9][0-9]*):?"
 FOLLOW_UPS_LINE = re.compile(

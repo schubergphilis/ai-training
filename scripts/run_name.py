@@ -81,10 +81,11 @@ HARNESS = "harness"
 REFUSED = 3
 """The exit code when the harness exclusivity check refuses the run."""
 STOP_COMMENTS = ("Run ended:", "Stop condition:")
-"""How a stop comment starts. `Run ended:` is the first line SKILL.md "When the
-run ends" gives it. The runs that ended before 2026-09-30 (549bd15f) mostly
-started it with `Stop condition:`, and Ocelot (#513), which PR #520 closed,
-is one of them."""
+"""How a stop comment starts. `Run ended:` is the first line
+.claude/skills/wave/when-the-run-ends.md, "When the run ends", gives it.
+The runs that ended before 2026-09-30 (549bd15f) mostly started it with
+`Stop condition:`, and Ocelot (#513), which PR #520 closed, is one of
+them."""
 RECENT_LIMIT = 50
 """How many of the newest issues `--check` reads without the search index (#616)."""
 RECENT_QUERY = """
@@ -391,8 +392,8 @@ def newest_closed_run(runs: Sequence[Run], name: str) -> Run | None:
 def has_stop_comment(comments: Sequence[Comment]) -> bool:
     """True when one of the comments is the run's stop comment.
 
-    The stop comment is the one .claude/skills/wave/SKILL.md, "When the
-    run ends", posts: its body starts with `Run ended:`, or with the older
+    The stop comment is the one .claude/skills/wave/when-the-run-ends.md,
+    "When the run ends", posts: its body starts with `Run ended:`, or with the older
     `Stop condition:` (STOP_COMMENTS). Only a comment by
     an account in TRUSTED_VERDICT_AUTHORS counts, since anyone can comment
     on a public issue. Every comment is read, since a later comment can
