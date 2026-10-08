@@ -80,6 +80,33 @@ def test_an_untrusted_comment_is_dropped_and_only_counted(
     assert "Dropped 1 comment by other accounts." in out
 
 
+def test_a_standing_approval_comment_by_an_outsider_on_a_run_issue_is_dropped(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The wave dispatcher reads the run issue's standing approval this way (#631)."""
+    run_url = "https://github.com/schubergphilis/ai-training/issues/746"
+    withdrawn = {
+        **comment("lsimons", "Standing approval withdrawn.", "2026-10-01T00:00:00Z"),
+        "url": f"{run_url}#issuecomment-1",
+    }
+    given = {
+        **comment("outsider", "Standing approval given again.", "2026-10-02T00:00:00Z"),
+        "url": f"{run_url}#issuecomment-2",
+    }
+    _, out = run_main(["746"], issue_json([withdrawn, given]), capsys)
+    assert "--- comment 1 of 1: lsimons, 2026-10-01T00:00:00Z ---\n" in out
+    assert f"URL: {run_url}#issuecomment-1\nStanding approval withdrawn.\n" in out
+    assert "given again" not in out
+    assert "issuecomment-2" not in out
+    assert "Dropped 1 comment by other accounts." in out
+
+
+def test_a_comment_without_a_url_gets_no_url_line(capsys: pytest.CaptureFixture[str]) -> None:
+    _, out = run_main(["606"], issue_json([comment("lsimons", "A note.", "2026-09-01")]), capsys)
+    assert "URL:" not in out
+    assert "--- comment 1 of 1: lsimons, 2026-09-01 ---\nA note.\n" in out
+
+
 def test_a_login_that_only_contains_a_trusted_name_is_dropped(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
