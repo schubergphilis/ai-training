@@ -81,6 +81,14 @@ Spawn agents by name and by nothing else:
   builder's reply from the issue too. Read an issue for yourself through
   the same task, never through `gh issue view --comments`.
 
+For an issue whose title starts with `Lesson:`, read the builder's
+hand-back before you start its `lesson-reviewer`. It holds a block that
+starts with the line `Self-check:`, with the parts `builder.md` lists
+under "Self-check before the first push" (#727). When the block or one
+of its parts is missing, send the builder one message asking for it, and
+start the reviewer only after the builder hands it back. Paste the block
+in the reviewer's prompt after the issue brief.
+
 The table in your prompt has the format of the wave's kind. A lessons
 wave lists the lesson id, the course position and the planned `after`
 entries. A content wave and a code wave list each issue with its title and

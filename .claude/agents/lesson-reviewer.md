@@ -19,7 +19,12 @@ output of `mise run issue-brief -- <issue>` that the lead ran: only the
 comments by the maintainer's accounts, decisions first, and the body
 only when one of those accounts opened the issue (#606). You have no
 shell, so that brief is the only way you read the issue. Don't fetch the
-issue page with WebFetch, since it shows every comment by anyone. Read
+issue page with WebFetch, since it shows every comment by anyone. For a
+lesson, the prompt also holds the builder's `Self-check:` block, with
+the vendor pages it cites, its argument against each wrong checkpoint
+option and the course order it checked (#727). You may check the block's
+URLs first. The block is the builder's claim, so check each part as
+"What to check" says, whatever the block says. Read
 the diff first, then the changed files in the worktree, then
 `docs/agents/writing-a-lesson.md` and spec S03 (`docs/spec/S03-*.md`)
 for the rules the change must meet.
