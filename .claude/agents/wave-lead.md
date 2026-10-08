@@ -122,7 +122,8 @@ after it. `mise run wave-status` reads that first line as a parked note,
 which is no builder reply, so a resumed lead doesn't send the unchanged
 branch to a re-check.
 
-Stop an agent that is still running when the wave ends, with `TaskStop`.
+Before you finish as "Finishing" says, stop an agent that is still running
+with `TaskStop`.
 
 ## Integration
 
