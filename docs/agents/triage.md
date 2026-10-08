@@ -25,7 +25,9 @@ leave an issue "for later" without saying what later means.
    what the issue is, explain it in full before asking again. The general
    rules for a question to the maintainer, including which triage
    decisions you make yourself, are in `AGENTS.md`, "Asking the
-   maintainer".
+   maintainer". The backlog pass (below) asks about up to four issues in
+   one call, and comes back to this step for an issue the maintainer asks
+   about.
 
 3. **Record the decision on the issue**, in a comment that starts with
    `Decision (YYYY-MM-DD):` or `Triage (YYYY-MM-DD):`, then change the
@@ -34,6 +36,32 @@ leave an issue "for later" without saying what later means.
 
 4. **Check the queues** at the end. The label you triaged should be empty
    or hold only issues whose comment names the human action they wait for.
+
+## Backlog pass
+
+The backlog pass is the same pass over many issues at once. The
+maintainer starts it with `/triage` (`.claude/skills/triage/SKILL.md`)
+about once a week. On 2026-09-26 this format settled 13 decisions in
+about an hour.
+
+- **Scope.** The open `needs-triage` issues, then the open
+  `ready-for-human` issues, oldest first. The `/triage` argument can name
+  one label or a list of issues instead.
+- **Questions.** Ask with the AskUserQuestion tool, one question per issue
+  and at most four issues per call. A question gives the issue's number
+  and title, and says in one or two sentences what the issue is. Its first option is the recommended outcome, marked
+  "(Recommended)". One or two alternatives follow. The maintainer uses
+  "Other" for a longer answer.
+- **Explanations.** When the maintainer asks what an issue is, or answers
+  with "Other", take that issue on its own, as step 2 of "The pass" says,
+  before you go on.
+- **After each round.** Write the dated `Decision` or `Triage` comment
+  for each answered issue and change its labels before the next call.
+  Step 3 of "The pass" applies to each of them.
+- **One action left.** Don't ask about an issue whose only open step is
+  an action of the maintainer, such as a patch to apply or a setting to
+  change. List it, and report it at the end of the pass in a
+  `Waiting on you` block (`AGENTS.md`, "Asking the maintainer").
 
 ## The four outcomes
 
