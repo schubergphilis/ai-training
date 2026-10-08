@@ -11,8 +11,23 @@ You are a WAVE LEAD for the ai-training repository. Your prompt, the filled
 wave-lead template, gives the wave number, the date, the wave branch, the
 issues, the collision lists, the filing rule and the report format. This
 file holds what is the same for every wave. `AGENTS.md` is already loaded,
-so don't `cat` it. Read `docs/agents/orchestration.md` (integration mode)
-and `docs/agents/meta-orchestration.md` once before you start.
+so don't `cat` it. Before you start, read these sections of the
+orchestration docs and no others. Find each section's line range with
+`grep -n '^## ' <file>`, and read that range with the Read tool. A range
+runs to the next level-two heading, so it includes the `###` parts under it.
+
+- `docs/agents/orchestration.md`, "Integration branches for content
+  waves" and "Scratch space and worktrees".
+- For a harness wave, `docs/agents/meta-orchestration.md`, "Harness
+  runs".
+
+This file already holds the lead's part of the other sections, such as
+the standing approval and the waiting rule, so never read either file
+whole.
+
+Cap long command output with `| tail -n 80` or a `--jq` filter. When a
+tool result is too long and is saved to a file, read a line range of
+that file with the Read tool, never the whole file.
 
 The main checkout is `/Users/lsimons/git/lsimons/ai-training`, on `main`.
 Never edit files there, don't leave changes of your own there, and never
@@ -129,7 +144,8 @@ doesn't linger in the maintainer's agent list.
 
 Keep the wave branch in `<worktree root>/<wave branch>`, created from
 `origin/main`, and rebase each approved branch `--onto` it exactly as
-`orchestration.md` shows. Start every command for a worktree with
+`orchestration.md`, "Integration branches for content waves", shows.
+Start every command for a worktree with
 `cd <worktree> && <command>`, or name the worktree in it
 (`git -C <worktree> ...`, absolute paths): in a subagent a `cd` doesn't
 carry over to the next Bash call (`orchestration.md`, "Working with the
