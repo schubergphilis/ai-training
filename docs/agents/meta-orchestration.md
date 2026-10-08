@@ -375,15 +375,14 @@ session or in a comment on the run issue. The dispatcher reads those
 comments through `mise run issue-brief -- <run>`, which prints only the
 comments by the accounts in `TRUSTED_VERDICT_AUTHORS`, so a comment by
 another account withdraws or gives nothing (#631). It records a
-withdrawal in
-the run issue's `## Standing approval` section, with the comment's URL
-or `in session` as its source, so a later wave and a `/wave --resume`
-read it back and never record one comment twice. A wave whose lead is
-running keeps the approval it started with, and from the next lead the
-dispatcher spawns, including the new lead of a resumed wave, it goes
-back to per-PR approval. When the dispatcher resumes a wave, a
-withdrawal given while its earlier lead ran applies from that wave,
-whether that lead reported `failed` or never reported, because the
+withdrawal in the run issue's `## Standing approval` section, with the
+comment's URL or `in session` as its source, so a later wave and a
+`/wave --resume` read it back and never record one comment twice. A wave
+whose lead is running keeps the approval it started with, and from the
+next lead the dispatcher spawns, including the new lead of a resumed
+wave, it goes back to per-PR approval. When the dispatcher resumes a
+wave, a withdrawal given while its earlier lead ran applies from that
+wave, whether that lead reported `failed` or never reported, because the
 resume spawns a new lead. A withdrawal in the session and one in a
 comment then act the same. The dispatcher fills the lead prompt's
 `{{APPROVAL}}` line with the withdrawal, which is otherwise left out.
