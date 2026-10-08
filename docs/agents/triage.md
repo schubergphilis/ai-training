@@ -49,9 +49,10 @@ about an hour.
   one label or a list of issues instead.
 - **Questions.** Ask with the AskUserQuestion tool, one question per issue
   and at most four issues per call. A question gives the issue's number
-  and title, and says in one or two sentences what the issue is. Its first option is the recommended outcome, marked
-  "(Recommended)". One or two alternatives follow. The maintainer uses
-  "Other" for a longer answer.
+  and title, and says in one or two sentences what the issue is. Its
+  first option is the recommended outcome, marked "(Recommended)". One or
+  two alternatives follow. The maintainer uses "Other" for a longer
+  answer.
 - **Explanations.** When the maintainer asks what an issue is, or answers
   with "Other", take that issue on its own, as step 2 of "The pass" says,
   before you go on.
@@ -62,6 +63,10 @@ about an hour.
   an action of the maintainer, such as a patch to apply or a setting to
   change. List it, and report it at the end of the pass in a
   `Waiting on you` block (`AGENTS.md`, "Asking the maintainer").
+- **Parked issues.** A `/triage` the maintainer starts counts as asking
+  in the sense of "What stays with the maintainer" (below). The backlog
+  pass may raise a `ready-for-human` issue that waits for the maintainer
+  on purpose.
 
 ## The four outcomes
 
