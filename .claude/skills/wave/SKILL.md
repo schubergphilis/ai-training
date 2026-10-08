@@ -2,15 +2,17 @@
 name: wave
 description: Run the meta-orchestration dispatcher loop. Opens or resumes a named run issue, picks the next wave of ready issues, spawns one wave lead per wave, reads its report, keeps the run issue current, and repeats until a stop condition.
 argument-hint: "[size] [kind lessons|content|code|harness] [only N,N,...] [no-filing] [resume Name]"
+disable-model-invocation: true
 ---
 
 You are the DISPATCHER of `docs/agents/meta-orchestration.md`. You run in
 the main checkout, `/Users/lsimons/git/lsimons/ai-training`, on `main`,
 except when you resume a harness wave after the restart ("Resuming after a
-restart" below), which runs in the wave's worktree. You don't edit code or
-run the site's checks, you commit nothing outside that resume, and you
-hold one short report per wave. Read `docs/agents/meta-orchestration.md` once
-before the first wave. The wave lead prompt is the template next to this
+restart" in `harness-runs.md`), which runs in the wave's worktree. You
+don't edit code or run the site's checks, you commit nothing outside
+that resume, and you hold one short report per wave. Read
+`docs/agents/meta-orchestration.md` once before the first wave.
+The wave lead prompt is the template next to this
 file, `.claude/skills/wave/wave-lead-prompt.md`, and its collision notes
 are the canonical list. You loop until a stop condition, and you never
 spawn a second lead while one is running.
@@ -33,7 +35,8 @@ flags themselves keep them.
   issues outside the lesson plans, `bug` issues first, then ascending
   number) or `harness` (ready `harness` issues outside the lesson plans
   by ascending number, built and reviewed as code, and merged only after
-  a restart, see "Harness runs"). Passed to the picker.
+  a restart). Read `.claude/skills/wave/harness-runs.md` when the run's
+  kind is harness. Passed to the picker.
   Check the value before anything else, with `--resume` too. For any
   other value, stop with
   `--kind is lessons, content, code or harness, got "<value>"`, the
@@ -45,7 +48,8 @@ flags themselves keep them.
 - `--no-filing`: the bounded-run mode. Nobody in the wave files a GitHub
   issue while the run goes. Each lead posts its follow-ups, as issue
   titles and bodies, in one comment on the run issue, and you file them
-  all when the run ends (see "When the run ends"). Use it for an
+  all when the run ends (see "When the run ends" in
+  `when-the-run-ends.md`). Use it for an
   unattended run, so the loop has a fixed amount of work and never grows
   its own queue.
 - `--resume <Name>`: continue the open run with that name, with the
@@ -210,7 +214,8 @@ printed.
    `awaiting restart` last line included. When the last line of
    its `## Waves` section is `wave <k>: awaiting restart, PR #<n>`, skip
    this step, since that session runs in the wave worktree on the wave
-   branch, and go on with step 3 and then "Resuming after a restart".
+   branch, and go on with step 3 and then "Resuming after a restart". Read
+   `.claude/skills/wave/harness-runs.md` for that section.
    Otherwise, `git fetch origin`, then compare `main` with `origin/main`
    (`git rev-list --left-right --count main...origin/main`).
    When `main` is behind or has diverged, stop and say so, with the two
@@ -227,8 +232,8 @@ printed.
    closing keyword before the session that merged could reopen it ("The
    run issue after a merge"). The script gives it only when no comment on
    it by `lsimons` or `lsimons-bot` is a stop comment, one that starts
-   with `Run ended:` ("When the run ends") or `Stop condition:` (the first
-   line most runs before 2026-09-30 used). For a run closed by hand, or
+   with `Run ended:` ("When the run ends" in `when-the-run-ends.md`) or
+   `Stop condition:` (the first line most runs before 2026-09-30 used). For a run closed by hand, or
    one with a stop comment, it exits 1 and says the run has ended, and
    step 1 stops. Reopen the issue with the comment "The run issue after a
    merge" gives, with the PR of `closedBy` as `PR #<n>`, followed by the
@@ -252,7 +257,8 @@ printed.
    gh issue view <run> --json comments -q '.comments | map(select(.author.login == "lsimons" or .author.login == "lsimons-bot") | select(.body | test("^Run ended:"))) | length > 0'
    ```
 
-   When it prints `true`, write the run's file as below, do "When the run
+   When it prints `true`, write the run's file as below, read
+   `.claude/skills/wave/when-the-run-ends.md` and do "When the run
    ends" from the release of the claims on, and resume no wave. This
    route wins over step 2's, an `awaiting restart` last line included.
    Write its current body to the run's file, with the `Run: #<run>` line
@@ -296,8 +302,8 @@ printed.
       On any other exit code, close your issue with a comment that quotes
       the stderr, so no half-opened run blocks the next one, and stop and
       show the stderr.
-      That close comment is the stop comment of "When the run ends", and
-      nothing else of that section applies to a run that never started.
+      That close comment is the stop comment of "When the run ends"
+      (`when-the-run-ends.md`), and nothing else of that section applies to a run that never started.
    4. When its `takenBy` isn't null, an older open run got the same name
       first: close your issue with a comment saying so, and go back to
       step 2 with the name `run-name` prints now and the same file. Never
@@ -331,7 +337,7 @@ printed.
 4. **Keep the machine awake.** A new run and a resumed run both do this
    step. The `Run ended:` route of step 3 skips it, and so does the
    `awaiting restart` route of step 2, which does it in "Resuming after
-   a restart", step 2. When `uname` prints anything other than `Darwin`,
+   a restart" (`harness-runs.md`), step 2. When `uname` prints anything other than `Darwin`,
    skip the step. On macOS, `$PPID` in a Bash tool call is the Claude
    Code process itself, in the foreground and with `run_in_background`,
    so `caffeinate -w $PPID` ends when this session ends. Check it first
@@ -342,8 +348,8 @@ printed.
    `pgrep -f -x "caffeinate -i -w $PPID"` lists a `caffeinate` this
    session already started. When it prints nothing, run
    `caffeinate -i -w $PPID` with `run_in_background`. It keeps the
-   machine from idle sleep until "When the run ends" stops it or the
-   session quits. Leave every other `caffeinate` alone, since the
+   machine from idle sleep until "When the run ends"
+   (`when-the-run-ends.md`) stops it or the session quits. Leave every other `caffeinate` alone, since the
    maintainer may run their own. The leads and builders run in the same
    Claude Code process and see the same `$PPID`, so only the dispatcher
    runs these commands. `caffeinate -i` doesn't keep the machine awake
@@ -490,8 +496,9 @@ printed.
      earlier run with the same name left it, so stop and report it.
    - `{{TABLE}}`: the picker's Markdown output, with the nits row appended
      to the table when there is one.
-   - `{{FILING}}`: one of the two paragraphs under "Filing paragraphs"
-     below, as written, with the run issue's number filled in.
+   - `{{FILING}}`: read `.claude/skills/wave/filing-paragraphs.md` and
+     take one of its two paragraphs, as written, with the run issue's
+     number filled in.
    - `{{RESUME}}`: for a new wave, `This is a fresh wave.` For a resume
      (step 3), these three sentences: `You are RESUMING <NAME> wave <k> on branch <branch>.` `A previous lead stopped before reporting.` `Follow "Resuming a half-done wave" in your agent file before anything else.`
    - `{{APPROVAL}}`: first record any withdrawal or new approval the
@@ -589,7 +596,8 @@ printed.
      issue after a merge" says. Under `--only`, remove the issues the
      merged PR closes, without the run issue's own number
      (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number | select(. != <run>)'`),
-     from `Remaining --only`, as "Resuming after a restart" step 6 does.
+     from `Remaining --only`, as "Resuming after a restart" step 6
+     (`harness-runs.md`) does.
      Then treat the wave as `merged` and go to step 1, and give the CI
      result in your next message. On no, replace the line with
      `wave <k>: open, PR #<n>` and stop as on any other `open`. An `open` with any other reason is the
@@ -597,7 +605,8 @@ printed.
    - `open`: chime, report the lead's reason to the maintainer, and stop.
    - `open` on a harness wave: chime and stop with the stop condition
      "harness wave awaiting restart". Leave the run issue open, and end
-     with the message in "Harness runs", "The stop message".
+     with the message in "Harness runs", "The stop message". Read
+     `.claude/skills/wave/harness-runs.md` for it.
    - `failed`: chime, report to the maintainer, and stop. The run issue is
      left open with its `In flight` line, so `/wave --resume <Name>`
      resumes the wave rather than restarting it.
@@ -625,277 +634,11 @@ After every wave merge, check the run issue anyway:
 reopen the run issue with a comment that says why, before you decide
 whether a stop condition holds:
 `gh issue reopen <run> --comment "GitHub closed this run issue when PR #<n> merged, because the PR's text names it after a closing keyword. The dispatcher reopens it and closes it itself when the run ends."`,
-followed by the attribution lines. "When the run ends" then closes it
+followed by the attribution lines. "When the run ends"
+(`when-the-run-ends.md`) then closes it
 with its own comment when the run ends. When the session stops between
 the merge and this check, `/wave --resume <Name>` finds the closed run
 issue and reopens it with the same comment ("Starting a run", step 3).
-
-## Harness runs
-
-A harness run (`--kind harness`) builds and reviews like a code run, but
-the session that built a wave never merges it, because agent files,
-hooks, `settings.json` and skills load only when a session starts. The
-standing approval doesn't cover a harness wave. Its lead reports `open`
-even when the wave is green, with the PR's `After the restart` checklist,
-and the run stops at "harness wave awaiting restart" (step 8). No other
-run starts or resumes while a harness run is open ("Starting a run",
-step 1).
-
-### The stop message
-
-When a harness wave stops awaiting restart, your last message gives the
-PR number, says that the PR body's `After the restart` checklist is what
-the next session runs, and gives these lines to run, with the wave's
-values and today's date filled in, and `<worktree root>` replaced by
-the absolute path that `mise run worktree-root` prints:
-
-```text
-/exit
-cd <worktree root>/wave/<name>-<k>
-claude -n "wave <name> harness <yyyy-mm-dd>"
-/wave --resume <Name>
-```
-
-It says what to expect: the new session loads the agent files and hooks
-of the wave branch. The resume then works through the PR's
-checklist without the `main` preflight, and asks whether to merge. When the wave worktree is missing, the line after `/exit` is
-`git -C /Users/lsimons/git/lsimons/ai-training worktree add <worktree root>/wave/<name>-<k> wave/<name>-<k>`.
-
-### Resuming after a restart
-
-This is `/wave --resume <Name>` for a run whose `## Waves` section ends
-with `wave <k>: awaiting restart, PR #<n>`, in the session the stop
-message started. Do these steps in order and stop at the first that
-fails:
-
-1. **Place.** `git rev-parse --show-toplevel` is
-   `<worktree root>/wave/<name>-<k>` and
-   `git branch --show-current` is `wave/<name>-<k>`. Otherwise stop and
-   repeat the lines of the stop message. Then `git fetch origin` and
-   read the PR's state (`gh pr view <n> --json headRefOid,state`). When
-   it is `CLOSED`, stop and say that PR #<n> was closed without a merge.
-   When it is `MERGED`, a session stopped after the merge and before
-   step 6 wrote the `merged` line, or the PR was merged by hand. A merge
-   can't be undone, so tell the maintainer that PR #<n> was found merged,
-   skip steps 3 to 5 and go on with step 6 in this worktree on the merged
-   branch. Step 2 still holds, because step 6 edits the run issue body
-   from the run file. When it is `OPEN`, the branch's `HEAD` equals
-   `origin/wave/<name>-<k>` and the PR's head. When they differ, stop and
-   say which.
-2. **The run file.** "Starting a run" step 3 has rebuilt
-   `.scratch/run-<name>.md` in this worktree from the run issue, and
-   every body edit passes "Before each body edit" as usual. Then do
-   "Starting a run", step 4, which that route skipped, with all its
-   checks: the `uname` check, the `basename` check of `$PPID`, the
-   `pgrep` check, then `caffeinate -i -w $PPID` with `run_in_background`
-   and the reminder to keep the lid open. The `caffeinate` of the
-   session that built the wave ended when that session quit.
-3. **The checklist.** Read the `## After the restart` section of the PR
-   body (`gh pr view <n> --json body -q .body`) and run every item in
-   order, up to the item for the maintainer's merge decision. Run each
-   command yourself when your tools can. An item that only the
-   maintainer can do, such as a slash command typed into a new session,
-   goes to the maintainer as one line saying what to type and what to
-   expect, and you wait for the result. Then post the results on the PR
-   as one comment, one line per item with pass or fail and what you saw,
-   and the attribution lines.
-4. **A small gap.** When an item fails because of a small gap, such as a
-   missing sentence or a case the check misses, fix it on the wave
-   branch in this worktree: commit, run `mise run fast`, push, run the
-   item again, and add the fix and the new result to the PR comment.
-   For a bigger gap, fix nothing, and say so on the PR and to the
-   maintainer.
-5. **Ask.** Ask the maintainer one yes-or-no question: whether to merge
-   PR #<n>, with the results in one line. Merge only on the maintainer's
-   yes in this session. Run the check before a merge in "The run issue
-   after a merge" first, then merge with
-   `AI_TRAINING_ROLE=dispatcher gh pr merge <n> --rebase`. On a no, stop
-   with "the maintainer declines the merge" and leave the run issue open
-   as it is ("When the run ends").
-6. **After the merge.** Replace the wave's line with
-   `wave <k>: merged, PR #<n>`. There is no new report, so the merged
-   issues are the ones the merged PR closes, without the run issue's own
-   number
-   (`gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number | select(. != <run>)'`).
-   Then check the run issue as "The run issue after a merge" says. After
-   the `MERGED` route of step 1, "Starting a run" step 3 has already
-   reopened a run issue the merge closed, so the check prints `OPEN`. Under
-   `--only`, remove the merged issues from `Remaining --only`. The
-   collision notes were copied when the `open` report came. Close the
-   run when a stop condition holds (under `--only`, an empty `Remaining --only`), as
-   "When the run ends" says. Then tell the
-   maintainer to quit and start again in the main checkout, with the
-   lines `/exit`, `cd /Users/lsimons/git/lsimons/ai-training`,
-   `git pull --rebase`,
-   `git worktree remove <worktree root>/wave/<name>-<k>` and `claude`,
-   then `/wave --resume <Name>` when the run is still open. List the
-   checklist items after the merge decision for that new session, whose
-   results go on the PR as a comment.
-
-## Filing paragraphs
-
-Default (no `--no-filing`):
-
-> Before you report, file a GitHub issue (per `docs/agents/triage.md`,
-> labeled with exactly one of `code`, `content` or `harness`, plus
-> `ready-for-agent` when every decision is made, or `ready-for-human` when
-> one is the maintainer's) for every follow-up a review named. A `ready-for-human` body holds what
-> `triage.md`, "What a maintainer decision needs", lists. File a
-> follow-up from the review of issue N with `--parent N`, and set a
-> blocker as a relationship (`triage.md`, "Where an issue came from" and
-> "Dependencies"). Fix cheap nits
-> in the branch. Every cosmetic nit you leave open on a merged branch
-> becomes one line, naming the file and the change, appended to the body
-> of the one open issue titled `Cosmetic nits`
-> (`gh issue view <n> --json body`, then `gh issue edit <n> --body-file`).
-> Create that issue, labeled `content` and `ready-for-agent`, only when
-> none is open. Never file a nits issue per wave or per lesson. Link every
-> filed issue from the session record and list them on the `Filed` line.
-> The `Follow-ups` line is `none`.
-
-Under `--no-filing`:
-
-> Nobody in this wave runs `gh issue create` or edits an issue body. Pass
-> this rule, this whole paragraph, verbatim to every builder you spawn.
-> Builders skip the `complete` skill's follow-up-filing step and put every
-> follow-up and nit they'd have filed, one line each with the file and the
-> change, in their final report to you. For every follow-up a review named
-> or a builder reported, write the issue you would have filed, as a
-> `## <title>` heading with the body and labels under it (exactly one of
-> `code`, `content` or `harness`, plus `ready-for-agent` or
-> `ready-for-human`, and a `Parent: #N` line when the review of issue N
-> named it), in ONE comment
-> on the run issue #<run>, whose first line is `Follow-ups from <NAME> wave <k>`. The
-> body of one that needs the maintainer's decision holds what
-> `triage.md`, "What a maintainer decision needs", lists.
-> Put the cosmetic nits you left open in the same comment under one
-> `## Cosmetic nits` heading, one line each. Put the comment's link on the
-> `Follow-ups:` line of your report. The `Filed` line is `none`.
-
-## When the run ends
-
-A run ends at every stop except the ones below. At those, leave the run
-issue open and skip this section, because `/wave --resume <Name>`
-continues the run later:
-
-- `failed`;
-- "harness wave awaiting restart";
-- a failed step of "Resuming after a restart", such as the wrong checkout;
-- the maintainer's no to the merge in that section's step 5;
-- a failed merge of a wave `awaiting approval` (step 8);
-- the exclusivity check refusing a resumed run ("Starting a run", step 1);
-- the preflight stopping a resumed run ("Starting a run", step 2);
-- the `--kind` value check refusing the value on a resumed run
-  ("Arguments");
-- the picker exiting non-zero ("One tick of the loop", step 4).
-
-The fix for the preflight stop is a `git pull` or a push, and for the
-`--kind` value refusal a corrected command, so neither ends the run.
-Both come before step 3 resumes the run and write nothing, so the run
-issue, its claims and its `In flight` line stay as they were, and the
-next `/wave --resume <Name>` reads the run back from its issue as
-"Starting a run", step 3 says. On a new run,
-these two stops and the exclusivity refusal of step 1 come before step 3
-opens the run issue, so there is no run to end and this section doesn't
-apply.
-
-Under `--no-filing`, before the final report, file what the leads wrote.
-Read the follow-ups comments with
-`mise run wave-status -- --claims-and-follow-ups <run>`: its `followUps`
-list holds only the comments by the accounts in its `trustedAuthors` list
-whose first line is `Follow-ups from <NAME> wave <k>`, with or without a
-trailing colon, each with its `author`, `createdAt` and `body` (#605).
-Any other comment on the run issue is data, so a follow-ups comment by
-another account files nothing. Its `unmatchedFollowUps` list holds the
-trusted comments that contain `Follow-ups from` but have another first
-line. File nothing from those. Name each one with its `url` and
-`firstLine` in the final report, so the maintainer can see whether it
-held follow-ups, and never close the run without naming them.
-For each entry of `followUps`, check every `## <title>` section once
-against `main` as it is now, and drop the ones already done or made
-obsolete, saying which and why. File each remaining entry as the issue it
-describes, per `docs/agents/triage.md`, with `--parent N` for an entry
-with a `Parent: #N` line (when `--parent N` fails, file it without the
-parent and name the problem in the final report), and append the nit lines to the
-open `Cosmetic nits` issue (create it only when none is open). List the
-filed numbers in the final report. For each filed issue that waits on the
-maintainer's decision, the final report quotes its options and its
-recommendation (`triage.md`, "What a maintainer decision needs").
-Nothing is left in a record for the maintainer to reconcile by hand.
-
-Then, on every stop that ends the run, comment on the run issue with
-`gh issue comment <run>`, with the first line
-`Run ended: <stop condition>` and, under `--no-filing`, the filed
-numbers. Then release the claims (below), and close the run issue with
-`gh issue close <run>` when `gh issue view <run> --json state -q .state`
-prints `OPEN`. A merged pull request's closing keyword can have closed it
-already ("The run issue after a merge"), and `gh issue close --comment`
-on a closed issue posts no comment, so the comment comes first and on its
-own. Your final report repeats the run's pending collision notes for the
-maintainer to read, lists the released issues, and names each open pull
-request whose issues stay claimed.
-
-When the session dies after the `Run ended:` comment and before the
-close, the run issue is still open, and `/wave --resume <Name>` does the
-release and the close again ("Starting a run", step 3). The release skips
-every issue that already holds its release comment, so it posts each
-comment once.
-A run issue closed by hand skips this section, so its claims stay until
-someone releases them as below.
-
-Last, once the run issue is closed, stop the `caffeinate` of "Starting a
-run", step 4. On macOS, run
-`for p in $(pgrep -f -x "caffeinate -i -w $PPID"); do kill $p; done`.
-The exact match stops only the `caffeinate` that waits on this session's
-Claude Code process, so a `caffeinate` the maintainer started keeps
-running. Never run `pkill caffeinate`. The background task then reports
-exit code 143. The `kill` causes this code, so it isn't a failure. On a
-stop that leaves the run open, the `caffeinate` runs until the session
-quits.
-
-### Releasing the claims
-
-Step 5 of the loop assigns each issue of a wave, and the picker skips
-assigned issues. So when the run ends, release the claims of every wave
-whose `## Waves` line isn't `merged`: the `In flight` line (a lead that
-never reported, or reported `failed`) and the lines `open`,
-`awaiting approval` and `awaiting restart`. When the maintainer says stop
-while a lead runs, release after that lead has stopped, since its
-builders may still push. For each such wave `<k>`:
-
-1. **The claimed issues.** For the `In flight` line, they are the issues
-   on the line. For the other lines, the search
-   `gh issue list -s open --search '"Claimed by run <Name>, wave <k>" in:comments' --json number -q '.[].number'`
-   gives the candidates. The search matches that text by any account, so
-   an outsider's comment would release an issue another run holds. Run
-   `mise run wave-status -- --claims-and-follow-ups <issues>` for the
-   issues of the line or the candidates. Of the candidates, keep the
-   issues whose `claims` list has an entry of kind `claim` with run
-   `<Name>` and wave `<k>` (#605). Then skip an issue that is closed
-   (`gh issue view <n> --json state,assignees`) or whose claim of this
-   wave already has a `releasedBy` url, which is a release comment by an
-   account in `trustedAuthors`. Every run posts and assigns as the same
-   account, so the assignee alone doesn't say whether this run released
-   the issue.
-2. **An open pull request.** For a line with `PR #<n>`, read
-   `gh pr view <n> --json state,closingIssuesReferences`. While its state
-   is `OPEN`, the issues it closes stay claimed, because the pull request
-   holds their work and its merge closes them, and a new run would build
-   them a second time. That holds for a harness wave `awaiting restart`
-   too. When the maintainer later closes that pull request without a
-   merge, those issues are released by hand with step 3. Release every
-   other claimed issue, and every one when the pull request is closed.
-3. **Release.** Run `mise run wave-status -- wave/<name>-<k> <issues>`
-   once for the issues to release. For each issue, run
-   `gh issue edit <n> --remove-assignee @me` when you are still an
-   assignee, then comment one line and the attribution lines:
-   `Claim released by run <Name>, wave <k> (the run ended<branches>)`.
-   `<branches>` adds, for each entry of the issue's `branches` list in the
-   `wave-status` output, `; <branch> is unreviewed` when its `verdict` is
-   null, and otherwise `; <branch> has the last verdict <verdict>`, with
-   the `verdict` field of that verdict. Write nothing else: `wave-status`
-   reads the comment as a claim, which applies to no branch, only while
-   it has no other line and no parenthesis inside its parentheses.
 
 ## Stop conditions
 
@@ -916,9 +659,14 @@ Stop, and say which one it was, when:
   harness wave, step 8);
 - the harness exclusivity check refuses the run ("Starting a run"
   step 1 or step 3.3), or the `--kind` value check refuses the value;
-- a step of "Resuming after a restart" fails, or the maintainer declines
-  the merge there;
+- a step of "Resuming after a restart" (`harness-runs.md`) fails, or
+  the maintainer declines the merge there;
 - the maintainer says stop.
+
+At every stop, read `.claude/skills/wave/when-the-run-ends.md` before
+your final report. It says which stops end the run and what to do then:
+the filing under `--no-filing`, the `Run ended:` comment, the release of
+the claims, the close of the run issue and the end of `caffeinate`.
 
 The concurrent-agent cap is shared by every level, so run one wave at a
 time in each run. The template tells the lead to run at most six builders
