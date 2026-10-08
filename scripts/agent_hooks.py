@@ -8,13 +8,17 @@ Five entry points, each reading the hook's JSON event on stdin:
   reason that names the alternative, which Claude Code shows the agent.
 - `review-bash` (PreToolUse on Bash in the `code-reviewer` agent,
   `.claude/agents/code-reviewer.md`, #348) allows only the read-only
-  commands a review needs: `git diff|log|show|status|ls-files`,
+  commands a review needs: `git diff|log|show|status|ls-files|range-diff`,
+  `git branch` that lists, `git ls-remote` without `--upload-pack`,
   `gh pr diff|view`, `gh issue view`, `mise tasks`, `mise run` of a check
   task in `REVIEW_TASKS`, `cd`, `ls`, `grep`, `cat`, `echo`, `head`,
-  `tail`, `wc`, `sort`, `uniq`, `sed -n` with print scripts, and `for`
-  loops over these, with no redirect to a file. The command inside each
-  `$(...)`, backtick pair or process substitution is checked the same
-  way. `git -c`, `git --output` and assignments (`NAME=value`) are
+  `tail`, `wc`, `sort`, `uniq`, `cut`, `od`, `sed -n` with print scripts
+  (`p`, `!p`), `awk` with a program that has no `system`, `getline`,
+  `>`, `|` or `@` and no option but `-F` and `-v`, `for` loops over
+  these, and a `for` loop over task names in `REVIEW_TASKS` whose whole
+  body is `mise run $task` (#732), with no redirect to a file. The
+  command inside each `$(...)`, backtick pair or process substitution is
+  checked the same way. `git -c`, `git --output` and assignments (`NAME=value`) are
   rejected. Anything else exits 2, and so does a command it can't read.
   A backtick body is unescaped before the check, a `for` loop over an
   upper-case name or `path` and an unquoted here-document are rejected,
@@ -940,6 +944,9 @@ REVIEW_COMMANDS = (
     ("gh", "pr", "view"),
     ("gh", "issue", "view"),
     ("git", "ls-files"),
+    ("git", "range-diff"),
+    ("git", "branch"),
+    ("git", "ls-remote"),
     ("mise", "tasks"),
     ("head",),
     ("tail",),
@@ -950,6 +957,8 @@ REVIEW_COMMANDS = (
     ("echo",),
     ("sort",),
     ("uniq",),
+    ("cut",),
+    ("od",),
 )
 
 # The `mise run` tasks a reviewer may run: checks that write only to
@@ -1105,7 +1114,8 @@ MISE_TASKS_WRITERS = frozenset({"add", "edit", "run", "r"})
 # closing `/`. Any other `$` in a sed script comes from the shell, such as
 # the zsh `/$~X/p` (#414).
 SED_ADDRESS = r"(\d+|\$|/(?:[^/\\$]|\\.)*\$?/)"
-SED_PRINT = re.compile(rf"{SED_ADDRESS}(,{SED_ADDRESS})?p(;{SED_ADDRESS}(,{SED_ADDRESS})?p)*")
+# `!p` prints the lines the address doesn't match (#732).
+SED_PRINT = re.compile(rf"{SED_ADDRESS}(,{SED_ADDRESS})?!?p(;{SED_ADDRESS}(,{SED_ADDRESS})?!?p)*")
 
 
 REDIRECT_END = frozenset(" \t\n;|&<>()")
@@ -1434,7 +1444,138 @@ def uniq_writes(args: Sequence[str]) -> bool:
     return operands > 1
 
 
-GIT_OUTPUT_COMMANDS = frozenset({"diff", "log", "show"})
+# `git range-diff --output=f` writes a file too (checked with git 2.56, #732).
+GIT_OUTPUT_COMMANDS = frozenset({"diff", "log", "show", "range-diff"})
+
+
+# Text in an awk program that writes a file, runs a command, reads a
+# command's output or loads code: `system()`, `print > "f"`, `print | "cmd"`,
+# `"cmd" | getline`, and gawk's `@include`, `@load` and indirect call
+# `@name()`. A comparison such as `$1 > 5` is rejected too (#732).
+AWK_WRITERS = re.compile(r"system|getline|[>|@]")
+
+
+def awk_reads_only(args: Sequence[str]) -> bool:
+    """True for `awk` with a program that only reads, given on the command line.
+
+    The options allowed are `-F sep` and `-v name=value`. Any other option is
+    rejected: `-f`, `--file` and gawk's `-E` read the program from a file,
+    gawk's `-i` and `--include` load a source file and `-l` a library, and
+    its `-o`, `-p` and `-d` write a file. An operand that starts with `-`
+    after the program is rejected too, in case an awk reads options there.
+    """
+    i = 0
+    while i < len(args) and args[i].startswith("-") and args[i] != "-":
+        word = args[i]
+        if word == "--":
+            i += 1
+            break
+        if word in {"-F", "-v"}:
+            i += 2
+        elif re.fullmatch(r"-[Fv].+", word):
+            i += 1
+        else:
+            return False
+    if i >= len(args):
+        return False
+    program, operands = args[i], args[i + 1 :]
+    return (
+        AWK_WRITERS.search(program) is None
+        and not (UNKNOWN_WORD | {"`"}) & set(program)
+        and not any(word.startswith("-") and word != "-" for word in operands)
+    )
+
+
+# The `git branch` options that list. Any other option creates, deletes,
+# renames, copies or configures a branch, or opens an editor
+# (`--edit-description`), so it is rejected (#732).
+GIT_BRANCH_FLAGS = frozenset(
+    {
+        "--all",
+        "--remotes",
+        "--list",
+        "--verbose",
+        "--quiet",
+        "--show-current",
+        "--ignore-case",
+        "--color",
+        "--no-color",
+        "--column",
+        "--no-column",
+        "--abbrev",
+        "--no-abbrev",
+        "--omit-empty",
+    }
+)
+# Options that take a value, as the next word or after `=`. They don't make
+# git list: `git branch --sort=refname x` creates `x`.
+GIT_BRANCH_VALUES = frozenset({"--sort", "--format"})
+# Filters with a commit or object as the next word or after `=`. A filter
+# makes git list, so the other words are patterns.
+GIT_BRANCH_FILTERS = frozenset(
+    {"--contains", "--no-contains", "--merged", "--no-merged", "--points-at"}
+)
+
+
+def git_branch_lists(args: Sequence[str]) -> bool:
+    """True for `git branch` arguments that only list branches.
+
+    A word that isn't an option names a branch to create, unless `-l`,
+    `--list` or a filter (`--contains`, `--merged`, `--points-at`) makes
+    it a pattern. git accepts a long option by a unique prefix, so only the
+    full names count.
+    """
+    lists = False
+    patterns: list[str] = []
+    i = 0
+    while i < len(args):
+        word = args[i]
+        name = word.split("=", 1)[0]
+        if name in GIT_BRANCH_VALUES or name in GIT_BRANCH_FILTERS:
+            lists = lists or name in GIT_BRANCH_FILTERS
+            if "=" not in word:
+                i += 1
+                if i == len(args) and name in GIT_BRANCH_VALUES:
+                    return False
+                # git 2.56 reads `-d` after `--contains` as the commit. A
+                # listing never needs that, so a value with `-` is rejected
+                # in case another git version reads it as an option.
+                if i < len(args) and args[i].startswith("-"):
+                    return False
+        elif name in GIT_BRANCH_FLAGS:
+            lists = lists or name == "--list"
+        elif re.fullmatch(r"-[arvlqi]+", word):
+            lists = lists or "l" in word
+        elif word.startswith("-"):
+            return False
+        else:
+            patterns.append(word)
+        i += 1
+    return lists or not patterns
+
+
+# The `git ls-remote` options a reviewer may use. `--upload-pack` (and the
+# older `--exec`) runs a program, so it is rejected with every option not
+# listed here (#732).
+GIT_LS_REMOTE_OPTIONS = frozenset(
+    {"-q", "--quiet", "-t", "--tags", "-b", "--branches", "--heads", "--refs"}
+    | {"--get-url", "--exit-code", "--symref"}
+)
+
+
+def git_ls_remote_reads(args: Sequence[str]) -> bool:
+    """True for `git ls-remote` without an option that runs a program.
+
+    A repository of the form `<transport>::<address>` runs the remote helper
+    `git-remote-<transport>`, such as `ext::` that runs a command, so a
+    word with `::` is rejected too.
+    """
+    return all(
+        (word in GIT_LS_REMOTE_OPTIONS or word.startswith("--sort="))
+        if word.startswith("-")
+        else "::" not in word
+        for word in args
+    )
 
 
 def git_sets_config(options: Sequence[str]) -> bool:
@@ -1478,6 +1619,8 @@ def review_allows(words: Sequence[str], scope: ReviewScope = CODE_REVIEW) -> boo
         )
     if words[0] == "sed":
         return sed_prints_only(words[1:])
+    if words[0] == "awk":
+        return awk_reads_only(words[1:])
     if words[0] == "sort" and sort_writes(words[1:]):
         return False
     if words[0] == "uniq" and uniq_writes(words[1:]):
@@ -1492,6 +1635,10 @@ def review_allows(words: Sequence[str], scope: ReviewScope = CODE_REVIEW) -> boo
         parsed = git_args(words, ".")
         args = parsed[0] if parsed else []
         if not args or ("git", args[0]) not in REVIEW_COMMANDS:
+            return False
+        if args[0] == "branch" and not git_branch_lists(args[1:]):
+            return False
+        if args[0] == "ls-remote" and not git_ls_remote_reads(args[1:]):
             return False
         return not git_sets_config(words[1 : len(words) - len(args)]) and not (
             args[0] in GIT_OUTPUT_COMMANDS and any(map(is_git_output_option, args[1:]))
@@ -1509,6 +1656,34 @@ def review_segments(command: str, globs: bool = False) -> list[Segment]:
     # redirects writes_a_file allows before splitting.
     harmless = re.sub(r"(\d*|&)>>?(&(\d+|-)|\s*/dev/null)", " ", command)
     return split_segments(mark_expansions(harmless, globs), ".", strict=True, keep_assignments=True)
+
+
+def task_loop_bodies(segments: Sequence[Segment], scope: ReviewScope) -> set[int]:
+    """The indexes of the `mise run $t` segments that are a task loop's whole body.
+
+    A task loop is `for t in <task> ...; do mise run $t; done` with each
+    word of the list a task of `scope`, written out: a `$`, a substitution
+    or a glob in the list makes a word the shell's to decide, and that word
+    is not a task name (#732). Any other body, such as a second command
+    that could change `$t`, leaves `mise run $t` to the usual check, which
+    rejects it.
+    """
+    bodies: set[int] = set()
+    for i in range(len(segments) - 2):
+        header, body, end = segments[i : i + 3]
+        words = header.words
+        if not (
+            words[0] == "for"
+            and len(words) > 3
+            and review_allows(words, scope)
+            and all(word in scope.tasks for word in words[3:])
+        ):
+            continue
+        name = words[1]
+        runs = (["mise", "run", f"{EXPANSION}{name}"], ["mise", "run", f"{EXPANSION}{{{name}}}"])
+        if body.words in runs and body.role is None and end.words == ["done"]:
+            bodies.add(i + 1)
+    return bodies
 
 
 def changes_directory(command: str) -> bool:
@@ -1558,7 +1733,11 @@ def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
                 "anyone. Read an issue through `mise run issue-brief -- <issue>`, or the "
                 "brief in your prompt, which hold only the trusted comments (#606)."
             )
-    for segment in review_segments(outer):
+    segments = review_segments(outer)
+    loop_bodies = task_loop_bodies(segments, scope)
+    for index, segment in enumerate(segments):
+        if index in loop_bodies:
+            continue
         if segment.role is not None or not review_allows(segment.words, scope):
             allowed = ", ".join(" ".join(c) for c in (*REVIEW_COMMANDS, *sorted(scope.exact)))
             task_list = ", ".join(scope.tasks)
@@ -1566,8 +1745,12 @@ def review_reason(command: str, scope: ReviewScope = CODE_REVIEW) -> str | None:
             shown = shown.replace(SUBSTITUTION, "$(...)")
             return (
                 f"`{shown}` is not a review command. A reviewer runs only {allowed}, "
-                "sed -n with p scripts, for loops over these, cd, mise run with one "
-                f"of {task_list}, and mise run issue-brief -- <issue>. A reviewer never edits."
+                "git branch only to list, git ls-remote without --upload-pack, sed -n with p "
+                "or !p scripts, awk with no system, "
+                "getline, >, | or @ in the program and no option but -F and -v, for loops "
+                "over these, cd, mise run with one "
+                f"of {task_list}, a for loop over those tasks whose whole body is "
+                "mise run $task, and mise run issue-brief -- <issue>. A reviewer never edits."
             )
     return None
 

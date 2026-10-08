@@ -52,8 +52,18 @@ since agents may not edit that file.
   such as `{-o,out.txt}`, also with an escaped or quoted space in it, and
   an unquoted here-document (`<<EOF`, where `<<'EOF'` passes). In a
   `sed -n` script a `$` is only the last-line address or the anchor
-  before a regex's closing `/`. It also rejects `git -c` and
-  `git --config-env`, `--output` on `git diff`, `git log` and `git show`,
+  before a regex's closing `/`, and `!p` prints the lines that don't
+  match. `awk` passes only with a program that has no `system`,
+  `getline`, `>`, `|` or `@` (gawk's `@include`, `@load` and indirect
+  calls) and no option but `-F` and `-v`. `git branch` passes only when
+  it lists: no option outside the listing ones and no branch name
+  unless `-l`, `--list` or a filter such as `--contains` makes it a
+  pattern. `git ls-remote` passes without `--upload-pack` or a
+  `<transport>::` repository. A `for` loop over task names in
+  `REVIEW_TASKS` passes when its whole body is `mise run $t` (#732).
+  It also rejects `git -c` and
+  `git --config-env`, `--output` on `git diff`, `git log`, `git show` and
+  `git range-diff`,
   any `NAME=value` assignment, on its own or as a prefix, and a `for` loop
   over an upper-case name or a zsh tied array such as `path`, since a git
   config value or an environment variable such as `GIT_EXTERNAL_DIFF` can

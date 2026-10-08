@@ -23,8 +23,9 @@ A hook in this file's frontmatter (`.claude/hooks/security-bash.sh`)
 gives Bash the rules of the `code-reviewer` hook: the read-only `git`,
 `gh pr diff|view` and `gh issue view` commands without the comments,
 `mise run issue-brief -- <issue>`, `ls`, `grep`, `cat`,
-`echo`, `head`, `tail`, `wc`, `sort`, `uniq`, `sed -n` with print
-scripts, `for` loops over these, `cd`, and `mise run` of one check task
+`echo`, `head`, `tail`, `wc`, `sort`, `uniq`, `cut`, `od`, `sed -n` with
+print scripts, `awk` without `system`, `getline`, `>`, `|` or `@`,
+`for` loops over these, `cd`, and `mise run` of one check task
 in `REVIEW_TASKS` in `scripts/agent_hooks.py`. On top of those it allows
 `mise run audit` (zizmor), `mise run site-audit` (`bun audit`) and
 `mise run vuln` (osv-scanner), and

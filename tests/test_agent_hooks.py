@@ -1196,6 +1196,8 @@ def test_review_bash_names_the_allowed_tasks_and_sed_in_the_block_message() -> N
     assert code == 2
     assert "py-test" in message
     assert "sed -n" in message
+    assert "awk" in message
+    assert "git range-diff" in message
 
 
 @pytest.mark.parametrize(
@@ -1626,6 +1628,128 @@ def test_review_bash_rejects_the_spellings_of_448(command: str, what: str) -> No
 )
 def test_review_bash_still_allows_the_read_ones_near_448(command: str) -> None:
     assert agent_hooks.review_bash({"tool_input": {"command": command}}) == (0, "")
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "sed -n '/x/!p' f",
+        "sed -n '1,5!p;$p' f",
+        "cut -c1-40 f",
+        "cut -d: -f1 f | sort",
+        "od -c f",
+        "git range-diff A...B",
+        "awk '{print length}' f",
+        "awk -F: -v n=2 '{print $n}' f",
+        "awk -F : -vn=2 -- '{print}' f",
+        "awk 'BEGIN{print ENVIRON[\"HOME\"]}'",
+        "git branch",
+        "git branch -a",
+        "git branch -vv",
+        "git branch -r --list 'feat/*'",
+        "git branch --contains HEAD",
+        "git branch --merged main",
+        "git branch --show-current",
+        "git branch --format='%(refname)' --sort=-committerdate",
+        "git ls-remote",
+        "git ls-remote origin",
+        "git ls-remote --tags origin 'refs/tags/v*'",
+        "for t in py-lint spell; do mise run $t; done",
+        'for t in py-lint spell\ndo\n  mise run "$t"\ndone',
+        "for t in py-test; do mise run ${t}; done",
+    ],
+)
+def test_review_bash_allows_the_read_only_commands_of_732(command: str) -> None:
+    assert agent_hooks.review_bash({"tool_input": {"command": command}}) == (0, "")
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "sed -n '/x/w out' f",
+        "sed -n '/x/W out' f",
+        "sed -n '1e date' f",
+        "sed -n '1r /etc/passwd' f",
+        "sed -n '/x/!w out' f",
+        "cut -c1-40 f > out",
+        "od -c f >> out",
+        "git range-diff --output=x A...B",
+        "awk '{system(\"rm x\")}' f",
+        "awk '{print > \"f\"}' f",
+        "awk '{print | \"sh\"}' f",
+        "awk '{\"date\" | getline d}' f",
+        "awk 'BEGIN{getline l < \"f\"}'",
+        "awk '@include \"x\"'",
+        'awk \'BEGIN{f="system"; @f("rm x")}\'',
+        "awk -f prog f",
+        "awk -i inplace '{print}' f",
+        "awk --include x '{print}' f",
+        "awk -l x '{print}'",
+        "awk -o out '{print}'",
+        "awk '{print}' -f prog",
+        'awk "$P" f',
+        "awk '{print}' $(touch x)",
+        "awk -v 'x=1'",
+        "git branch -D x",
+        "git branch -d x",
+        "git branch --delete x",
+        "git branch -m x y",
+        "git branch -M x",
+        "git branch --move x y",
+        "git branch -c x y",
+        "git branch -C x y",
+        "git branch --copy x y",
+        "git branch -u origin/x",
+        "git branch --set-upstream-to=origin/x",
+        "git branch --edit-description",
+        "git branch -f x",
+        "git branch --force x",
+        "git branch --del x",
+        "git branch newname",
+        "git branch -a newname",
+        "git branch --sort=refname newname",
+        "git branch --contains -d x",
+        "git ls-remote --upload-pack=evil origin",
+        "git ls-remote --upload-pack evil origin",
+        "git ls-remote --exec=evil origin",
+        "git ls-remote 'ext::sh -c touch% x'",
+        "for t in py-lint fast; do mise run $t; done",
+        "for t in $X; do mise run $t; done",
+        "for t in py-*; do mise run $t; done",
+        "for t in py-lint; do t=fast; mise run $t; done",
+        "for t in py-lint; do echo; mise run $t; done",
+        "for t in py-lint; do mise run $t; mise run $t; done",
+        "for t in py-lint; do mise run $t:h; done",
+        "for t in py-lint; do mise run $=t; done",
+        "for t in py-lint; do mise run $t x; done",
+        "for t in py-lint; do mise run $u; done",
+        "for t in py-lint; do AI_TRAINING_ROLE=lead mise run $t; done",
+        "for t in py-lint; { mise run $t }",
+    ],
+)
+def test_review_bash_rejects_the_writers_near_732(command: str) -> None:
+    code, message = agent_hooks.review_bash({"tool_input": {"command": command}})
+    assert code == 2
+    assert "not a review command" in message or "to a file" in message
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "for t in $(echo fast); do mise run $t; done",
+        "for t in {fast,ci}; do mise run $t; done",
+        "for t (py-lint) mise run $t",
+        "awk '{print}' *(e:'rm x':)",
+    ],
+)
+def test_review_bash_rejects_a_task_loop_or_awk_the_shell_decides(command: str) -> None:
+    assert agent_hooks.review_bash({"tool_input": {"command": command}})[0] == 2
+
+
+def test_review_bash_allows_a_task_loop_over_the_security_tasks() -> None:
+    event = {"tool_input": {"command": "for t in audit vuln; do mise run $t; done"}}
+    assert agent_hooks.review_bash(event, agent_hooks.SECURITY_REVIEW) == (0, "")
+    assert agent_hooks.review_bash(event)[0] == 2
 
 
 def test_guard_checks_the_lines_after_a_here_string() -> None:
