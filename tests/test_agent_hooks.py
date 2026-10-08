@@ -784,6 +784,40 @@ def test_default_lookups_block_stash_in_every_worktree(repo: Path) -> None:
     assert agent_hooks.check_command("git push", str(repo / "main"), {}) is not None
 
 
+def test_hook_messages_name_the_worktree_root_next_to_the_main_checkout(repo: Path) -> None:
+    root = (repo / "ai-training-wt").resolve()
+    stash = agent_hooks.check_command("git stash", str(repo / "wt"), {})
+    assert stash is not None
+    assert f"`{root}/`" in stash
+    reset = agent_hooks.check_command("git reset --hard", str(repo / "main"), {})
+    assert reset is not None
+    assert f"`{root}/`" in reset
+
+
+@pytest.mark.parametrize("flags", ["gh,glab", ""])
+def test_hook_messages_name_tmp_inside_claude_docker(repo: Path, flags: str) -> None:
+    env = {"CLAUDE_DOCKER_FLAGS": flags}
+    for command, where in [("git stash", "wt"), ("git reset --hard", "main")]:
+        reason = agent_hooks.check_command(command, str(repo / where), env)
+        assert reason is not None, command
+        assert "`/tmp/ai-training-wt/`" in reason, command
+
+
+def test_hook_messages_name_the_task_when_git_fails() -> None:
+    for command, cwd in [("git stash", WORKTREE), ("git reset --hard", MAIN)]:
+        reason = check(command, cwd=cwd)
+        assert reason is not None, command
+        assert "`mise run worktree-root` prints it" in reason, command
+
+
+def test_stash_message_through_main_exits_2_when_git_fails(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    event = json.dumps({"cwd": str(tmp_path / "missing"), "tool_input": {"command": "git stash"}})
+    assert agent_hooks.main(["agent_hooks.py", "guard-bash"], event, {}) == 2
+    assert "`mise run worktree-root` prints it" in capsys.readouterr().err
+
+
 def test_formatter_for_picks_biome_under_site_and_ruff_for_python(tmp_path: Path) -> None:
     biome = tmp_path / "site" / "node_modules" / ".bin" / "biome"
     ruff = tmp_path / ".venv" / "bin" / "ruff"
@@ -843,14 +877,14 @@ def test_format_file_never_fails(repo: Path, tmp_path: Path) -> None:
     [
         "git diff origin/main...HEAD",
         "git log --oneline -5",
-        "git -C ../ai-training-wt/feat/1-x show HEAD",
+        "git -C /tmp/ai-training-wt/feat/1-x show HEAD",
         "git status --short",
         "gh pr diff 12",
         "gh pr view 12 --json files",
         "gh issue view 12",
         "gh issue view 12 --json title,body,labels",
         "mise run site-test",
-        "cd ../ai-training-wt/feat/1-x && git diff origin/main...HEAD | head -50",
+        "cd /Users/me/git/ai-training-wt/feat/1-x && git diff origin/main...HEAD | head -50",
         "ls site/src",
         "grep -rn 'a > b' site 2>/dev/null",
         "git diff 2>&1 | head",
@@ -930,7 +964,7 @@ def security_bash(command: str) -> tuple[int, str]:
     "command",
     [
         *SECURITY_AUDITS,
-        "cd ../ai-training-wt/x && mise run vuln 2>&1 | tail -20",
+        "cd /tmp/ai-training-wt/x && mise run vuln 2>&1 | tail -20",
         "mise run site-test",
         "git log -p --all -- .env",
         "mise run issue-brief -- 384",
@@ -1443,7 +1477,7 @@ def test_extract_substitutions_returns_the_outer_and_inner_commands() -> None:
         "git diff",
         "git log -p",
         "git show",
-        "git -C ../ai-training-wt/feat/1-x --no-pager log --oneline -3",
+        "git -C /Users/me/git/ai-training-wt/feat/1-x --no-pager log --oneline -3",
         "git log --oneline --output-indicator-new=+ -1",
         "git diff -- output.txt",
         "cd site && ls",

@@ -76,6 +76,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
+from worktree_root import WorktreeRootError, worktree_root
+
 ROLE_VAR = "AI_TRAINING_ROLE"
 PUSH_MAIN_ROLES: frozenset[str] = frozenset()
 MERGE_ROLES = frozenset({"dispatcher", "wave-lead", "coordinator"})
@@ -352,7 +354,21 @@ def sleep_seconds(words: Sequence[str]) -> float:
     return total
 
 
-def stash_reason(sub: str, rest: list[str], args: list[str]) -> str | None:
+def worktree_root_hint(where: str, env: Mapping[str, str]) -> str:
+    """The worktree root seen from `where`, for a message (#698).
+
+    When git can't tell where the main checkout is, the hint names the task
+    that prints the root instead, so the message never raises.
+    """
+    try:
+        return f"`{worktree_root(where, env)}/`"
+    except WorktreeRootError:
+        return "the worktree root (`mise run worktree-root` prints it)"
+
+
+def stash_reason(
+    sub: str, rest: list[str], args: list[str], where: str, env: Mapping[str, str]
+) -> str | None:
     """The reason a `git stash` that changes the stash is rejected, in any directory."""
     if sub != "stash" or (rest and rest[0] in {"list", "show"}):
         return None
@@ -362,7 +378,7 @@ def stash_reason(sub: str, rest: list[str], args: list[str]) -> str | None:
         "your work in progress instead. You can also save it with "
         "`git diff HEAD > .scratch/x.patch` and restore it with `git apply` (run "
         "`git add -N` first for untracked files), or run `git worktree add --detach` "
-        "for a separate checkout under `../ai-training-wt/`."
+        f"for a separate checkout under {worktree_root_hint(where, env)}."
     )
 
 
@@ -803,7 +819,7 @@ def check_segment(
                 "a pull request. A dispatcher keeps its record in its run issue, not in git."
             )
         return None
-    stash = stash_reason(sub, rest, args)
+    stash = stash_reason(sub, rest, args, where, env)
     if stash is not None:
         return stash
     destructive = (
@@ -815,8 +831,8 @@ def check_segment(
     if destructive and main_checkout(where):
         return (
             f"`git {' '.join(args)}` in the main checkout: other agents' work may be in it. "
-            "Work in your own worktree (`../ai-training-wt/<branch>`), and leave the main "
-            "checkout as you found it."
+            f"Work in your own worktree, `<branch>` under {worktree_root_hint(where, env)}, "
+            "and leave the main checkout as you found it."
         )
     return None
 

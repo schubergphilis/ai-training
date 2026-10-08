@@ -213,6 +213,15 @@ run = "uv run --locked python scripts/run_name.py"
 description = "One issue with only its trusted comments, decisions first: mise run issue-brief -- <issue>"
 run = "uv run --locked python scripts/issue_brief.py"
 
+# The directory every agent worktree goes in (#698), as an absolute path:
+# /tmp/ai-training-wt inside claude-docker (CLAUDE_DOCKER_FLAGS is set,
+# even to an empty value), <parent of the main checkout>/ai-training-wt
+# everywhere else. The rules are in scripts/worktree_root.py, and the
+# guard-bash hook's messages name the same path. Local.
+[tasks.worktree-root]
+description = "The directory agent worktrees go in, as an absolute path: mise run worktree-root"
+run = "uv run --locked python scripts/worktree_root.py"
+
 # Branch cleanup, for human maintainers only: no agent runs this task,
 # also not as a dry run. It lists the remote branches that are merged into
 # `main` (every commit's patch is in `main`) and older than 14 days, or
