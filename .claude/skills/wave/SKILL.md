@@ -335,8 +335,9 @@ printed.
    skip the step. On macOS, `$PPID` in a Bash tool call is the Claude
    Code process itself, in the foreground and with `run_in_background`,
    so `caffeinate -w $PPID` ends when this session ends. Check it first
-   with `ps -o comm= -p $PPID`, which prints `claude`. When it prints
-   anything else, skip the step and say so in your next message, because
+   with `basename "$(ps -o comm= -p $PPID)"`, which prints `claude`
+   (`ps` prints the full path when the session was started by one). When
+   it prints anything else, skip the step and say so in your next message, because
    `caffeinate` would wait on the wrong process. Then
    `pgrep -f -x "caffeinate -i -w $PPID"` lists a `caffeinate` this
    session already started. When it prints nothing, run
@@ -683,11 +684,11 @@ fails:
    say which.
 2. **The run file.** "Starting a run" step 3 has rebuilt
    `.scratch/run-<name>.md` in this worktree from the run issue, and
-   every body edit passes "Before each body edit" as usual. Then keep
-   the machine awake as "Starting a run", step 4 says, which that route
-   skipped: on macOS, start `caffeinate -i -w $PPID` with
-   `run_in_background` and remind the maintainer to keep the lid open.
-   The `caffeinate` of the session that built the wave ended when that
+   every body edit passes "Before each body edit" as usual. Then do
+   "Starting a run", step 4, which that route skipped, with all its
+   checks: the `uname` check, the `basename` check of `$PPID`, the
+   `pgrep` check, then `caffeinate -i -w $PPID` with `run_in_background`
+   and the reminder to keep the lid open. The `caffeinate` of the session that built the wave ended when that
    session quit.
 3. **The checklist.** Read the `## After the restart` section of the PR
    body (`gh pr view <n> --json body -q .body`) and run every item in
@@ -848,7 +849,7 @@ step 4. On macOS, run
 The exact match stops only the `caffeinate` that waits on this
 session's Claude Code process, so a `caffeinate` the maintainer started
 keeps running. Never run `pkill caffeinate`. The background task then
-reports exit code 143, which is the `kill` and no failure. On a stop
+reports exit code 143. The `kill` causes this code, so it isn't a failure. On a stop
 that leaves the run open, the `caffeinate` runs until the session quits.
 
 ### Releasing the claims
