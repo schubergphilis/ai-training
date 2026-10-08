@@ -67,7 +67,7 @@ ai-training/
 ├── SECURITY.md
 ├── LICENSE                       # CC BY-SA 4.0 (content)
 ├── LICENSE-CODE                  # Apache-2.0 (code)
-├── NOTICE.md                     # third-party material and its terms
+├── THIRD_PARTY.md                # third-party material and its terms
 └── README.md
 ```
 
@@ -90,4 +90,4 @@ Content is licensed under
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); see
 [LICENSE](./LICENSE), which also says what counts as content. Code is
 licensed under the [Apache License 2.0](./LICENSE-CODE). Third-party
-material and its terms are listed in [NOTICE.md](./NOTICE.md).
+material and its terms are listed in [THIRD_PARTY.md](./THIRD_PARTY.md).

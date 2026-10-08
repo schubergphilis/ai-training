@@ -201,16 +201,18 @@ The cases that come up:
   the branch joins the wave if the pull request is still open or waits for
   the next one. Nothing on the wave branch depends on it.
 - **A rebase conflict between branches in the wave.** The rebase of the
-  second branch stops on the conflict. Outside the S02 and bibliography
-  cases at the end of this item, the coordinator doesn't resolve it.
-  It runs `git rebase --abort`, which leaves the wave worktree as it was,
-  and tells the builder whose branch came second to redo the `--onto`
-  rebase in that worktree, resolve the conflict there, and run the
-  `branch -f` and `checkout` lines itself. The first branch is left as it
-  was rebased. The coordinator resolves an add/add conflict in the S02
-  source table itself, by keeping every line in course order. After the
-  rebases it also drops one copy of a duplicate bibliography key that
-  `mise run data` reports (`.claude/agents/wave-lead.md`).
+  second branch stops on the conflict. The coordinator resolves an
+  add/add conflict in the S02 source table itself: it keeps every line in
+  course order and runs `git rebase --continue`. It doesn't resolve any
+  other conflict. It runs `git rebase --abort`, which leaves the wave
+  worktree as it was, and tells the builder whose branch came second to
+  redo the `--onto` rebase in that worktree, resolve the conflict there,
+  and run the `branch -f` and `checkout` lines itself. The first branch is
+  left as it was rebased. The bibliography and `cspell-words.txt` never
+  stop a rebase, because `.gitattributes` merges them with the union
+  driver. When two branches add the same bibliography key,
+  `mise run data` reports the duplicate after the rebases, and the
+  coordinator drops one copy (`.claude/agents/wave-lead.md`).
 - **A follow-up after the branch is on the wave.** A builder that pushes
   one more commit to its own branch, after a review finding on the wave
   pull request, tells the coordinator the SHA. The coordinator

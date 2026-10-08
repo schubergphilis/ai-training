@@ -328,11 +328,13 @@ side, and the repository's page on orchestration describes how
 - The coordinator rebases the approved branches onto one integration
   branch, one at a time in the order they were approved, and runs the full
   check on the result before it opens one pull request. When a branch
-  conflicts, the coordinator stops the rebase and sends the branch back to
-  the builder whose branch came second, and doesn't resolve the conflict
-  itself. There is one exception. When two branches add lines to the same
-  table of sources, the coordinator keeps the lines of both, and when they
-  add the same entry to the shared bibliography, it drops one copy.
+  conflicts, the coordinator stops the rebase and sends the second branch
+  back to its builder, and doesn't resolve the conflict itself. The table
+  of sources is the exception: when two branches add lines to it, the
+  coordinator keeps the lines of both. The shared bibliography never stops
+  a rebase, because git merges that file by keeping the lines of both
+  sides. When two branches add the same entry, the check after the
+  rebases reports it twice, and the coordinator drops one copy.
 
 <MultiChoice id="lines-of-the-docs-brief" objective="coding-with-agents/works-in-team/runs-parallel-work"
   concepts={['parallel-sessions', 'worktrees']}
