@@ -307,11 +307,11 @@ function renderComponents(
 			const range = { from: spanOf(first, where).start, to: spanOf(last, where).end };
 			children = renderComponents(src, range.from, range.to, componentsUnder(node), aside, where, alternate);
 		}
-		// A block component is a block of its own, so blank lines set it off from its neighbors. A component
-		// inside a line of text, such as `<AboutFigure>` (#762), stays in its sentence.
+		// A component is a block of its own, so blank lines set it off from its neighbors. One inside a line
+		// of text that renders to one line, such as `<AboutFigure>` (#762), stays in its sentence.
 		const rendered =
 			alternate?.components?.[name]?.(attrs) ?? renderTag(where, name, attrs, children, aside, alternate);
-		const inline = node.type === 'mdxJsxTextElement';
+		const inline = node.type === 'mdxJsxTextElement' && !rendered.includes('\n');
 		out += src.slice(pos, start) + (rendered && !inline ? `\n\n${rendered}\n\n` : rendered);
 		pos = end;
 	}
@@ -334,11 +334,24 @@ export function absolutizeLinks(md: string, site: string): string {
 		.replace(/((?:href|src)=")(\/(?!\/)[^"]*)/g, (_, pre: string, path: string) => pre + absoluteUrl(path, site));
 }
 
-/** The MDX import block: the `import` lines (and blank lines between them) before the first line of content. */
+/**
+ * The MDX import block: the `import` lines (and blank lines between them) before the first line of content.
+ * A comment-only expression before or between them is part of the block too, so a page that opens with a
+ * comment, as the About page does (#762), still loses its imports.
+ */
 function withoutImportBlock(body: string): string {
 	const lines = body.split('\n');
 	let i = 0;
-	while (i < lines.length && (/^import\s/.test(lines[i] as string) || (lines[i] as string).trim() === '')) i++;
+	while (i < lines.length) {
+		const line = lines[i] as string;
+		if (/^import\s/.test(line) || line.trim() === '') i++;
+		else if (/^\{\/\*/.test(line)) {
+			let j = i;
+			while (j < lines.length && !/\*\/\}\s*$/.test(lines[j] as string)) j++;
+			if (j === lines.length) break;
+			i = j + 1;
+		} else break;
+	}
 	return lines.slice(i).join('\n');
 }
 

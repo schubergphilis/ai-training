@@ -94,6 +94,21 @@ describe('aboutFigures', () => {
 	});
 });
 
+describe('aboutFigures with nothing of a kind', () => {
+	const f = aboutFigures(input({ lessons: [], bibliography: [], competencies: [] }));
+	it('shows 0 for a known figure that has nothing to count', () => {
+		expect(f.get('checkpoints:repair')).toBe(0);
+		expect(f.get('checkpoints-practice')).toBe(0);
+		expect(f.get('sources:book')).toBe(0);
+		expect(f.get('lessons:building-agents')).toBe(0);
+		expect(f.get('objectives:expert')).toBe(0);
+		expect(f.get('checkpoint-kinds')).toBe(8);
+	});
+	it('still has no key for a misspelled figure', () => {
+		expect(f.has('checkpoints:repairs')).toBe(false);
+	});
+});
+
 describe('aboutFigure', () => {
 	it('formats a figure with a thousands separator', () => {
 		expect(aboutFigure(new Map([['words', 452793]]), 'words')).toBe('452,793');
@@ -113,12 +128,17 @@ describe('widgetNames', () => {
 });
 
 describe('getAboutFigures', () => {
-	it('reads the collections once and keeps the result', async () => {
+	it('reads the collections again on each call under the dev server', () => {
+		expect(getAboutFigures()).not.toBe(getAboutFigures());
+	});
+	it('reads the collections once in a build and keeps the result', async () => {
+		vi.stubEnv('DEV', false);
 		const first = getAboutFigures();
 		expect(getAboutFigures()).toBe(first);
 		const f = await first;
-		expect(f.get('lessons-planned')).toBeUndefined();
+		expect(f.get('lessons-planned')).toBe(0);
 		expect(f.get('widget-kinds')).toBeGreaterThan(0);
 		expect(f.get('study-hours')).toBe(0);
+		vi.unstubAllEnvs();
 	});
 });

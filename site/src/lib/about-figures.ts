@@ -1,6 +1,6 @@
 import { getCollection } from 'astro:content';
-import { type CheckpointTag, KIND_OF_TAG } from './checkpoint-rules';
-import { attrsOf, jsxElements, parseMdx, phaseProp } from './checkpoint-tags';
+import { KIND_OF_TAG, PHASES } from './checkpoint-rules';
+import { attrsOf, checkpointTagsOfSource, jsxElements, parseMdx } from './checkpoint-tags';
 import { lessonTime } from './lesson-time';
 
 /**
@@ -46,35 +46,72 @@ function addPerArea(out: Map<string, number>, key: string, area: string, n = 1):
 	add(out, `${key}:${area}`, n);
 }
 
-/** The counts of one lesson body: its checkpoints by phase and kind, exercises, habits, widgets and runnable examples. */
+/**
+ * The counts of one lesson body. Checkpoints come from the site's own tag reader
+ * (`checkpointTagsOfSource`), so a checkpoint counts here exactly when it counts on the lesson page,
+ * an ungraded `Predict` included. Exercises, habits, widgets and runnable examples are read from the tree.
+ */
 function countLesson(out: Map<string, number>, lesson: { id: string; body: string }, widgets: Set<string>): void {
 	const area = areaOf(lesson.id);
 	const where = `src/content/docs/${lesson.id}.mdx`;
+	for (const { kind, phase } of checkpointTagsOfSource(lesson.body, where)) {
+		if (phase === 'first') {
+			addPerArea(out, 'checkpoints', area);
+			add(out, `checkpoints:${kind}`);
+		} else add(out, `checkpoints-${phase}`);
+	}
 	for (const el of jsxElements(parseMdx(lesson.body))) {
 		const name = el.name ?? '';
-		const attrs = attrsOf(el, where);
-		if (name === 'Predict' && attrs.has('run')) add(out, 'examples-run');
-		if (name in KIND_OF_TAG) {
-			// A Predict without an objective is an ungraded example, no checkpoint (spec S03 "Examples").
-			if (name === 'Predict' && !attrs.has('objective')) continue;
-			const phase = phaseProp(where, attrs);
-			if (phase === 'first') {
-				addPerArea(out, 'checkpoints', area);
-				add(out, `checkpoints:${KIND_OF_TAG[name as CheckpointTag]}`);
-			} else {
-				add(out, `checkpoints-${phase}`);
-			}
-		} else if (name === 'Exercise') addPerArea(out, 'exercises', area);
+		if (name === 'Predict' && attrsOf(el, where).has('run')) add(out, 'examples-run');
+		else if (name === 'Exercise') addPerArea(out, 'exercises', area);
 		else if (name === 'Habit') addPerArea(out, 'habits', area);
 		else if (widgets.has(name)) add(out, 'widget-uses');
 	}
-	add(out, 'minutes', lessonTime(lesson.body, where).totalMinutes);
+	// The rounded time each course plan table shows, so the course tables add up to the About figure.
+	add(out, 'minutes', lessonTime(lesson.body, where).minutes);
 }
+
+/**
+ * The keys whose value can be a true zero, set to 0 first: a figure that drops to zero then shows `0`,
+ * and only a misspelled key fails the build.
+ */
+function zeroKeys(input: AboutInput): string[] {
+	const areas = input.groups.flatMap((g) => g.areas);
+	const perArea = [
+		'lessons',
+		'lessons-planned',
+		'topics',
+		'concepts',
+		'competencies',
+		'objectives',
+		'checkpoints',
+		'exercises',
+		'habits',
+	];
+	return [
+		...perArea,
+		...perArea.flatMap((k) => areas.map((a) => `${k}:${a}`)),
+		...Object.values(KIND_OF_TAG).map((k) => `checkpoints:${k}`),
+		...PHASES.filter((p) => p !== 'first').map((p) => `checkpoints-${p}`),
+		...SOURCE_TYPES.map((t) => `sources:${t}`),
+		'lessons-planned:tutorial',
+		'lessons-planned:explanation',
+		'objectives:base',
+		'objectives:expert',
+		'behaviors',
+		'examples-run',
+		'widget-uses',
+	];
+}
+
+/** The `type` values of a bibliography entry (`content.config.ts`, spec S01 "Source"). */
+const SOURCE_TYPES = ['book', 'course', 'paper', 'reference', 'video'];
 
 /** Every figure the About page can show, by key. */
 export function aboutFigures(input: AboutInput): Map<string, number> {
-	const out = new Map<string, number>();
+	const out = new Map<string, number>(zeroKeys(input).map((k) => [k, 0]));
 	out.set('groups', input.groups.length);
+	out.set('checkpoint-kinds', Object.keys(KIND_OF_TAG).length);
 	out.set(
 		'areas',
 		input.groups.reduce((n, g) => n + g.areas.length, 0),
@@ -136,8 +173,12 @@ export const widgetNames = (files: string[]) => files.map((f) => f.replace(/^.*\
 
 let cached: Promise<Map<string, number>> | undefined;
 
-/** The figures of the current build, read once: the page uses `<AboutFigure>` many times. */
+/**
+ * The figures of the current build, read once: the page uses `<AboutFigure>` many times. The dev server
+ * reads them again on each request, so a new lesson shows in the counts without a restart.
+ */
 export function getAboutFigures(): Promise<Map<string, number>> {
+	if (import.meta.env.DEV) return loadAboutFigures();
 	cached ??= loadAboutFigures();
 	return cached;
 }
