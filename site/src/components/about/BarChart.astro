@@ -10,6 +10,8 @@ import { getAboutFigures } from '@lib/about-figures';
 import '../../styles/about.css';
 
 interface Props {
+	/** The HTML id of the figure, and the key the slides read its props by (`FromAbout`). */
+	id?: string;
 	rows: (BarRow & { muted?: boolean })[];
 	/** What the values count, for the alternate's table and the figure's accessible name. */
 	unit?: string;
@@ -17,7 +19,7 @@ interface Props {
 	label?: string;
 	caption?: string;
 }
-const { rows, unit = 'Count', caption } = Astro.props;
+const { id, rows, unit = 'Count', caption } = Astro.props;
 const bars = barsOf(await getAboutFigures(), rows);
 const withNotes = bars.some((b) => b.note);
 const W = 720;
@@ -41,7 +43,7 @@ const H = y + 4;
 const label = `${unit}: ${bars.map((b) => `${b.label} ${b.text}`).join(', ')}`;
 ---
 
-<figure class="about-figure">
+<figure class="about-figure" id={id}>
 	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
 		{
 			placed.map((b) => (

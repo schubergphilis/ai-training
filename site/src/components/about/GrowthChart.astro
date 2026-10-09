@@ -11,10 +11,12 @@ import { dayLabel, daysBetween, formatNumber, type GrowthEvent, type GrowthPoint
 import '../../styles/about.css';
 
 interface Props {
+	/** The HTML id of the figure, and the key the slides read its props by (`FromAbout`). */
+	id?: string;
 	points: GrowthPoint[];
 	events: GrowthEvent[];
 }
-const { points, events } = Astro.props;
+const { id, points, events } = Astro.props;
 const start = events[0]?.date ?? points[0]?.date ?? '';
 const days = Math.max(
 	1,
@@ -43,7 +45,7 @@ const tickDate = (offset: number) =>
 const label = `Live lessons at the end of the day: ${points.map((p) => `${dayLabel(p.date)} ${p.lessons}`).join(', ')}.`;
 ---
 
-<figure class="about-figure">
+<figure class="about-figure" id={id}>
 	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
 		{
 			grid.map((g) => (

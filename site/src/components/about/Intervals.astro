@@ -9,10 +9,12 @@ import { dayPosition, type IntervalRow } from '@lib/about-charts';
 import '../../styles/about.css';
 
 interface Props {
+	/** The HTML id of the figure, and the key the slides read its props by (`FromAbout`). */
+	id?: string;
 	rows: IntervalRow[];
 	caption?: string;
 }
-const { rows, caption } = Astro.props;
+const { id, rows, caption } = Astro.props;
 const max = Math.max(1, ...rows.flatMap((r) => r.days));
 const W = 720;
 const AXIS_X = 130;
@@ -23,7 +25,7 @@ const H = rows.length * ROW_H + 34;
 const label = rows.map((r) => `${r.label}: on days ${r.days.join(', ')} after the lesson`).join('. ');
 ---
 
-<figure class="about-figure">
+<figure class="about-figure" id={id}>
 	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
 		<line class="axis" x1={x(0)} x2={x(max)} y1={rows.length * ROW_H + 8} y2={rows.length * ROW_H + 8}></line>
 		<text class="note" x={x(0)} y={rows.length * ROW_H + 24} text-anchor="middle">lesson</text>

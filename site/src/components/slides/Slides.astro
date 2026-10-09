@@ -1,0 +1,39 @@
+---
+/**
+ * The deck of the About slides (`content/docs/about/slides.mdx`, issue #762):
+ * the slides, and a bar with the back and next buttons, the slide number, the
+ * theme select and a full-screen button. `scripts/slides.ts` shows one slide
+ * at a time. Without it, the slides are sections of one page, one after the
+ * other. The styles are in `styles/slides.css`.
+ */
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import '../../styles/slides.css';
+---
+
+<div class="slides not-content" data-slides role="region" aria-label="Slides">
+	<div class="slides-progress" aria-hidden="true"><div data-slide-progress></div></div>
+	<slot />
+	<nav class="slides-bar" aria-label="Slide navigation">
+		<button type="button" data-slide-back aria-label="Back">
+			<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"></path></svg>
+			<span>Back</span>
+		</button>
+		<span class="slides-counter" data-slide-counter aria-live="polite"></span>
+		<button type="button" data-slide-next aria-label="Next">
+			<span>Next</span>
+			<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5"></path></svg>
+		</button>
+		<span class="slides-bar-end">
+			<ThemeSelect />
+			<button type="button" data-slide-fullscreen aria-label="Full screen" title="Full screen (F)">
+				<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"></path></svg>
+			</button>
+		</span>
+	</nav>
+</div>
+
+<script>
+	import { mountSlides } from '@scripts/slides';
+
+	mountSlides(document);
+</script>

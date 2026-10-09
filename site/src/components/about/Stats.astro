@@ -9,13 +9,15 @@ import { getAboutFigures } from '@lib/about-figures';
 import '../../styles/about.css';
 
 interface Props {
+	/** The HTML id of the figure, and the key the slides read its props by (`FromAbout`). */
+	id?: string;
 	items: StatItem[];
 }
 const figures = await getAboutFigures();
 const tiles = Astro.props.items.map((s, i) => ({ ...s, text: formatNumber(rowValue(figures, s, `tile ${i + 1}`)) }));
 ---
 
-<ul class="about-stats not-content">
+<ul class="about-stats not-content" id={Astro.props.id}>
 	{
 		tiles.map((t) => (
 			<li>
