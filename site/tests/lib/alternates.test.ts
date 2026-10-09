@@ -160,7 +160,7 @@ describe('the About page alternate', () => {
 		const md = await alternateOf('/about/');
 		expect(md).toContain(`# About this project\n\n> Why the project exists.\n\nPage: ${ROOT}/about/\n`);
 		expect(md).toMatch(/The site has \d+ areas \(How agents think, Agent Engineer Course\)\./);
-		expect(md).not.toMatch(/source:|\{\/\*|<[A-Z]/);
+		expect(md).not.toMatch(/source:|How to update|\{\/\*|<[A-Z]|^import /m);
 		expect(md).toContain('## References');
 	});
 });

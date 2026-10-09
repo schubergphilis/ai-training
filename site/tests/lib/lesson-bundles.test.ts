@@ -72,6 +72,18 @@ describe('withoutMdxComments', () => {
 });
 
 describe('proseOf', () => {
+	it('leaves out a comment before the imports, and the imports', () => {
+		const body = "{/*\nHeader.\n*/}\n\nimport A from '@components/A.astro';\n\nText.\n";
+		expect(proseOf(body, site)).toBe('Text.\n');
+	});
+	it('keeps a component in its sentence only when it renders to one line', () => {
+		const one = { pageUrl: `${site}/x/`, components: { Fig: () => '6' } };
+		expect(renderLessonBody('It has <Fig /> areas.\n', site, 'x', {}, one).markdown).toBe('It has 6 areas.\n');
+		const two = { pageUrl: `${site}/x/`, components: { Fig: () => 'a\nb' } };
+		expect(renderLessonBody('It has <Fig /> areas.\n', site, 'x', {}, two).markdown).toBe(
+			'It has \n\na\nb\n\n areas.\n',
+		);
+	});
 	it('leaves out MDX comments, and keeps one inside a fence', () => {
 		const fence = '```mdx\n{/* shown */}\n```';
 		expect(proseOf(`{/* source: a.yaml */}\n\nText.\n\n${fence}\n`, site)).toBe(`Text.\n\n${fence}\n`);
