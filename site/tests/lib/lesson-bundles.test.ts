@@ -76,6 +76,10 @@ describe('proseOf', () => {
 		const body = "{/*\nHeader.\n*/}\n\nimport A from '@components/A.astro';\n\nText.\n";
 		expect(proseOf(body, site)).toBe('Text.\n');
 	});
+	it('keeps the text after a comment that opens the page on its line', () => {
+		const body = '{/* note */} Intro.\n\nMore.\n\n{/* x */}\n\nEnd.\n';
+		expect(proseOf(body, site)).toBe('{/* note */} Intro.\n\nMore.\n\nEnd.\n');
+	});
 	it('keeps a component in its sentence only when it renders to one line', () => {
 		const one = { pageUrl: `${site}/x/`, components: { Fig: () => '6' } };
 		expect(renderLessonBody('It has <Fig /> areas.\n', site, 'x', {}, one).markdown).toBe('It has 6 areas.\n');
