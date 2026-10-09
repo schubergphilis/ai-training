@@ -5,6 +5,7 @@ import {
 	lessonUrl,
 	proseOf,
 	renderLessonBody,
+	withoutMdxComments,
 } from '@lib/lesson-bundles';
 import type { Lesson } from '@lib/lessons';
 import { describe, expect, it, vi } from 'vitest';
@@ -58,7 +59,23 @@ describe('renderLessonBody with the alternate flag', () => {
 	});
 });
 
+describe('withoutMdxComments', () => {
+	it('drops a comment on its own lines, one line or several', () => {
+		expect(withoutMdxComments('{/* cspell:ignore labtop */}\n\nText.')).toBe('\n\nText.');
+		expect(withoutMdxComments('Before.\n\n{/*\nHow to update.\n- a list\n*/}\n\nAfter.')).toBe('Before.\n\n\n\nAfter.');
+	});
+	it('keeps an expression with code, and text after a comment on its line', () => {
+		expect(withoutMdxComments('{1 + 2}')).toBe('{1 + 2}');
+		const mixed = '{/* a */} text\n\nMore.\n\n{/* b */}';
+		expect(withoutMdxComments(mixed)).toBe('{/* a */} text\n\nMore.\n\n');
+	});
+});
+
 describe('proseOf', () => {
+	it('leaves out MDX comments, and keeps one inside a fence', () => {
+		const fence = '```mdx\n{/* shown */}\n```';
+		expect(proseOf(`{/* source: a.yaml */}\n\nText.\n\n${fence}\n`, site)).toBe(`Text.\n\n${fence}\n`);
+	});
 	it('keeps a run of blank lines inside a fenced block and collapses one outside', () => {
 		const block = '```python\nimport os\n\n\ndef f():\n    pass\n```';
 		expect(proseOf(`Before.\n\n\n\n${block}\n\n\n\nAfter.\n`, site)).toBe(`Before.\n\n${block}\n\nAfter.\n`);

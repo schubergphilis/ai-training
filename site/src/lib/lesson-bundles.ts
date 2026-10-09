@@ -307,10 +307,12 @@ function renderComponents(
 			const range = { from: spanOf(first, where).start, to: spanOf(last, where).end };
 			children = renderComponents(src, range.from, range.to, componentsUnder(node), aside, where, alternate);
 		}
-		// A component is a block of its own, so blank lines set it off from its neighbors.
+		// A block component is a block of its own, so blank lines set it off from its neighbors. A component
+		// inside a line of text, such as `<AboutFigure>` (#762), stays in its sentence.
 		const rendered =
 			alternate?.components?.[name]?.(attrs) ?? renderTag(where, name, attrs, children, aside, alternate);
-		out += src.slice(pos, start) + (rendered ? `\n\n${rendered}\n\n` : '');
+		const inline = node.type === 'mdxJsxTextElement';
+		out += src.slice(pos, start) + (rendered && !inline ? `\n\n${rendered}\n\n` : rendered);
 		pos = end;
 	}
 	return out + src.slice(pos, to);
@@ -340,6 +342,15 @@ function withoutImportBlock(body: string): string {
 	return lines.slice(i).join('\n');
 }
 
+/**
+ * `text` without its MDX comments: a `{/* ... *\/}` expression that holds only a comment, on lines of its
+ * own. The page never shows one, so neither does its prose or alternate (issue #762). Runs after the code
+ * is set aside, so a comment inside a fence or a code span stays.
+ */
+export function withoutMdxComments(text: string): string {
+	return text.replace(/^[ \t]*\{\/\*(?:(?!\*\/)[\s\S])*\*\/\}[ \t]*$/gm, '');
+}
+
 /** Every `#<id>` link in Markdown and raw HTML, resolved against `pageUrl`, so it works outside the page. */
 function absolutizeFragments(md: string, pageUrl: string): string {
 	return md
@@ -366,14 +377,15 @@ export function renderLessonBody(
 	alternate?: AlternateOptions,
 ): RenderedBody {
 	const aside = setAsideCode(withoutImportBlock(body));
-	const text = resolveCitations(aside.text, bibliography, aside, where);
+	const source = withoutMdxComments(aside.text);
+	const text = resolveCitations(source, bibliography, aside, where);
 	const tree = parseAside(text, where);
 	const components = renderComponents(text, 0, text.length, componentsUnder(tree), aside, where, alternate);
 	// Runs of blank lines are collapsed before the code comes back, so a double blank line inside a fence stays.
 	let rendered = absolutizeLinks(components, site);
 	if (alternate) rendered = absolutizeFragments(rendered, alternate.pageUrl);
 	const markdown = `${aside.restore(rendered.replace(/\n{3,}/g, '\n\n')).trim()}\n`;
-	return { markdown, cited: citedKeys(aside.text, markdown, bibliography) };
+	return { markdown, cited: citedKeys(source, markdown, bibliography) };
 }
 
 /**
