@@ -9,8 +9,8 @@
  * the page that announces it. Each hint must start with `root`, Astro's
  * `site` plus the base path (`SITE_ROOT` in `site-address.mjs`).
  * The pages S12 "Which pages get one" gives no alternate (the front page, the
- * topic and competency maps, the progress, reference and settings pages, and
- * the review pages) must carry no hint and have no alternate. Every other
+ * topic and competency maps, the progress, reference and settings pages, the
+ * About slides and the review pages) must carry no hint and have no alternate. Every other
  * page's `index.html` must carry the hint, so a page that
  * `alternateSources` leaves out fails the check.
  * `scripts/check-bundles.mjs` runs this; tests import it.
@@ -41,7 +41,7 @@ const AREAS = new Set(
  * @param {Set<string>} [areas] the area slugs, `site/src/data/areas/` by default
  */
 export function hasNoAlternate(dir, areas = AREAS) {
-	if (['', 'map', 'competencies', 'progress', 'reference', 'settings'].includes(dir)) return true;
+	if (['', 'map', 'competencies', 'progress', 'reference', 'settings', 'about/slides'].includes(dir)) return true;
 	const review = /^([^/]+)\/review$/.exec(dir);
 	return review !== null && areas.has(review[1] ?? '');
 }

@@ -31,6 +31,10 @@ How to update this page (issue #762). Read this before you edit.
   form in the Markdown copy (`site/src/lib/about-charts.ts`,
   `aboutMarkdown`). Use a figure in place of a table, and in place of a
   paragraph that lists many numbers.
+- The slides (`about/slides.mdx`) show some of these figures. A figure
+  with an `id` prop, such as `id="figure-growth"`, is one the slides read
+  by that id, with its props. Keep the id when you change the figure, and
+  check the slides when you remove one: an unknown id fails the build.
 - Search the page for `as of` to find every dated figure. The lesson growth
   table in "A timeline" is dated too.
 - History and process figures can't be counted at build time, because the
@@ -70,6 +74,9 @@ how it grew, and how work on it happens now. The last sections describe the
 agent harness that does most of the writing and the software that runs the
 site.
 
+A short version of this page is a [set of slides](/about/slides/) for a
+talk of 10 to 20 minutes.
+
 ## In short
 
 AI Training is an open training suite for people who start to use
@@ -86,6 +93,7 @@ lessons with graded checkpoints. Each lesson ends in
 one exercise that the learner does outside the page.
 
 <Stats
+  id="figure-in-short"
   items={[
     { of: 'lessons', label: 'lessons' },
     { of: 'checkpoints', label: 'graded checkpoints' },
@@ -184,6 +192,7 @@ checkpoint tests one objective. The next sections explain each part.
 <ContentModel />
 
 <Stats
+  id="figure-facts"
   items={[
     { of: 'examples-run', label: 'runnable examples' },
     { of: 'widget-kinds', label: 'widget kinds' },
@@ -358,6 +367,7 @@ A checkpoint is a small graded question inside the lesson. The site has
 <AboutFigure of="checkpoint-kinds" /> kinds:
 
 <BarChart
+  id="figure-checkpoint-kinds"
   label="Kind"
   unit="Graded checkpoints"
   rows={[
@@ -502,6 +512,7 @@ The figure shows both schedules for a learner who passes each review on
 the day it is due.
 
 <Intervals
+  id="figure-schedules"
   rows={[
     { label: 'Review item', days: [1, 4, 11, 32, 92] },
     { label: 'Habit', days: [1, 3, 7] },
@@ -743,6 +754,7 @@ and the numbered events under it. All dates are in 2026.
 {/* source, lesson counts: git ls-tree -r --name-only $(git rev-list -1 --before="<date> 23:59" HEAD) site/src/content/docs | grep -E 'docs/(concepts|safety|using-agents|coding-with-agents|customizing-agents|building-agents)/[^/]+\.mdx$' | grep -v index.mdx | wc -l, as of 2026-10-09 */}
 
 <GrowthChart
+  id="figure-growth"
   points={[
     { date: '2026-09-20', lessons: 10 },
     { date: '2026-09-23', lessons: 37 },
@@ -771,6 +783,7 @@ These figures are as of October 9, 2026.
 {/* source: git rev-list --count HEAD (1436); git log --format=%ad --date=short | sort | uniq -c (17 active days; peaks 09-24 276, 09-25 269, 09-20 204); gh issue list --state all --limit 2000 --json number,state (608: 533 closed, 75 open); gh pr list --state all --limit 2000 --json state (154: 153 merged); git log --format='%(trailers:key=Assisted-by,valueonly)' | grep -v '^$' | sort | uniq -c; git log --merges | wc -l (0). All as of 2026-10-09, HEAD cb719acf. */}
 
 <Stats
+  id="figure-history"
   items={[
     { value: 1436, label: 'commits' },
     { value: 17, label: 'days with commits' },
@@ -787,6 +800,7 @@ such a line are the first commit, six small edits by the maintainer and
 two automatic dependency updates.
 
 <BarChart
+  id="figure-models"
   label="Model"
   unit="Commits"
   rows={[
@@ -923,6 +937,7 @@ Customizing agents course teach the same kind of tools.
 ### Each control and what it prevents
 
 <Controls
+  id="figure-controls"
   groups={[
     {
       name: 'How work is split',

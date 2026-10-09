@@ -1,0 +1,220 @@
+---
+title: About this project, as slides
+description: A short talk about the AI Training project, with the figures of the About page, for a laptop or a projector.
+template: splash
+tableOfContents: false
+pagefind: false
+---
+
+{/*
+How to update these slides (issue #762). Read this before you edit.
+
+- The slides are a 10 to 20 minute talk made from the About page
+  (`../about.mdx`). Keep them between 8 and 15, and keep the order: a title,
+  an agenda, why, what, how, and a last slide that links to the site.
+- Each slide is a `<Slide>` with a `part` (the part of the talk, shown above
+  the heading), one `##` heading, a line or two of text and one figure. The
+  figure gets the rest of the slide. `layout` is `title`, `agenda`, `end` or
+  the default `figure`.
+- Figures come from the About page. A figure without props, such as
+  `<ContentModel />`, is used as it is. A figure with data, such as the
+  timeline, is `<FromAbout id="figure-growth" />`: it shows the element with
+  that `id` in `about.mdx`, with its props, so the data and its `source:`
+  comment stay in one place. An unknown id fails the build.
+- Never type a content count. Write `<AboutFigure of="key" />`, as on the
+  About page. A history claim must also be on the About page, with its
+  source.
+- No citations: the References section would land after the slides. Point
+  to the About page instead.
+- The agenda links to the slide headings by their id, so a new slide
+  doesn't break them.
+- The page has no Markdown alternate (spec S12): the About page alternate
+  has the same facts.
+*/}
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import AboutFigure from '@components/AboutFigure.astro';
+import ArchitectureDiagram from '@components/about/ArchitectureDiagram.astro';
+import AreaChart from '@components/about/AreaChart.astro';
+import ContentModel from '@components/about/ContentModel.astro';
+import FromAbout from '@components/about/FromAbout.astro';
+import LessonAnatomy from '@components/about/LessonAnatomy.astro';
+import WaveDiagram from '@components/about/WaveDiagram.astro';
+import Slide from '@components/slides/Slide.astro';
+import Slides from '@components/slides/Slides.astro';
+
+<Slides>
+
+<Slide layout="title" part="An open training suite">
+
+## AI Training
+
+Interactive lessons for people who start to use generative AI in their
+work, from the first prompt to building an agent.
+
+<FromAbout id="figure-in-short" />
+
+[schubergphilis.github.io/ai-training](/)
+
+</Slide>
+
+<Slide layout="agenda" part="Agenda">
+
+## What this talk covers
+
+1. [Why the project exists](#why-the-project-exists) <span>A common starting point for safe and useful work with AI</span>
+2. [What the site contains](#what-the-site-contains) <span>Areas, courses, lessons and the model behind them</span>
+3. [How a lesson teaches](#the-parts-of-a-lesson) <span>Checkpoints, review and the research behind them</span>
+4. [Building with AI agents](#how-the-project-grew) <span>AI agents write, one maintainer decides, a harness checks</span>
+
+</Slide>
+
+<Slide part="Why">
+
+## Why the project exists
+
+Generative AI reached office work in a short time, and most people got no
+training in how these tools work or fail.
+
+<CardGrid>
+  <Card title="A common starting point">
+    A group that learns the same words and the same basic model of the
+    tools can discuss a result, a risk or a working method with each other.
+  </Card>
+  <Card title="Safe use and real use together">
+    People stop checking a machine that does most of a task. So safety
+    comes first, and every area returns to checking the output.
+  </Card>
+  <Card title="Open content">
+    Anyone may run the courses, change a lesson to fit their own tools, or
+    study alone with only a browser.
+  </Card>
+</CardGrid>
+
+</Slide>
+
+<Slide part="What">
+
+## What the site contains
+
+<AboutFigure of="lessons" /> lessons in <AboutFigure of="areas" /> areas,
+counted when the site is built. A lesson covers one topic, and each graded
+checkpoint tests one learning objective.
+
+<ContentModel />
+
+</Slide>
+
+<Slide part="What">
+
+## Two groups for two audiences
+
+Foundations is for anyone who does knowledge work and needs no
+programming. Engineering is for software engineers and uses real code and
+real tools.
+
+<AreaChart />
+
+</Slide>
+
+<Slide part="How a lesson teaches">
+
+## The parts of a lesson
+
+Each lesson has the same parts in the same order. It is one page of 10
+to 25 minutes, plus an exercise that the learner does in their own tools.
+
+<LessonAnatomy />
+
+</Slide>
+
+<Slide part="How a lesson teaches">
+
+## Checkpoints test one objective each
+
+A wrong answer gets feedback, and a hint asks a question about the
+mistake. The page never reveals the answer.
+
+<FromAbout id="figure-checkpoint-kinds" />
+
+</Slide>
+
+<Slide part="How a lesson teaches">
+
+## What the learner finished comes back
+
+- **Retrieval practice.** Recall an idea again, instead of reading it again.
+- **Spaced review.** The gaps between reviews grow.
+- **Habits.** One change in real work, asked about again a few days later.
+
+<FromAbout id="figure-schedules" />
+
+</Slide>
+
+<Slide part="Building with AI agents">
+
+## How the project grew
+
+<FromAbout id="figure-growth" />
+
+</Slide>
+
+<Slide part="Building with AI agents">
+
+## Written with AI agents
+
+Almost every commit names the AI model that helped write it. These figures
+are as of October 9, 2026.
+
+<FromAbout id="figure-history" />
+
+<FromAbout id="figure-models" />
+
+</Slide>
+
+<Slide part="Building with AI agents">
+
+## Waves of agents
+
+A dispatcher starts a wave lead, and the lead starts one builder per issue
+and one reviewer per branch. The maintainer has given standing approval
+for a wave that passes every check.
+
+<WaveDiagram />
+
+</Slide>
+
+<Slide part="Building with AI agents">
+
+## Each control and what it prevents
+
+<FromAbout id="figure-controls" />
+
+</Slide>
+
+<Slide part="Building with AI agents">
+
+## A static site for people and for agents
+
+The build writes HTML for people, and Markdown and data files for agents
+that read the site for a person. GitHub Pages serves the files, and the
+progress record stays in the learner's browser.
+
+<ArchitectureDiagram />
+
+</Slide>
+
+<Slide layout="end" part="See more">
+
+## Try the training
+
+- [Start the first course: Concepts](/concepts/)
+- [Read the full About page](/about/)
+- [Run a workshop with the site](/guides/running-a-workshop/)
+- [Read the source on GitHub](https://github.com/schubergphilis/ai-training)
+
+[schubergphilis.github.io/ai-training](/)
+
+</Slide>
+
+</Slides>

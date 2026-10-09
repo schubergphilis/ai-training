@@ -8,12 +8,14 @@ import type { ControlGroup } from '@lib/about-charts';
 import '../../styles/about.css';
 
 interface Props {
+	/** The HTML id of the figure, and the key the slides read its props by (`FromAbout`). */
+	id?: string;
 	groups: ControlGroup[];
 }
-const { groups } = Astro.props;
+const { id, groups } = Astro.props;
 ---
 
-<div class="about-controls not-content">
+<div class="about-controls not-content" id={id}>
 	{
 		groups.map((g) => (
 			<section>

@@ -8,12 +8,14 @@ import type { AdoptedRow } from '@lib/about-charts';
 import '../../styles/about.css';
 
 interface Props {
+	/** The HTML id of the figure, and the key the slides read its props by (`FromAbout`). */
+	id?: string;
 	rows: AdoptedRow[];
 }
-const { rows } = Astro.props;
+const { id, rows } = Astro.props;
 ---
 
-<ul class="about-adopted not-content">
+<ul class="about-adopted not-content" id={id}>
 	{
 		rows.map((r) => (
 			<li>

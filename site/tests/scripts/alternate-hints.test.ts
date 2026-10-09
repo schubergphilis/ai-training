@@ -137,7 +137,7 @@ describe('checkAlternateHints on a page without a hint', () => {
 
 describe('hasNoAlternate', () => {
 	it('names the pages S12 gives no alternate, and none that it gives one', () => {
-		for (const dir of ['', 'map', 'competencies', 'progress', 'reference', 'settings', 'safety/review'])
+		for (const dir of ['', 'map', 'competencies', 'progress', 'reference', 'settings', 'about/slides', 'safety/review'])
 			expect(hasNoAlternate(dir)).toBe(true);
 		for (const dir of [
 			'safety',
@@ -148,6 +148,7 @@ describe('hasNoAlternate', () => {
 			'topics/safety/risk',
 			'competencies/safety/judges-output',
 			'guides/review',
+			'about',
 		])
 			expect(hasNoAlternate(dir)).toBe(false);
 	});

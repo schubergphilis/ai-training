@@ -76,6 +76,7 @@ What this spec takes from it is cited to that page in each section.
 | Guide, `/guides/<slug>/`                              | yes       | Plain Markdown pages.                                                                |
 | Contributing, `/contributing/`                        | yes       | A plain Markdown page.                                                               |
 | About, `/about/`                                      | yes       | Prose about the project, with its figures as numbers, tables and lists.              |
+| About slides, `/about/slides/`                        | no        | A talk made from the About page. The About alternate has the same facts.             |
 | Glossary, `/glossary/`                                | yes       | Generated reference: every concept and its definition.                               |
 | Topic page, `/topics/<area>/<topic>/`                 | yes       | Generated reference, per S02 "Stable URLs".                                          |
 | Competency page, `/competencies/<area>/<competency>/` | yes       | Generated reference: objectives and behaviors.                                       |

@@ -1,0 +1,280 @@
+/* The About slides (components/slides/, issue #762). Without the script the
+   slides are sections of one page, one after the other. With it, the class
+   `slides-deck` on <html> turns the deck into a full-window stage that shows
+   one slide at a time.
+
+   The stage is sized in rem, and the deck sets the root font size from the
+   window: 1rem is 1/80 of the width or 1/45 of the height, whichever is
+   smaller. A slide is then 80 by 45 rem on any 16:9 screen, so a laptop and a
+   projector show the same slide at a different scale. Colors are tokens of
+   spec S14, and the figures keep their own classes from about.css. */
+
+.slides {
+	margin: 2rem 0;
+}
+.slide {
+	padding: 2rem 0;
+	border-bottom: 1px solid var(--sl-color-gray-5);
+}
+.slides-bar,
+.slides-progress {
+	display: none;
+}
+.slide .sl-anchor-link {
+	display: none;
+}
+
+:root.slides-deck {
+	font-size: clamp(12px, min(1.25vw, 2.2222vh), 48px);
+	overflow: hidden;
+}
+:root.slides-deck .page {
+	display: none;
+}
+:root.slides-deck .slides {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	background-color: var(--sl-color-bg);
+	color: var(--sl-color-gray-2);
+	line-height: 1.45;
+}
+:root.slides-deck .slide {
+	flex: 1 1 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	width: 100%;
+	max-width: 80rem;
+	margin-inline: auto;
+	padding: 2.5rem 4rem 1.5rem;
+	border: none;
+	overflow: auto;
+}
+:root.slides-deck .slide[hidden] {
+	display: none;
+}
+
+/* Text on a slide. */
+.slides-deck .slide > * {
+	margin: 0;
+}
+.slides-deck .slide .slide-part {
+	color: var(--sl-color-text-accent);
+	font-size: 1rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+.slides-deck .slide .sl-heading-wrapper {
+	margin: 0;
+}
+.slides-deck .slide h2 {
+	margin: 0;
+	color: var(--sl-color-white);
+	font-size: 2.75rem;
+	font-weight: 700;
+	line-height: 1.15;
+}
+.slides-deck .slide > p {
+	max-width: 62rem;
+	font-size: 1.375rem;
+}
+.slides-deck .slide > :is(ul, ol):not([class]) {
+	display: grid;
+	gap: 0.4rem;
+	padding-left: 1.5rem;
+	font-size: 1.375rem;
+}
+.slides-deck .slide strong {
+	color: var(--sl-color-white);
+}
+
+/* The cards of a card grid. */
+.slides-deck .slide .card-grid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	align-content: start;
+}
+.slides-deck .slide .card .title {
+	font-size: 1.6rem;
+}
+.slides-deck .slide .card .body {
+	font-size: 1.3rem;
+}
+
+/* A figure takes the height that the text leaves. */
+.slides-deck .slide > :is(.about-figure, .about-controls, .about-adopted, .card-grid) {
+	flex: 1 1 0;
+	min-height: 0;
+}
+.slides-deck .slide .about-figure {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	border: none;
+	background: none;
+}
+.slides-deck .slide .about-figure svg {
+	flex: 1 1 0;
+	min-height: 0;
+	height: 100%;
+}
+.slides-deck .slide .about-figure figcaption,
+.slides-deck .slide .about-events {
+	flex: none;
+	font-size: 1rem;
+}
+.slides-deck .slide .about-events {
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 0.75rem 1.25rem;
+	font-size: 0.85rem;
+}
+.slides-deck .slide .about-stats {
+	flex: none;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 1rem;
+}
+.slides-deck .slide .about-stat-value {
+	font-size: 2.75rem;
+}
+.slides-deck .slide .about-stat-label {
+	font-size: 1.125rem;
+}
+.slides-deck .slide .about-controls {
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	align-content: start;
+}
+.slides-deck .slide .about-controls h4 {
+	font-size: 1.05rem;
+}
+.slides-deck .slide .about-controls ul {
+	gap: 0.75rem;
+	font-size: 0.9rem;
+}
+.slides-deck .slide .about-controls .about-prevents {
+	font-size: 0.8rem;
+}
+
+/* The title and the last slide: one centered column. */
+:root.slides-deck .slide:is(.slide-title, .slide-end) {
+	justify-content: center;
+	gap: 1.5rem;
+}
+.slides-deck .slide-title h2 {
+	font-size: 5rem;
+	line-height: 1.05;
+}
+.slides-deck .slide-title > p {
+	font-size: 1.75rem;
+}
+.slides-deck .slide-title .about-stats {
+	max-width: 52rem;
+}
+.slides-deck .slide-end > :is(ul, ol):not([class]) {
+	gap: 1rem;
+	padding: 0;
+	list-style: none;
+	font-size: 1.75rem;
+}
+
+/* The agenda: one large numbered line per part of the talk. */
+.slides-deck .slide-agenda > ol:not([class]) {
+	gap: 1.5rem;
+	margin-top: 1.5rem;
+	padding: 0;
+	list-style: none;
+	counter-reset: agenda;
+	font-size: 2rem;
+}
+.slides-deck .slide-agenda > ol:not([class]) > li {
+	display: flex;
+	gap: 1.25rem;
+	align-items: baseline;
+	counter-increment: agenda;
+}
+.slides-deck .slide-agenda > ol:not([class]) > li::before {
+	content: counter(agenda);
+	flex: none;
+	display: inline-grid;
+	place-items: center;
+	width: 3rem;
+	height: 3rem;
+	border: 2px solid var(--sl-color-accent);
+	border-radius: 50%;
+	color: var(--sl-color-text-accent);
+	font-size: 1.5rem;
+	font-weight: 700;
+}
+.slides-deck .slide-agenda li span {
+	display: block;
+	color: var(--sl-color-gray-3);
+	font-size: 1.25rem;
+}
+
+/* The bar under the slides. */
+:root.slides-deck .slides-progress {
+	display: block;
+	flex: none;
+	height: 0.25rem;
+	background-color: var(--at-inset);
+}
+.slides-progress > div {
+	width: 0;
+	height: 100%;
+	background-color: var(--sl-color-accent);
+}
+:root.slides-deck .slides-bar {
+	display: flex;
+	flex: none;
+	gap: 1rem;
+	align-items: center;
+	padding: 0.6rem 1.5rem;
+	border-top: 1px solid var(--sl-color-gray-5);
+	background-color: var(--at-surface);
+	font-size: 1rem;
+}
+.slides-bar button {
+	display: inline-flex;
+	gap: 0.4rem;
+	align-items: center;
+	padding: 0.35rem 0.8rem;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: var(--at-radius-md);
+	background: none;
+	color: var(--sl-color-gray-2);
+	font: inherit;
+	cursor: pointer;
+}
+.slides-bar button:hover:not(:disabled) {
+	border-color: var(--sl-color-accent);
+	color: var(--sl-color-text-accent);
+}
+.slides-bar button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.slides-bar svg {
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.75;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.slides-counter {
+	min-width: 4.5rem;
+	color: var(--sl-color-gray-3);
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+.slides-bar-end {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	margin-left: auto;
+}

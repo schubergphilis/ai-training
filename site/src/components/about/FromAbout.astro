@@ -1,0 +1,35 @@
+---
+import { getEntry } from 'astro:content';
+/**
+ * A figure of the About page on the About slides (issue #762), with the props
+ * it has in `about.mdx`: `<FromAbout id="figure-growth" />`. The figure keeps
+ * its data and its `source:` comment in one place. An unknown id, or a
+ * component this list doesn't have, fails the build.
+ */
+import { aboutFigureById, aboutFiguresOf } from '@lib/about-slides';
+import Adopted from './Adopted.astro';
+import BarChart from './BarChart.astro';
+import Controls from './Controls.astro';
+import GrowthChart from './GrowthChart.astro';
+import Intervals from './Intervals.astro';
+import Stats from './Stats.astro';
+
+interface Props {
+	id: string;
+}
+/**
+ * The components a figure may be. Each one has its own props, and `astro check` checks them where the
+ * figure is in `about.mdx`. Here the props are the same values, read from that source, so the map takes
+ * any props.
+ */
+type Figure = (props: Record<string, unknown>) => unknown;
+const COMPONENTS = { Adopted, BarChart, Controls, GrowthChart, Intervals, Stats } as unknown as Record<string, Figure>;
+
+const page = await getEntry('docs', 'about');
+if (!page) throw new Error('about/slides.mdx: the About page is missing');
+const figure = aboutFigureById(aboutFiguresOf(page.body ?? ''), Astro.props.id);
+const Component = COMPONENTS[figure.name];
+if (!Component) throw new Error(`about/slides.mdx: <FromAbout> can't show a <${figure.name}>`);
+---
+
+<Component {...figure.props} />

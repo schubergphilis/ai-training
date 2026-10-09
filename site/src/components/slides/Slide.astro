@@ -1,0 +1,19 @@
+---
+/**
+ * One slide of the About slides (issue #762). `part` is the part of the talk
+ * the slide belongs to, shown above its heading. `layout` sets how the slide
+ * places its content: `title` and `end` center it, `agenda` shows a large
+ * numbered list, and `figure`, the default, puts the heading and a line of
+ * text above a figure that takes the rest of the slide.
+ */
+interface Props {
+	part?: string;
+	layout?: 'title' | 'agenda' | 'figure' | 'end';
+}
+const { part, layout = 'figure' } = Astro.props;
+---
+
+<section class={`slide slide-${layout}`} data-slide>
+	{part && <p class="slide-part">{part}</p>}
+	<slot />
+</section>
