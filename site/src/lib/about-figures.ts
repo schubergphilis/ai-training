@@ -8,9 +8,9 @@ import { lessonTime } from './lesson-time';
  * issue #762), counted from the data tree and the lesson pages at build
  * time, so the page never states a stale count. The page shows one figure
  * with `<AboutFigure of="key" />`, and an unknown key fails the build.
- * `getAboutFigures` reads the collections into an `AboutInput` once per
- * build, and `aboutFigures` counts it without reading a collection, so the
- * tests run it directly.
+ * `getAboutFigures` reads the collections into an `AboutInput`, and
+ * `aboutFigures` counts it without reading a collection, so the tests run
+ * it directly.
  *
  * Keys are kebab-case. A per-area figure is the key, a colon and the area
  * slug (`lessons:concepts`). A per-kind figure is the key, a colon and the
@@ -171,21 +171,24 @@ export function aboutFigure(figures: Map<string, number>, key: string): string {
 const WIDGET_FILES = Object.keys(import.meta.glob('../components/widgets/*.astro'));
 export const widgetNames = (files: string[]) => files.map((f) => f.replace(/^.*\//, '').replace(/\.astro$/, '')).sort();
 
-let cached: Promise<Map<string, number>> | undefined;
+let cached: { key: string; figures: Map<string, number> } | undefined;
 
 /**
- * The figures of the current build, read once: the page uses `<AboutFigure>` many times. The dev server
- * reads them again on each request, so a new lesson shows in the counts without a restart.
+ * The figures of the current input. The page uses a figure many times, and counting parses every lesson
+ * body, so the figures are kept with the input they were counted from. A call reads the collections, which
+ * Astro keeps in memory, and counts again only when the input changed: under the dev server, a new lesson
+ * shows in the counts without a restart, and a page load doesn't parse every lesson once per figure.
  */
-export function getAboutFigures(): Promise<Map<string, number>> {
-	if (import.meta.env.DEV) return loadAboutFigures();
-	cached ??= loadAboutFigures();
-	return cached;
+export async function getAboutFigures(): Promise<Map<string, number>> {
+	const input = await loadAboutInput();
+	const key = JSON.stringify(input);
+	if (cached?.key !== key) cached = { key, figures: aboutFigures(input) };
+	return cached.figures;
 }
 
-async function loadAboutFigures(): Promise<Map<string, number>> {
+async function loadAboutInput(): Promise<AboutInput> {
 	const docs = await getCollection('docs');
-	return aboutFigures({
+	return {
 		groups: (await getCollection('groups')).map((g) => g.data),
 		courses: (await getCollection('courses')).map((c) => c.data),
 		lessonPlans: (await getCollection('lessonPlans')).map((p) => ({ id: p.data.id, mode: p.data.mode })),
@@ -195,5 +198,5 @@ async function loadAboutFigures(): Promise<Map<string, number>> {
 		alignment: (await getCollection('alignment')).map((a) => a.data),
 		bibliography: (await getCollection('bibliography')).map((b) => b.data),
 		widgets: widgetNames(WIDGET_FILES),
-	});
+	};
 }

@@ -1,7 +1,9 @@
 import { type AboutInput, aboutFigure, aboutFigures, getAboutFigures, widgetNames } from '@lib/about-figures';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('astro:content', () => ({ getCollection: async () => [] }));
+/** What the mocked `getCollection` returns for each collection. A test sets it. */
+const collections: Record<string, unknown[]> = {};
+vi.mock('astro:content', () => ({ getCollection: async (name: string) => collections[name] ?? [] }));
 
 const cp = 'objective="concepts/c/o" concepts={[\'c\']} hint="h"';
 
@@ -128,17 +130,20 @@ describe('widgetNames', () => {
 });
 
 describe('getAboutFigures', () => {
-	it('reads the collections again on each call under the dev server', () => {
-		expect(getAboutFigures()).not.toBe(getAboutFigures());
+	it('keeps the figures while the collections are unchanged', async () => {
+		const first = await getAboutFigures();
+		expect(await getAboutFigures()).toBe(first);
+		expect(first.get('lessons-planned')).toBe(0);
+		expect(first.get('widget-kinds')).toBeGreaterThan(0);
+		expect(first.get('study-hours')).toBe(0);
 	});
-	it('reads the collections once in a build and keeps the result', async () => {
-		vi.stubEnv('DEV', false);
-		const first = getAboutFigures();
-		expect(getAboutFigures()).toBe(first);
-		const f = await first;
-		expect(f.get('lessons-planned')).toBe(0);
-		expect(f.get('widget-kinds')).toBeGreaterThan(0);
-		expect(f.get('study-hours')).toBe(0);
-		vi.unstubAllEnvs();
+	it('counts again when a collection changes, as under the dev server', async () => {
+		const before = await getAboutFigures();
+		collections.groups = [{ data: { areas: ['concepts'] } }];
+		const after = await getAboutFigures();
+		delete collections.groups;
+		expect(after).not.toBe(before);
+		expect(after.get('areas')).toBe(1);
+		expect(before.get('areas')).toBe(0);
 	});
 });
