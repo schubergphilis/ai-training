@@ -163,6 +163,13 @@ describe('the About page alternate', () => {
 		expect(md).not.toMatch(/source:|How to update|\{\/\*|<[A-Z]|^import /m);
 		expect(md).toContain('## References');
 	});
+	it('turns the tiles into a list and the area chart into a table, and leaves out a drawing', async () => {
+		const md = await alternateOf('/about/');
+		expect(md).toMatch(/^- \d+ lessons\n- 1,436 commits$/m);
+		expect(md).toContain('| Area | Group | What it covers | Lessons | Topics | Checkpoints |');
+		expect(md).toMatch(/^\| Concepts \| Foundations \| .+ \| \d+ \| \d+ \| \d+ \|$/m);
+		expect(md).not.toContain('LessonAnatomy');
+	});
 });
 
 describe('a glossary alternate', () => {

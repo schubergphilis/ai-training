@@ -96,11 +96,11 @@ const glossary: DocFixture = {
 	data: { title: 'Glossary', description: 'Every concept.' },
 	body: "import Glossary from '@components/Glossary.astro';\n\nGenerated from the topic definitions.\n\n<Glossary />\n",
 };
-/** The About page (#762): a header comment before the imports, a source comment, a figure, the topic map and a citation. */
+/** The About page (#762): a header comment before the imports, a source comment, a figure, the topic map, a citation, tiles, the area chart and a drawing. */
 const about: DocFixture = {
 	id: 'about',
 	data: { title: 'About this project', description: 'Why the project exists.' },
-	body: "{/*\nHow to update this page.\n*/}\n\nimport AboutFigure from '@components/AboutFigure.astro';\nimport TopicMap from '@components/TopicMap.astro';\n\n{/* source: groups.yaml */}\n\nThe site has <AboutFigure of=\"areas\" /> areas (@AEC-02).\n\n<TopicMap />\n",
+	body: "{/*\nHow to update this page.\n*/}\n\nimport AboutFigure from '@components/AboutFigure.astro';\nimport TopicMap from '@components/TopicMap.astro';\n\n{/* source: groups.yaml */}\n\nThe site has <AboutFigure of=\"areas\" /> areas (@AEC-02).\n\n<TopicMap />\n\n<Stats items={[{ of: 'lessons', label: 'lessons' }, { value: 1436, label: 'commits' }]} />\n\n<AreaChart />\n\n<LessonAnatomy />\n",
 };
 /** A docs page that S12 gives no alternate. */
 const progress: DocFixture = {

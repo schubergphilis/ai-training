@@ -1,0 +1,27 @@
+---
+import { formatNumber, rowValue, type StatItem } from '@lib/about-charts';
+/**
+ * A row of tiles on the About page (issue #762), one big number each:
+ * `<Stats items={[{ of: 'lessons', label: 'lessons' }, { value: 1436, label: 'commits' }]} />`.
+ * `of` is a build figure (`lib/about-figures.ts`), and `value` a number the page states with an "as of" date.
+ */
+import { getAboutFigures } from '@lib/about-figures';
+import '../../styles/about.css';
+
+interface Props {
+	items: StatItem[];
+}
+const figures = await getAboutFigures();
+const tiles = Astro.props.items.map((s, i) => ({ ...s, text: formatNumber(rowValue(figures, s, `tile ${i + 1}`)) }));
+---
+
+<ul class="about-stats not-content">
+	{
+		tiles.map((t) => (
+			<li>
+				<span class="about-stat-value">{t.text}</span>
+				<span class="about-stat-label">{t.label}</span>
+			</li>
+		))
+	}
+</ul>

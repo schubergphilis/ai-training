@@ -1,0 +1,29 @@
+---
+/**
+ * What the project took from each source it learned from, on the About page
+ * (issue #762): one row per source, one chip per idea:
+ * `<Adopted rows={[{ source: 'CS50', adopted: ['Comfort levels', 'A tutor that gives hints'] }]} />`.
+ */
+import type { AdoptedRow } from '@lib/about-charts';
+import '../../styles/about.css';
+
+interface Props {
+	rows: AdoptedRow[];
+}
+const { rows } = Astro.props;
+---
+
+<ul class="about-adopted not-content">
+	{
+		rows.map((r) => (
+			<li>
+				<span class="about-source">{r.source}</span>
+				<ul>
+					{r.adopted.map((a) => (
+						<li>{a}</li>
+					))}
+				</ul>
+			</li>
+		))
+	}
+</ul>

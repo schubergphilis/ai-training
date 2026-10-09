@@ -170,6 +170,19 @@ Hazeldine
 Sanne
 Duarte
 
+# Learning-science authors cited on the About page
+Roediger
+Karpicke
+Cepeda
+Pashler
+Dunlosky
+Rawson
+Kornell
+Bruner
+Gollwitzer
+Tighe
+ASCD
+
 # Sharma 2023 authors
 Sharma
 Mrinank

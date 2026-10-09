@@ -1,0 +1,99 @@
+---
+/**
+ * One run of the wave process on the About page (issue #762): the maintainer
+ * starts the dispatcher, the dispatcher starts a wave lead, the lead starts a
+ * builder per issue and a reviewer per pushed branch, then combines the
+ * approved branches and opens one pull request. It only draws what the prose
+ * next to it says, so the Markdown alternate leaves it out.
+ */
+import { nth } from '@lib/about-charts';
+import '../../styles/about.css';
+
+const W = 720;
+const BW = 130;
+const BH = 44;
+const X = [10, 175, 340, 505];
+const ROWS = [40, 100, 160];
+const BOTTOM = 248;
+const H = BOTTOM + BH + 10;
+const x = (c: number) => nth(X, c);
+const row = (r: number) => nth(ROWS, r);
+const cx = (c: number) => x(c) + BW / 2;
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="The maintainer starts a run. The dispatcher picks ready issues and starts a wave lead. The lead starts one builder per issue, each in its own copy of the repository, and one reviewer per pushed branch. Reviews go back through the lead to the builder. The lead combines the approved branches on a wave branch, runs every check and opens one pull request, which merges into the main branch.">
+		<defs>
+			<marker id="wd-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+				<path class="arrow" d="M0,0 L10,5 L0,10 z"></path>
+			</marker>
+			<marker id="wd-arrow-cross" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+				<path class="arrow-cross" d="M0,0 L10,5 L0,10 z"></path>
+			</marker>
+		</defs>
+
+		<rect class="box" x={x(0)} y={row(0)} width={BW} height={BH} rx="10"></rect>
+		<text class="label-strong" x={cx(0)} y={row(0) + 27} text-anchor="middle">Maintainer</text>
+		<path class="edge" d={`M${cx(0)},${row(0) + BH} L${cx(0)},${row(1) + 20}`} marker-end="url(#wd-arrow)"></path>
+		<text class="note" x={cx(0) + 6} y={row(0) + BH + 18}>starts a run</text>
+
+		<rect class="box" x={x(0)} y={row(1) + 24} width={BW} height={BH + 10} rx="10"></rect>
+		<text class="label-strong" x={cx(0)} y={row(1) + 46} text-anchor="middle">Dispatcher</text>
+		<text class="note" x={cx(0)} y={row(1) + 62} text-anchor="middle">picks ready issues</text>
+
+		<path class="edge" d={`M${x(0) + BW},${row(1) + 46} L${x(1) - 4},${row(1) + 30}`} marker-end="url(#wd-arrow)"></path>
+
+		<rect class="box-accent" x={x(1)} y={row(1)} width={BW} height={BH} rx="10"></rect>
+		<text class="label-strong" x={cx(1)} y={row(1) + 27} text-anchor="middle">Wave lead</text>
+
+		{
+			ROWS.map((y, i) => (
+				<g>
+					<path class="edge" d={`M${x(1) + BW},${row(1) + BH / 2} L${x(2) - 4},${y + BH / 2}`} marker-end="url(#wd-arrow)"></path>
+					<rect class="box" x={x(2)} y={y} width={BW} height={BH} rx="10"></rect>
+					<text class="label-strong" x={cx(2)} y={y + 20} text-anchor="middle">
+						Builder {i + 1}
+					</text>
+					<text class="note" x={cx(2)} y={y + 35} text-anchor="middle">
+						own copy and branch
+					</text>
+					<path class="edge" d={`M${x(2) + BW},${y + BH / 2} L${x(3) - 4},${y + BH / 2}`} marker-end="url(#wd-arrow)"></path>
+					<rect class="box" x={x(3)} y={y} width={BW} height={BH} rx="10"></rect>
+					<text class="label-strong" x={cx(3)} y={y + 20} text-anchor="middle">
+						Reviewer {i + 1}
+					</text>
+					<text class="note" x={cx(3)} y={y + 35} text-anchor="middle">
+						reads, runs checks
+					</text>
+				</g>
+			))
+		}
+		<text class="note" x={(x(2) + BW + x(3)) / 2} y={row(0) - 6} text-anchor="middle">branch</text>
+		<path class="edge-cross" d={`M${cx(3)},${row(0)} L${cx(3)},26 Q${cx(3)},18 ${cx(3) - 8},18 L${cx(1) + 8},18 Q${cx(1)},18 ${cx(1)},26 L${cx(1)},${row(1) - 4}`} marker-end="url(#wd-arrow-cross)"></path>
+		<text class="cross-label" x={(cx(1) + cx(3)) / 2} y="12" text-anchor="middle">review, passed on to the builder</text>
+
+		<path class="edge" d={`M${cx(1)},${row(1) + BH} L${cx(1)},${BOTTOM - 4}`} marker-end="url(#wd-arrow)"></path>
+		<text class="note" x={cx(1) + 6} y={row(2) + 30}>approved</text>
+		<text class="note" x={cx(1) + 6} y={row(2) + 44}>branches</text>
+		{
+			[
+				{ c: 1, title: 'Wave branch', note: 'branches combined' },
+				{ c: 2, title: 'Every check', note: 'the full suite' },
+				{ c: 3, title: 'One pull request', note: 'merged when green' },
+			].map((b, i) => (
+				<g>
+					<rect class={i === 2 ? 'box-done' : 'box'} x={x(b.c)} y={BOTTOM} width={BW} height={BH} rx="10"></rect>
+					<text class="label-strong" x={cx(b.c)} y={BOTTOM + 20} text-anchor="middle">
+						{b.title}
+					</text>
+					<text class="note" x={cx(b.c)} y={BOTTOM + 35} text-anchor="middle">
+						{b.note}
+					</text>
+					{i < 2 && <path class="edge" d={`M${x(b.c) + BW},${BOTTOM + BH / 2} L${x(b.c + 1) - 4},${BOTTOM + BH / 2}`} marker-end="url(#wd-arrow)"></path>}
+				</g>
+			))
+		}
+		<path class="edge" d={`M${x(3) + BW},${BOTTOM + BH / 2} L${W - 52},${BOTTOM + BH / 2}`} marker-end="url(#wd-arrow)"></path>
+		<text class="label-strong" x={W - 46} y={BOTTOM + BH / 2 + 5}>main</text>
+	</svg>
+</figure>

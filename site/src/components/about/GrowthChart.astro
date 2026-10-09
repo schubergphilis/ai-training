@@ -1,0 +1,104 @@
+---
+/**
+ * How the project grew, on the About page (issue #762): the number of live
+ * lessons at the end of some days as a line, and numbered markers on the date
+ * axis for the events listed under the chart. Both lists are in the page,
+ * with the commands and commits that back them in a `source:` comment:
+ * `<GrowthChart points={[{ date: '2026-09-20', lessons: 10 }]} events={[{ date: '2026-09-19', text: '...' }]} />`.
+ * The axis starts at the first event and ends at the last point or event.
+ */
+import { dayLabel, daysBetween, formatNumber, type GrowthEvent, type GrowthPoint } from '@lib/about-charts';
+import '../../styles/about.css';
+
+interface Props {
+	points: GrowthPoint[];
+	events: GrowthEvent[];
+}
+const { points, events } = Astro.props;
+const start = events[0]?.date ?? points[0]?.date ?? '';
+const days = Math.max(
+	1,
+	...points.map((p) => daysBetween(start, p.date)),
+	...events.map((e) => daysBetween(start, e.end ?? e.date)),
+);
+const top = Math.ceil(Math.max(1, ...points.map((p) => p.lessons)) / 25) * 25;
+
+const W = 720;
+const PLOT_X = 44;
+const PLOT_W = W - PLOT_X - 20;
+const PLOT_TOP = 12;
+const PLOT_H = 170;
+const AXIS_Y = PLOT_TOP + PLOT_H;
+const MARK_Y = AXIS_Y + 38;
+const H = MARK_Y + 16;
+const x = (date: string) => PLOT_X + (daysBetween(start, date) / days) * PLOT_W;
+const y = (lessons: number) => AXIS_Y - (lessons / top) * PLOT_H;
+const line = [{ date: start, lessons: 0 }, ...points].map((p) => `${x(p.date)},${y(p.lessons)}`);
+const area = `M${x(start)},${AXIS_Y} L${line.join(' L')} L${x(points.at(-1)?.date ?? start)},${AXIS_Y} Z`;
+const grid = Array.from({ length: top / 25 + 1 }, (_, i) => i * 25);
+// One tick per week, and the axis ends.
+const ticks = Array.from({ length: Math.floor(days / 7) + 1 }, (_, i) => i * 7);
+const tickDate = (offset: number) =>
+	new Date(Date.parse(`${start}T00:00:00Z`) + offset * 86400000).toISOString().slice(0, 10);
+const label = `Live lessons at the end of the day: ${points.map((p) => `${dayLabel(p.date)} ${p.lessons}`).join(', ')}.`;
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+		{
+			grid.map((g) => (
+				<g>
+					<line class="axis" x1={PLOT_X} x2={W - 20} y1={y(g)} y2={y(g)}></line>
+					<text class="note" x={PLOT_X - 8} y={y(g) + 4} text-anchor="end">
+						{g}
+					</text>
+				</g>
+			))
+		}
+		<text class="heading" x={PLOT_X} y={PLOT_TOP - 2}>Live lessons</text>
+		<path class="area" d={area}></path>
+		<polyline class="line" points={line.join(' ')}></polyline>
+		{
+			points.map((p) => (
+				<g>
+					<circle class="dot" cx={x(p.date)} cy={y(p.lessons)} r="4"></circle>
+					<text class="num-sm" x={x(p.date) - 6} y={y(p.lessons) - 8} text-anchor="end">
+						{formatNumber(p.lessons)}
+					</text>
+				</g>
+			))
+		}
+		{
+			ticks.map((t) => (
+				<text class="note" x={x(tickDate(t))} y={AXIS_Y + 16} text-anchor="middle">
+					{dayLabel(tickDate(t))}
+				</text>
+			))
+		}
+		{
+			events.map((e, i) => (
+				<g>
+					{e.end && <line class="edge" x1={x(e.date)} x2={x(e.end)} y1={MARK_Y} y2={MARK_Y}></line>}
+					<circle class="marker" cx={e.end ? (x(e.date) + x(e.end)) / 2 : x(e.date)} cy={MARK_Y} r="9"></circle>
+					<text class="marker-text" x={e.end ? (x(e.date) + x(e.end)) / 2 : x(e.date)} y={MARK_Y + 3.5} text-anchor="middle">
+						{i + 1}
+					</text>
+				</g>
+			))
+		}
+	</svg>
+	<ol class="about-events not-content">
+		{
+			events.map((e, i) => (
+				<li>
+					<span class="about-event-n" aria-hidden="true">
+						{i + 1}
+					</span>
+					<span>
+						<span class="about-event-date">{dayLabel(e.date, e.end)}.</span> {e.text}
+					</span>
+				</li>
+			))
+		}
+	</ol>
+</figure>

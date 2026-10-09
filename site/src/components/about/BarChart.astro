@@ -1,0 +1,79 @@
+---
+import { type BarRow, barsOf } from '@lib/about-charts';
+/**
+ * Horizontal bars on the About page (issue #762), each with its label, an
+ * optional note under the label and its value:
+ * `<BarChart rows={[{ of: 'checkpoints:choice', label: 'Choice', note: 'Picks the one right option' }]} />`.
+ * A row with `group` starts a new block with that heading, and `muted` draws a row's bar in gray.
+ */
+import { getAboutFigures } from '@lib/about-figures';
+import '../../styles/about.css';
+
+interface Props {
+	rows: (BarRow & { muted?: boolean })[];
+	/** What the values count, for the alternate's table and the figure's accessible name. */
+	unit?: string;
+	/** What the labels name, for the head of the alternate's table. */
+	label?: string;
+	caption?: string;
+}
+const { rows, unit = 'Count', caption } = Astro.props;
+const bars = barsOf(await getAboutFigures(), rows);
+const withNotes = bars.some((b) => b.note);
+const W = 720;
+const LABEL_W = withNotes ? 270 : 210;
+const BAR_X = LABEL_W + 10;
+const BAR_W = W - BAR_X - 70;
+const ROW_H = withNotes ? 38 : 26;
+const HEAD_H = 26;
+let y = 0;
+const placed = bars.map((b, i) => {
+	let head: number | undefined;
+	if (b.group) {
+		y += i === 0 ? HEAD_H - 8 : HEAD_H + 6;
+		head = y;
+	}
+	const top = y;
+	y += ROW_H;
+	return { ...b, muted: rows[i]?.muted ?? false, top, head };
+});
+const H = y + 4;
+const label = `${unit}: ${bars.map((b) => `${b.label} ${b.text}`).join(', ')}`;
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+		{
+			placed.map((b) => (
+				<g>
+					{b.head !== undefined && (
+						<text class="heading" x="0" y={b.head - 8}>
+							{b.group}
+						</text>
+					)}
+					<text class="label-strong" x="0" y={b.top + (withNotes ? 15 : 17)}>
+						{b.label}
+					</text>
+					{b.note && (
+						<text class="note" x="0" y={b.top + 30}>
+							{b.note}
+						</text>
+					)}
+					<rect class="track" x={BAR_X} y={b.top + 5} width={BAR_W} height={withNotes ? 18 : 14} rx="3" />
+					<rect
+						class={b.muted ? 'bar-muted' : 'bar'}
+						x={BAR_X}
+						y={b.top + 5}
+						width={Math.max(b.value > 0 ? 2 : 0, b.fraction * BAR_W)}
+						height={withNotes ? 18 : 14}
+						rx="3"
+					/>
+					<text class="num-sm" x={BAR_X + BAR_W + 10} y={b.top + (withNotes ? 19 : 17)}>
+						{b.text}
+					</text>
+				</g>
+			))
+		}
+	</svg>
+	{caption && <figcaption>{caption}</figcaption>}
+</figure>
