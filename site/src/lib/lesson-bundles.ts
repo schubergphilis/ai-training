@@ -346,9 +346,10 @@ function withoutImportBlock(body: string): string {
 		const line = lines[i] as string;
 		if (/^import\s/.test(line) || line.trim() === '') i++;
 		else if (/^\{\/\*/.test(line)) {
+			// The comment ends on the first line with `*/`. Text after its `}` makes it no comment-only block.
 			let j = i;
-			while (j < lines.length && !/\*\/\}\s*$/.test(lines[j] as string)) j++;
-			if (j === lines.length) break;
+			while (j < lines.length && !(lines[j] as string).includes('*/')) j++;
+			if (j === lines.length || !/\*\/\}\s*$/.test(lines[j] as string)) break;
 			i = j + 1;
 		} else break;
 	}
