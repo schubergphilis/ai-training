@@ -709,6 +709,55 @@ Bainbridge 1983:
   author: Lisanne Bainbridge
   license: Copyright IFAC, published by Elsevier
   url: https://doi.org/10.1016/0005-1098(83)90046-8
+Roediger 2006:
+  type: paper
+  title: "Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention"
+  container: Psychological Science 17(3) (2006), 249-255
+  author: Henry L. Roediger III and Jeffrey D. Karpicke
+  license: Copyright Association for Psychological Science, published by SAGE
+  url: https://doi.org/10.1111/j.1467-9280.2006.01693.x
+Cepeda 2006:
+  type: paper
+  title: "Distributed Practice in Verbal Recall Tasks: A Review and Quantitative Synthesis"
+  container: Psychological Bulletin 132(3) (2006), 354-380
+  author: Nicholas J. Cepeda, Harold Pashler, Edward Vul and 2 others
+  license: Copyright American Psychological Association
+  url: https://doi.org/10.1037/0033-2909.132.3.354
+Dunlosky 2013:
+  type: paper
+  title: "Improving Students' Learning With Effective Learning Techniques: Promising Directions From Cognitive and Educational Psychology"
+  container: Psychological Science in the Public Interest 14(1) (2013), 4-58
+  author: John Dunlosky, Katherine A. Rawson, Elizabeth J. Marsh and 2 others
+  license: Copyright Association for Psychological Science, published by SAGE
+  url: https://doi.org/10.1177/1529100612453266
+Kornell 2009:
+  type: paper
+  title: Unsuccessful Retrieval Attempts Enhance Subsequent Learning
+  container: "Journal of Experimental Psychology: Learning, Memory, and Cognition 35(4) (2009), 989-998"
+  author: Nate Kornell, Matthew Jensen Hays and Robert A. Bjork
+  license: Copyright American Psychological Association
+  url: https://doi.org/10.1037/a0015729
+Wood 1976:
+  type: paper
+  title: The Role of Tutoring in Problem Solving
+  container: Journal of Child Psychology and Psychiatry 17(2) (1976), 89-100
+  author: David Wood, Jerome S. Bruner and Gail Ross
+  license: Copyright Association for Child Psychology and Psychiatry, published by Wiley
+  url: https://doi.org/10.1111/j.1469-7610.1976.tb00381.x
+Gollwitzer 1999:
+  type: paper
+  title: "Implementation Intentions: Strong Effects of Simple Plans"
+  container: American Psychologist 54(7) (1999), 493-503
+  author: Peter M. Gollwitzer
+  license: Copyright American Psychological Association
+  url: https://doi.org/10.1037/0003-066X.54.7.493
+Wiggins 2005:
+  type: book
+  title: Understanding by Design, Expanded 2nd Edition
+  container: ASCD, 2005
+  author: Grant Wiggins and Jay McTighe
+  license: Proprietary
+  url: null
 NTSB Asiana 214:
   type: reference
   title: "Descent Below Visual Glidepath and Impact With Seawall, Asiana Airlines Flight 214, Boeing 777-200ER, HL7742, San Francisco, California, July 6, 2013 (AAR-14/01)"

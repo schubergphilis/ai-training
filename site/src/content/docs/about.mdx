@@ -14,7 +14,7 @@ How to update this page (issue #762). Read this before you edit.
   reading. At 180 words a minute, that is about 16,000 words, and the page
   is far below that. The right-hand "On this page" menu lists the `##` and
   `###` headings, so keep them short and descriptive.
-- Keep the four `import` lines directly under this comment and before any
+- Keep the `import` lines directly under this comment and before any
   prose. The Markdown copy for agents (`/about/index.md`) leaves out the
   comments and the imports above the first line of prose.
 - Content figures are counted at build time. Write `<AboutFigure of="key" />`
@@ -22,6 +22,15 @@ How to update this page (issue #762). Read this before you edit.
   `site/src/lib/about-figures.ts`. An unknown key fails the build and lists
   the known keys. A count that has no key, such as the agents and skills of
   the harness, is left out of the prose or named by its items instead.
+- Figures and diagrams are components in `site/src/components/about/`.
+  `<Stats>` and `<BarChart>` take rows with `of="key"` for a build figure
+  or `value={n}` for a history figure. `<GrowthChart>`, `<Adopted>`,
+  `<Controls>` and `<Intervals>` take their data as props in this page, so
+  the data and its `source:` comment stay together. `<ContentModel>` and
+  `<AreaChart>` read everything from the build. Each component has a text
+  form in the Markdown copy (`site/src/lib/about-charts.ts`,
+  `aboutMarkdown`). Use a figure in place of a table, and in place of a
+  paragraph that lists many numbers.
 - Search the page for `as of` to find every dated figure. The lesson growth
   table in "A timeline" is dated too.
 - History and process figures can't be counted at build time, because the
@@ -40,6 +49,17 @@ How to update this page (issue #762). Read this before you edit.
 
 import { Aside } from '@astrojs/starlight/components';
 import AboutFigure from '@components/AboutFigure.astro';
+import Adopted from '@components/about/Adopted.astro';
+import ArchitectureDiagram from '@components/about/ArchitectureDiagram.astro';
+import AreaChart from '@components/about/AreaChart.astro';
+import BarChart from '@components/about/BarChart.astro';
+import ContentModel from '@components/about/ContentModel.astro';
+import Controls from '@components/about/Controls.astro';
+import GrowthChart from '@components/about/GrowthChart.astro';
+import Intervals from '@components/about/Intervals.astro';
+import LessonAnatomy from '@components/about/LessonAnatomy.astro';
+import Stats from '@components/about/Stats.astro';
+import WaveDiagram from '@components/about/WaveDiagram.astro';
 import TopicMap from '@components/TopicMap.astro';
 import Sampler from '@components/widgets/Sampler.astro';
 
@@ -48,8 +68,7 @@ project exists and what the site contains. It then shows how a lesson works
 and which ideas about learning are behind that design. After that it tells how the project started,
 how it grew, and how work on it happens now. The last sections describe the
 agent harness that does most of the writing and the software that runs the
-site. The page is long. Use the "On this page" menu to go to the part you
-need.
+site.
 
 ## In short
 
@@ -63,9 +82,18 @@ software engineers.
 {/* source: site/src/data/groups.yaml; lesson counts are build-time figures */}
 
 Each area has one course, and each course is a sequence of interactive
-lessons. Today the site has <AboutFigure of="lessons" /> lessons with
-<AboutFigure of="checkpoints" /> graded checkpoints. Each lesson ends in
-one exercise that the learner does outside the page. The site keeps the
+lessons with graded checkpoints. Each lesson ends in
+one exercise that the learner does outside the page.
+
+<Stats
+  items={[
+    { of: 'lessons', label: 'lessons' },
+    { of: 'checkpoints', label: 'graded checkpoints' },
+    { of: 'exercises', label: 'exercises' },
+  ]}
+/>
+
+The site keeps the
 learner's progress in their own browser and brings finished checkpoints
 back for review on a fixed schedule. A learner can also study a lesson with
 an AI tutor that runs in their own coding agent.
@@ -148,28 +176,21 @@ CS50 (@CS50x), are cited and linked. Their text is never copied.
 ### Facts and figures
 
 All of the counts below are made from the site's data and lesson pages
-when the site is built, so they match the version you are reading.
+when the site is built, so they match the version you are reading. The
+drawing shows what the site has and how the parts relate. A lesson covers
+one topic and serves one or more learning objectives, and each graded
+checkpoint tests one objective. The next sections explain each part.
 
-| What                                        | Count                                            |
-| ------------------------------------------- | ------------------------------------------------ |
-| Groups                                      | <AboutFigure of="groups" />                      |
-| Areas, each with one course                 | <AboutFigure of="areas" />                       |
-| Course parts                                | <AboutFigure of="course-parts" />                |
-| Lessons with a page                         | <AboutFigure of="lessons" />                     |
-| Lessons planned                             | <AboutFigure of="lessons-planned" />             |
-| Topics                                      | <AboutFigure of="topics" />                      |
-| Concepts (each one a glossary entry)        | <AboutFigure of="concepts" />                    |
-| Competencies                                | <AboutFigure of="competencies" />                |
-| Learning objectives                         | <AboutFigure of="objectives" />                  |
-| Behaviors                                   | <AboutFigure of="behaviors" />                   |
-| Graded checkpoints in lessons               | <AboutFigure of="checkpoints" />                 |
-| Extra checkpoints for review only           | <AboutFigure of="checkpoints-review" />          |
-| Exercises                                   | <AboutFigure of="exercises" />                   |
-| Habits                                      | <AboutFigure of="habits" />                      |
-| Code examples whose output a check asserts  | <AboutFigure of="examples-run" />                |
-| Interactive widgets (kinds)                 | <AboutFigure of="widget-kinds" />                |
-| Sources in the bibliography                 | <AboutFigure of="sources" />                     |
-| Estimated study time of all lessons (hours) | <AboutFigure of="study-hours" />                 |
+<ContentModel />
+
+<Stats
+  items={[
+    { of: 'examples-run', label: 'runnable examples' },
+    { of: 'widget-kinds', label: 'widget kinds' },
+    { of: 'sources', label: 'sources' },
+    { of: 'study-hours', label: 'study hours, estimated' },
+  ]}
+/>
 
 The study time is the site's own estimate. It adds the reading time and a
 fixed time per checkpoint to the time each exercise states. The constants in the
@@ -192,16 +213,9 @@ what the levels change.
 
 {/* source: site/src/data/groups.yaml; docs/spec/S03-lesson-authoring.md "Foundations audience"; AGENTS.md (mise run data rejects code in foundations lessons) */}
 
-| Area               | Group       | What the course covers                                                                                                         | Lessons                                       | Topics                                       |
-| ------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- | -------------------------------------------- |
-| Concepts           | Foundations | How language models work, what they do well and where they fail, prompting, tokens and cost, grounding and memory               | <AboutFigure of="lessons:concepts" />           | <AboutFigure of="topics:concepts" />           |
-| Safety             | Foundations | Which data you may share and how far to trust an answer. The risks of an agent that acts, and laws such as the EU AI Act          | <AboutFigure of="lessons:safety" />             | <AboutFigure of="topics:safety" />             |
-| Using agents       | Foundations | How to hand a task to an agent and check the result, and how to choose models and tools                                          | <AboutFigure of="lessons:using-agents" />       | <AboutFigure of="topics:using-agents" />       |
-| Coding with agents | Engineering | Software changes with a coding agent: specifying, plan and implement, context, verification, sandboxing and team practice        | <AboutFigure of="lessons:coding-with-agents" /> | <AboutFigure of="topics:coding-with-agents" /> |
-| Customizing agents | Engineering | Instructions, skills, tool servers, hooks, permissions, settings and memory that make a general agent work in a project         | <AboutFigure of="lessons:customizing-agents" /> | <AboutFigure of="topics:customizing-agents" /> |
-| Building agents    | Engineering | From a bare model API to a working agent: tool use, the loop, retrieval and memory, evaluation, guardrails and production        | <AboutFigure of="lessons:building-agents" />    | <AboutFigure of="topics:building-agents" />    |
+<AreaChart />
 
-{/* source: the "covers" column paraphrases site/src/content/docs/<area>/index.mdx and site/src/data/areas/<area>/area.yaml as of 2026-10-09; update it when a course changes scope */}
+{/* source: site/src/data/groups.yaml and site/src/data/areas/<area>/area.yaml (name and description); the counts are build-time figures */}
 
 ### Topics, concepts and competencies
 
@@ -215,9 +229,7 @@ is data, in YAML files next to the lessons, and the build reads it.
 - A **competency** says what a learner can do after a course, as one
   sentence. It has **learning objectives**, each at a `base` or an `expert`
   level. Each objective has **behaviors**: a claim about what a competent
-  person does, the reason for it, and an example. The site has
-  <AboutFigure of="objectives:base" /> base and
-  <AboutFigure of="objectives:expert" /> expert objectives.
+  person does, the reason for it, and an example.
 - A lesson covers one topic and serves one or more objectives. A graded
   checkpoint tests one objective.
 
@@ -225,7 +237,7 @@ is data, in YAML files next to the lessons, and the build reads it.
 
 The behaviors format comes from Brilliant's skills map for coding with AI
 (@Brilliant VER). The project also maps its objectives to <AboutFigure of="alignment-frameworks" /> outside
-frameworks, in <AboutFigure of="alignment-rows" /> rows. The frameworks are
+frameworks. The frameworks are
 that skills map, a skills map for AI engineering (@Ng), and the 4D
 framework of AI Fluency (@Academy ai-fluency-framework-foundations). The
 mapping shows which part of each framework the site covers, and where it
@@ -241,13 +253,21 @@ from your browser. They stay gray until you finish a lesson.
 
 ### Sources
 
-The bibliography has <AboutFigure of="sources" /> entries:
-<AboutFigure of="sources:reference" /> reference pages,
-<AboutFigure of="sources:course" /> courses,
-<AboutFigure of="sources:paper" /> papers,
-<AboutFigure of="sources:video" /> videos and
-<AboutFigure of="sources:book" /> books. A lesson cites a source with a
-numbered reference, and the build fails on a citation to an unknown entry.
+A lesson cites a source with a numbered reference, and the build fails on
+a citation to an unknown entry. The bibliography has these kinds of
+entry:
+
+<BarChart
+  label="Kind"
+  unit="Entries"
+  rows={[
+    { of: 'sources:reference', label: 'Reference pages' },
+    { of: 'sources:course', label: 'Courses' },
+    { of: 'sources:paper', label: 'Papers' },
+    { of: 'sources:video', label: 'Videos' },
+    { of: 'sources:book', label: 'Books' },
+  ]}
+/>
 
 {/* source: site/src/data/bibliography.yaml; site/plugins/remark-citations.mjs */}
 
@@ -291,9 +311,17 @@ Lessons are for study, so a lesson is a **tutorial** or an
 result early and often. It follows one path, in a setting the learner can
 reset. Its rhythm is fixed: one or two paragraphs, then one example to run
 or predict. An explanation builds understanding. It may compare options
-and hold an opinion. Of the <AboutFigure of="lessons-planned" /> planned
-lessons, <AboutFigure of="lessons-planned:tutorial" /> are tutorials and
-<AboutFigure of="lessons-planned:explanation" /> are explanations.
+and hold an opinion. The planned lessons, the ones with a page and the
+ones still to write, are of these kinds:
+
+<BarChart
+  label="Kind"
+  unit="Planned lessons"
+  rows={[
+    { of: 'lessons-planned:tutorial', label: 'Tutorials' },
+    { of: 'lessons-planned:explanation', label: 'Explanations' },
+  ]}
+/>
 
 The site builds reference pages from data: each topic page and the
 glossary. The guides, such as the guide to running a workshop, are
@@ -314,6 +342,8 @@ two **habits**.
 
 {/* source: docs/spec/S01-dictionary.md "Section kinds"; docs/spec/S03-lesson-authoring.md "Lesson anatomy" */}
 
+<LessonAnatomy />
+
 A lesson that teaches prompting shows prompts and responses in their own
 styled blocks. Each block says which model produced the response and on
 which date, or marks the exchange as illustrative when it was written by
@@ -325,18 +355,22 @@ an example is.
 ### Checkpoints
 
 A checkpoint is a small graded question inside the lesson. The site has
-<AboutFigure of="checkpoints" /> of them, of <AboutFigure of="checkpoint-kinds" /> kinds:
+<AboutFigure of="checkpoint-kinds" /> kinds:
 
-| Kind                       | What the learner does                                    | Count                                          |
-| -------------------------- | -------------------------------------------------------- | ---------------------------------------------- |
-| Choice                     | Picks the one right option                               | <AboutFigure of="checkpoints:choice" />        |
-| Multiple choice            | Picks every right option                                 | <AboutFigure of="checkpoints:multi-choice" />  |
-| Scenario                   | Picks what to do in a short work situation               | <AboutFigure of="checkpoints:scenario" />      |
-| Predict                    | Predicts what a piece of code or a prompt will produce   | <AboutFigure of="checkpoints:predict" />       |
-| Sort                       | Puts items into groups                                   | <AboutFigure of="checkpoints:sort" />          |
-| Match                      | Matches each item on the left to one on the right        | <AboutFigure of="checkpoints:match" />         |
-| Order                      | Puts steps in the right order                            | <AboutFigure of="checkpoints:order" />         |
-| Repair                     | Rewrites a flawed prompt, instruction or piece of code   | <AboutFigure of="checkpoints:repair" />        |
+<BarChart
+  label="Kind"
+  unit="Graded checkpoints"
+  rows={[
+    { of: 'checkpoints:choice', label: 'Choice', note: 'Picks the one right option' },
+    { of: 'checkpoints:multi-choice', label: 'Multiple choice', note: 'Picks every right option' },
+    { of: 'checkpoints:scenario', label: 'Scenario', note: 'Picks what to do in a short work situation' },
+    { of: 'checkpoints:predict', label: 'Predict', note: 'Predicts what code or a prompt will produce' },
+    { of: 'checkpoints:sort', label: 'Sort', note: 'Puts items into groups' },
+    { of: 'checkpoints:match', label: 'Match', note: 'Matches each item to one on the other side' },
+    { of: 'checkpoints:order', label: 'Order', note: 'Puts steps in the right order' },
+    { of: 'checkpoints:repair', label: 'Repair', note: 'Rewrites a flawed prompt, instruction or code' },
+  ]}
+/>
 
 {/* source: site/src/lib/checkpoint-rules.ts KIND_OF_TAG; docs/spec/S01-dictionary.md "Interaction types"; docs/spec/S03-lesson-authoring.md "Checkpoints" */}
 
@@ -452,8 +486,7 @@ don't. Each course has a review page. An item comes back 1, 3, 7, 21
 and 60 days after the learner last passed it. With a pass it moves to the
 next step, and with a fail it goes back to the first step. After the fifth pass
 the item retires. A session asks at most 12 items. Many checkpoints have
-alternate versions that only the review page asks. The site has
-<AboutFigure of="checkpoints-review" /> of these, so that a review tests
+alternate versions that only the review page asks, so that a review tests
 the idea rather than the memory of the wording. The sidebar shows how many
 items are due per course.
 
@@ -461,10 +494,21 @@ items are due per course.
 
 **Habits.** A habit is a small task to do in your own work, in the form
 "The next time you do X, do Y". It comes back 1, 3 and 7 days after the
-lesson. After that the site stops showing it. The site has <AboutFigure of="habits" />
-habits.
+lesson. After that the site stops showing it.
 
 {/* source: docs/spec/S07-habits.md */}
+
+The figure shows both schedules for a learner who passes each review on
+the day it is due.
+
+<Intervals
+  rows={[
+    { label: 'Review item', days: [1, 4, 11, 32, 92] },
+    { label: 'Habit', days: [1, 3, 7] },
+  ]}
+/>
+
+{/* source: docs/spec/S05-spaced-review.md "Schedule" (1, 3, 7, 21, 60 days after the last pass, so days 1, 4, 11, 32 and 92 when every pass is on time); docs/spec/S07-habits.md (days 1, 3 and 7 after the lesson) */}
 
 **The learner's reference.** A topic page has a short summary of the
 lessons that cover it: the takeaways from the recap and one canonical
@@ -514,13 +558,14 @@ answer away doesn't ship.
 ## The ideas about learning behind the design
 
 The project draws on a small number of ideas from learning research and
-from other learning platforms. The specs state each idea in their own words
-with the reason for it. They cite few learning-science papers directly, and
-the numbers in the design, such as the review intervals, are first guesses.
-The project has no data about real learners yet. This section describes
-the ideas as the project uses them.
+from other learning platforms. The specs state each idea in their own words,
+with the reason for it, and most of the ideas came to the project through
+other platforms. This section describes each idea as the project uses it,
+and names research that supports it. The numbers in the design, such as
+the review intervals, are first guesses. The project has no data about
+real learners yet.
 
-{/* source: docs/spec/S02, S03, S05, S07, S08 (the specs give reasons in their own words and cite Diátaxis, CS50, Brilliant and the alignment frameworks, and no learning-science papers, checked 2026-10-09); docs/spec/S05-spaced-review.md open question 4 ("first guesses, to tune once there are learners") */}
+{/* source: docs/spec/S02, S03, S05, S07, S08 (the specs give reasons in their own words and cite Diátaxis, CS50, Brilliant and the alignment frameworks, checked 2026-10-09); docs/spec/S05-spaced-review.md open question 4 ("first guesses, to tune once there are learners"). The papers cited in this section were added to the bibliography for this page (#762); the specs don't cite them. */}
 
 ### Retrieval practice and spaced review
 
@@ -531,7 +576,15 @@ them. So the site asks a learner to retrieve each idea again, after
 growing intervals. It also uses alternate questions. With those, the
 learner recalls the idea and not the wording of one question.
 
-{/* source: docs/spec/S05-spaced-review.md "Introduction" */}
+Memory research supports this design. In one study, students who
+took a test on a text remembered more of it a week later than students who
+spent the same time reading it again (@Roediger 2006). A review of 317
+experiments found that practice spread out over time gives better
+long-term recall than the same practice in one session (@Cepeda 2006). A
+later review of ten study techniques rated these two as the most useful,
+and rereading as one of the least (@Dunlosky 2013).
+
+{/* source: docs/spec/S05-spaced-review.md "Introduction"; Roediger 2006 (restudy won at five minutes, testing at two days and one week); Cepeda 2006 (review of 317 experiments in 184 articles); Dunlosky 2013 (practice testing and distributed practice rated high utility, rereading low) */}
 
 ### Prediction before the result
 
@@ -540,15 +593,19 @@ pays more attention to the result. When the prediction is wrong, the
 difference shows where their model of the system is wrong. The predict checkpoint uses this. Code
 examples follow a fixed rhythm: one idea, then one example. The project
 took both from Execute Program, an online platform that teaches
-programming with short, executable examples.
+programming with short, executable examples. Research supports the first
+part: an attempt to answer before seeing the answer helps later recall,
+even when the attempt fails (@Kornell 2009).
 
-{/* source: exploration note 10 (Execute Program), d7ca2629; docs/spec/S03-lesson-authoring.md "Examples" */}
+{/* source: exploration note 10 (Execute Program), d7ca2629; docs/spec/S03-lesson-authoring.md "Examples"; Kornell 2009 (unsuccessful retrieval attempts enhance later learning) */}
 
 ### Design from the outcomes
 
 The design starts from what the learner can do afterwards, and works back
-to the lessons. Course designers call this backward design. The competencies, objectives and behaviors say what a
-learner can do. Each checkpoint tests one objective. So the site can show
+to the lessons. Course designers call this backward design (@Wiggins 2005).
+It starts from the results a course wants and the evidence that would
+show them, and plans the teaching last. The competencies, objectives and
+behaviors say what a learner can do. Each checkpoint tests one objective. So the site can show
 which objectives a learner has evidence for, and a reviewer can check
 whether a lesson tests what it claims to teach.
 
@@ -569,7 +626,9 @@ work on the current objective, or take an extension.
 The project assumes that a hint that gives the answer ends the learner's own thinking. In
 this project a hint asks the learner a question about their own mistake. The
 tutor follows the same rule. The idea comes from CS50's AI tutor
-(@Liu 2024b).
+(@Liu 2024b). Research on tutoring calls this kind of help scaffolding: the
+tutor takes over the parts of a task that the learner can't do yet, and
+leaves the rest to the learner (@Wood 1976).
 
 {/* source: docs/spec/S03-lesson-authoring.md "Checkpoints"; docs/spec/S08-tutor-skill.md; docs/spec/S02-topic-map.md "Source material" (CS50) */}
 
@@ -579,7 +638,10 @@ People often don't use at work what they read on a page. Exercises use the
 learner's own tools in a practice setting. Habits are closer to the job:
 they ask the learner to change one thing in their real work, and come back
 to ask whether they did. The aim is that a lesson changes what a learner
-does, as well as what they know.
+does, as well as what they know. The habit form, "The next time you do X,
+do Y", is a plan of the kind that psychologists call an implementation
+intention. Such plans make it more likely that people act on a goal
+(@Gollwitzer 1999).
 
 {/* source: docs/spec/S07-habits.md "Introduction" */}
 
@@ -629,15 +691,17 @@ and documentation methods. They wrote one exploration note per source. Each
 note ended with a list of ideas to adopt or to decline, and the maintainer
 decided on each.
 
-| Source                                 | What the project adopted                                                                                 |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| CS50                                   | Ideas, structure and words: comfort levels, walkthroughs, and a tutor that gives hints                   |
-| Diátaxis                               | The four page kinds, and the split of lessons into tutorials and explanations                            |
-| Brilliant's skills map for coding      | Behaviors as claim, reason and example, finer competencies, and alignment with outside frameworks        |
-| Execute Program                        | The predict checkpoint, the course page as a lesson graph, spaced review, and examples that run in CI    |
-| roadmap.sh                             | A status per topic, short concept definitions, the tutor's verbs, and topic pages with a stable link     |
-| Learn Prompting                        | Citations by key, glossary tooltips, and prompt blocks with model and date                               |
-| Claude Academy                         | A survey of its interactive mechanics, as a list of widgets the site could build later                  |
+<Adopted
+  rows={[
+    { source: 'CS50', adopted: ['Comfort levels', 'Walkthroughs', 'A tutor that gives hints', 'Ideas, structure and words'] },
+    { source: 'Diátaxis', adopted: ['The four page kinds', 'Tutorials and explanations as lesson kinds'] },
+    { source: "Brilliant's skills map for coding", adopted: ['Behaviors as claim, reason and example', 'Finer competencies', 'Alignment with outside frameworks'] },
+    { source: 'Execute Program', adopted: ['The predict checkpoint', 'The course page as a lesson graph', 'Spaced review', 'Examples that run in CI'] },
+    { source: 'roadmap.sh', adopted: ['A status per topic', 'Short concept definitions', "The tutor's verbs", 'Topic pages with a stable link'] },
+    { source: 'Learn Prompting', adopted: ['Citations by key', 'Glossary tooltips', 'Prompt blocks with model and date'] },
+    { source: 'Claude Academy', adopted: ['A survey of its interactive mechanics, as a list of widgets to build later'] },
+  ]}
+/>
 
 {/* source: git ls-tree -r --name-only edb5011c docs/plan (exploration notes 03 to 12); 1af8a982 (09 skills map), d7ca2629 (10 Execute Program), 6aa1fd4b (11 roadmap.sh), 4af3c82e (12 Learn Prompting), a2915086 (08 Diátaxis); docs/spec/S13-interactive-components.md (Claude Academy mechanics). The AGENTS.md rule against company names covers lessons, course pages and examples. This page names products as sources of ideas, to credit them. */}
 
@@ -671,36 +735,34 @@ tutor.
 
 ### A timeline
 
-All dates are in 2026.
+The chart shows the number of lessons with a page at the end of some days,
+and the numbered events under it. All dates are in 2026.
 
-{/* source: the commits, issues and PRs in the comment under the table, and git log --format=%ad --date=short | sort | uniq -c for the dates */}
+{/* source, events: 20 Sep: PR #1, f005fe5e, 0b944a06, docs/agents/orchestration.md intro; 21 Sep: PR #227; 23 Sep: PRs #230, #258; 24 Sep: #67, PRs #266 #268, docs/agents/harness-review.md, Assisted-by trailers; 25–27 Sep: run issues Gecko, Jackal, Marmot, #384; 29 Sep: PR #593; 30 Sep: PR #596, PR #601, public date from the maintainer (#762); 1 Oct: PR #649 (#608), #499 #500 #501, PR #668; 4–8 Oct: run Zebra (PRs #712 #715 #723), PR #757, #726 */}
 
-| Date             | What happened                                                                                                                    |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| September 19     | Repository created. Plan, interview, exploration notes, license change, first specs.                                             |
-| September 20     | First release. Prose and spelling checks. First parallel agent work: twelve issues to twelve merged pull requests.               |
-| September 21     | All structure moved into data files: one YAML file per area, competency, course and lesson.                                       |
-| September 23     | A second layer of agent orchestration, the "wave" process, so that one session can work through many issues.                      |
-| September 24     | Habits. Exact versions for every dependency. The first review of the agent harness. The default agent model changed.               |
-| September 25 to 27 | Most lessons were written, in batches of four to ten. A security review of the whole site started.                                 |
-| September 29     | The site left its pre-release status.                                                                                             |
-| September 30     | The repository moved to the organization's account and became public. The site got its visual identity.                          |
-| October 1        | A Content Security Policy on every page. Markdown copies of pages and data files for AI agents. A guide for running a workshop.   |
-| October 4 to 8   | Lessons for the remaining gaps. A skill for triage with the maintainer. The second harness review.                                |
+{/* source, lesson counts: git ls-tree -r --name-only $(git rev-list -1 --before="<date> 23:59" HEAD) site/src/content/docs | grep -E 'docs/(concepts|safety|using-agents|coding-with-agents|customizing-agents|building-agents)/[^/]+\.mdx$' | grep -v index.mdx | wc -l, as of 2026-10-09 */}
 
-{/* source: 20 Sep: PR #1, f005fe5e, 0b944a06, docs/agents/orchestration.md intro; 21 Sep: PR #227; 23 Sep: PRs #230, #258; 24 Sep: #67, PRs #266 #268, docs/agents/harness-review.md, Assisted-by trailers; 25–27 Sep: run issues Gecko, Jackal, Marmot, #384; 29 Sep: PR #593; 30 Sep: PR #596, PR #601, public date from the maintainer (#762); 1 Oct: PR #649 (#608), #499 #500 #501, PR #668; 4–8 Oct: run Zebra (PRs #712 #715 #723), PR #757, #726 */}
-
-The number of live lessons grew in steps.
-
-{/* source: git ls-tree -r --name-only $(git rev-list -1 --before="<date> 23:59" HEAD) site/src/content/docs | grep -E 'docs/(concepts|safety|using-agents|coding-with-agents|customizing-agents|building-agents)/[^/]+\.mdx$' | grep -v index.mdx | wc -l */}
-
-| End of day    | Lessons |
-| ------------- | ------- |
-| September 20  | 10      |
-| September 23  | 37      |
-| September 25  | 100     |
-| September 27  | 114     |
-| October 9     | 132     |
+<GrowthChart
+  points={[
+    { date: '2026-09-20', lessons: 10 },
+    { date: '2026-09-23', lessons: 37 },
+    { date: '2026-09-25', lessons: 100 },
+    { date: '2026-09-27', lessons: 114 },
+    { date: '2026-10-09', lessons: 132 },
+  ]}
+  events={[
+    { date: '2026-09-19', text: 'Repository created. Plan, interview, exploration notes, license change, first specs.' },
+    { date: '2026-09-20', text: 'First release. Prose and spelling checks. First parallel agent work: twelve issues to twelve merged pull requests.' },
+    { date: '2026-09-21', text: 'All structure moved into data files: one YAML file per area, competency, course and lesson.' },
+    { date: '2026-09-23', text: 'A second layer of agent orchestration, the "wave" process, so that one session can work through many issues.' },
+    { date: '2026-09-24', text: 'Habits. Exact versions for every dependency. The first review of the agent harness. The default agent model changed.' },
+    { date: '2026-09-25', end: '2026-09-27', text: 'Most lessons were written, in batches of four to ten. A security review of the whole site started.' },
+    { date: '2026-09-29', text: 'The site left its pre-release status.' },
+    { date: '2026-09-30', text: "The repository moved to the organization's account and became public. The site got its visual identity." },
+    { date: '2026-10-01', text: 'A Content Security Policy on every page. Markdown copies of pages and data files for AI agents. A guide for running a workshop.' },
+    { date: '2026-10-04', end: '2026-10-08', text: 'Lessons for the remaining gaps. A skill for triage with the maintainer. The second harness review.' },
+  ]}
+/>
 
 ### Figures from the history
 
@@ -708,19 +770,32 @@ These figures are as of October 9, 2026.
 
 {/* source: git rev-list --count HEAD (1436); git log --format=%ad --date=short | sort | uniq -c (17 active days; peaks 09-24 276, 09-25 269, 09-20 204); gh issue list --state all --limit 2000 --json number,state (608: 533 closed, 75 open); gh pr list --state all --limit 2000 --json state (154: 153 merged); git log --format='%(trailers:key=Assisted-by,valueonly)' | grep -v '^$' | sort | uniq -c; git log --merges | wc -l (0). All as of 2026-10-09, HEAD cb719acf. */}
 
-- The repository has 1,436 commits over 17 days with commits. The busiest
-  days had 276, 269 and 204 commits.
-- 1,427 of those commits end with a line that names the AI model that
-  helped write them. Nine don't: the first commit, six small edits by the
-  maintainer, and two automatic dependency updates.
-- Two models did almost all of the work. Claude Fable 5.1 was the default
-  until September 24, with 553 commits. Claude Opus 5.5 was the default
-  after that day, with 868 commits. Six more commits name the model string
-  `claude-opus-5`.
-- The project has 608 GitHub issues, of which 533 are closed.
-- It has 154 pull requests, and 153 of them were merged. Each merge
-  rebased the commits onto the main branch, so the history has no merge
-  commits.
+<Stats
+  items={[
+    { value: 1436, label: 'commits' },
+    { value: 17, label: 'days with commits' },
+    { value: 608, label: 'issues, 533 closed' },
+    { value: 153, label: 'merged pull requests, of 154' },
+  ]}
+/>
+
+Each merge rebased the commits onto the main branch, so the history has
+no merge commits. Almost every commit ends with a line that names the AI
+model that helped write it. Claude Fable 5.1 was the default model until
+September 24, and Claude Opus 5.5 after that day. The commits without
+such a line are the first commit, six small edits by the maintainer and
+two automatic dependency updates.
+
+<BarChart
+  label="Model"
+  unit="Commits"
+  rows={[
+    { value: 868, label: 'Claude Opus 5.5' },
+    { value: 553, label: 'Claude Fable 5.1' },
+    { value: 6, label: 'claude-opus-5', note: 'a model string in six commits' },
+    { value: 9, label: 'No model named', note: 'by the maintainer or a bot', muted: true },
+  ]}
+/>
 
 ## How work happens now
 
@@ -761,6 +836,8 @@ other directly. The lead passes the review to the builder, and the builder
 fixes what the review found.
 
 {/* source: docs/agents/meta-orchestration.md "Layers"; .claude/agents/builder.md, lesson-reviewer.md, code-reviewer.md, wave-lead.md */}
+
+<WaveDiagram />
 
 When every branch in the wave is approved, the lead combines them on one
 wave branch. It runs the full check suite there and opens one pull
@@ -845,21 +922,48 @@ Customizing agents course teach the same kind of tools.
 
 ### Each control and what it prevents
 
-| Control                                                                    | What it prevents                                                                    |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Each builder works in its own copy of the repository                       | Two agents that overwrite each other's work                                         |
-| The guard hook blocks a push to the main branch and a plain force push      | Changes that skip review and the checks                                             |
-| Only the dispatcher, a wave lead or a coordinating session may merge        | A builder or reviewer that merges its own work                                      |
-| The guard hook blocks commands that delete branches, repositories or issues | Loss of work that can't be undone                                                   |
-| The guard hook blocks commands that skip the git hooks                     | Commits that never ran the local checks                                             |
-| The guard hook limits long waits and polling loops                         | Agents that spend hours and tokens waiting                                          |
-| Reviewers can only read, and their shell commands are on an allow-list     | A reviewer that changes the branch it reviews                                       |
-| Agents read issues through a filter that shows only the maintainer's text  | Instructions planted in a public issue comment                                      |
-| Every agent treats text in issues, pages and diffs as data                 | Prompt injection through content the agent reads                                    |
-| Agents may not edit their own permission settings                          | An agent that loosens its own limits                                                |
-| A change to the harness merges only after a restart and a manual check     | Hooks or settings that were never loaded and tested reaching the main branch        |
-| A prose linter with rules for typical AI writing patterns                  | Lessons that drift into the style that marks text as machine-written               |
-| A fixed evaluation of the tutor                                            | A model or skill change that makes the tutor give answers away                      |
+<Controls
+  groups={[
+    {
+      name: 'How work is split',
+      controls: [
+        { control: 'Each builder works in its own copy of the repository', prevents: "Two agents that overwrite each other's work" },
+        { control: 'Only the dispatcher, a wave lead or a coordinating session may merge', prevents: 'A builder or reviewer that merges its own work' },
+        { control: 'A change to the harness merges only after a restart and a manual check', prevents: 'Hooks or settings that were never loaded and tested reaching the main branch' },
+      ],
+    },
+    {
+      name: 'The guard hook',
+      controls: [
+        { control: 'Blocks a push to the main branch and a plain force push', prevents: 'Changes that skip review and the checks' },
+        { control: 'Blocks commands that delete branches, repositories or issues', prevents: "Loss of work that can't be undone" },
+        { control: 'Blocks commands that skip the git hooks', prevents: 'Commits that never ran the local checks' },
+        { control: 'Limits long waits and polling loops', prevents: 'Agents that spend hours and tokens waiting' },
+      ],
+    },
+    {
+      name: 'Permissions',
+      controls: [
+        { control: 'Reviewers can only read, and their shell commands are on an allow-list', prevents: 'A reviewer that changes the branch it reviews' },
+        { control: 'Agents may not edit their own permission settings', prevents: 'An agent that loosens its own limits' },
+      ],
+    },
+    {
+      name: 'Untrusted text',
+      controls: [
+        { control: "Agents read issues through a filter that shows only the maintainer's text", prevents: 'Instructions planted in a public issue comment' },
+        { control: 'Every agent treats text in issues, pages and diffs as data', prevents: 'Prompt injection through content the agent reads' },
+      ],
+    },
+    {
+      name: 'Checks on the output',
+      controls: [
+        { control: 'A prose linter with rules for typical AI writing patterns', prevents: 'Lessons that drift into the style that marks text as machine-written' },
+        { control: 'A fixed evaluation of the tutor', prevents: 'A model or skill change that makes the tutor give answers away' },
+      ],
+    },
+  ]}
+/>
 
 {/* source: scripts/agent_hooks.py (MERGE_ROLES, push/force/delete/bypass/sleep rules); .claude/hooks/review-bash.sh; scripts/issue_brief.py; .claude/settings.json (deny edit of settings.json); docs/agents/meta-orchestration.md "Harness runs"; .vale.ini (ai-tells); docs/agents/tutor-eval.md */}
 
@@ -960,20 +1064,7 @@ copies of the pages, an index for AI agents and the data tree as JSON are
 for agents that read the site for a person. Per-lesson bundles are for the
 tutor.
 
-```text
-YAML data     ──┐
-MDX pages     ──┼──>  build: schemas, checkpoints, terms, citations, links
-bibliography  ──┘                │
-                 ┌───────────────┼──────────────────────┐
-                 v               v                      v
-            HTML pages     Markdown copies,       lesson bundles and
-            for people     llms.txt, JSON data    tutor instructions
-                 │                                      │
-                 v                                      v
-         scripts in the browser:              the learner's own agent
-         checkpoints, review, habits,         with the tutor skill
-         progress in local storage
-```
+<ArchitectureDiagram />
 
 {/* source: site/astro.config.mjs; site/src/pages/ (llms.txt.ts, data/, [...page]/index.md.ts); docs/spec/S12-agent-readable-site.md; docs/spec/S08-tutor-skill.md */}
 
@@ -994,13 +1085,23 @@ service.
 
 ### Size of the code
 
-As of October 9, 2026, the site has about 10,000 lines of TypeScript and
-3,600 lines of Astro components. The build plugins and check scripts are
-about 4,900 lines. The Python scripts for the harness and the checks are
-about 8,000 lines. Tests are larger than the code they test: about 16,500
-lines of unit tests for the site, 2,200 lines of browser tests and 11,900
-lines of Python tests. The files behind the lesson examples include 425
-small Python files: examples, practice repositories and helper modules.
+The chart counts lines of code and tests, as of October 9, 2026. The tests
+are larger than the code they test. The lesson examples add 425 small
+Python files: examples, practice repositories and helper modules.
+
+<BarChart
+  label="Part"
+  unit="Lines"
+  rows={[
+    { group: 'Code', value: 10001, label: 'Site TypeScript' },
+    { value: 3649, label: 'Astro components' },
+    { value: 4894, label: 'Build plugins and checks' },
+    { value: 7970, label: 'Python harness and checks' },
+    { group: 'Tests', value: 16485, label: 'Site unit tests', muted: true },
+    { value: 2227, label: 'Browser tests', muted: true },
+    { value: 11891, label: 'Python tests', muted: true },
+  ]}
+/>
 
 {/* source: git ls-files | grep -E REGEX | xargs cat | wc -l, as of 2026-10-09, with REGEX: '^site/src/.+[.]ts$' (10,001), '^site/.+[.]astro$' (3,649), '^site/(plugins|scripts)/.+[.]mjs$' (4,894), '^scripts/.+[.]py$' (7,970), '^site/tests/.+[.]ts$' (16,485), '^site/e2e/.+[.]ts$' (2,227), '^tests/.+[.]py$' (11,891); git ls-files | grep -cE '^site/examples/.+[.]py$' (425) */}
 

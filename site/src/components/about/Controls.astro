@@ -1,0 +1,32 @@
+---
+/**
+ * The controls of the agent harness on the About page (issue #762), one card
+ * per place a control sits, each control with what it prevents:
+ * `<Controls groups={[{ name: 'Guard hook', controls: [{ control: '...', prevents: '...' }] }]} />`.
+ */
+import type { ControlGroup } from '@lib/about-charts';
+import '../../styles/about.css';
+
+interface Props {
+	groups: ControlGroup[];
+}
+const { groups } = Astro.props;
+---
+
+<div class="about-controls not-content">
+	{
+		groups.map((g) => (
+			<section>
+				<h4>{g.name}</h4>
+				<ul>
+					{g.controls.map((c) => (
+						<li>
+							<span class="about-control">{c.control}</span>
+							<span class="about-prevents">{c.prevents}</span>
+						</li>
+					))}
+				</ul>
+			</section>
+		))
+	}
+</div>

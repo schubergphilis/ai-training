@@ -1,0 +1,52 @@
+---
+/**
+ * When things come back after a lesson, on the About page (issue #762): one
+ * row per schedule, a dot on each day after the lesson that it comes back.
+ * The day axis is a square root, so the short first steps stay apart:
+ * `<Intervals rows={[{ label: 'Habit', days: [1, 3, 7] }]} />`.
+ */
+import { dayPosition, type IntervalRow } from '@lib/about-charts';
+import '../../styles/about.css';
+
+interface Props {
+	rows: IntervalRow[];
+	caption?: string;
+}
+const { rows, caption } = Astro.props;
+const max = Math.max(1, ...rows.flatMap((r) => r.days));
+const W = 720;
+const AXIS_X = 130;
+const AXIS_W = W - AXIS_X - 20;
+const ROW_H = 44;
+const x = (day: number) => AXIS_X + dayPosition(day, max) * AXIS_W;
+const H = rows.length * ROW_H + 34;
+const label = rows.map((r) => `${r.label}: on days ${r.days.join(', ')} after the lesson`).join('. ');
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+		<line class="axis" x1={x(0)} x2={x(max)} y1={rows.length * ROW_H + 8} y2={rows.length * ROW_H + 8}></line>
+		<text class="note" x={x(0)} y={rows.length * ROW_H + 24} text-anchor="middle">lesson</text>
+		<text class="note" x={x(max)} y={rows.length * ROW_H + 24} text-anchor="end">days after the lesson</text>
+		{
+			rows.map((r, i) => (
+				<g>
+					<text class="label-strong" x="0" y={i * ROW_H + 34}>
+						{r.label}
+					</text>
+					<line class="edge" x1={x(0)} x2={x(Math.max(...r.days))} y1={i * ROW_H + 30} y2={i * ROW_H + 30}></line>
+					<circle class="dot-done" cx={x(0)} cy={i * ROW_H + 30} r="6"></circle>
+					{r.days.map((d) => (
+						<g>
+							<circle class="dot" cx={x(d)} cy={i * ROW_H + 30} r="6"></circle>
+							<text class="num-sm" x={x(d)} y={i * ROW_H + 16} text-anchor="middle">
+								{d}
+							</text>
+						</g>
+					))}
+				</g>
+			))
+		}
+	</svg>
+	{caption && <figcaption>{caption}</figcaption>}
+</figure>

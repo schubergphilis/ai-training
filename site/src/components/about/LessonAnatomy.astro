@@ -1,0 +1,94 @@
+---
+/**
+ * The parts of a lesson page, in order, on the About page (issue #762): a
+ * sketch of the page on the left and what each part is on the right. It only
+ * draws what the prose next to it says, so the Markdown alternate leaves it out.
+ */
+import '../../styles/about.css';
+
+interface Part {
+	kind: 'intro' | 'teach' | 'pitfall' | 'checkpoint' | 'exercise' | 'recap' | 'habit';
+	h: number;
+	title?: string;
+	label?: string;
+	note?: string;
+}
+const parts: Part[] = [
+	{ kind: 'intro', h: 22, label: 'Opening', note: 'One or two sentences on what the lesson does' },
+	{ kind: 'teach', h: 52, label: 'Teaching section', note: 'One idea, with an example to run or predict' },
+	{ kind: 'pitfall', h: 34, title: 'Pitfall', label: 'Pitfall', note: 'A common mistake and what it costs' },
+	{ kind: 'checkpoint', h: 46, title: 'Checkpoint', label: 'Checkpoint', note: 'Graded, close to the idea it tests' },
+	{ kind: 'teach', h: 40 },
+	{ kind: 'checkpoint', h: 46, title: 'Checkpoint' },
+	{ kind: 'exercise', h: 44, title: 'Exercise', label: 'Exercise', note: 'Done outside the page, with your own tools' },
+	{ kind: 'recap', h: 46, title: 'Recap', label: 'Recap', note: 'Takeaways, objectives, and the finish button' },
+	{ kind: 'habit', h: 28, title: 'Habit', label: 'Habit', note: 'One change to try in your real work' },
+];
+const W = 720;
+const PAGE_X = 20;
+const PAGE_W = 280;
+const GAP = 8;
+let y = 18;
+const placed = parts.map((p) => {
+	const top = y;
+	y += p.h + GAP;
+	return { ...p, top };
+});
+const H = y + 12;
+const boxClass: Record<Part['kind'], string> = {
+	intro: 'box-plain',
+	teach: 'box-plain',
+	pitfall: 'box-warn',
+	checkpoint: 'box-accent',
+	exercise: 'box',
+	recap: 'box-done',
+	habit: 'box',
+};
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="The parts of a lesson page in order: an opening, teaching sections with pitfalls and checkpoints between them, one exercise, a recap with the finish button, and sometimes a habit.">
+		<rect class="box" x={PAGE_X - 10} y="6" width={PAGE_W + 20} height={H - 12} rx="12"></rect>
+		{
+			placed.map((p) => (
+				<g>
+					<rect class={boxClass[p.kind]} x={PAGE_X} y={p.top} width={PAGE_W} height={p.h} rx="6"></rect>
+					{p.title && (
+						<text class="label-strong" x={PAGE_X + 12} y={p.top + 18}>
+							{p.title}
+						</text>
+					)}
+					{(p.kind === 'teach' || p.kind === 'intro') &&
+						Array.from({ length: Math.max(1, Math.floor((p.h - 8) / 12)) }, (_, i) => (
+							<rect class="sketch" x={PAGE_X + 10} y={p.top + 7 + i * 12} width={PAGE_W - 20 - (i % 2) * 50} height="5" rx="2"></rect>
+						))}
+					{p.kind === 'checkpoint' && (
+						<g>
+							<rect class="box" x={PAGE_X + 12} y={p.top + 26} width="70" height="12" rx="6"></rect>
+							<rect class="box" x={PAGE_X + 90} y={p.top + 26} width="70" height="12" rx="6"></rect>
+						</g>
+					)}
+					{p.kind === 'recap' && (
+						<g>
+							<rect class="box-done" x={PAGE_X + PAGE_W - 82} y={p.top + 14} width="70" height="20" rx="10"></rect>
+							<text class="note" x={PAGE_X + PAGE_W - 47} y={p.top + 28} text-anchor="middle">
+								Finish
+							</text>
+						</g>
+					)}
+					{p.label && (
+						<g>
+							<line class="axis" x1={PAGE_X + PAGE_W + 6} x2="350" y1={p.top + p.h / 2} y2={p.top + p.h / 2}></line>
+							<text class="label-strong" x="358" y={p.top + p.h / 2 - 2}>
+								{p.label}
+							</text>
+							<text class="note" x="358" y={p.top + p.h / 2 + 12}>
+								{p.note}
+							</text>
+						</g>
+					)}
+				</g>
+			))
+		}
+	</svg>
+</figure>

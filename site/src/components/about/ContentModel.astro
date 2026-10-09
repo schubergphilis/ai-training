@@ -1,0 +1,137 @@
+---
+import { figureValue, formatNumber, nth } from '@lib/about-charts';
+/**
+ * What the site contains, as one drawing on the About page (issue #762): the
+ * groups and areas, and below them three columns. The middle column is what a
+ * learner studies (courses, lessons, checkpoints), the left one what it is about
+ * (topics, concepts), and the right one what a learner can do afterwards
+ * (competencies, objectives, behaviors). Dashed links are the relations that
+ * tie the columns together. Every number is a build figure.
+ */
+import { getAboutFigures } from '@lib/about-figures';
+import '../../styles/about.css';
+
+const figures = await getAboutFigures();
+const n = (key: string) => formatNumber(figureValue(figures, key));
+
+const W = 720;
+const BOX_W = 190;
+const BOX_H = 54;
+const COL = [115, 360, 605];
+const ROW = [8, 92, 176, 260];
+const H = nth(ROW, 3) + BOX_H + 6;
+const left = (c: number) => nth(COL, c) - BOX_W / 2;
+const right = (c: number) => nth(COL, c) + BOX_W / 2;
+const top = (r: number) => nth(ROW, r);
+const bottom = (r: number) => nth(ROW, r) + BOX_H;
+const mid = (r: number) => nth(ROW, r) + BOX_H / 2;
+const col = (c: number) => nth(COL, c);
+
+interface Box {
+	c: number;
+	r: number;
+	num: string;
+	label: string;
+	note?: string;
+	accent?: boolean;
+}
+const boxes: Box[] = [
+	{ c: 0, r: 0, num: n('groups'), label: 'groups', note: 'Foundations and Engineering' },
+	{ c: 1, r: 0, num: n('areas'), label: 'areas', note: 'one course each' },
+	{ c: 0, r: 1, num: n('topics'), label: 'topics' },
+	{ c: 1, r: 1, num: n('courses'), label: 'courses', note: `in ${n('course-parts')} parts` },
+	{ c: 2, r: 1, num: n('competencies'), label: 'competencies' },
+	{ c: 0, r: 2, num: n('concepts'), label: 'concepts', note: 'each one a glossary entry' },
+	{ c: 1, r: 2, num: n('lessons'), label: 'lessons', accent: true },
+	{
+		c: 2,
+		r: 2,
+		num: n('objectives'),
+		label: 'objectives',
+		note: `${n('objectives:base')} base, ${n('objectives:expert')} expert`,
+	},
+	{ c: 0, r: 3, num: n('exercises'), label: 'exercises', note: `and ${n('habits')} habits` },
+	{
+		c: 1,
+		r: 3,
+		num: n('checkpoints'),
+		label: 'checkpoints',
+		note: `and ${n('checkpoints-review')} for review only`,
+		accent: true,
+	},
+	{ c: 2, r: 3, num: n('behaviors'), label: 'behaviors', note: 'claim, reason and example' },
+];
+// Lines that mean "has": a thing above has the things below it.
+const has = [
+	`M${right(0)},${mid(0)} L${left(1) - 4},${mid(0)}`,
+	`M${col(1) - 40},${bottom(0)} C${col(1) - 40},${top(1) - 10} ${col(0)},${bottom(0) + 6} ${col(0)},${top(1) - 4}`,
+	`M${col(1)},${bottom(0)} L${col(1)},${top(1) - 4}`,
+	`M${col(1) + 40},${bottom(0)} C${col(1) + 40},${top(1) - 10} ${col(2)},${bottom(0) + 6} ${col(2)},${top(1) - 4}`,
+	...[0, 1, 2].flatMap((c) => [1, 2].map((r) => `M${col(c)},${bottom(r)} L${col(c)},${top(r + 1) - 4}`)),
+	`M${left(1) + 30},${bottom(2)} L${right(0) - 10},${top(3) - 4}`,
+];
+// Dashed relations between the columns, with their verbs.
+const relations = [
+	{
+		d: `M${left(1)},${top(2) + 14} L${right(0) + 4},${bottom(1) - 8}`,
+		label: 'covers one',
+		x: left(1) - 30,
+		y: top(2) - 2,
+	},
+	{
+		d: `M${right(1)},${mid(2)} L${left(2) - 4},${mid(2)}`,
+		label: 'serves',
+		x: (right(1) + left(2)) / 2,
+		y: mid(2) - 6,
+	},
+	{
+		d: `M${right(1)},${top(3) + 14} L${left(2) + 4},${bottom(2) - 8}`,
+		label: 'tests one',
+		x: right(1) + 30,
+		y: top(3) + 2,
+	},
+];
+const label = `The site has ${n('groups')} groups and ${n('areas')} areas, each with one course. The courses have ${n('lessons')} lessons with ${n('checkpoints')} graded checkpoints and ${n('exercises')} exercises. The areas have ${n('topics')} topics with ${n('concepts')} concepts, and ${n('competencies')} competencies with ${n('objectives')} objectives and ${n('behaviors')} behaviors. A lesson covers one topic and serves objectives, and a checkpoint tests one objective.`;
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+		<defs>
+			<marker id="cm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+				<path class="arrow" d="M0,0 L10,5 L0,10 z"></path>
+			</marker>
+			<marker id="cm-arrow-cross" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+				<path class="arrow-cross" d="M0,0 L10,5 L0,10 z"></path>
+			</marker>
+		</defs>
+		{has.map((d) => <path class="edge" d={d} marker-end="url(#cm-arrow)"></path>)}
+		{
+			relations.map((r) => (
+				<g>
+					<path class="edge-cross" d={r.d} marker-end="url(#cm-arrow-cross)"></path>
+					<text class="cross-label" x={r.x} y={r.y} text-anchor="middle">
+						{r.label}
+					</text>
+				</g>
+			))
+		}
+		{
+			boxes.map((b) => (
+				<g>
+					<rect class={b.accent ? 'box-accent' : 'box'} x={left(b.c)} y={top(b.r)} width={BOX_W} height={BOX_H} rx="10"></rect>
+					<text x={left(b.c) + 14} y={top(b.r) + (b.note ? 25 : 33)}>
+						<tspan class="num">{b.num}</tspan>
+						<tspan class="label" dx="6">
+							{b.label}
+						</tspan>
+					</text>
+					{b.note && (
+						<text class="note" x={left(b.c) + 14} y={top(b.r) + 43}>
+							{b.note}
+						</text>
+					)}
+				</g>
+			))
+		}
+	</svg>
+</figure>

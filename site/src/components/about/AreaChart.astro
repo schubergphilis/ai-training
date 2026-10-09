@@ -1,0 +1,93 @@
+---
+import { areaFiguresOf, formatNumber, wrapText } from '@lib/about-charts';
+/**
+ * The six areas on the About page (issue #762): each area's name and
+ * description from its `area.yaml`, under its group, with bars for its
+ * lessons, topics and graded checkpoints. Every bar of one kind is scaled
+ * against the largest area, and every number is a build figure.
+ */
+import { getAboutFigures } from '@lib/about-figures';
+import { getAreas, getGroups } from '@lib/areas';
+import '../../styles/about.css';
+
+const groups = areaFiguresOf(await getAboutFigures(), await getGroups(), await getAreas());
+const all = groups.flatMap((g) => g.areas);
+const metrics = [
+	{ key: 'lessons', title: 'Lessons' },
+	{ key: 'topics', title: 'Topics' },
+	{ key: 'checkpoints', title: 'Checkpoints' },
+] as const;
+const max = Object.fromEntries(metrics.map((m) => [m.key, Math.max(1, ...all.map((a) => a[m.key]))]));
+
+const W = 720;
+const TEXT_W = 300;
+const COL_W = (W - TEXT_W) / metrics.length;
+const BAR_W = COL_W - 50;
+const ROW_H = 60;
+const GROUP_H = 30;
+let y = 22;
+const rows = groups.map((g) => {
+	const head = y + 20;
+	y += GROUP_H;
+	const areas = g.areas.map((a) => {
+		const top = y;
+		y += ROW_H;
+		return { ...a, top, lines: wrapText(a.description, 46).slice(0, 2) };
+	});
+	return { group: g.group, head, areas };
+});
+const H = y;
+const label = `Lessons, topics and graded checkpoints per area. ${all
+	.map((a) => `${a.name}: ${a.lessons} lessons, ${a.topics} topics, ${a.checkpoints} checkpoints`)
+	.join('. ')}.`;
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+		{
+			metrics.map((m, i) => (
+				<text class="heading" x={TEXT_W + i * COL_W} y="12">
+					{m.title}
+				</text>
+			))
+		}
+		{
+			rows.map((g) => (
+				<g>
+					<text class="heading" x="0" y={g.head}>
+						{g.group.name}: {g.group.audience.toLowerCase()}
+					</text>
+					<line class="axis" x1="0" x2={W} y1={g.head + 6} y2={g.head + 6}></line>
+					{g.areas.map((a) => (
+						<g>
+							<text class="label-strong" x="0" y={a.top + 18}>
+								{a.name}
+							</text>
+							{a.lines.map((line, i) => (
+								<text class="note" x="0" y={a.top + 33 + i * 13}>
+									{line}
+								</text>
+							))}
+							{metrics.map((m, i) => (
+								<g>
+									<rect class="track" x={TEXT_W + i * COL_W} y={a.top + 8} width={BAR_W} height="14" rx="3"></rect>
+									<rect
+										class="bar"
+										x={TEXT_W + i * COL_W}
+										y={a.top + 8}
+										width={(a[m.key] / (max[m.key] ?? 1)) * BAR_W}
+										height="14"
+										rx="3"
+									></rect>
+									<text class="num-sm" x={TEXT_W + i * COL_W + BAR_W + 6} y={a.top + 20}>
+										{formatNumber(a[m.key])}
+									</text>
+								</g>
+							))}
+						</g>
+					))}
+				</g>
+			))
+		}
+	</svg>
+</figure>

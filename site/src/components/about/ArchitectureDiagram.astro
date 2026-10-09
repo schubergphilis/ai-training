@@ -1,0 +1,86 @@
+---
+/**
+ * The build of the site on the About page (issue #762): the sources on the
+ * left, the build steps in the middle, the three outputs, and who reads each
+ * one. It only draws what the prose next to it says, so the Markdown
+ * alternate leaves it out.
+ */
+import { nth } from '@lib/about-charts';
+import '../../styles/about.css';
+
+const W = 720;
+const ROW = [16, 82, 148];
+const BH = 52;
+const H = nth(ROW, 2) + BH + 12;
+const SRC = { x: 10, w: 130 };
+const BUILD = { x: 180, w: 170 };
+const OUT = { x: 390, w: 160 };
+const USE = { x: 590, w: 125 };
+const sources = [
+	{ title: 'YAML data', note: 'areas, topics, plans' },
+	{ title: 'MDX pages', note: 'lessons, guides' },
+	{ title: 'Bibliography', note: 'one entry per source' },
+];
+const steps = ['schemas', 'checkpoints', 'terms', 'citations', 'links'];
+const outputs = [
+	{ title: 'HTML pages', note: 'for people', use: 'Browser scripts', useNote: 'progress in the browser' },
+	{ title: 'Markdown, llms.txt', note: 'and JSON data', use: 'Agents', useNote: 'that read for a person' },
+	{ title: 'Lesson bundles', note: 'and tutor instructions', use: 'Learner’s agent', useNote: 'with the tutor skill' },
+];
+const mid = (r: number) => nth(ROW, r) + BH / 2;
+---
+
+<figure class="about-figure">
+	<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="YAML data, MDX pages and the bibliography go into the build, which checks schemas, checkpoints, terms, citations and links. The build writes HTML pages for people, Markdown copies with llms.txt and JSON data for agents, and lesson bundles with tutor instructions for the learner's own agent.">
+		<defs>
+			<marker id="ad-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+				<path class="arrow" d="M0,0 L10,5 L0,10 z"></path>
+			</marker>
+		</defs>
+		<rect class="box-accent" x={BUILD.x} y={nth(ROW, 0)} width={BUILD.w} height={nth(ROW, 2) + BH - nth(ROW, 0)} rx="10"></rect>
+		<text class="label-strong" x={BUILD.x + 14} y={nth(ROW, 0) + 24}>Build</text>
+		{
+			steps.map((s, i) => (
+				<text class="label" x={BUILD.x + 14} y={nth(ROW, 0) + 52 + i * 22}>
+					{s}
+				</text>
+			))
+		}
+		{
+			sources.map((s, r) => (
+				<g>
+					<rect class="box" x={SRC.x} y={ROW[r]} width={SRC.w} height={BH} rx="10"></rect>
+					<text class="label-strong" x={SRC.x + 12} y={nth(ROW, r) + 22}>
+						{s.title}
+					</text>
+					<text class="note" x={SRC.x + 12} y={nth(ROW, r) + 38}>
+						{s.note}
+					</text>
+					<path class="edge" d={`M${SRC.x + SRC.w},${mid(r)} L${BUILD.x - 4},${mid(r)}`} marker-end="url(#ad-arrow)"></path>
+				</g>
+			))
+		}
+		{
+			outputs.map((o, r) => (
+				<g>
+					<path class="edge" d={`M${BUILD.x + BUILD.w},${mid(r)} L${OUT.x - 4},${mid(r)}`} marker-end="url(#ad-arrow)"></path>
+					<rect class="box" x={OUT.x} y={ROW[r]} width={OUT.w} height={BH} rx="10"></rect>
+					<text class="label-strong" x={OUT.x + 12} y={nth(ROW, r) + 22}>
+						{o.title}
+					</text>
+					<text class="note" x={OUT.x + 12} y={nth(ROW, r) + 38}>
+						{o.note}
+					</text>
+					<path class="edge" d={`M${OUT.x + OUT.w},${mid(r)} L${USE.x - 4},${mid(r)}`} marker-end="url(#ad-arrow)"></path>
+					<rect class="box-plain" x={USE.x} y={ROW[r]} width={USE.w} height={BH} rx="10"></rect>
+					<text class="label-strong" x={USE.x + 12} y={nth(ROW, r) + 22}>
+						{o.use}
+					</text>
+					<text class="note" x={USE.x + 12} y={nth(ROW, r) + 38}>
+						{o.useNote}
+					</text>
+				</g>
+			))
+		}
+	</svg>
+</figure>
