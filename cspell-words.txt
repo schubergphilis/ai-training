@@ -93,6 +93,10 @@ pset
 psets
 
 # Jargon
+llms
+pyproject
+shortlog
+valueonly
 wordmark
 distractor
 distractors
