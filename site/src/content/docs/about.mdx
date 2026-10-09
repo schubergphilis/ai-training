@@ -1,0 +1,1010 @@
+---
+title: About this project
+description: Why this training suite exists, what it contains, how its lessons work, and how it was built and is maintained.
+---
+
+{/*
+How to update this page (issue #762). Read this before you edit.
+
+- The page is one long read, from top to bottom, for someone who has not
+  opened any other page of the site. Don't send the reader away to
+  understand a section. A link is fine as a pointer for later.
+- The page is no lesson. It has no checkpoints, no exercise and no recap,
+  and it doesn't teach the course material. Keep it under 90 minutes of
+  reading. At 180 words a minute, that is about 16,000 words, and the page
+  is far below that. The right-hand "On this page" menu lists the `##` and
+  `###` headings, so keep them short and descriptive.
+- Content figures are counted at build time. Write `<AboutFigure of="key" />`
+  and never type a content count by hand. The keys are in
+  `site/src/lib/about-figures.ts`. An unknown key fails the build and lists
+  the known keys.
+- History and process figures can't be counted at build time, because the
+  deploy has no full git history and no GitHub access. Each one has an
+  "as of" date in the prose and a `source:` comment just above it with the
+  command or the commit, issue or PR that backs it. To refresh one, run the
+  command, change the number and the date, and keep the comment.
+- Every hand-written claim about the project has a `source:` comment, with
+  a file, spec section, commit, issue or PR. Add one when you add a claim.
+- Cite outside sources with `(@key)` from `site/src/data/bibliography.yaml`.
+  The References section at the end is generated.
+- No organization name and no personal names in the prose (AGENTS.md,
+  spec S14). Author names in the generated References are fine.
+- Voice: the rules in AGENTS.md "Voice", checked by `mise run prose`.
+*/}
+
+import { Aside } from '@astrojs/starlight/components';
+import AboutFigure from '@components/AboutFigure.astro';
+import TopicMap from '@components/TopicMap.astro';
+import Sampler from '@components/widgets/Sampler.astro';
+
+This page describes the AI Training project as a whole. It explains why the
+project exists and what the site contains. It then shows how a lesson works
+and which ideas about learning are behind that design. It then tells how the project started,
+how it grew, and how work on it happens now. The last sections describe the
+agent harness that does most of the writing and the software that runs the
+site. The page is long. Use the "On this page" menu to go to the part you
+need.
+
+## In short
+
+AI Training is an open training suite for people who start to use
+generative AI in their work. It has <AboutFigure of="areas" /> areas in
+<AboutFigure of="groups" /> groups. The Foundations group (Concepts, Safety
+and Using agents) is for anyone who does knowledge work. The Engineering
+group (Coding with agents, Customizing agents and Building agents) is for
+software engineers.
+
+{/* source: site/src/data/groups.yaml; lesson counts are build-time figures */}
+
+Each area has one course, and each course is a sequence of interactive
+lessons. Today the site has <AboutFigure of="lessons" /> lessons with
+<AboutFigure of="checkpoints" /> graded checkpoints. Each lesson ends in
+one exercise that the learner does outside the page. The site keeps the
+learner's progress in their own browser and brings finished checkpoints
+back for review on a fixed schedule. A learner can also study a lesson with
+an AI tutor that runs in their own coding agent.
+
+The site is a static website on GitHub Pages. It runs entirely in the
+browser, without accounts or tracking. The content is licensed CC BY-SA 4.0 and the code
+Apache-2.0, so others may copy and adapt both.
+
+{/* source: LICENSE, LICENSE-CODE, AGENTS.md "Content and licensing", SECURITY.md "Scope" */}
+
+The project started on September 19, 2026. One maintainer runs it. AI coding
+agents write almost all of the content and the code, and the maintainer
+decides what gets built and reviews the result. The site states this in its
+footer: the content is co-authored by AI.
+
+{/* source: git log --reverse | head -1 (27008263, 2026-09-19); git log --invert-grep --grep='Assisted-by:' (9 of 1,436 commits have no agent trailer, as of 2026-10-09); site/src/components/overrides/Footer.astro */}
+
+## Why the project exists
+
+### People need a common starting point
+
+Generative AI tools reached most office work in a short time. Many people
+now use a chat assistant or a coding agent every day without any training
+in how these tools work or fail. The result is uneven. Some colleagues save
+hours each week with the tools. Others paste confidential data into them, trust
+answers they should check, or give up after one bad result.
+
+A training suite gives a group of people the same words and the same basic
+model of the tools. People can then discuss a result, a risk or a working
+method with each other. The project defines its own words in a project
+dictionary and uses them the same way on every page.
+
+{/* source: docs/spec/S01-dictionary.md "Introduction" */}
+
+### Safe use and real use go together
+
+Research on automation has a long history of one finding. When a machine
+does most of a task, people stop checking its work, and they lose the skill
+to take over when it fails (@Bainbridge 1983). Studies of automation bias
+show that people accept a wrong answer from a system they trust, also when
+the evidence in front of them says otherwise (@Parasuraman 2010). AI
+assistants make both effects more likely, because they answer fluently and
+with confidence.
+
+So the suite teaches safety in the Foundations group, before any
+engineering material, and it returns to verification in every area. The
+Safety course covers which data a person may share with a tool and how far
+to trust an answer. It ends with the risks of an agent that acts on its
+own.
+
+{/* source: site/src/content/docs/safety/index.mdx; site/src/data/groups.yaml (Engineering assumes Foundations) */}
+
+### Open content
+
+The project is public, and its license lets anyone reuse it. An
+organization can run the courses for its own staff or change a lesson to
+fit its own tools. A person can study alone, with only a
+browser. The license is CC BY-SA 4.0 for the content and Apache-2.0 for the
+code.
+
+The first license, on the first day, was CC BY-NC-SA 4.0. It was changed
+the same evening. The "non-commercial" term made training inside a company
+an unclear use, and it blocked the project from adapting material under
+BY-SA, which Diátaxis uses (@Diátaxis).
+
+{/* source: a2915086 "docs: relicense content to CC BY-SA 4.0, code to Apache-2.0; adopt Diátaxis" (2026-09-19), its commit message */}
+
+The license also limits what the project may take from others. A lesson may
+adapt text only from a source whose license allows it, such as Apache-2.0,
+CC BY or CC BY-SA material. Other sources, such as Claude Academy courses
+(@Academy ai-fluency-framework-foundations), DeepLearning.AI courses and
+CS50 (@CS50x), are cited and linked. Their text is never copied.
+
+{/* source: AGENTS.md "Content and licensing"; docs/agents/writing-a-lesson.md "Source licenses"; docs/spec/S02-topic-map.md "Source material" */}
+
+## What the site contains
+
+### Facts and figures
+
+All of the counts below are made from the site's data and lesson pages
+when the site is built, so they match the version you are reading.
+
+| What                                        | Count                                            |
+| ------------------------------------------- | ------------------------------------------------ |
+| Groups                                      | <AboutFigure of="groups" />                      |
+| Areas, each with one course                 | <AboutFigure of="areas" />                       |
+| Course parts                                | <AboutFigure of="course-parts" />                |
+| Lessons with a page                         | <AboutFigure of="lessons" />                     |
+| Lessons planned                             | <AboutFigure of="lessons-planned" />             |
+| Topics                                      | <AboutFigure of="topics" />                      |
+| Concepts (each one a glossary entry)        | <AboutFigure of="concepts" />                    |
+| Competencies                                | <AboutFigure of="competencies" />                |
+| Learning objectives                         | <AboutFigure of="objectives" />                  |
+| Behaviors                                   | <AboutFigure of="behaviors" />                   |
+| Graded checkpoints in lessons               | <AboutFigure of="checkpoints" />                 |
+| Extra checkpoints for review only           | <AboutFigure of="checkpoints-review" />          |
+| Exercises                                   | <AboutFigure of="exercises" />                   |
+| Habits                                      | <AboutFigure of="habits" />                      |
+| Code examples that run in the build checks  | <AboutFigure of="examples-run" />                |
+| Interactive widgets (kinds)                 | <AboutFigure of="widget-kinds" />                |
+| Sources in the bibliography                 | <AboutFigure of="sources" />                     |
+| Estimated study time of all lessons (hours) | <AboutFigure of="study-hours" />                 |
+
+The study time is the site's own estimate. It adds the reading time and a
+fixed time per checkpoint to the time each exercise states. The constants in the
+estimate were chosen by hand and have not been checked against learners
+with a clock yet. Spaced review comes on top of this time.
+
+{/* source: site/src/lib/lesson-time.ts (LESSON_TIME, "not calibrated against timed readers yet (issue #521)"); docs/spec/S03-lesson-authoring.md "Lesson time" */}
+
+### Two groups and six areas
+
+The Foundations group has one level for everyone. Its lessons need no
+programming and no agent setup. A check in the build rejects a Foundations
+lesson that shows code or terminal work. New lessons must pass the same
+check.
+
+The Engineering group assumes the learner finished Foundations. Its lessons
+use real code and real tools, and learners choose one of two comfort levels,
+"less comfortable" or "more comfortable". The section on routing explains
+what the levels change.
+
+{/* source: site/src/data/groups.yaml; docs/spec/S03-lesson-authoring.md "Foundations audience"; AGENTS.md (mise run data rejects code in foundations lessons) */}
+
+| Area               | Group       | What the course covers                                                                                                         | Lessons                                       | Topics                                       |
+| ------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- | -------------------------------------------- |
+| Concepts           | Foundations | How language models work, what they do well and where they fail, prompting, tokens and cost, grounding and memory               | <AboutFigure of="lessons:concepts" />           | <AboutFigure of="topics:concepts" />           |
+| Safety             | Foundations | Which data you may share and how far to trust an answer. The risks of an agent that acts, and laws such as the EU AI Act          | <AboutFigure of="lessons:safety" />             | <AboutFigure of="topics:safety" />             |
+| Using agents       | Foundations | How to hand a task to an agent and check the result, and how to choose models and tools                                          | <AboutFigure of="lessons:using-agents" />       | <AboutFigure of="topics:using-agents" />       |
+| Coding with agents | Engineering | Software changes with a coding agent: specifying, plan and implement, context, verification, sandboxing and team practice        | <AboutFigure of="lessons:coding-with-agents" /> | <AboutFigure of="topics:coding-with-agents" /> |
+| Customizing agents | Engineering | Instructions, skills, tool servers, hooks, permissions, settings and memory that make a general agent work in a project         | <AboutFigure of="lessons:customizing-agents" /> | <AboutFigure of="topics:customizing-agents" /> |
+| Building agents    | Engineering | From a bare model API to a working agent: tool use, the loop, retrieval and memory, evaluation, guardrails and production        | <AboutFigure of="lessons:building-agents" />    | <AboutFigure of="topics:building-agents" />    |
+
+{/* source: the "covers" column paraphrases site/src/content/docs/<area>/index.mdx and site/src/data/areas/<area>/area.yaml as of 2026-10-09; update it when a course changes scope */}
+
+### Topics, concepts and competencies
+
+The site describes what it teaches with a small knowledge model. The model
+is data, in YAML files next to the lessons, and the build reads it.
+
+- A **topic** is one subject in one area, such as "Prompting" in Concepts.
+  Topics link to the topics they build on. Each topic has a list of
+  **concepts**, each with a one-paragraph definition. All of the concepts
+  together make the glossary.
+- A **competency** says what a learner can do after a course, as one
+  sentence. It has **learning objectives**, each at a `base` or an `expert`
+  level. Each objective has **behaviors**: a claim about what a competent
+  person does, the reason for it, and an example. The site has
+  <AboutFigure of="objectives:base" /> base and
+  <AboutFigure of="objectives:expert" /> expert objectives.
+- A lesson covers one topic and serves one or more objectives. A graded
+  checkpoint tests one objective.
+
+{/* source: docs/spec/S01-dictionary.md "Knowledge model"; docs/spec/S02-topic-map.md; docs/spec/S10-competency-authoring.md */}
+
+The behaviors format comes from Brilliant's skills map for coding with AI
+(@Brilliant VER). The project also maps its objectives to three outside
+frameworks, in <AboutFigure of="alignment-rows" /> rows. The frameworks are
+that skills map, a skills map for AI engineering (@Ng), and the 4D
+framework of AI Fluency (@Academy ai-fluency-framework-foundations). The
+mapping shows which part of each framework the site covers, and where it
+has gaps.
+
+{/* source: site/src/data/alignment/*.yaml; docs/spec/S02-topic-map.md "Alignment"; exploration note 09 in git show edb5011c:docs/plan/explore/ (adopted the behavior triple and the alignment layer) */}
+
+The map below shows every topic, one column per area. An arrow runs from a
+topic to a topic that builds on it. The colors show your own progress, read
+from your browser. They stay gray until you finish a lesson.
+
+<TopicMap />
+
+### Sources
+
+The bibliography has <AboutFigure of="sources" /> entries:
+<AboutFigure of="sources:reference" /> reference pages,
+<AboutFigure of="sources:course" /> courses,
+<AboutFigure of="sources:paper" /> papers,
+<AboutFigure of="sources:video" /> videos and
+<AboutFigure of="sources:book" /> books. A lesson cites a source with a
+numbered reference, and the build fails on a citation to an unknown entry.
+
+{/* source: site/src/data/bibliography.yaml; site/plugins/remark-citations.mjs */}
+
+Most citations point to vendor documentation, because many lessons teach a
+specific tool. Claude Code documentation is the most cited family, and its
+pages on memory (@Claude Code memory) and on best practices (@Claude Code
+best practices) are each cited in more than a dozen lessons. An open course
+on agent engineering by three authors is the second family (@AEC-01). The
+project began as a rebuild of that course, as the history section explains.
+Claude Academy courses are the third family.
+
+{/* source: citation uses per key, from the repo root: git ls-files site/src/content/docs | grep -E 'docs/[a-z-]+/[a-z0-9-]+[.]mdx$' | grep -v -e index.mdx -e guides | xargs cat | grep -oh "(@[^()]*)" | sort | uniq -c | sort -rn (count lessons per key with grep -l). As of 2026-10-09: Claude Code docs 563 uses in 57 lessons, the agent engineering course 213 in 50, Claude Academy 115 in 65; Claude Code memory in 23 lessons, best practices in 15. */}
+
+Where a lesson makes a claim about how people work with automation or how
+models behave, it cites the research. Examples are the papers on automation
+cited above, a survey of hallucination in language models (@Huang 2025),
+and a study of sycophancy, the tendency of a model to agree with the user
+(@Sharma 2023). Prompting concepts are written from the original papers.
+
+{/* source: docs/agents/writing-a-lesson.md "Source licenses"; git show edb5011c:docs/plan/README.md (Learn Prompting row: "Prompting concepts are written from the papers") */}
+
+## Inside a lesson
+
+A lesson is one page, which takes 10 to 25 minutes of reading and
+checkpoints, plus the exercise. The build warns when the estimate of a
+lesson goes over 25 minutes. Each lesson has the same parts in the same
+order, so that a learner knows where they are on any page.
+
+{/* source: docs/spec/S03-lesson-authoring.md "Lesson anatomy", "Lesson time"; site/src/lib/lesson-time.ts warnMinutes */}
+
+### Two kinds of lesson
+
+The project uses the Diátaxis model of documentation (@Diátaxis). That
+model sorts a page by two questions. Does the reader act or think? Is the
+reader studying or working? The answers give four kinds of page: tutorial,
+explanation, how-to guide and reference.
+
+Lessons are for study, so a lesson is a **tutorial** or an
+**explanation**. A tutorial has the learner do something and see the
+result early and often. It follows one path, in a setting the learner can
+reset. Its rhythm is fixed: one or two paragraphs, then one example to run
+or predict. An explanation builds understanding. It may compare options
+and hold an opinion. Of the <AboutFigure of="lessons-planned" /> planned
+lessons, <AboutFigure of="lessons-planned:tutorial" /> are tutorials and
+<AboutFigure of="lessons-planned:explanation" /> are explanations.
+
+The site builds the other two kinds from data. Each topic page and the
+glossary are reference pages. The guides, such as the guide to running a
+workshop, are how-to pages.
+
+{/* source: docs/spec/S01-dictionary.md "Page kinds"; docs/spec/S03-lesson-authoring.md "Choosing the page kind" */}
+
+### The parts of a lesson
+
+A lesson opens with one or two sentences in the present tense that say what
+the lesson does. Then come the teaching sections. Some of these are
+**pitfalls**, short boxes that show a common mistake and its cost. Graded
+**checkpoints** sit between the teaching sections, close to the idea they
+test. After the teaching comes one **exercise**, and then a **recap**. The
+recap lists the takeaways and the objectives the learner can now meet, and
+it holds the button that finishes the lesson. Some lessons end with one or
+two **habits**.
+
+{/* source: docs/spec/S01-dictionary.md "Section kinds"; docs/spec/S03-lesson-authoring.md "Lesson anatomy" */}
+
+A lesson that teaches prompting shows prompts and responses in their own
+styled blocks. Each block says which model produced the response and on
+which date, or marks the exchange as illustrative when it was written by
+hand. Model output changes over time, so the reader can judge how current
+an example is.
+
+{/* source: docs/spec/S03-lesson-authoring.md "Prompts" (recorded and illustrative prompt blocks) */}
+
+### Checkpoints
+
+A checkpoint is a small graded question inside the lesson. The site has
+<AboutFigure of="checkpoints" /> of them, of eight kinds:
+
+| Kind                       | What the learner does                                    | Count                                          |
+| -------------------------- | -------------------------------------------------------- | ---------------------------------------------- |
+| Choice                     | Picks the one right option                               | <AboutFigure of="checkpoints:choice" />        |
+| Multiple choice            | Picks every right option                                 | <AboutFigure of="checkpoints:multi-choice" />  |
+| Scenario                   | Picks what to do in a short work situation               | <AboutFigure of="checkpoints:scenario" />      |
+| Predict                    | Predicts what a piece of code or a prompt will produce   | <AboutFigure of="checkpoints:predict" />       |
+| Sort                       | Puts items into groups                                   | <AboutFigure of="checkpoints:sort" />          |
+| Match                      | Matches each item on the left to one on the right        | <AboutFigure of="checkpoints:match" />         |
+| Order                      | Puts steps in the right order                            | <AboutFigure of="checkpoints:order" />         |
+| Repair                     | Rewrites a flawed prompt, instruction or piece of code   | <AboutFigure of="checkpoints:repair" />        |
+
+{/* source: site/src/lib/checkpoint-rules.ts KIND_OF_TAG; docs/spec/S01-dictionary.md "Interaction types"; docs/spec/S03-lesson-authoring.md "Checkpoints" */}
+
+The rules for checkpoints are the same everywhere:
+
+- Each checkpoint tests exactly one learning objective, and it names the
+  concepts it uses.
+- A wrong answer shows feedback for that answer. A hint is a question that
+  points the learner at their own mistake, and it never gives the answer.
+- The lesson never reveals the answer. The learner can try again as often
+  as they want, or skip the checkpoint. The site records a skip, and it
+  doesn't count a skip as a pass.
+- A checkpoint is graded all or nothing.
+- Every checkpoint works with the keyboard alone.
+
+{/* source: docs/spec/S03-lesson-authoring.md "Checkpoints" */}
+
+A multiple-choice question has a known weakness: a reader can often guess
+the answer from the options alone. The longest option, the option with
+careful hedges, or the option that repeats words from the question is often
+the right one. The build checks every checkpoint for four such cues and
+rejects a checkpoint that has one. It also rejects a set of checkpoints
+where the right answer is always in the same position.
+
+{/* source: docs/spec/S03-lesson-authoring.md "Checkpoints" (guessability); site/scripts/lib/guessability.mjs; mise run checkpoints */}
+
+To see a real checkpoint, open the first checkpoint of the lesson
+[How a language model works](/concepts/how-models-work/#what-the-model-does).
+A checkpoint only works inside its lesson, because a pass becomes part of
+your progress record.
+
+{/* source: site/src/components/lesson/CheckpointShell.astro (lessonIdOf, data-progress-id); site/src/scripts/markdown-content.ts (mountLesson binds checkpoints inside the lesson root); site/src/components/overrides/MarkdownContent.astro (the lesson root only on pages with a mode) */}
+
+### Examples that run
+
+Many lessons in the Engineering group show code and the output it prints.
+That output is never typed by hand. Each example is a small program in the
+repository, and a build check runs it and compares what it prints with
+what the page shows. The check runs every example on two versions of
+Python, the current release and an older version that some learners still
+have. A change to a model library, or a mistake in a lesson, fails the
+check before the page is published.
+
+The site has <AboutFigure of="examples-run" /> such examples. Some are
+graded **predict** checkpoints, where the learner first guesses the output
+and then runs the code to check the guess. The others are worked examples
+that the learner reads or runs.
+
+{/* source: docs/spec/S03-lesson-authoring.md "Examples"; site/scripts/check-examples.mjs; .mise.toml (Python 3.14.7 and 3.9.25, as of 2026-10-09) */}
+
+### Widgets
+
+A few concepts are easier to understand by trying them than by reading.
+For these the site has <AboutFigure of="widget-kinds" /> kinds of
+interactive widget. A widget isn't graded and doesn't write to your
+progress. The one below is from the first Concepts lesson. A language model
+picks each next word at random, by weight, and the temperature changes how
+spread out the weights are. Move the slider and sample a few times.
+
+{/* source: site/src/components/widgets/Sampler.astro; grep -l progress site/src/scripts/sampler.ts (no widget script imports the progress record, checked 2026-10-09) */}
+
+<Sampler />
+
+### Exercises
+
+Each lesson ends with one exercise. The learner does it outside the page,
+with their own tools, in a setting they can reset, such as a practice
+repository. The exercise brief says what to do and what a finished result
+looks like. Then the learner compares their work with a model answer. No
+one grades the exercise. It ends with one reflection question.
+
+There are two kinds of exercise. In a **do** exercise the learner produces
+something, such as an instruction file or a test. In a **judge** exercise
+the learner gets a result, such as an agent's output or a pull request, and
+assesses it. Some exercises add a one-line stretch goal for
+learners who want more.
+
+{/* source: docs/spec/S03-lesson-authoring.md "Exercises"; docs/spec/S01-dictionary.md "Exercise" */}
+
+### Routing between learners
+
+People start a course with different knowledge. The site writes each lesson
+once, and it changes the route through the material for each learner.
+
+Each lesson declares the objectives it serves and the objectives it
+assumes. If a learner fails or skips a checkpoint that depends on an
+assumed objective, the lesson shows a card that points to the section where
+that objective is taught. If a learner passes every checkpoint at the first
+try, the lesson shows a card that suggests where to go next. The site never
+locks a lesson.
+
+{/* source: docs/spec/S02-topic-map.md "Differentiation by routing"; site/src/components/lesson/RouteAhead.astro */}
+
+In the Engineering group the learner also picks a comfort level, an idea
+the project took from CS50 (@CS50x). At the "less comfortable" level the
+lesson first shows the sections that teach what it assumes, and new review
+items come back sooner. At the "more comfortable" level the lesson starts
+with a short skills check. It skips what the learner already knows and
+offers extensions. The level changes the route and never the content.
+
+{/* source: docs/spec/S01-dictionary.md "Comfort level"; docs/spec/S02-topic-map.md "Differentiation by routing"; docs/spec/S05-spaced-review.md (entry stage by comfort level) */}
+
+### After the lesson
+
+Finishing a lesson starts three things.
+
+**Spaced review.** Every graded checkpoint of a finished lesson becomes a
+review item. Each course has a review page. An item comes back 1, 3, 7, 21
+and 60 days after the learner last passed it. With a pass it moves to the
+next step, and with a fail it goes back to the first step. After the fifth pass
+the item retires. A session asks at most 12 items. Many checkpoints have
+alternate versions that only the review page asks. The site has
+<AboutFigure of="checkpoints-review" /> of these, so that a review tests
+the idea rather than the memory of the wording. The sidebar shows how many
+items are due per course.
+
+{/* source: docs/spec/S05-spaced-review.md "Schedule", "Where reviews surface", "Alternates" */}
+
+**Habits.** A habit is a small task to do in your own work, in the form
+"The next time you do X, do Y". It comes back 1, 3 and 7 days after the
+lesson. After that the site stops showing it. The site has <AboutFigure of="habits" />
+habits. A habit is the bridge from the page to real work.
+
+{/* source: docs/spec/S07-habits.md */}
+
+**The learner's reference.** A topic page has a short summary of the
+lessons that cover it: the takeaways from the recap and one canonical
+example. The summary appears once you finish that lesson. Over time the
+topic pages become a personal reference with only what you studied.
+
+{/* source: docs/spec/S02-topic-map.md "Learner's reference"; site/src/content/docs/reference.mdx */}
+
+The site has no email and no notifications, because it has no backend. It
+shows what is due when the learner comes back to it.
+
+{/* source: docs/spec/S05-spaced-review.md; docs/spec/S07-habits.md "Where habits surface" */}
+
+### Your progress stays with you
+
+The site stores all progress in one record in the learner's browser, in
+local storage. The site sends nothing to a server. The progress page can export
+the record to a file and import it in another browser. The record has a
+version number, and the site converts an older record when it loads it.
+
+A static site can't hide its answers, because the answers are in the page.
+Passes work on the honor system. The record is for the learner, and it
+grades no one.
+
+{/* source: docs/spec/S04-progress-record.md "Principles", "Storage", "Export and import"; SECURITY.md "Scope" */}
+
+### The tutor
+
+A learner can study a lesson with an AI tutor in their own coding agent.
+The tutor is a skill that the learner installs once. When it starts, it
+fetches its instructions and the lesson from the site. It then gives hints
+and asks questions. It doesn't give the answers to checkpoints or
+exercises, and it stays on the lesson the learner names. When the learner
+pastes their progress export, the tutor first asks one recall question for
+a review that is due.
+
+{/* source: docs/spec/S08-tutor-skill.md; .claude/skills/ai-tutor/SKILL.md; site/src/tutor/instructions.md */}
+
+The design follows the AI tutor that CS50 built for its students, which
+gives hints and guides the student to the answer (@Liu 2024b). The project
+tests the tutor with a fixed set of learner questions, each with what the
+tutor must and must not do. A change to the tutor that makes it give an
+answer away doesn't ship.
+
+{/* source: docs/agents/tutor-eval.md (hand-graded queries, must-not failure counts double, "a change that adds one doesn't ship") */}
+
+## The ideas about learning behind the design
+
+The project draws on a small number of ideas from learning research and
+from other learning platforms. The specs state each idea in their own words
+with the reason for it. They cite few learning-science papers directly, and
+the numbers in the design, such as the review intervals, are first guesses.
+The project has no data about real learners yet. This section describes
+the ideas as the project uses them.
+
+{/* source: docs/spec/S02, S03, S05, S07, S08 (the specs give reasons in their own words and cite Diátaxis, CS50, Brilliant and the alignment frameworks, and no learning-science papers, checked 2026-10-09); docs/spec/S05-spaced-review.md open question 4 ("first guesses, to tune once there are learners") */}
+
+### Retrieval practice and spaced review
+
+A learner who reads a page can recognize its ideas the next day, but often
+can't recall them a week later. The spaced-review spec states this as its
+starting point: lessons alone produce recognition, and recall needs
+practice. So the site asks a learner to retrieve each idea again, after
+growing intervals. It also uses alternate questions. With those, the
+learner recalls the idea and not the wording of one question.
+
+{/* source: docs/spec/S05-spaced-review.md "Introduction" */}
+
+### Prediction before the result
+
+A learner who predicts a result before seeing it pays more attention to
+the result. When the prediction is wrong, the surprise shows where their
+model of the system is wrong. The predict checkpoint uses this. Code
+examples follow a fixed rhythm: one idea, then one example. The project
+took both from an online platform that teaches programming with short,
+executable examples.
+
+{/* source: exploration note 10 (Execute Program), d7ca2629; docs/spec/S03-lesson-authoring.md "Examples" */}
+
+### Design from the outcomes
+
+The design starts from what the learner can do afterwards, and works back
+to the lessons. The competencies, objectives and behaviors say what a
+learner can do. Each checkpoint tests one objective. So the site can show
+which objectives a learner has evidence for, and a reviewer can check
+whether a lesson tests what it claims to teach.
+
+{/* source: docs/spec/S02-topic-map.md; docs/spec/S03-lesson-authoring.md "Checkpoints" (one objective per checkpoint, at least one per served objective) */}
+
+### One text with several routes
+
+Writing a separate course for each level of learner costs too much, and the
+versions drift apart. The project writes each lesson once. Routing cards,
+comfort levels and the skills check adapt the route through it. The model
+for this was a classroom method with three paths: review a prerequisite,
+work on the current objective, or take an extension.
+
+{/* source: docs/spec/S02-topic-map.md "Differentiation by routing" (Brilliant's classroom model) */}
+
+### Hints that ask questions
+
+When a hint gives away the answer, the learning stops at that point. In
+this project a hint asks the learner a question about their own mistake. The
+tutor follows the same rule. The idea comes from CS50's AI tutor
+(@Liu 2024b).
+
+{/* source: docs/spec/S03-lesson-authoring.md "Checkpoints"; docs/spec/S08-tutor-skill.md; docs/spec/S02-topic-map.md "Source material" (CS50) */}
+
+### From the page to the job
+
+What a person learns on a page often stays on the page. Exercises use the
+learner's own tools in a practice setting. Habits are closer to the job:
+they ask the learner to change one thing in their real work, and come back
+to ask whether they did. A lesson then changes what a learner does, as well
+as what they know.
+
+{/* source: docs/spec/S07-habits.md "Introduction" */}
+
+### Plain language
+
+Many readers have English as a second language. The project keeps the
+concepts at a professional level and the language simple. It prefers common
+words and plain sentences, and it expands each abbreviation on first use. A prose linter checks every page for wordy, vague or
+hard-to-read text, and the reading-time estimate assumes a slower reading
+speed than a native speaker has.
+
+{/* source: AGENTS.md "Voice"; .vale.ini (Readability, write-good, proselint, Google, House); site/src/lib/lesson-time.ts proseWpm (180, below the measured 238) */}
+
+## How the project started
+
+### The first two days
+
+The repository was created on September 19, 2026, from a documentation
+template that the maintainer had made earlier. The template already had the
+site generator, a pinned set of tools and a continuous integration (CI)
+pipeline, which runs the checks on every change.
+
+{/* source: 27008263 "Initial commit", adbd8d96 "chore: set up ai-training from lsimons-template-doc" (2026-09-19) */}
+
+The project replaced two earlier attempts. The first was a private training
+repository that never got beyond its setup. The second was the open course
+on agent engineering mentioned in the sources section (@AEC-01). That
+course is Apache-2.0, so this project could take its best material, with
+credit to its authors.
+
+{/* source: git show edb5011c:docs/plan/README.md ("It replaces two earlier attempts"); THIRD_PARTY.md */}
+
+On the first day the maintainer answered a set of design questions in an
+interview with an agent. The answers fixed the title, the two groups and
+six areas, and one level for Foundations with two comfort levels in
+Engineering. The first release was to be one thin slice through all six
+areas. The tutor was to be an agent skill, and progress was to stay in the
+browser.
+
+{/* source: ce98e93c "docs(plan): record interview decisions and deeper source exploration"; git show edb5011c:docs/plan/README.md "Decisions (interview 2026-09-19)" */}
+
+### Learning from other platforms
+
+Before any lesson was written, agents studied existing learning platforms
+and documentation methods. They wrote one exploration note per source. Each
+note ended with a list of ideas to adopt or to decline, and the maintainer
+decided on each.
+
+| Source                                 | What the project adopted                                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| CS50                                   | Ideas, structure and words: comfort levels, walkthroughs, and a tutor that gives hints                   |
+| Diátaxis                               | The four page kinds, and the split of lessons into tutorials and explanations                            |
+| Brilliant's skills map for coding      | Behaviors as claim, reason and example, finer competencies, and alignment with outside frameworks        |
+| Execute Program                        | The predict checkpoint, the course page as a lesson graph, spaced review, and examples that run in CI    |
+| roadmap.sh                             | A status per topic, short concept definitions, the tutor's verbs, and topic pages with a stable link     |
+| Learn Prompting                        | Citations by key, glossary tooltips, and prompt blocks with model and date                               |
+| Claude Academy                         | The kinds of checkpoint and the parts of a lesson                                                        |
+
+{/* source: git ls-tree -r --name-only edb5011c docs/plan (exploration notes 03 to 12); 1af8a982 (09 skills map), d7ca2629 (10 Execute Program), 6aa1fd4b (11 roadmap.sh), 4af3c82e (12 Learn Prompting), a2915086 (08 Diátaxis); docs/spec/S13-interactive-components.md (Claude Academy mechanics). The AGENTS.md rule against company names covers lessons, course pages and examples. This page names products as sources of ideas, to credit them. */}
+
+### Specs before code
+
+The decisions went into numbered design specs before code was written. The
+first spec is a project dictionary. It fixes the words the project uses,
+such as lesson, checkpoint, topic, competency and habit, so that every
+page, data file and component means the same thing by the same word. The
+other specs build on it, one subject each: the topic map, lesson authoring,
+the progress record, spaced review, habits, the tutor, the data files, the
+agent-readable site, interactive components and the visual identity.
+
+{/* source: docs/spec/000-specs.md; 879ab374, 17346c39, 27a60acd (2026-09-19/20) */}
+
+### The first release
+
+On September 20 an agent built a quick prototype of a thin slice: two
+lessons and the progress record. The prototype showed that the design
+worked in a browser. A rebuild the same day became the first release: six
+lessons, one per area, and every mechanism from the plan. It had the
+checkpoint kinds, pitfalls, exercises and recaps, the progress record, the
+review schedule, the topic map, two widgets, a check that runs the code
+examples, a browser test of a full lesson, and a first version of the
+tutor.
+
+{/* source: d844d1f8 (spike, 2026-09-20); c181d4dd, PR #1 "release 1 slice, six lessons and every mechanism from spec S06" */}
+
+## How the project grew
+
+### A timeline
+
+All dates are in 2026.
+
+{/* source: the commits, issues and PRs in the comment under the table, and git log --format=%ad --date=short | sort | uniq -c for the dates */}
+
+| Date             | What happened                                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| September 19     | Repository created. Plan, interview, exploration notes, license change, first specs.                                             |
+| September 20     | First release. Prose and spelling checks. First parallel agent work: twelve issues to twelve merged pull requests.               |
+| September 21     | All structure moved into data files: one YAML file per area, competency, course and lesson.                                       |
+| September 23     | A second layer of agent orchestration, the "wave" process, so that one session can work through many issues.                      |
+| September 24     | Habits. Exact versions for every dependency. The first review of the agent harness. The default agent model changed.               |
+| September 25 to 27 | Most lessons were written, in batches of four to ten. A security review of the whole site started.                                 |
+| September 29     | The site left its pre-release status.                                                                                             |
+| September 30     | The repository moved to the organization's account and became public. The site got its visual identity.                          |
+| October 1        | A Content Security Policy on every page. Markdown copies of pages and data files for AI agents. A guide for running a workshop.   |
+| October 4 to 8   | Lessons for the remaining gaps. A skill for triage with the maintainer. The second harness review.                                |
+
+{/* source: 20 Sep: PR #1, f005fe5e, 0b944a06, docs/agents/orchestration.md intro; 21 Sep: PR #227; 23 Sep: PRs #230, #258; 24 Sep: #67, PRs #266 #268, docs/agents/harness-review.md, Assisted-by trailers; 25–27 Sep: run issues Gecko, Jackal, Marmot, #384; 29 Sep: PR #593; 30 Sep: PR #596, PR #601, public date from the maintainer (#762); 1 Oct: PR #649 (#608), #499 #500 #501, PR #668; 4–8 Oct: run Zebra (PRs #712 #715 #723), PR #757, #726 */}
+
+The number of live lessons grew in steps.
+
+{/* source: git ls-tree -r --name-only $(git rev-list -1 --before="<date> 23:59" HEAD) site/src/content/docs | grep -E 'docs/(concepts|safety|using-agents|coding-with-agents|customizing-agents|building-agents)/[^/]+\.mdx$' | grep -v index.mdx | wc -l */}
+
+| End of day    | Lessons |
+| ------------- | ------- |
+| September 20  | 10      |
+| September 23  | 37      |
+| September 25  | 100     |
+| September 27  | 114     |
+| October 9     | 132     |
+
+### Figures from the history
+
+These figures are as of October 9, 2026.
+
+{/* source: git rev-list --count HEAD (1436); git log --format=%ad --date=short | sort | uniq -c (17 active days; peaks 09-24 276, 09-25 269, 09-20 204); gh issue list --state all --limit 2000 --json number,state (608: 533 closed, 75 open); gh pr list --state all --limit 2000 --json state (154: 153 merged); git log --format='%(trailers:key=Assisted-by,valueonly)' | grep -v '^$' | sort | uniq -c; git log --merges | wc -l (0). All as of 2026-10-09, HEAD cb719acf. */}
+
+- The repository has 1,436 commits over 17 days with commits. The busiest
+  days had 276, 269 and 204 commits.
+- 1,427 of those commits end with a line that names the AI model that
+  helped write them. Nine don't: the first commit, six small edits by the
+  maintainer, and two automatic dependency updates.
+- Two models did the work. Claude Fable 5.1 was the default until
+  September 24, with 553 commits. Claude Opus 5.5 was the default after that
+  day, with 868 commits.
+- The project has 608 GitHub issues, of which 533 are closed.
+- It has 154 pull requests, and 153 of them were merged. Each merge
+  rebased the commits onto the main branch, so the history has no merge
+  commits.
+
+## How work happens now
+
+The project has one maintainer and no other human contributors so far.
+The maintainer decides what to build and what to accept. Agents write the
+lessons, the code, the tests and most issue text, and other agents review
+that work. This section describes the process as the repository documents
+it, and as the issue history shows it.
+
+{/* source: git shortlog -sne HEAD (one human author, as of 2026-10-09); docs/agents/orchestration.md; docs/agents/meta-orchestration.md */}
+
+### Everything starts as an issue
+
+Every piece of work is a GitHub issue. An issue has one label for the kind
+of change: `content`, `code` or `harness`. The last one covers the agent
+setup itself. A triage pass with the maintainer leaves every issue in one
+of three states. It is ready for an agent, with its decisions written down,
+or ready for a human, with one named action, or it is closed with a reason.
+
+A follow-up that a review finds, and an improvement the maintainer defers,
+become new issues before a session ends. Agents keep open work in issues,
+and never in a chat log or a session record.
+
+{/* source: docs/agents/issue-tracker.md "Labels"; docs/agents/triage.md; AGENTS.md "Process" */}
+
+### Waves of agents
+
+Most work happens in **runs**. A run is one session in which the maintainer
+starts a dispatcher with the `/wave` command. The dispatcher picks a few
+ready issues and starts a **wave lead** for them. The wave lead then starts
+one **builder** agent per issue. Each builder works in its own copy of the
+repository, on its own branch. When a builder pushes its branch, the lead
+starts a **reviewer** agent for it. For a lesson, the reviewer compares the
+prose with the authoring guide and checks the license of each source and
+each factual claim. For code, the reviewer reads the change and runs the
+checks. Builders and reviewers never talk to each
+other directly. The lead passes the review to the builder, and the builder
+fixes what the review found.
+
+{/* source: docs/agents/meta-orchestration.md "Layers"; .claude/agents/builder.md, lesson-reviewer.md, code-reviewer.md, wave-lead.md */}
+
+When every branch in the wave is approved, the lead combines them on one
+wave branch. It runs the full check suite there and opens one pull
+request. The maintainer has given standing approval for a wave that passes
+every check, so the lead may merge such a wave without asking. That
+approval never covers a wave that changes the agent setup itself, as the
+harness section explains.
+
+{/* source: docs/agents/meta-orchestration.md "Standing approval", "Harness runs" */}
+
+Each run gets an animal name in alphabetical order, from Axolotl to
+Zebra and then on from Alpaca. The run has its own GitHub issue, which
+records its waves and its state, so that a run can resume after an
+interruption. As of October 9, 2026, there have been 30 runs.
+
+{/* source: .claude/skills/wave/run-names.txt; gh issue list --label dispatcher-run --state all (30, Axolotl #358 to Bison #746, as of 2026-10-09) */}
+
+### Why there are two layers
+
+At first one coordinating session managed all builders and reviewers
+itself. Each issue cost that session about twenty thousand tokens of its
+context, and with more than a hundred ready issues one context could not
+hold the work. The wave lead takes that load, and the dispatcher keeps
+only a short report per wave.
+
+{/* source: docs/agents/meta-orchestration.md "Why a second layer" (about 20k tokens per issue; 113 ready issues on 2026-09-23) */}
+
+### What the maintainer does
+
+The maintainer's time is the scarcest resource in the project. Agents
+decide routine matters themselves and report what they decided. They ask
+the maintainer only when a decision touches a spec, a project rule, the
+scope of the work or its cost. A question to the maintainer holds one
+decision in plain words, with one recommendation. Merging a pull request
+outside a green wave needs the maintainer's explicit word.
+
+{/* source: AGENTS.md "Asking the maintainer", "Interactive sessions" */}
+
+### Reviewing the process itself
+
+About once a week, and after each change of model or orchestration, a
+harness review looks at where time, tokens and the maintainer's attention
+went. It reads the git history, the issues and the agents' session logs,
+and it compares the project's own way of working with what its lessons
+teach. The findings the maintainer picks become issues. The reviews are
+public as issues. The full reports stay outside the repository, because
+session logs can hold private material.
+
+{/* source: docs/agents/harness-review.md; .claude/skills/harness-review/SKILL.md; issues #385 and #726 */}
+
+## Harness engineering
+
+An agent harness is everything around a model that decides what it does:
+its instructions, its tools, its permissions, the checks its work must
+pass, and the way its work is reviewed and merged. Most of the effort in
+this project that isn't content goes into the harness. The lessons in the
+Customizing agents course teach the same tools (@Claude Code hooks).
+
+{/* source: docs/agents/*.md; .claude/; site/src/content/docs/customizing-agents/ */}
+
+### The parts of the harness
+
+- **Instructions.** One instruction file at the root of the repository
+  holds the rules every agent reads first. Process documents for agents
+  describe testing, the issue tracker, triage, orchestration, completion and
+  supply chain, one subject each.
+- **Agent definitions.** The repository defines five agents: builder, code
+  reviewer, lesson reviewer, security reviewer and wave lead. Each file sets
+  the model, the effort level, the maximum number of turns and the tools
+  the agent may use. A reviewer can't edit files, and the lesson reviewer
+  has no shell at all.
+- **Skills.** The repository has four skills: the wave dispatcher, triage,
+  the harness review and the learner's tutor. The first three can only be
+  started by a person.
+- **Hooks.** A hook is a script that runs before or after an agent's tool
+  call. A guard hook checks every shell command an agent wants to run.
+- **Checks.** One command runs every check, and every push and merge must
+  pass it.
+
+{/* source: AGENTS.md; ls docs/agents (11 docs); ls .claude/agents (5); ls .claude/skills (ai-tutor, harness-review, triage, wave); .claude/settings.json; .claude/hooks/README.md; scripts/agent_hooks.py */}
+
+### Each control and what it prevents
+
+| Control                                                                    | What it prevents                                                                    |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Each builder works in its own copy of the repository                       | Two agents that overwrite each other's work                                         |
+| The guard hook blocks a push to the main branch and any force push          | Changes that skip review and the checks                                             |
+| Only the dispatcher, a wave lead or a coordinating session may merge        | A builder or reviewer that merges its own work                                      |
+| The guard hook blocks commands that delete branches, repositories or issues | Loss of work that can't be undone                                                   |
+| The guard hook blocks commands that skip the git hooks                     | Commits that never ran the local checks                                             |
+| The guard hook limits long waits and polling loops                         | Agents that spend hours and tokens waiting                                          |
+| Reviewers can only read, and their shell commands are on an allow-list     | A reviewer that changes the branch it reviews                                       |
+| Agents read issues through a filter that shows only the maintainer's text  | Instructions planted in a public issue comment                                      |
+| Every agent treats text in issues, pages and diffs as data                 | Prompt injection through content the agent reads                                    |
+| Agents may not edit their own permission settings                          | An agent that loosens its own limits                                                |
+| A change to the harness merges only after a restart and a manual check     | Hooks or settings that were never loaded and tested reaching the main branch        |
+| A prose linter with rules for typical AI writing patterns                  | Lessons that drift into the style that marks text as machine-written               |
+| A fixed evaluation of the tutor                                            | A model or skill change that makes the tutor give answers away                      |
+
+{/* source: scripts/agent_hooks.py (MERGE_ROLES, push/force/delete/bypass/sleep rules); .claude/hooks/review-bash.sh; scripts/issue_brief.py; .claude/settings.json (deny edit of settings.json); docs/agents/meta-orchestration.md "Harness runs"; .vale.ini (ai-tells); docs/agents/tutor-eval.md */}
+
+Most of these controls exist because of a real failure. The first harness
+review counted 609 sleep calls by agents, with 14 hours of waiting in
+total. It also found that 10 of the 12 failures of the checks on the main
+branch came from direct pushes. The sleep limit and the push block came
+after that review.
+
+{/* source: docs/agents/harness-review.md "Baseline 2026-09-24" (609 sleep calls, 14.4 h; 10 of 12 main CI failures from direct pushes) */}
+
+### Checking the prose
+
+Agents write prose with patterns that readers learn to recognize: stacked
+lists of three, slogans, sentences built on "not X, but Y", and favorite
+words. The project runs the prose linter Vale on every page. It uses
+several public rule packages, including one made for typical AI writing,
+plus four rules of its own. Each rule was evaluated one by one before it
+was turned on. Lesson pages get a stricter level, where most of those
+rules are errors that block a change. A spelling check in American English
+runs next to it.
+
+{/* source: .vale.ini (write-good, proselint, Readability, Google, ai-tells, House); docs/prose/README.md; 42bff6b3, 2eadb46f (rule-by-rule evaluation); cspell.json */}
+
+### Checking the work
+
+The full check suite runs on every pull request and before every merge.
+
+- Formatting and linting of the site code and the Python scripts
+- Type checks of the site and the Python code
+- Unit tests of the site code and the Python scripts, each with a floor of
+  80% test coverage
+- The prose and spelling checks
+- The runnable code examples, on two Python versions
+- A check of the data files against each other and against the pages
+- A build of the whole site, which fails on any broken internal link,
+  unknown citation or broken checkpoint
+- Checks of the published data files, the tutor bundles and the security
+  policy of every page
+- Browser tests of real lesson pages
+
+{/* source: .mise.toml [tasks.fast] and [tasks.ci]; docs/agents/testing.md */}
+
+### Supply chain
+
+Every dependency of the site and of the Python tools is pinned to an exact
+version, and the lock files are in the repository. The GitHub Actions that
+the workflows use are pinned to full commit hashes. New releases of a tool wait seven days before
+the project uses them. A scanner checks the lock files for known
+vulnerabilities on every push and once a week. An exception for a known
+vulnerability expires after at most 30 days, and an agent must ask the
+maintainer before it adds one.
+
+{/* source: docs/agents/supply-chain.md; .mise.toml (minimum_release_age 7d); pyproject.toml (exclude-newer); .github/dependabot.yml (cooldown 7); osv-scanner.toml; tests/test_osv_ignores.py */}
+
+## Software architecture
+
+### A static site
+
+The site is built with Astro and its documentation theme Starlight, and
+published on GitHub Pages. It has no server code. A push to the main branch
+builds the site and publishes it.
+
+{/* source: site/package.json; .github/workflows/deploy.yml */}
+
+### Content as data and pages
+
+The site has two kinds of source:
+
+- **Data files** in YAML describe the groups, areas, topics, competencies,
+  courses, lesson plans, framework alignments and the bibliography. The
+  build loads them as typed collections with a strict schema, so a
+  misspelled field fails the build. A separate check compares the data
+  with the pages. For example, it checks that each lesson plan has a page
+  and that each assumed objective exists.
+- **Pages** in MDX, which is Markdown with components. A lesson page has no
+  metadata of its own. Its title, kind and objectives come from its lesson
+  plan file, so the data has one source.
+
+{/* source: site/src/content.config.ts; docs/spec/S09-area-authoring.md, S10, S11; site/scripts/check-data.mjs */}
+
+### The build
+
+The build turns the sources into HTML in a few steps.
+
+- A checkpoint reader parses every checkpoint and fails on a malformed one.
+- A terms plugin links the first mention of a concept to its glossary
+  entry.
+- A citations plugin turns each citation into a numbered reference and adds
+  the References section.
+- A link plugin adds the base path of the site to internal links.
+- A link validator fails the build on a broken internal link.
+
+{/* source: site/astro.config.mjs markdown.remarkPlugins and rehypePlugins; site/plugins/ */}
+
+The build writes three outputs. The HTML site is for people. Markdown
+copies of the pages, an index for AI agents and the data tree as JSON are
+for agents that read the site for a person. Per-lesson bundles are for the
+tutor.
+
+```text
+YAML data     ──┐
+MDX pages     ──┼──>  build: schemas, checkpoints, terms, citations, links
+bibliography  ──┘                │
+                 ┌───────────────┼──────────────────────┐
+                 v               v                      v
+            HTML pages     Markdown copies,       lesson bundles and
+            for people     llms.txt, JSON data    tutor instructions
+                 │                                      │
+                 v                                      v
+         scripts in the browser:              the learner's own agent
+         checkpoints, review, habits,         with the tutor skill
+         progress in local storage
+```
+
+{/* source: site/astro.config.mjs; site/src/pages/ (llms.txt.ts, data/, [...page]/index.md.ts); docs/spec/S12-agent-readable-site.md; docs/spec/S08-tutor-skill.md */}
+
+### In the browser
+
+Small scripts make the pages interactive. They grade checkpoints, show
+routing cards, schedule reviews and habits, and color the maps. They read
+and write one progress record in local storage. No script sends data
+anywhere.
+
+A Content Security Policy on every page allows scripts only from the site
+itself. A build check rejects a page without the policy, an inline script
+without a known hash, and any script or stylesheet from another site. The
+site serves its own fonts. A page load makes no request to a font
+service.
+
+{/* source: site/src/scripts/; site/scripts/lib/csp.mjs; site/scripts/check-bundles.mjs (checkCsp); docs/spec/S14-visual-identity.md (self-hosted font) */}
+
+### Size of the code
+
+As of October 9, 2026, the site has about 10,000 lines of TypeScript and
+3,600 lines of Astro components. The build plugins and check scripts are
+about 4,900 lines. The Python scripts for the harness and the checks are
+about 8,000 lines. Tests are larger than the code they test: about 16,500
+lines of unit tests for the site, 2,200 lines of browser tests and 11,900
+lines of Python tests. The lesson examples are 425 small Python programs.
+
+{/* source: git ls-files | grep -E REGEX | xargs cat | wc -l, as of 2026-10-09, with REGEX: '^site/src/.+[.]ts$' (10,001), '^site/.+[.]astro$' (3,649), '^site/(plugins|scripts)/.+[.]mjs$' (4,894), '^scripts/.+[.]py$' (7,970), '^site/tests/.+[.]ts$' (16,485), '^site/e2e/.+[.]ts$' (2,227), '^tests/.+[.]py$' (11,891); git ls-files | grep -cE '^site/examples/.+[.]py$' (425) */}
+
+## Limits and open questions
+
+The project is young, and some of its design rests on guesses.
+
+- No group of learners has finished a course yet. The time estimates and
+  the review intervals are first guesses, to tune once there is data.
+- Some parts of the design are in the specs but not on the site yet,
+  among them learning paths per role and quizzes per course.
+- The content is written by AI agents and reviewed by agents and by one
+  person. The reviews check every claim against a public source, but
+  mistakes are still possible. A learner who finds one can open an issue
+  on GitHub.
+- Many lessons teach specific tools, and those tools change every month.
+  Each lesson records the date its sources were last checked and a date by
+  which to check them again.
+
+{/* source: docs/spec/000-specs.md (S01, S02 status: paths, quizzes deferred); docs/spec/S05-spaced-review.md open question 4; issue #521; docs/spec/S03-lesson-authoring.md (sources-checked, review-by) */}
+
+<Aside>
+The source of this page, with a comment on where each fact comes from, is
+in the repository at `site/src/content/docs/about.mdx`.
+</Aside>

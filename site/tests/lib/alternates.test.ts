@@ -24,6 +24,7 @@ describe('alternateSources', () => {
 		'/safety/deeper/',
 		'/contributing/',
 		'/guides/tutor/',
+		'/about/',
 		'/glossary/',
 		'/topics/concepts/models/',
 		'/topics/safety/risk/',
@@ -34,7 +35,7 @@ describe('alternateSources', () => {
 		'/competencies/safety/judges-output/',
 		'/competencies/safety/spots-injection/',
 	];
-	it('lists the course pages, live lessons, guides, contributing, glossary, topic and competency pages, and no other page', async () => {
+	it('lists the course pages, live lessons, guides, contributing, About, glossary, topic and competency pages, and no other page', async () => {
 		expect((await alternateSources()).map((s) => s.path)).toEqual(paths);
 		expect(await alternatePaths()).toEqual(new Set(paths));
 	});
@@ -151,6 +152,16 @@ describe('a guide and the contributing page alternate', () => {
 		expect(md).toContain(`# Contributing\n\n> Building the site.\n\nPage: ${ROOT}/contributing/\n`);
 		expect(md).toContain(`Read [the guide](${ROOT}/guides/tutor/).`);
 		expect(md).not.toContain('## References');
+	});
+});
+
+describe('the About page alternate', () => {
+	it('shows each figure as its number, and leaves out the comments and the topic map', async () => {
+		const md = await alternateOf('/about/');
+		expect(md).toContain(`# About this project\n\n> Why the project exists.\n\nPage: ${ROOT}/about/\n`);
+		expect(md).toMatch(/The site has \d+ areas \(How agents think, Agent Engineer Course\)\./);
+		expect(md).not.toMatch(/source:|\{\/\*|<[A-Z]/);
+		expect(md).toContain('## References');
 	});
 });
 

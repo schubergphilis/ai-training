@@ -96,6 +96,12 @@ const glossary: DocFixture = {
 	data: { title: 'Glossary', description: 'Every concept.' },
 	body: "import Glossary from '@components/Glossary.astro';\n\nGenerated from the topic definitions.\n\n<Glossary />\n",
 };
+/** The About page (#762): a source comment, a figure, the topic map and a citation. */
+const about: DocFixture = {
+	id: 'about',
+	data: { title: 'About this project', description: 'Why the project exists.' },
+	body: "import AboutFigure from '@components/AboutFigure.astro';\nimport TopicMap from '@components/TopicMap.astro';\n\n{/* source: groups.yaml */}\n\nThe site has <AboutFigure of=\"areas\" /> areas (@AEC-02).\n\n<TopicMap />\n",
+};
 /** A docs page that S12 gives no alternate. */
 const progress: DocFixture = {
 	id: 'progress',
@@ -105,7 +111,7 @@ const progress: DocFixture = {
 
 /**
  * The docs of the alternate tests: the lesson above, a course page, the two safety lessons of `content.ts`,
- * a guide, the contributing page, the glossary, and the progress page, which has no alternate.
+ * a guide, the contributing page, the About page, the glossary, and the progress page, which has no alternate.
  */
 export const alternateDocs: DocFixture[] = [
 	lesson,
@@ -114,6 +120,7 @@ export const alternateDocs: DocFixture[] = [
 	deeper,
 	guide,
 	contributing,
+	about,
 	glossary,
 	progress,
 ];

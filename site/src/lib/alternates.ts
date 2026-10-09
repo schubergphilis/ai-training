@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { aboutFigure, getAboutFigures } from './about-figures';
 import { getAreas } from './areas';
 import type { BibliographyEntry } from './citations';
 import { type CoursePlan, getCourse, isLive, type PlanEntry } from './courses';
@@ -115,6 +116,27 @@ async function plainPageSources(): Promise<AlternateSource[]> {
 	});
 }
 
+/**
+ * The About page (issue #762): its prose, with each `<AboutFigure>` as its number. The topic map and the
+ * widget on the page leave nothing, as a widget does in a lesson alternate.
+ */
+async function aboutSources(): Promise<AlternateSource[]> {
+	const page = (await getCollection('docs')).find((d) => d.id === 'about');
+	if (!page) return [];
+	const path = '/about/';
+	return [
+		{
+			path,
+			render: async (site: string) => {
+				const figures = await getAboutFigures();
+				return renderPageAlternate(page, path, site, {
+					AboutFigure: (attrs) => aboutFigure(figures, String(attrs.get('of')?.value)),
+				});
+			},
+		},
+	];
+}
+
 async function getTopics(): Promise<TopicData[]> {
 	return (await getCollection('topics')).map((t) => t.data);
 }
@@ -207,13 +229,14 @@ async function competencySources(): Promise<AlternateSource[]> {
 
 /**
  * Every page with an alternate, in a fixed order: the course pages in group order, the lessons by id, the
- * guides and the contributing page by id, the glossary, then the topic and competency pages.
+ * guides and the contributing page by id, the About page, the glossary, then the topic and competency pages.
  */
 export async function alternateSources(): Promise<AlternateSource[]> {
 	return [
 		...(await courseSources()),
 		...(await lessonSources()),
 		...(await plainPageSources()),
+		...(await aboutSources()),
 		...(await glossarySources()),
 		...(await topicSources()),
 		...(await competencySources()),

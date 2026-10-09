@@ -255,6 +255,8 @@ export default defineConfig({
 					],
 				},
 				{ slug: 'guides/running-a-workshop', label: 'Run a workshop' },
+				// One page on the whole project: why, what, how it was built and is run (#762).
+				{ slug: 'about', label: 'About this project' },
 			],
 			components: {
 				// Lesson frame: routing cards, finish/skip, checkpoint script.

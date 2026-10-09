@@ -176,6 +176,7 @@ export async function buildLlmsIndex(site: string): Promise<LlmsIndex> {
 						note: 'The Markdown alternate of every course page and live lesson, in one file.',
 					},
 					pageAlternate('contributing'),
+					pageAlternate('about'),
 				],
 			},
 		],
