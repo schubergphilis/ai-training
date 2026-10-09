@@ -8,6 +8,19 @@
    `num` a figure, `label` text, `note` secondary text, `bar` and `track` a
    bar and the space for it, `axis` an axis or a guide line. */
 
+/* The page shows the topic map, so it gets the full-width layout of the map
+   pages (lesson.css). The title, the text and the figures keep the width of a
+   lesson's text column, centered as on a lesson page. The topic map and the
+   controls cards use the full width. */
+.main-pane:has(.about-figure) h1,
+.main-pane:has(.about-figure) .sl-markdown-content > * {
+	max-width: 45rem;
+	margin-inline: auto;
+}
+.main-pane:has(.about-figure) .sl-markdown-content > :is(:has(> .topic-map), .about-controls) {
+	max-width: none;
+}
+
 .about-figure {
 	margin: 1.5rem 0;
 	padding: 1rem;
