@@ -398,10 +398,12 @@ def test_a_multi_word_accept_entry_applies_across_a_line_break(
     old = _vale_with(tmp_path / "old", rules, text, accept=_unwidened(entries, entry))
     if rule == "Vale.Terms":
         assert widened == ["Vale.Terms"]
-        assert old == []
     else:
         assert widened == []
-        assert old == [rule]
+    # Since Vale 3.22.0 a vocabulary phrase with a space matches across a
+    # line wrap too ("Vocabularies" in its release notes), so the entry
+    # without `\s` gives the same result.
+    assert old == widened
 
 
 # The accepted spelling of each entry, on one line and split. Vale.Terms

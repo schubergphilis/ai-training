@@ -6,7 +6,7 @@
 # CI pins mise to this release (`version` and `sha256` on every mise-action
 # step). This is a floor and requires at least that version locally.
 # Refresh them together: docs/agents/mise-refresh.md (`mise run mise-refresh`).
-min_version = "2026.9.12"
+min_version = "2026.10.3"
 
 [settings]
 minimum_release_age = "7d"
@@ -25,7 +25,7 @@ lockfile = true
 bun = "1.4.2"
 gitleaks = "8.30.1"
 lychee = "0.24.2"
-prek = "0.5.2"
+prek = "0.5.5"
 # Used by `mise run audit`; must match `version:` in the workflow's zizmor
 # job. Bump them together.
 zizmor = "1.30.1"
@@ -41,13 +41,13 @@ shellcheck = "0.11.0"
 # every fixture must print the lesson's answer there too, and the runner
 # executes each fixture on both. Pinned here rather than fetched by uv at
 # task time so mise.lock holds its checksum like every other tool.
-python = ["3.14.7", "3.9.25"]
+python = ["3.14.8", "3.9.25"]
 # Installs the pinned Python dev tools (ruff, basedpyright, pytest) from
 # uv.lock into .venv (`mise run py-install-frozen`).
-uv = "0.12.13"
+uv = "0.12.23"
 # Prose lint (`mise run prose`). Its style packages are pinned by URL in
 # .vale.ini and fetched by `mise run prose-sync`.
-vale = "3.20.0"
+vale = "3.22.0"
 # Used by `mise run vuln`. Unlike zizmor there is no second version to
 # keep in step: the CI `vuln` job runs `mise run vuln` through mise-action,
 # so this pin is the single source of truth for local and CI alike.
