@@ -75,14 +75,14 @@ jobs:
           fi
 
       - name: Set up mise
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
           # `min_version` requires at least this version. Refresh them
           # together (docs/agents/mise-refresh.md).
-          version: 2026.9.12
-          sha256: e79ae57945034903aee8aa2ea66b4c7ca9cd4f4edd5a8a78a589cbae6d0f428a
+          version: 2026.10.3
+          sha256: 8d48bc510b7d844fad0bc7156c0855c2a1e7230c51e498a7f6b63b021f8b57c5
           install: true
           cache: true
 
@@ -187,14 +187,14 @@ jobs:
           persist-credentials: false
 
       - name: Set up mise
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
           # `min_version` requires at least this version. Refresh them
           # together (docs/agents/mise-refresh.md).
-          version: 2026.9.12
-          sha256: e79ae57945034903aee8aa2ea66b4c7ca9cd4f4edd5a8a78a589cbae6d0f428a
+          version: 2026.10.3
+          sha256: 8d48bc510b7d844fad0bc7156c0855c2a1e7230c51e498a7f6b63b021f8b57c5
           install: true
           cache: true
 
@@ -244,14 +244,14 @@ jobs:
           persist-credentials: false
 
       - name: Set up mise
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
           # `min_version` requires at least this version. Refresh them
           # together (docs/agents/mise-refresh.md).
-          version: 2026.9.12
-          sha256: e79ae57945034903aee8aa2ea66b4c7ca9cd4f4edd5a8a78a589cbae6d0f428a
+          version: 2026.10.3
+          sha256: 8d48bc510b7d844fad0bc7156c0855c2a1e7230c51e498a7f6b63b021f8b57c5
           # Only the scanner: the whole [tools] set is two CPythons, bun,
           # vale and more, for one binary this job needs.
           install_args: osv-scanner
