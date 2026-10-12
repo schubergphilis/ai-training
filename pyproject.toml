@@ -19,8 +19,8 @@ dependencies = []
 dev = [
   "pytest==9.1.1",
   "pytest-cov==7.1.0",
-  "ruff==0.16.9",
-  "basedpyright==1.40.1",
+  "ruff==0.16.10",
+  "basedpyright==1.40.2",
 ]
 
 [tool.uv]
