@@ -17,7 +17,7 @@ assumes:
     lesson: using-agents/delegating
     section: reviewing-against-the-brief
 extends-to:
-  - label: "Get Started with Codex, module 1: accept a change on evidence, and say who checked what (OpenAI Academy, free account)"
+  - label: "Get Started with Codex, module 1: accept a change on evidence, and write a handoff that says who checked what (OpenAI Academy, free account)"
     href: https://academy.openai.com/public/courses/get-started-with-codex-jkhsq
 after: [coding-with-agents/reversible-changes]
 shorts: [why the diff is read before the agent's summary]
