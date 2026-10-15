@@ -17,7 +17,7 @@ assumes:
 extends-to:
   - label: Decomposing work
     href: /using-agents/decomposition/
-  - label: Agents and Workflows (OpenAI Academy, free account)
+  - label: "Agents and Workflows: a lab where an agent works on a folder of sample files and you review the document it writes (OpenAI Academy, free account)"
     href: https://academy.openai.com/public/courses/agents-and-workflows-y0qoc
 after: []
 shorts: [Done-criteria before the work]

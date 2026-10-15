@@ -2,8 +2,9 @@
 # type is per spec S01 "Source" (book, course, paper, reference or video). url is a
 # public URL only where the licensing rules in AGENTS.md allow a link to the
 # source (agent-engineer-course, DeepLearning.AI, Claude Academy, CS50,
-# Diátaxis, Fuchsia, OpenSSF, AI Hero, OpenAI Academy); otherwise null. Academy keys are
-# `Academy <slug>`, one per cited course, and link to the public course page.
+# Diátaxis, Fuchsia, OpenSSF, AI Hero, OpenAI Academy); otherwise null.
+# Academy keys are `Academy <slug>`, one per cited course, and link to the
+# public course page.
 # AI Hero keys are `AI Hero <slug>` for a post at aihero.dev, where the slug
 # is the URL's path segment, and `AI Hero video <id>` for a video on Matt
 # Pocock's YouTube channel, where the id is the YouTube video id.
