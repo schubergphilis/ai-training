@@ -17,6 +17,9 @@ assumes:
     section: pass-three-when-a-step-fails
 sources-checked: 2026-09-25
 review-by: 2027-03-25
+extends-to:
+  - label: "Extend Codex Workflows, the lab: test that a skill runs on the right request and not on the wrong one (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/extend-codex-workflows-4e61p
 after: [customizing-agents/first-skill]
 shorts: []
 exercise:

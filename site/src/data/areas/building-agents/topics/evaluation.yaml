@@ -81,4 +81,4 @@ links:
   prerequisites: [building-agents/agent-loop, coding-with-agents/verification]
   related: []
   specializations: []
-sources: [AEC-09, AEC-08, DLAI-11, Brilliant VER, Academy building-with-the-claude-api, Academy ai-native-sdlc-playbook, OpenTelemetry GenAI spans]
+sources: [AEC-09, AEC-08, DLAI-11, Brilliant VER, Academy building-with-the-claude-api, Academy ai-native-sdlc-playbook, OpenTelemetry GenAI spans, OpenAI Academy evaluate-ai-applications-pxds7]

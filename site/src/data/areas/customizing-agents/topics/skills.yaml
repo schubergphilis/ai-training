@@ -88,4 +88,4 @@ links:
   prerequisites: [customizing-agents/instructions]
   related: []
   specializations: []
-sources: [AEC-17, DLAI-10, Academy introduction-to-agent-skills, Academy claude-code-in-action, Academy ai-native-sdlc-playbook, Claude Code skills, Agent Skills spec, Claude Code plugins, anthropics skills]
+sources: [AEC-17, DLAI-10, Academy introduction-to-agent-skills, Academy claude-code-in-action, Academy ai-native-sdlc-playbook, Claude Code skills, Agent Skills spec, Claude Code plugins, anthropics skills, OpenAI Academy extend-codex-workflows-4e61p]

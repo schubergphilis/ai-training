@@ -11,6 +11,9 @@ assumes:
   - objective: building-agents/builds-agent-loop/implements-the-loop
     lesson: building-agents/agent-loop
     section: the-loop
+extends-to:
+  - label: "Optimize AI Application Performance: batch processing, spend alerts and latency budgets (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/optimize-ai-application-performance-1k50h
 after: [building-agents/eval-gated-deploys]
 shorts: [Retries and backoff]
 exercise:

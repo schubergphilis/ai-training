@@ -38,4 +38,4 @@ links:
   prerequisites: [building-agents/agent-loop, concepts/grounding]
   related: []
   specializations: []
-sources: [AEC-05, AEC-08, Academy building-with-the-claude-api, Academy claude-platform-101]
+sources: [AEC-05, AEC-08, Academy building-with-the-claude-api, Academy claude-platform-101, OpenAI Academy build-with-retrieval-augmented-generation-2v6xg]

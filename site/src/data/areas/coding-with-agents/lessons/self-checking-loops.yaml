@@ -21,6 +21,8 @@ assumes:
 extends-to:
   - label: Essential AI coding feedback loops for TypeScript projects (AI Hero)
     href: https://www.aihero.dev/essential-ai-coding-feedback-loops-for-type-script-projects
+  - label: "Scale Codex Across Teams and Systems, the lab: a run over several milestones that may not weaken an approved test (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/scale-codex-across-teams-and-systems-jr83a
 after: [coding-with-agents/observing-and-debugging]
 shorts: [why a second model's review never replaces a test]
 exercise:

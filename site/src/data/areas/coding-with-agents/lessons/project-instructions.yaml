@@ -24,6 +24,8 @@ extends-to:
     href: https://www.aihero.dev/a-complete-guide-to-agents-md
   - label: Never run claude /init (AI Hero on YouTube, 11 minutes)
     href: https://www.youtube.com/watch?v=9tmsq-Gvx6g
+  - label: "Get Started with Codex, the lab: make a repository ready for the agent with AGENTS.md (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/get-started-with-codex-jkhsq
 after: [coding-with-agents/scoping-and-referencing]
 shorts:
   - long instruction files are followed less reliably than short ones. When the agent drifts,
