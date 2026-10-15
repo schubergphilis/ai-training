@@ -1,5 +1,8 @@
 id: customizing-agents/notes-that-go-stale
 title: Notes that go stale
+description: >-
+  Tell a primary source from a secondary one, and check each memory note against the code, tests or
+  person it summarizes before an agent acts on it.
 mode: explanation
 covers: customizing-agents/memory
 serves: [customizing-agents/configures-agent/manages-memory]
@@ -7,7 +10,12 @@ introduces: [primary-and-secondary-sources]
 assumes:
   - objective: customizing-agents/configures-agent/manages-memory
     lesson: customizing-agents/memory-review
-extends-to: []
+    section: delete-what-has-gone-stale
+extends-to:
+  - label: Handing work to the next session
+    href: /customizing-agents/session-handoff/
+sources-checked: 2026-10-15
+review-by: 2027-04-15
 after: [customizing-agents/memory-review]
 shorts: []
 exercise:
@@ -20,4 +28,13 @@ issue: 688
 minutes: 10
 notes: >-
   "Check a note against the code before acting on it" is our wording. The memory page supports
-  that notes go stale, and has no rule of its own for it.
+  that notes go stale, and has no rule of its own for it. The page says so in the section that
+  states the rule. Vendor claims, all from code.claude.com/docs/en/memory: memory and instruction
+  files load at the start of every session and are context rather than enforced configuration;
+  memory files are excluded from the transcript cleanup and stay until edited or deleted; the
+  reminder to drop stale entries comes when MEMORY.md nears its read limit; the `modified`
+  frontmatter field (v2.1.214 or later, only for files with frontmatter) records the write time;
+  `project` notes hold what the code and git history don't show, and Claude skips what it can
+  derive from the code. The exercise uses its own five notes for an invoice tool, so its good
+  result gives away no checkpoint. No fixture: nothing on the page runs. Added a
+  `session-handoff` extends-to, since a handoff is the next secondary source the course writes.

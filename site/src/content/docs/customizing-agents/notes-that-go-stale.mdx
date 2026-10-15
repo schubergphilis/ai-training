@@ -1,0 +1,213 @@
+import { Choice, Match, Scenario, Sort, Pitfall, Exercise, Recap } from '@components/lesson';
+
+In the lesson on reading what the agent remembers, two of the planted
+notes had gone stale. One waited for a branch that no longer existed, and
+the other described tests that no longer opened the data file. A
+`git branch` and a `grep` showed it in a few seconds. This lesson is
+about the habit behind those two commands: before an agent acts on a
+note, someone checks the note against the thing it describes.
+
+You don't run anything here. The examples are memory notes and the
+facts around them, and the exercise is a judgment you write down.
+
+## Where a note gets its facts
+
+A memory note is a summary. Someone saw something true, wrote a line
+about it, and the line was saved. The thing they saw is still there, and
+it can change after the line is written. The difference between the two
+is the difference between **primary and secondary sources**.
+
+For a claim about what a project does now, the primary source is the
+project itself: the code, the tests, the configuration and the git
+history. Running the tests or reading the file tells you what is true
+today. A secondary source records what someone believed at one moment.
+Auto-memory notes are secondary, and so are handoff files, plans and
+old chat messages. Each of them was right when it was written, or at
+least the writer thought so.
+
+Not every primary source is in the repository. You are the primary
+source for a note about your preference for short commit messages. For
+a note about where the team tracks bugs, the source is the tracker. And
+a decision ("we drop the old export in March") comes from the meeting or
+the issue where it was made, which the code may not show yet. So the first question about any note is
+which source it summarizes. The second is whether that source still says
+the same.
+
+Claude Code's documentation says the agent doesn't save what it can
+read from the code, such as file paths or the structure of the project.
+A `project` note is for things outside the code: work still under way, a
+deadline, or a decision that neither the files nor the git history
+record (@Claude Code memory). Those are the claims that change fastest. A
+deadline passes, a branch is merged, a decision is reversed, and the
+note stays as it was.
+
+<Match id="which-source-a-note-summarizes" objective="customizing-agents/configures-agent/manages-memory"
+  concepts={['primary-and-secondary-sources']}
+  context="A developer reviews the auto-memory notes of a coding agent for a web shop project. For each note they name the primary source that would show whether the note is still true."
+  title="Where would you check it?" hint="For each note, ask what you would open or run to find out whether it is still true today."
+  options={['The branches and commit history', 'The test files', 'The person who said it', 'The issue tracker the team uses']}
+  rows={[
+    { statement: 'The payment rewrite is on the pay-v3 branch', option: 0, why: 'A branch is a place in git. What shows whether it exists and what is on it?' },
+    { statement: 'The tests replace the mail server with a fake, so no mail is sent', option: 1, why: 'Where is it written down what the tests do when they run?' },
+    { statement: 'Answer in English, even when I write in Dutch', option: 2, why: 'This is a wish. Who decides whether it still holds?' },
+    { statement: 'Open bugs for the shop carry the label shop-bug', option: 3, why: 'Labels on bugs are kept outside the repository. Where?' },
+  ]}
+  rationale="Each note is checked where its claim comes from: git for branches, the test code for test behavior, the person for a preference, and the tracker for how bugs are filed.">
+Match each memory note to the primary source that shows whether it is
+still true.
+</Match>
+
+## Why notes go stale
+
+Code changes in commits, and a commit says what changed. A note doesn't
+change when the code does. The two aren't linked, so a commit that makes
+a note wrong leaves the note as it was.
+
+Claude Code makes this concrete. At the start of a session it puts the
+instruction files and the start of the memory index into the context.
+The documentation calls both context for the agent, as opposed to
+settings that Claude Code enforces (@Claude Code memory). A stale line
+is in the window with the same weight as a true one. The memory files aren't removed when Claude
+Code cleans up old session logs. They stay until you or the agent edits
+or deletes them. The documentation describes one reminder to drop stale
+entries, and it comes when the index file gets close to its size limit
+(@Claude Code memory). That reminder is about the length of the file,
+and it compares no note with the code.
+
+One feature helps. From version 2.1.214, when the agent writes a memory
+file that starts with a header, Claude Code records the time of the
+write in a `modified` field of that header. The documentation says
+the date lets both you and the agent judge how recent the fact is
+(@Claude Code memory).
+The date tells you how long ago the claim was last written down. It
+doesn't tell you whether the claim is still true. A note from last year
+about your commit message style can be right, and a note from yesterday
+about a branch can be wrong by tonight.
+
+## Check the note before acting on it
+
+Here is the rule this course uses. Claude Code's documentation says
+notes can go stale but doesn't give a rule for it, so the wording is ours.
+**Treat a note as a lead, and check it against its primary source before
+acting on it.** When the two disagree about what the project does now,
+you follow the project, and you correct or delete the note.
+
+When you review a note, it gets one of these outcomes:
+
+- **Trust it** when the note is a record of something with no other
+  record you could check, and the source still agrees. Your own
+  preference is the usual case, and so is a pointer to a place you open
+  anyway when you follow it.
+- **Check it** when the note makes a claim about the project that the
+  agent acts on: a branch, a test, a setting, a time a command takes.
+  The check is often one command or one file. Do it before the agent
+  acts, and again at each review.
+- **Delete it** when the primary source already contradicts it, or when
+  the note only repeats what the code states plainly. The code is the
+  record in the second case, and a copy of it can only go out of date.
+
+A note that lets the agent skip a step deserves the check most. "The
+full test suite takes 20 minutes, run only the fast tests" stays in
+memory long after someone makes the suite fast. Until then the agent
+skips the full suite in every session.
+
+<Scenario id="release-from-the-note" objective="customizing-agents/configures-agent/manages-memory"
+  concepts={['primary-and-secondary-sources']}
+  context="A coding agent's auto-memory holds a note that says release tags are made from the release branch. The developer asks the agent to tag a new release. The note is a few months old."
+  title="The agent is about to tag a release" hint="Which of these steps looks at the project itself, and which only look at the note?"
+  options={[
+    { text: 'Let the agent tag from the release branch right away, as the note says.', consequence: 'The release branch had no commit for three months, because the team now tags from main. The tag points at old code.' },
+    { text: 'Ask the agent whether the note is still right before it starts tagging.', consequence: 'The agent says yes and quotes the note. It answers from the note, because the question asks it to look at nothing else.' },
+    { text: 'Have the agent read the release script and the recent commits on each branch first.', correct: true, consequence: 'It finds that release has been idle since spring and that the script tags main. It tags main, and you delete the note.' },
+    { text: 'Delete every memory note older than a month first, then ask it again.', consequence: 'Your preferences go with the stale note. A note written last week could be just as wrong, and the age of a note checks nothing.' },
+  ]}>
+A memory note says "release tags are made from the `release` branch".
+You ask the agent to tag version 2.4. What do you do before it tags?
+</Scenario>
+
+<Pitfall title="Asking the agent whether its note is true">
+A developer reviewed the memory of a coding agent by asking it, for each
+note, whether the note was still correct. The agent said yes to every
+one. Each note was in its context, and the agent had read nothing that
+contradicted them, so it repeated them back. A secondary
+source can't confirm itself. Ask the agent to run the command or open
+the file that the note describes, and read what that shows.
+</Pitfall>
+
+<Sort id="primary-or-secondary" phase="review"
+  objective="customizing-agents/configures-agent/manages-memory"
+  concepts={['primary-and-secondary-sources']}
+  context="A developer wants to know what a software project does today. Some things they could read show the project directly, and others record what someone believed about it at one moment."
+  title="Primary or secondary?" hint="Does this show the project as it is now, or what someone wrote about it at one time?"
+  buckets={['Primary source', 'Secondary source']}
+  items={[
+    { text: 'The test file, read today', bucket: 0 },
+    { text: 'An auto-memory note about the tests', bucket: 1 },
+    { text: 'The output of git log for the main branch', bucket: 0 },
+    { text: 'A handoff file from last week', bucket: 1 },
+    { text: 'The configuration file in the repository', bucket: 0 },
+    { text: 'A plan written before the work started', bucket: 1 },
+  ]}>
+Place each item as a primary or a secondary source for what the project
+does today.
+</Sort>
+
+<Choice id="note-and-code-disagree" phase="review"
+  objective="customizing-agents/configures-agent/manages-memory"
+  concepts={['primary-and-secondary-sources']}
+  context="A coding agent's memory note says the project's tests use the real database. The developer opens the test setup file and sees that every test uses an in-memory fake database instead."
+  title="The note and the test file disagree" hint="Which of the two shows what happens when the tests run today?"
+  options={[
+    { text: 'Follow the note, because whoever wrote it knew why the tests were set up that way.', why: 'The note shows what was true when it was written. The setup file is what runs today.' },
+    { text: 'Ask the agent which of the two is right, and follow its answer.', why: 'The agent has the note in its context and nothing that contradicts it, so it tends to repeat the note.' },
+    { text: 'Keep both, and add today\'s date to the note so readers know its age.', why: 'A date says how old the note is. The note still tells every session something false about the tests.' },
+    { text: 'Follow the test file, and correct or delete the note.', correct: true },
+  ]}>
+A memory note says the tests use the real database. The test setup file
+shows that every test uses an in-memory fake. What do you do?
+</Choice>
+
+<Exercise stretch="Open the memory folder of one of your own projects, under `~/.claude/projects/`, and do the same for every note in it. Read and judge only, and change the notes afterwards if you decide to.">
+Below are five notes from the memory index of a small invoice tool,
+with one fact from the project next to two of them. For each note, write
+down which source it summarizes and whether you trust it, check it
+against that source, or delete it, with a one-line reason. It takes
+about ten minutes, and you need only a pen or a text file.
+
+```text
+1. user      Keep commit messages to one line.
+2. project   The CSV export is behind the setting export_v2 until the beta ends.
+             (git log shows a commit last week: "Remove export_v2, CSV export is on for everyone")
+3. project   The date helpers are in billing/dates.py.
+             (billing/dates.py exists and holds the date helpers)
+4. feedback  Run only the fast tests. The full suite takes 20 minutes.
+5. reference Customer complaints are in the support queue, under the tag invoice.
+```
+
+A good result: note 1 summarizes you, and you trust it if you still want
+that. Note 2 summarizes the code and its history, and the commit
+contradicts it, so you delete it. Note 3 summarizes the code and repeats
+what the code shows, so you delete it, because the file is the record.
+Note 4 summarizes the test suite, and you check it, by timing the full
+run, before the agent skips any test. Note 5 summarizes the support queue
+and is a pointer to it, so you trust it and the queue is checked each
+time someone opens it. Which note would you have trusted without a
+check before this lesson, and what would the agent have done because of
+it?
+</Exercise>
+
+<Recap>
+1. A note in memory is a secondary source. It records what was true, or
+   believed, when it was written. The code, the tests, the configuration
+   and the git history are the primary source for what the project does
+   now.
+2. Before acting on a note, name the source it summarizes and check the
+   note against it. When they disagree about the project, the project
+   counts, and the note is corrected or deleted.
+3. In Claude Code a memory note stays until someone edits or deletes it,
+   and every session reads the index as context. A `modified` date shows
+   how old a note is, which isn't the same as whether it is still true
+   (@Claude Code memory).
+4. Asking the agent whether its own note is true checks nothing. Have
+   it run the command or open the file the note describes.
+</Recap>
