@@ -11,6 +11,9 @@ assumes:
   - objective: using-agents/delegates-and-checks/reviews-against-brief
     lesson: using-agents/delegating
     section: reviewing-against-the-brief
+extends-to:
+  - label: Applied AI Foundations, module 4 (OpenAI Academy, free account)
+    href: https://academy.openai.com/public/courses/applied-ai-foundations-szsmv
 after: [using-agents/delegating]
 shorts: [The decisions that are yours to make first]
 exercise:

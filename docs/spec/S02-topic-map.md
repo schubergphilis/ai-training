@@ -13,6 +13,8 @@ learner's reference on topic pages and at `/reference/` are implemented
 the alignment rows for Brilliant, Ng and AI Fluency 4D (2026-09-20).
 Claude Academy is a source, with one `Academy <slug>` key per cited course
 in the bibliography and the topic YAML (2026-09-20).
+OpenAI Academy is a source, with one `OpenAI Academy <slug>` key per linked
+learning path in the bibliography and the topic YAML (issue #776, 2026-10-15).
 Every `DLAI-N` key carries its verified public course page URL in the
 bibliography and the table below (2026-09-20).
 Deferred: the map's side drawer, path lanes, and quizzes.
@@ -183,6 +185,7 @@ The topic tables below name the material each topic can start from. Keys:
 | `AEC-NN`                                  | Lesson NN of *agent-engineer-course*, a fork of Addy Osmani's course maintained by the author, published at `https://lsimons.github.io/agent-engineer-course/`                             | Apache-2.0                                 | May be adapted, with attribution in `NOTICE.md`                                                                           |
 | `DLAI-N`                                  | DeepLearning.AI course N in the reading order below, where `M1`..`M5` are modules of a course                                                                                              | Proprietary                                | Topic coverage and sequencing as inspiration only; nothing copied or embedded                                             |
 | `Academy <slug>`                          | The Claude Academy course at `https://academy.claude.com/courses/<slug>`, Anthropic's free public learning site. The course table below lists the ones cited                               | Proprietary or CC BY-NC-SA                 | Links and paraphrased ideas; no text                                                                                      |
+| `OpenAI Academy <slug>`                   | An OpenAI Academy learning path at `https://academy.openai.com/public/courses/<slug>`, OpenAI's free learning site. The slug ends in a random suffix. The table below lists the ones cited | Proprietary                                | Links and paraphrased ideas; no text                                                                                      |
 | `Brilliant XXX`                           | A big idea (three-letter code) in Brilliant's *Coding with AI* skills map; see "Alignment"                                                                                                 | Proprietary                                | Ideas and codes as facts; no text                                                                                         |
 | `Ng`                                      | Andrew Ng's AI engineering skills map: build and deploy AI applications, software engineering fundamentals, use coding agents, shape the build                                             | Public newsletter                          | Ordering and area split                                                                                                   |
 | `AI Fluency 4D`                           | Dakan and Feller's *Framework for AI Fluency*; see "Alignment". Anthropic's course on it is `Academy ai-fluency-framework-foundations`                                                     | CC BY-NC-ND 4.0 (framework)                | Competency names as facts; asks paraphrased; no text                                                                      |
@@ -309,6 +312,14 @@ CC BY-NC-SA 4.0 notice. The NonCommercial (NC) term is incompatible with this
 site's CC BY-SA 4.0, so no text is adapted from any Academy course regardless
 of its license.
 
+The `OpenAI Academy <slug>` license is Proprietary. The Academy's pages
+carry no reuse license, and its terms page points to OpenAI's general Terms
+of Use (checked 2026-10-12). No text is adapted from any path. A path page is
+public, and its lessons need a free account and have no public URL of their
+own, so an `extends-to` label names the module. The paths are written by
+OpenAI about its own products, so they are cited as OpenAI's own account of
+its tools. Their model names and prices date quickly.
+
 | Key      | agent-engineer-course lesson                                                                  |
 | -------- | --------------------------------------------------------------------------------------------- |
 | `AEC-01` | What are AI agents: model versus agent, autonomy levels, when a prompt suffices               |
@@ -364,6 +375,23 @@ Claude Academy courses cited, by slug. Each is at `https://academy.claude.com/co
 | `Academy model-context-protocol-advanced-topics`      | Model Context Protocol advanced topics: sampling, notifications, roots, message types, the `stdio` and streamable HTTP transports, stateless scaling                                       |
 | `Academy claude-platform-101`                         | Claude Platform 101: first API call, model choice, the agent loop, tool use, thinking, built-in tools, skills, MCP, context management, managed agents                                     |
 | `Academy building-with-the-claude-api`                | Building with the Claude API: requests and system prompts, temperature, prompt evaluation with model- and code-based grading, prompting techniques, tool use, RAG, workflows versus agents |
+
+OpenAI Academy learning paths cited, by slug. Each is at `https://academy.openai.com/public/courses/<slug>`. Path and module names are facts, and the material itself is paraphrased and never copied.
+
+| Key                                                              | OpenAI Academy learning path                                                                                                                           |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `OpenAI Academy ai-foundations-dnq5w`                            | AI Foundations: how language models and ChatGPT work, clear instructions, context, reviewing output, what not to share with ChatGPT                    |
+| `OpenAI Academy applied-ai-foundations-szsmv`                    | Applied AI Foundations: a recurring task split into steps with a check after each, when to switch to a reasoning model, search against deep research   |
+| `OpenAI Academy agents-and-workflows-y0qoc`                      | Agents and Workflows: directing an agent with context, a defined output and limits, reviewing its work, plugins, skills and scheduled tasks in ChatGPT |
+| `OpenAI Academy ai-leadership-kaf7k`                             | AI Leadership: one AI initiative from a business priority to a strategy draft, ownership and governance, oversight matched to risk, a roadmap          |
+| `OpenAI Academy scope-ai-solutions-kjplw`                        | Scope AI Solutions: finding AI opportunities in a workflow, weighing the gain against the work to build it, a problem statement and a solution plan    |
+| `OpenAI Academy get-started-with-codex-jkhsq`                    | Get Started with Codex: a first scoped change in a real repository, `AGENTS.md`, completion criteria, verifying the change, evidence for the reviewer  |
+| `OpenAI Academy extend-codex-workflows-4e61p`                    | Extend Codex Workflows: shared team guidance, reusable Codex skills and testing when they fire, subagents and worktrees, ownership of parallel work    |
+| `OpenAI Academy scale-codex-across-teams-and-systems-jr83a`      | Scale Codex Across Teams and Systems: a large change split into workstreams with the evidence each must produce, goal-driven and headless runs         |
+| `OpenAI Academy build-with-retrieval-augmented-generation-2v6xg` | Build with Retrieval-Augmented Generation: answers grounded in your own data, embeddings, a vector store and File Search on the OpenAI API, Promptfoo  |
+| `OpenAI Academy design-and-build-agentic-systems-k5uke`          | Design and Build Agentic Systems: agents on the OpenAI Agents SDK with clear roles and limited tools, handoffs against agents called as tools, tracing |
+| `OpenAI Academy evaluate-ai-applications-pxds7`                  | Evaluate AI Applications: representative test cases, choosing an evaluation approach, rubric and exact-match graders in Promptfoo, regressions         |
+| `OpenAI Academy optimize-ai-application-performance-1k50h`       | Optimize AI Application Performance: production evidence, quality against latency, throughput and cost, caching, effort levels, Batch and Flex         |
 
 ## Foundations
 

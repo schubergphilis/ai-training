@@ -12,6 +12,9 @@ assumes:
   - objective: concepts/recognizes-agents/names-the-loop
     lesson: concepts/agent-loop
     section: a-model-in-a-loop-with-two-tools
+extends-to:
+  - label: Build with Retrieval-Augmented Generation (OpenAI Academy, free account)
+    href: https://academy.openai.com/public/courses/build-with-retrieval-augmented-generation-2v6xg
 after: [concepts/agent-loop]
 shorts: [keyword search versus similarity search]
 exercise:
