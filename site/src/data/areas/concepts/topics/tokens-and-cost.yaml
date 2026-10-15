@@ -52,4 +52,4 @@ links:
   prerequisites: [concepts/how-models-work]
   related: [concepts/limits, using-agents/choosing-tools]
   specializations: []
-sources: [Claude docs prompt-caching, Claude Code costs, Claude docs effort, Claude docs messages, Claude docs pricing]
+sources: [Claude docs prompt-caching, Claude Code costs, Claude docs effort, Claude docs messages, Claude docs pricing, OpenAI Academy optimize-ai-application-performance-1k50h]

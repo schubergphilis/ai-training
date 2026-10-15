@@ -11,6 +11,9 @@ assumes:
   - objective: safety/judges-agent-risk/chooses-human-in-loop
     lesson: safety/agent-risk
     section: human-in-the-loop
+extends-to:
+  - label: AI Leadership, modules 5 and 8 (OpenAI Academy, free account)
+    href: https://academy.openai.com/public/courses/ai-leadership-kaf7k
 after: [safety/writing-an-ai-policy]
 shorts: []
 exercise:

@@ -2,11 +2,14 @@
 # type is per spec S01 "Source" (book, course, paper, reference or video). url is a
 # public URL only where the licensing rules in AGENTS.md allow a link to the
 # source (agent-engineer-course, DeepLearning.AI, Claude Academy, CS50,
-# Diátaxis, Fuchsia, OpenSSF, AI Hero); otherwise null. Academy keys are
+# Diátaxis, Fuchsia, OpenSSF, AI Hero, OpenAI Academy); otherwise null. Academy keys are
 # `Academy <slug>`, one per cited course, and link to the public course page.
 # AI Hero keys are `AI Hero <slug>` for a post at aihero.dev, where the slug
 # is the URL's path segment, and `AI Hero video <id>` for a video on Matt
 # Pocock's YouTube channel, where the id is the YouTube video id.
+# OpenAI Academy keys are `OpenAI Academy <slug>`, one per cited learning
+# path, where the slug is the URL's last path segment with its random suffix,
+# and link to the public path page.
 # A `paper` entry follows spec S03 "Citations and terms" (key, author,
 # container and url rules).
 AEC-01:
@@ -373,6 +376,48 @@ Academy building-with-the-claude-api:
   author: Anthropic
   license: Proprietary
   url: https://academy.claude.com/courses/building-with-the-claude-api
+OpenAI Academy agents-and-workflows-y0qoc:
+  type: course
+  title: Agents and Workflows
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/agents-and-workflows-y0qoc
+OpenAI Academy applied-ai-foundations-szsmv:
+  type: course
+  title: Applied AI Foundations
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/applied-ai-foundations-szsmv
+OpenAI Academy build-with-retrieval-augmented-generation-2v6xg:
+  type: course
+  title: Build with Retrieval-Augmented Generation
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/build-with-retrieval-augmented-generation-2v6xg
+OpenAI Academy optimize-ai-application-performance-1k50h:
+  type: course
+  title: Optimize AI Application Performance
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/optimize-ai-application-performance-1k50h
+OpenAI Academy ai-foundations-dnq5w:
+  type: course
+  title: AI Foundations
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/ai-foundations-dnq5w
+OpenAI Academy ai-leadership-kaf7k:
+  type: course
+  title: AI Leadership
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/ai-leadership-kaf7k
 CS50x:
   type: course
   title: CS50's Introduction to Computer Science

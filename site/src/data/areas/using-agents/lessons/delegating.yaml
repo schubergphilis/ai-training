@@ -17,6 +17,8 @@ assumes:
 extends-to:
   - label: Decomposing work
     href: /using-agents/decomposition/
+  - label: Agents and Workflows (OpenAI Academy, free account)
+    href: https://academy.openai.com/public/courses/agents-and-workflows-y0qoc
 after: []
 shorts: [Done-criteria before the work]
 exercise:
