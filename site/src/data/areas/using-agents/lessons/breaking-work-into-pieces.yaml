@@ -12,7 +12,7 @@ assumes:
     lesson: using-agents/delegating
     section: reviewing-against-the-brief
 extends-to:
-  - label: Applied AI Foundations, module 4 (OpenAI Academy, free account)
+  - label: "Applied AI Foundations, module 4: a recurring task written as steps with a check after each (OpenAI Academy, free account)"
     href: https://academy.openai.com/public/courses/applied-ai-foundations-szsmv
 after: [using-agents/delegating]
 shorts: [The decisions that are yours to make first]
