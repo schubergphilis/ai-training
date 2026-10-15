@@ -313,12 +313,12 @@ site's CC BY-SA 4.0, so no text is adapted from any Academy course regardless
 of its license.
 
 The `OpenAI Academy <slug>` license is Proprietary. The Academy's pages
-carry no reuse license, and its terms page points to OpenAI's general Terms
+state no reuse license, and its terms page points to OpenAI's general Terms
 of Use (checked 2026-10-12). No text is adapted from any path. A path page is
 public, and its lessons need a free account and have no public URL of their
-own, so an `extends-to` label names the module. The paths are written by
-OpenAI about its own products, so they are cited as OpenAI's own account of
-its tools. Their model names and prices date quickly.
+own, so an `extends-to` label names the module. OpenAI wrote the paths about
+its own products, and this site cites them as OpenAI's own account of its
+tools. Their model names and prices date quickly.
 
 | Key      | agent-engineer-course lesson                                                                  |
 | -------- | --------------------------------------------------------------------------------------------- |
@@ -386,8 +386,8 @@ OpenAI Academy learning paths cited, by slug. Each is at `https://academy.openai
 | `OpenAI Academy ai-leadership-kaf7k`                             | AI Leadership: one AI initiative from a business priority to a strategy draft, ownership and governance, oversight matched to risk, a roadmap          |
 | `OpenAI Academy scope-ai-solutions-kjplw`                        | Scope AI Solutions: finding AI opportunities in a workflow, weighing the gain against the work to build it, a problem statement and a solution plan    |
 | `OpenAI Academy get-started-with-codex-jkhsq`                    | Get Started with Codex: a first scoped change in a real repository, `AGENTS.md`, completion criteria, verifying the change, evidence for the reviewer  |
-| `OpenAI Academy extend-codex-workflows-4e61p`                    | Extend Codex Workflows: shared team guidance, reusable Codex skills and testing when they fire, subagents and worktrees, ownership of parallel work    |
-| `OpenAI Academy scale-codex-across-teams-and-systems-jr83a`      | Scale Codex Across Teams and Systems: a large change split into workstreams with the evidence each must produce, goal-driven and headless runs         |
+| `OpenAI Academy extend-codex-workflows-4e61p`                    | Extend Codex Workflows: shared team guidance, reusable Codex skills and testing when one is used, subagents and worktrees, ownership of parallel work  |
+| `OpenAI Academy scale-codex-across-teams-and-systems-jr83a`      | Scale Codex Across Teams and Systems: a large change split into parts with the evidence each part must produce, goal-driven and headless runs          |
 | `OpenAI Academy build-with-retrieval-augmented-generation-2v6xg` | Build with Retrieval-Augmented Generation: answers grounded in your own data, embeddings, a vector store and File Search on the OpenAI API, Promptfoo  |
 | `OpenAI Academy design-and-build-agentic-systems-k5uke`          | Design and Build Agentic Systems: agents on the OpenAI Agents SDK with clear roles and limited tools, handoffs against agents called as tools, tracing |
 | `OpenAI Academy evaluate-ai-applications-pxds7`                  | Evaluate AI Applications: representative test cases, choosing an evaluation approach, rubric and exact-match graders in Promptfoo, regressions         |

@@ -78,6 +78,7 @@ hamel
 Artima
 Yaknyam
 statusline
+Promptfoo
 
 # Course and certification codes
 CCAO
@@ -91,6 +92,7 @@ SDLC
 Precalculus
 pset
 psets
+szsmv
 
 # Jargon
 llms
