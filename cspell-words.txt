@@ -318,7 +318,6 @@ aihero
 Vercel
 pathlib
 splitlines
-Promptfoo
 jkhsq
 kjplw
 pxds
