@@ -17,7 +17,7 @@ assumes:
 extends-to:
   - label: Delegating a task to an agent
     href: /using-agents/delegating/
-  - label: Applied AI Foundations, module 3 (OpenAI Academy, free account)
+  - label: "Applied AI Foundations, module 3: search compared with deep research in ChatGPT (OpenAI Academy, free account)"
     href: https://academy.openai.com/public/courses/applied-ai-foundations-szsmv
 after: []
 shorts: [Asking for sources]
