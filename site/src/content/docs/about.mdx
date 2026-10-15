@@ -69,10 +69,10 @@ import Sampler from '@components/widgets/Sampler.astro';
 
 This page describes the AI Training project as a whole. It explains why the
 project exists and what the site contains. It then shows how a lesson works
-and which ideas about learning are behind that design. After that it tells how the project started,
-how it grew, and how work on it happens now. The last sections describe the
-agent harness that does most of the writing and the software that runs the
-site.
+and which ideas about learning are behind that design. After that it tells
+how the project started, how it grew, and how work on it happens now. The
+last sections describe the agent harness that does most of the writing and
+the software that runs the site.
 
 A short version of this page is a [set of slides](/about/slides/) for a
 talk of 10 to 20 minutes.
@@ -89,8 +89,8 @@ software engineers.
 {/* source: site/src/data/groups.yaml; lesson counts are build-time figures */}
 
 Each area has one course, and each course is a sequence of interactive
-lessons with graded checkpoints. Each lesson ends in
-one exercise that the learner does outside the page.
+lessons with graded checkpoints. Each lesson ends in one exercise that the
+learner does outside the page.
 
 <Stats
   id="figure-in-short"
@@ -101,21 +101,20 @@ one exercise that the learner does outside the page.
   ]}
 />
 
-The site keeps the
-learner's progress in their own browser and brings finished checkpoints
-back for review on a fixed schedule. A learner can also study a lesson with
-an AI tutor that runs in their own coding agent.
+The site keeps the learner's progress in their own browser and brings
+finished checkpoints back for review on a fixed schedule. A learner can also
+study a lesson with an AI tutor that runs in their own coding agent.
 
 The site is a static website on GitHub Pages. It runs entirely in the
-browser, without accounts or tracking. The content is licensed CC BY-SA 4.0 and the code
-Apache-2.0, so others may copy and adapt both.
+browser, without accounts or tracking. The content is licensed CC BY-SA 4.0
+and the code Apache-2.0, so others may copy and adapt both.
 
 {/* source: LICENSE, LICENSE-CODE, AGENTS.md "Content and licensing", SECURITY.md "Scope" */}
 
 The project started on September 19, 2026. One maintainer runs it. AI coding
-agents write almost all of the content and the code. The maintainer
-decides what gets built. Agents review every change, and the maintainer
-reviews the changes that fall outside a standing approval. The site states this in its
+agents write almost all of the content and the code. The maintainer decides
+what gets built. Agents review every change, and the maintainer reviews the
+changes that fall outside a standing approval. The site states this in its
 footer: the content is co-authored by AI.
 
 {/* source: git log --reverse | head -1 (27008263, 2026-09-19); git log --invert-grep --grep='Assisted-by:' (9 of 1,436 commits have no agent trailer, as of 2026-10-09); site/src/components/overrides/Footer.astro */}
@@ -202,8 +201,8 @@ checkpoint tests one objective. The next sections explain each part.
 />
 
 The study time is the site's own estimate. It adds the reading time and a
-fixed time per checkpoint to the time each exercise states. The constants in the
-estimate were chosen by hand and have not been checked against learners
+fixed time per checkpoint to the time each exercise states. The constants in
+the estimate were chosen by hand and have not been checked against learners
 with a clock yet. Spaced review comes on top of this time.
 
 {/* source: site/src/lib/lesson-time.ts (LESSON_TIME, "not calibrated against timed readers yet (issue #521)"); docs/spec/S03-lesson-authoring.md "Lesson time" */}
@@ -245,12 +244,12 @@ is data, in YAML files next to the lessons, and the build reads it.
 {/* source: docs/spec/S01-dictionary.md "Knowledge model"; docs/spec/S02-topic-map.md; docs/spec/S10-competency-authoring.md */}
 
 The behaviors format comes from Brilliant's skills map for coding with AI
-(@Brilliant VER). The project also maps its objectives to <AboutFigure of="alignment-frameworks" /> outside
-frameworks. The frameworks are
-that skills map, a skills map for AI engineering (@Ng), and the 4D
+(@Brilliant VER). The project also maps its objectives to
+<AboutFigure of="alignment-frameworks" /> outside frameworks. The frameworks
+are that skills map, a skills map for AI engineering (@Ng), and the 4D
 framework of AI Fluency (@Academy ai-fluency-framework-foundations). The
-mapping shows which part of each framework the site covers, and where it
-has gaps.
+mapping shows which part of each framework the site covers, and where it has
+gaps.
 
 {/* source: site/src/data/alignment/*.yaml; docs/spec/S02-topic-map.md "Alignment"; exploration note 09 in git show edb5011c:docs/plan/explore/ (adopted the behavior triple and the alignment layer) */}
 
@@ -282,12 +281,12 @@ entry:
 
 Most citations point to vendor documentation, because many lessons teach a
 specific tool. Claude Code documentation is the most cited family, and its
-pages on memory (@Claude Code memory) and on best practices (@Claude Code
-best practices) are each cited in more than a dozen lessons. An open course
-on agent engineering, which the maintainer wrote with two others, is the
-second family (@AEC-01). The project began as a rebuild of that course, as
-the history section explains.
-Claude Academy courses are the third family.
+pages on memory (@Claude Code memory) and on best practices
+(@Claude Code best practices) are each cited in more than a dozen lessons.
+An open course on agent engineering, which the maintainer wrote with two
+others, is the second family (@AEC-01). The project began as a rebuild of
+that course, as the history section explains. Claude Academy courses are the
+third family.
 
 {/* source: citation uses per key, from the repo root: git ls-files site/src/content/docs | grep -E 'docs/[a-z-]+/[a-z0-9-]+[.]mdx$' | grep -v -e index.mdx -e guides | xargs cat | grep -oh "(@[^()]*)" | sort | uniq -c | sort -rn (count lessons per key with grep -l). As of 2026-10-09: Claude Code docs 563 uses in 57 lessons, the agent engineering course 213 in 50, Claude Academy 115 in 65; Claude Code memory in 23 lessons, best practices in 15. */}
 
@@ -302,9 +301,9 @@ and a study of sycophancy, the tendency of a model to agree with the user
 ## Inside a lesson
 
 A lesson is one page. It is meant to take 10 to 25 minutes of reading and
-checkpoints, plus the exercise. The data check warns when a lesson's
-reading and checkpoints alone take more than 25 minutes. Each lesson has the same parts in the same
-order, so that a learner knows where they are on any page.
+checkpoints, plus the exercise. The data check warns when a lesson's reading
+and checkpoints alone take more than 25 minutes. Each lesson has the same
+parts in the same order, so that a learner knows where they are on any page.
 
 {/* source: docs/spec/S03-lesson-authoring.md "Lesson anatomy", "Lesson time"; site/src/lib/lesson-time.ts warnMinutes */}
 
@@ -388,8 +387,9 @@ The rules for checkpoints are the same everywhere:
 
 - Each checkpoint tests exactly one learning objective, and it names the
   concepts it uses.
-- A wrong answer to a choice question shows feedback for that answer. A hint is a question that
-  points the learner at their own mistake, and it never gives the answer.
+- A wrong answer to a choice question shows feedback for that answer. A hint
+  is a question that points the learner at their own mistake, and it never
+  gives the answer.
 - The lesson never reveals the answer. The learner can try again as often
   as they want, or skip the checkpoint. The site records a skip, and it
   doesn't count a skip as a pass.
@@ -434,12 +434,12 @@ that the learner reads or runs.
 
 ### Widgets
 
-A few concepts are easier to understand by trying them than by reading.
-For these the site has <AboutFigure of="widget-kinds" /> kinds of
-interactive widget. A widget isn't graded and doesn't write to your
-progress. The one below is from the first Concepts lesson. A language model
-picks each next word, or part of a word, at random, by weight, and the temperature changes how
-spread out the weights are. Move the slider and sample a few times.
+A few concepts are easier to understand by trying them than by reading. For
+these the site has <AboutFigure of="widget-kinds" /> kinds of interactive
+widget. A widget isn't graded and doesn't write to your progress. The one
+below is from the first Concepts lesson. A language model picks each next
+word, or part of a word, at random, by weight, and the temperature changes
+how spread out the weights are. Move the slider and sample a few times.
 
 {/* source: site/src/components/widgets/Sampler.astro; the nine widget components in site/src/components/widgets/ and their scripts in site/src/scripts/ import no progress module (checked 2026-10-09) */}
 
@@ -475,13 +475,13 @@ locks a lesson.
 
 {/* source: docs/spec/S02-topic-map.md "Differentiation by routing"; site/src/components/lesson/RouteAhead.astro */}
 
-In the Engineering group the learner also picks a comfort level, an idea
-the project took from CS50 (@CS50x). At the "less comfortable" level the
-lesson shows the card with the sections that teach what it assumes from
-the start, and new review
-items come back sooner. At the "more comfortable" level the lesson starts
-with a short skills check. It skips what the learner already knows and
-offers extensions. The level changes the route and never the content.
+In the Engineering group the learner also picks a comfort level, an idea the
+project took from CS50 (@CS50x). At the "less comfortable" level the lesson
+shows the card with the sections that teach what it assumes from the start,
+and new review items come back sooner. At the "more comfortable" level the
+lesson starts with a short skills check. It skips what the learner already
+knows and offers extensions. The level changes the route and never the
+content.
 
 {/* source: docs/spec/S01-dictionary.md "Comfort level"; docs/spec/S02-topic-map.md "Differentiation by routing"; docs/spec/S05-spaced-review.md (entry stage by comfort level) */}
 
@@ -492,9 +492,9 @@ its habits, and adds the lesson to the learner's reference.
 
 **Spaced review.** Most graded checkpoints of a finished lesson become
 review items. Repair checkpoints, and ones the author marks as one-off,
-don't. Each course has a review page. An item comes back 1, 3, 7, 21
-and 60 days after the learner last passed it. With a pass it moves to the
-next step, and with a fail it goes back to the first step. After the fifth pass
+don't. Each course has a review page. An item comes back 1, 3, 7, 21 and 60
+days after the learner last passed it. With a pass it moves to the next
+step, and with a fail it goes back to the first step. After the fifth pass
 the item retires. A session asks at most 12 items. Many checkpoints have
 alternate versions that only the review page asks, so that a review tests
 the idea rather than the memory of the wording. The sidebar shows how many
@@ -536,9 +536,9 @@ shows what is due when the learner comes back to it.
 ### Your progress stays with you
 
 The site stores all progress in one record in the learner's browser, in
-local storage. The site sends nothing to a server. The progress page can export
-the record to a file and import it in another browser. The record has a
-version number, and the site converts an older record when it loads it.
+local storage. The site sends nothing to a server. The progress page can
+export the record to a file and import it in another browser. The record has
+a version number, and the site converts an older record when it loads it.
 
 A static site can't hide its answers, because the answers are in the page.
 The site trusts the learner not to look up the answer. The record is for the
@@ -601,24 +601,24 @@ and rereading as one of the least (@Dunlosky 2013).
 
 The project assumes that a learner who predicts a result before seeing it
 pays more attention to the result. When the prediction is wrong, the
-difference shows where their model of the system is wrong. The predict checkpoint uses this. Code
-examples follow a fixed rhythm: one idea, then one example. The project
-took both from Execute Program, an online platform that teaches
-programming with short, executable examples. Research supports the first
-part: an attempt to answer before seeing the answer helps later recall,
-even when the attempt fails (@Kornell 2009).
+difference shows where their model of the system is wrong. The predict
+checkpoint uses this. Code examples follow a fixed rhythm: one idea, then
+one example. The project took both from Execute Program, an online platform
+that teaches programming with short, executable examples. Research supports
+the first part: an attempt to answer before seeing the answer helps later
+recall, even when the attempt fails (@Kornell 2009).
 
 {/* source: exploration note 10 (Execute Program), d7ca2629; docs/spec/S03-lesson-authoring.md "Examples"; Kornell 2009 (unsuccessful retrieval attempts enhance later learning) */}
 
 ### Design from the outcomes
 
-The design starts from what the learner can do afterwards, and works back
-to the lessons. Course designers call this backward design (@Wiggins 2005).
-It starts from the results a course wants and the evidence that would
-show them, and plans the teaching last. The competencies, objectives and
-behaviors say what a learner can do. Each checkpoint tests one objective. So the site can show
-which objectives a learner has evidence for, and a reviewer can check
-whether a lesson tests what it claims to teach.
+The design starts from what the learner can do afterwards, and works back to
+the lessons. Course designers call this backward design (@Wiggins 2005). It
+starts from the results a course wants and the evidence that would show
+them, and plans the teaching last. The competencies, objectives and
+behaviors say what a learner can do. Each checkpoint tests one objective. So
+the site can show which objectives a learner has evidence for, and a
+reviewer can check whether a lesson tests what it claims to teach.
 
 {/* source: docs/spec/S02-topic-map.md; docs/spec/S03-lesson-authoring.md "Checkpoints" (one objective per checkpoint, at least one per served objective) */}
 
@@ -634,12 +634,12 @@ work on the current objective, or take an extension.
 
 ### Hints that ask questions
 
-The project assumes that a hint that gives the answer ends the learner's own thinking. In
-this project a hint asks the learner a question about their own mistake. The
-tutor follows the same rule. The idea comes from CS50's AI tutor
-(@Liu 2024b). Research on tutoring calls this kind of help scaffolding: the
-tutor takes over the parts of a task that the learner can't do yet, and
-leaves the rest to the learner (@Wood 1976).
+The project assumes that a hint that gives the answer ends the learner's own
+thinking. In this project a hint asks the learner a question about their own
+mistake. The tutor follows the same rule. The idea comes from CS50's AI
+tutor (@Liu 2024b). Research on tutoring calls this kind of help
+scaffolding: the tutor takes over the parts of a task that the learner can't
+do yet, and leaves the rest to the learner (@Wood 1976).
 
 {/* source: docs/spec/S03-lesson-authoring.md "Checkpoints"; docs/spec/S08-tutor-skill.md; docs/spec/S02-topic-map.md "Source material" (CS50) */}
 
@@ -845,9 +845,9 @@ repository, on its own branch. When a builder pushes its branch, the lead
 starts a **reviewer** agent for it. For a lesson, the reviewer compares the
 prose with the authoring guide and checks the license of each source and
 each factual claim. For code, the reviewer reads the change and runs the
-checks. Builders and reviewers never talk to each
-other directly. The lead passes the review to the builder, and the builder
-fixes what the review found.
+checks. Builders and reviewers never talk to each other directly. The lead
+passes the review to the builder, and the builder fixes what the review
+found.
 
 {/* source: docs/agents/meta-orchestration.md "Layers"; .claude/agents/builder.md, lesson-reviewer.md, code-reviewer.md, wave-lead.md */}
 
@@ -893,13 +893,13 @@ outside a green wave needs the maintainer's explicit word.
 
 ### Reviewing the process itself
 
-The process asks for a harness review once a week and after each change
-of model or orchestration. Two have run so far. A harness review looks at where time, tokens and the maintainer's attention
-went. It reads the git history, the issues and the agents' session logs,
-and it compares the project's own way of working with what its lessons
-teach. The findings the maintainer picks become issues. The reviews are
-public as issues. The full reports stay outside the repository, because
-session logs can hold private material.
+The process asks for a harness review once a week and after each change of
+model or orchestration. Two have run so far. A harness review looks at where
+time, tokens and the maintainer's attention went. It reads the git history,
+the issues and the agents' session logs, and it compares the project's own
+way of working with what its lessons teach. The findings the maintainer
+picks become issues. The reviews are public as issues. The full reports stay
+outside the repository, because session logs can hold private material.
 
 {/* source: docs/agents/harness-review.md; .claude/skills/harness-review/SKILL.md; issues #385 and #726 */}
 
@@ -919,16 +919,16 @@ Customizing agents course teach the same kind of tools.
   describe lesson writing, testing, the issue tracker, triage,
   orchestration, completion and supply chain, one subject each.
 - **Agent definitions.** The repository defines agents for each role:
-  builder, code reviewer, lesson reviewer, security reviewer and wave
-  lead. Each file sets
-  the model, the effort level, the maximum number of turns and the tools
-  the agent may use. A reviewer can't edit files, and the lesson reviewer
-  has no shell at all.
+  builder, code reviewer, lesson reviewer, security reviewer and wave lead.
+  Each file sets the model, the effort level, the maximum number of turns
+  and the tools the agent may use. A reviewer can't edit files, and the
+  lesson reviewer has no shell at all.
 - **Skills.** The repository has skills for the wave dispatcher, triage,
   the harness review and the learner's tutor. Only a person can start the
   first three.
 - **Hooks.** A hook is a script that runs before or after an agent's tool
-  call (@Claude Code hooks). A guard hook checks every shell command an agent wants to run.
+  call (@Claude Code hooks). A guard hook checks every shell command an
+  agent wants to run.
 - **Checks.** One command runs every check, and every push and merge must
   pass it.
 
@@ -994,12 +994,11 @@ after that review.
 
 Agents write prose with patterns that readers learn to recognize: stacked
 lists of three, slogans, sentences built on "not X, but Y", and favorite
-words. The project runs the prose linter Vale on every page. It uses
-several public rule packages, including one made for typical AI writing,
-plus rules of its own. Each rule was evaluated one by one before it
-was turned on. Pages of the site get a stricter level, where most of
-those rules are errors that block a change. A spelling check in American English
-runs next to it.
+words. The project runs the prose linter Vale on every page. It uses several
+public rule packages, including one made for typical AI writing, plus rules
+of its own. Each rule was evaluated one by one before it was turned on.
+Pages of the site get a stricter level, where most of those rules are errors
+that block a change. A spelling check in American English runs next to it.
 
 {/* source: .vale.ini (write-good, proselint, Readability, Google, ai-tells, House); docs/prose/README.md; 42bff6b3, 2eadb46f (rule-by-rule evaluation); cspell.json */}
 
@@ -1026,11 +1025,11 @@ The full check suite runs on every pull request and before every merge.
 
 Every dependency of the site and of the Python tools is pinned to an exact
 version, and the lock files are in the repository. The GitHub Actions that
-the workflows use are pinned to full commit hashes. New releases of a tool wait seven days before
-the project uses them. A scanner checks the lock files for known
-vulnerabilities on every push and once a week. An exception for a known
-vulnerability expires after at most 30 days, and an agent must ask the
-maintainer before it adds one.
+the workflows use are pinned to full commit hashes. New releases of a tool
+wait seven days before the project uses them. A scanner checks the lock
+files for known vulnerabilities on every push and once a week. An exception
+for a known vulnerability expires after at most 30 days, and an agent must
+ask the maintainer before it adds one.
 
 {/* source: docs/agents/supply-chain.md; .mise.toml (minimum_release_age 7d); pyproject.toml (exclude-newer); .github/dependabot.yml (cooldown 7); osv-scanner.toml; tests/test_osv_ignores.py */}
 
