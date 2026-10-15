@@ -29,17 +29,15 @@ Not every primary source is in the repository. You are the primary
 source for a note about your preference for short commit messages. For
 a note about where the team tracks bugs, the source is the tracker. And
 a decision ("we drop the old export in March") comes from the meeting or
-the issue where it was made, which the code may not show yet. So the first question about any note is
-which source it summarizes. The second is whether that source still says
-the same.
+the issue where it was made, which the code may not show yet. So the
+first question about any note is which source it summarizes. The second
+is whether that source still says the same.
 
 Claude Code's documentation says the agent doesn't save what it can
 read from the code, such as file paths or the structure of the project.
 A `project` note is for things outside the code: work still under way, a
 deadline, or a decision that neither the files nor the git history
-record (@Claude Code memory). Those are the claims that change fastest. A
-deadline passes, a branch is merged, a decision is reversed, and the
-note stays as it was.
+record (@Claude Code memory). Those are the claims that change fastest.
 
 <Match id="which-source-a-note-summarizes" objective="customizing-agents/configures-agent/manages-memory"
   concepts={['primary-and-secondary-sources']}
@@ -60,19 +58,21 @@ still true.
 ## Why notes go stale
 
 Code changes in commits, and a commit says what changed. A note doesn't
-change when the code does. The two aren't linked, so a commit that makes
-a note wrong leaves the note as it was.
+change when the code does. The two aren't linked, so when a branch is
+merged, a note that says the work is still on that branch stays as it
+was.
 
-Claude Code makes this concrete. At the start of a session it puts the
-instruction files and the start of the memory index into the context.
-The documentation calls both context for the agent, as opposed to
-settings that Claude Code enforces (@Claude Code memory). A stale line
-is in the window with the same weight as a true one. The memory files aren't removed when Claude
+At the start of a session Claude Code puts the instruction files and the
+start of the memory index into the context. The documentation calls
+both context for the agent, as opposed to settings that Claude Code
+enforces (@Claude Code memory). A stale line is in the context with the
+same weight as a true one. The memory files aren't removed when Claude
 Code cleans up old session logs. They stay until you or the agent edits
 or deletes them. The documentation describes one reminder to drop stale
-entries, and it comes when the index file gets close to its size limit
-(@Claude Code memory). That reminder is about the length of the file,
-and it compares no note with the code.
+entries. Claude Code sends it to the agent, and you don't see it as a
+prompt. It comes right after the agent writes `MEMORY.md`, when the file
+is close to its read limit (@Claude Code memory). That reminder is about
+the length of the file, and it compares no note with the code.
 
 One feature helps. From version 2.1.214, when the agent writes a memory
 file that starts with a header, Claude Code records the time of the
@@ -94,10 +94,10 @@ you follow the project, and you correct or delete the note.
 
 When you review a note, it gets one of these outcomes:
 
-- **Trust it** when the note is a record of something with no other
-  record you could check, and the source still agrees. Your own
-  preference is the usual case, and so is a pointer to a place you open
-  anyway when you follow it.
+- **Trust it** in two cases. A preference is trusted when the person
+  it belongs to confirms that it still holds. A pointer is trusted
+  because following it opens the source anyway, and you read the source
+  there.
 - **Check it** when the note makes a claim about the project that the
   agent acts on: a branch, a test, a setting, a time a command takes.
   The check is often one command or one file. Do it before the agent
@@ -106,10 +106,10 @@ When you review a note, it gets one of these outcomes:
   the note only repeats what the code states plainly. The code is the
   record in the second case, and a copy of it can only go out of date.
 
-A note that lets the agent skip a step deserves the check most. "The
-full test suite takes 20 minutes, run only the fast tests" stays in
-memory long after someone makes the suite fast. Until then the agent
-skips the full suite in every session.
+A note that lets the agent skip a step deserves the check most. "Skip
+the lint step, CI runs it" stays in memory after the team removes the
+lint job from CI. From then on the agent skips lint in every session,
+and nothing lints the code.
 
 <Scenario id="release-from-the-note" objective="customizing-agents/configures-agent/manages-memory"
   concepts={['primary-and-secondary-sources']}
@@ -118,7 +118,7 @@ skips the full suite in every session.
   options={[
     { text: 'Let the agent tag from the release branch right away, as the note says.', consequence: 'The release branch had no commit for three months, because the team now tags from main. The tag points at old code.' },
     { text: 'Ask the agent whether the note is still right before it starts tagging.', consequence: 'The agent says yes and quotes the note. It answers from the note, because the question asks it to look at nothing else.' },
-    { text: 'Have the agent read the release script and the recent commits on each branch first.', correct: true, consequence: 'It finds that release has been idle since spring and that the script tags main. It tags main, and you delete the note.' },
+    { text: 'Have the agent read the release script and the recent commits on each branch first.', correct: true, consequence: 'It finds that release has had no commit for three months and that the script tags main. It tags main, and you delete the note.' },
     { text: 'Delete every memory note older than a month first, then ask it again.', consequence: 'Your preferences go with the stale note. A note written last week could be just as wrong, and the age of a note checks nothing.' },
   ]}>
 A memory note says "release tags are made from the `release` branch".
@@ -168,7 +168,7 @@ shows that every test uses an in-memory fake. What do you do?
 </Choice>
 
 <Exercise stretch="Open the memory folder of one of your own projects, under `~/.claude/projects/`, and do the same for every note in it. Read and judge only, and change the notes afterwards if you decide to.">
-Below are five notes from the memory index of a small invoice tool,
+Below are five memory notes of a small invoice tool,
 with one fact from the project next to two of them. For each note, write
 down which source it summarizes and whether you trust it, check it
 against that source, or delete it, with a one-line reason. It takes
@@ -180,18 +180,18 @@ about ten minutes, and you need only a pen or a text file.
              (git log shows a commit last week: "Remove export_v2, CSV export is on for everyone")
 3. project   The date helpers are in billing/dates.py.
              (billing/dates.py exists and holds the date helpers)
-4. feedback  Run only the fast tests. The full suite takes 20 minutes.
+4. feedback  Skip the type check before a commit. CI runs it.
 5. reference Customer complaints are in the support queue, under the tag invoice.
 ```
 
-A good result: note 1 summarizes you, and you trust it if you still want
-that. Note 2 summarizes the code and its history, and the commit
+A good result: note 1 summarizes you, and you trust it once you confirm
+that you still want it. Note 2 summarizes the code and its history, and the commit
 contradicts it, so you delete it. Note 3 summarizes the code and repeats
 what the code shows, so you delete it, because the file is the record.
-Note 4 summarizes the test suite, and you check it, by timing the full
-run, before the agent skips any test. Note 5 summarizes the support queue
-and is a pointer to it, so you trust it and the queue is checked each
-time someone opens it. Which note would you have trusted without a
+Note 4 summarizes the CI configuration, and you check it, by reading
+that configuration, before the agent skips the type check. Note 5
+summarizes the support queue and is a pointer to it, so you trust it,
+because whoever follows it reads the queue itself. Which note would you have trusted without a
 check before this lesson, and what would the agent have done because of
 it?
 </Exercise>

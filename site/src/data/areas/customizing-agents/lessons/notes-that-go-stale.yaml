@@ -1,8 +1,8 @@
 id: customizing-agents/notes-that-go-stale
 title: Notes that go stale
 description: >-
-  Tell a primary source from a secondary one, and check each memory note against the code, tests or
-  person it summarizes before an agent acts on it.
+  Tell a primary source from a secondary one, name the source each memory note summarizes, and
+  decide whether to trust, check or delete each note.
 mode: explanation
 covers: customizing-agents/memory
 serves: [customizing-agents/configures-agent/manages-memory]
