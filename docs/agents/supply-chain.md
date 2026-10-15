@@ -92,8 +92,9 @@ approves.
 - Every platform entry in `mise.lock` has a `checksum`, and
   `tests/test_mise_lock.py` fails on one without it. zizmor publishes no
   musl Linux binary, so `mise lock` writes its `linux-arm64-musl`,
-  `linux-x64-musl` and `linux-x64-musl-baseline` entries with only
-  `provenance`. The repository sets no `lockfile_platforms`, so without
+  `linux-x64-musl` and `linux-x64-musl-baseline` entries either with only
+  `provenance` or, since mise 2026.10.8, with the URL and checksum of the
+  glibc binary, which doesn't run on musl. The repository sets no `lockfile_platforms`, so without
   `--platform` `mise lock` locks the platforms already in the lockfile
   ([`mise lock`](https://mise.jdx.dev/cli/lock.html)), and the
   other tools keep those three, so a bare `mise lock` writes the three
