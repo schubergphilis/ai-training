@@ -14,6 +14,9 @@ assumes:
     section: start-the-agent-and-ask-it-to-explain
 sources-checked: 2026-09-24
 review-by: 2027-03-24
+extends-to:
+  - label: "Extend Codex Workflows, the lab: make a Codex skill from a run that worked (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/extend-codex-workflows-4e61p
 after: [customizing-agents/skill-or-tool-or-instruction]
 shorts:
   - The skill specification, field by field (Academy introduction-to-agent-skills)

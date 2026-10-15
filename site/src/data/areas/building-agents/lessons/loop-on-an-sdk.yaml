@@ -15,6 +15,9 @@ assumes:
   - objective: building-agents/builds-agent-loop/implements-the-loop
     lesson: building-agents/parallel-tool-calls
     section: all-three-in-one-reply
+extends-to:
+  - label: "Design and Build Agentic Systems: a support agent on the OpenAI Agents SDK (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/design-and-build-agentic-systems-k5uke
 after: [building-agents/stopping-the-loop, building-agents/parallel-tool-calls]
 shorts: [When to drop to the raw API]
 exercise:

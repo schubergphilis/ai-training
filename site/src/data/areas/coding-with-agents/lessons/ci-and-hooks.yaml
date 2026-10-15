@@ -23,6 +23,8 @@ assumes:
 extends-to:
   - label: How to use Claude Code hooks to enforce the right CLI (AI Hero)
     href: https://www.aihero.dev/how-to-use-claude-code-hooks-to-enforce-the-right-cli
+  - label: "Scale Codex Across Teams and Systems: run Codex without a person, with output that follows a schema (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/scale-codex-across-teams-and-systems-jr83a
 after: [coding-with-agents/self-checking-loops]
 shorts:
   - an agent review pass in CI with a security lane, evals in CI (a pointer to

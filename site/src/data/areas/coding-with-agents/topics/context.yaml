@@ -64,4 +64,4 @@ links:
   prerequisites: [coding-with-agents/workflow, concepts/grounding]
   related: [customizing-agents/instructions]
   specializations: []
-sources: [AEC-15, Academy claude-code-101, Academy claude-code-in-action, Claude Code context window, Claude Code best practices, Anthropic context engineering]
+sources: [AEC-15, Academy claude-code-101, Academy claude-code-in-action, Claude Code context window, Claude Code best practices, Anthropic context engineering, OpenAI Academy get-started-with-codex-jkhsq]

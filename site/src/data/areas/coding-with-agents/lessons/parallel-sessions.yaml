@@ -13,6 +13,8 @@ assumes: []
 extends-to:
   - label: "I'm using claude --worktree for everything now (AI Hero on YouTube, 8 minutes)"
     href: https://www.youtube.com/watch?v=yv8VZpov8bk
+  - label: "Extend Codex Workflows: subagents in worktrees, and how to merge their work (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/extend-codex-workflows-4e61p
 after: [coding-with-agents/ci-and-hooks]
 shorts:
   - git worktree in five commands, shared ports and the shared stash

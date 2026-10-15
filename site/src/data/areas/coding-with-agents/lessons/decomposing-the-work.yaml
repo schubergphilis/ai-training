@@ -20,6 +20,8 @@ assumes:
 extends-to:
   - label: Tracer bullets (AI Hero)
     href: https://www.aihero.dev/tracer-bullets
+  - label: "Scale Codex Across Teams and Systems: split work across teams, with a check for each part (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/scale-codex-across-teams-and-systems-jr83a
 after: [coding-with-agents/deciding-what-to-build]
 shorts: [a check that would fail on a stub]
 exercise:

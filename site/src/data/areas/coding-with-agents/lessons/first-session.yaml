@@ -24,6 +24,8 @@ assumes:
 extends-to:
   - label: Plan, implement, verify
     href: /coding-with-agents/workflow/
+  - label: "Get Started with Codex: a first session in Codex, with a lab on a starter app (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/get-started-with-codex-jkhsq
 after: []
 shorts:
   - permission modes (S02 worked example), directed compaction and rewind

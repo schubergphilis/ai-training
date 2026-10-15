@@ -46,4 +46,4 @@ links:
   prerequisites: [building-agents/tool-use]
   related: []
   specializations: []
-sources: [AEC-13, Academy claude-platform-101, Academy building-with-the-claude-api]
+sources: [AEC-13, Academy claude-platform-101, Academy building-with-the-claude-api, OpenAI Academy design-and-build-agentic-systems-k5uke]
