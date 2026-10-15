@@ -373,6 +373,62 @@ Academy building-with-the-claude-api:
   author: Anthropic
   license: Proprietary
   url: https://academy.claude.com/courses/building-with-the-claude-api
+OpenAI Academy get-started-with-codex-jkhsq:
+  type: course
+  title: Get Started with Codex
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/get-started-with-codex-jkhsq
+OpenAI Academy scope-ai-solutions-kjplw:
+  type: course
+  title: Scope AI Solutions
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/scope-ai-solutions-kjplw
+OpenAI Academy extend-codex-workflows-4e61p:
+  type: course
+  title: Extend Codex Workflows
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/extend-codex-workflows-4e61p
+OpenAI Academy scale-codex-across-teams-and-systems-jr83a:
+  type: course
+  title: Scale Codex Across Teams and Systems
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/scale-codex-across-teams-and-systems-jr83a
+OpenAI Academy design-and-build-agentic-systems-k5uke:
+  type: course
+  title: Design and Build Agentic Systems
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/design-and-build-agentic-systems-k5uke
+OpenAI Academy build-with-retrieval-augmented-generation-2v6xg:
+  type: course
+  title: Build with Retrieval-Augmented Generation
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/build-with-retrieval-augmented-generation-2v6xg
+OpenAI Academy evaluate-ai-applications-pxds7:
+  type: course
+  title: Evaluate AI Applications
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/evaluate-ai-applications-pxds7
+OpenAI Academy optimize-ai-application-performance-1k50h:
+  type: course
+  title: Optimize AI Application Performance
+  container: OpenAI Academy
+  author: OpenAI
+  license: Proprietary
+  url: https://academy.openai.com/public/courses/optimize-ai-application-performance-1k50h
 CS50x:
   type: course
   title: CS50's Introduction to Computer Science

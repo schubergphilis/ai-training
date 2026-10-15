@@ -16,6 +16,8 @@ assumes:
 extends-to:
   - label: Your app is only as good as its evals (AI Hero)
     href: https://www.aihero.dev/what-are-evals
+  - label: "Evaluate AI Applications: rubric and exact-match graders, run in Promptfoo (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/evaluate-ai-applications-pxds7
 after: [building-agents/rubrics, building-agents/golden-sets]
 shorts: [Judge biases and calibration]
 exercise:

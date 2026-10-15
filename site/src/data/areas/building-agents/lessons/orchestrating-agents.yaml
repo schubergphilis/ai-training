@@ -14,6 +14,9 @@ assumes:
   - objective: building-agents/builds-agent-loop/implements-the-loop
     lesson: building-agents/agent-loop
     section: the-loop
+extends-to:
+  - label: "Design and Build Agentic Systems, the lab: handoffs and agents called as tools, built and traced (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/design-and-build-agentic-systems-k5uke
 after: [building-agents/plan-or-react]
 shorts: [Subagents with fresh context]
 exercise:

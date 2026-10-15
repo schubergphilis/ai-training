@@ -17,6 +17,8 @@ assumes:
 extends-to:
   - label: Deciding and specifying
     href: /topics/coding-with-agents/specification/
+  - label: "Scope AI Solutions: compare business opportunities and scope a pilot (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/scope-ai-solutions-kjplw
 after: [coding-with-agents/first-session]
 shorts: [the cost of keeping a change]
 exercise:

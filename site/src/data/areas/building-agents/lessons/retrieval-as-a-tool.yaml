@@ -14,6 +14,9 @@ assumes:
   - objective: building-agents/builds-agent-loop/defines-a-tool
     lesson: building-agents/agent-loop
     section: a-tool-is-a-function-plus-a-description
+extends-to:
+  - label: "Build with Retrieval-Augmented Generation, the lab: a vector store and File Search on the OpenAI API (OpenAI Academy, free account)"
+    href: https://academy.openai.com/public/courses/build-with-retrieval-augmented-generation-2v6xg
 after: [building-agents/stopping-the-loop]
 shorts: [Chunking and indexes]
 exercise:
