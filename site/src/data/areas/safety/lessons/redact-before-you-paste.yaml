@@ -12,6 +12,9 @@ assumes:
   - objective: safety/handles-data-safely/decides-what-to-share
     lesson: safety/responsible-use
     section: what-may-go-in-four-tiers
+extends-to:
+  - label: AI Foundations, module 5 (OpenAI Academy, free account)
+    href: https://academy.openai.com/public/courses/ai-foundations-dnq5w
 after: [safety/responsible-use]
 shorts: [Controller and processor in one page, Anonymized data can be re-identified]
 exercise:

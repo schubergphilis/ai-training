@@ -15,6 +15,9 @@ assumes:
   - objective: concepts/explains-models/explains-generation
     lesson: concepts/how-models-work
     section: one-token-at-a-time
+extends-to:
+  - label: Applied AI Foundations, module 2 (OpenAI Academy, free account)
+    href: https://academy.openai.com/public/courses/applied-ai-foundations-szsmv
 after: [using-agents/chat-agent-or-automation]
 shorts: [When a small model is the right one]
 exercise:
