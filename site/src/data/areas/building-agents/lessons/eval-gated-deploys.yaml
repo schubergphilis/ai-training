@@ -18,7 +18,7 @@ assumes:
     lesson: safety/reading-agent-logs
     section: treat-a-model-change-like-any-other-upgrade
 extends-to:
-  - label: "Optimize AI Application Performance: set an accuracy threshold from the value of a right answer and the cost of a wrong one (OpenAI Academy, free account)"
+  - label: "Optimize AI Application Performance: where an accuracy threshold comes from (OpenAI Academy, free account)"
     href: https://academy.openai.com/public/courses/optimize-ai-application-performance-1k50h
 after:
   - building-agents/golden-sets
