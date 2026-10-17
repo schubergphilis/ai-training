@@ -36,7 +36,7 @@
     "@vitest/coverage-v8": "5.0.3",
     "cspell": "10.3.6",
     "entities": "8.1.0",
-    "happy-dom": "20.14.5",
+    "happy-dom": "20.14.6",
     "markdownlint-cli2": "0.23.3",
     "remark-mdx": "3.1.1",
     "remark-parse": "11.0.0",
