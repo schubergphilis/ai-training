@@ -1,3 +1,4 @@
+import { newestCommitDate, SITE_PATHSPEC } from '@lib/newest-commit';
 import { describe, expect, it, vi } from 'vitest';
 import { onRequest, pagePathOf } from '../../src/route-data';
 
@@ -45,5 +46,22 @@ describe('the head hint middleware', () => {
 	it('adds only the llms.txt link to a page without an alternate', async () => {
 		expect(await headOf('/ai-training/')).toEqual([describedBy]);
 		expect(await headOf('/ai-training/progress/')).toEqual([describedBy]);
+	});
+});
+
+describe('the landing page date', () => {
+	async function lastUpdatedOf(pathname: string) {
+		const pageDate = new Date('2026-09-29');
+		const route = { head: [], lastUpdated: pageDate as Date | undefined };
+		const context = { url: new URL(`https://schubergphilis.github.io${pathname}`), locals: { starlightRoute: route } };
+		await onRequest(context as never, async () => {});
+		return route.lastUpdated;
+	}
+	it('is the newest commit under site/ on the landing page', async () => {
+		expect(await lastUpdatedOf('/ai-training/')).toEqual(newestCommitDate(SITE_PATHSPEC));
+	});
+	it('stays the page date on every other page', async () => {
+		expect(await lastUpdatedOf('/ai-training/safety/agent-risk/')).toEqual(new Date('2026-09-29'));
+		expect(await lastUpdatedOf('/ai-training/progress/')).toEqual(new Date('2026-09-29'));
 	});
 });

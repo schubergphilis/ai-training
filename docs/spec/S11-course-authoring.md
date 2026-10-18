@@ -168,6 +168,12 @@ the footer date the page's last git commit, and the review line reads
 `sources-checked`. Since #339 a lesson with `review-by` shows both date
 lines in the footer, the review line first, and every other page shows
 "Last updated" only. This replaces the one-date rule of #274.
+On the landing page (`site/src/content/docs/index.mdx`) "Last updated"
+is the newest commit under `site/` instead, so a change to any lesson,
+data file or site code moves it. The route middleware
+(`site/src/route-data.ts`) sets it. A `lastUpdated` date in the page's
+frontmatter was the other option, and it was rejected because the date
+stays fixed until someone edits it by hand.
 The course page `<area>/index.mdx`
 gets its `title` and `description` from `area.yaml` the same way (S09).
 

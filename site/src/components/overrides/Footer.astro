@@ -9,7 +9,9 @@
  * then shows Starlight's "Last updated", the page's last git commit. The
  * review line says when the facts were checked, and "Last updated" says when
  * the page last changed, so a lesson with `review-by` shows both (issue #339,
- * which replaces the one-date decision of #274).
+ * which replaces the one-date decision of #274). On the landing page the
+ * route middleware sets "Last updated" to the newest commit under `site/`
+ * (spec S11 "Lesson page").
  */
 import EditLink from '@astrojs/starlight/components/EditLink.astro';
 import LastUpdated from '@astrojs/starlight/components/LastUpdated.astro';
