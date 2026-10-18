@@ -2,6 +2,7 @@ import { defineRouteMiddleware } from '@astrojs/starlight/route-data';
 import { alternatePaths } from '@lib/alternates';
 import { describedByHeadLink } from '@lib/llms-txt';
 import { alternateHeadLink } from '@lib/markdown-alternate';
+import { newestCommitDate, SITE_PATHSPEC } from '@lib/newest-commit';
 
 /**
  * Starlight route middleware (`routeMiddleware` in astro.config.mjs, per
@@ -10,7 +11,9 @@ import { alternateHeadLink } from '@lib/markdown-alternate';
  * to each page that `alternatePaths` (`@lib/alternates`) lists, and to no
  * other page. The same list drives the alternate route, so every hint
  * points at a file the build writes. It also adds
- * `<link rel="describedby">` to `llms.txt` to every page (S12 "Place").
+ * `<link rel="describedby">` to `llms.txt` to every page (S12 "Place"),
+ * and sets the landing page's "Last updated" to the newest commit under
+ * `site/` (S11 "Lesson page").
  */
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -36,6 +39,7 @@ export const onRequest = defineRouteMiddleware(async (context) => {
 	if (!site) throw new Error('the Markdown alternate head hint needs `site` in astro.config.mjs for absolute URLs');
 	context.locals.starlightRoute.head.push(describedByHeadLink(new URL(site).origin));
 	const path = pagePathOf(context.url.pathname);
+	if (path === '/') context.locals.starlightRoute.lastUpdated = newestCommitDate(SITE_PATHSPEC);
 	if (!(await pagesWithAlternate()).has(path)) return;
 	context.locals.starlightRoute.head.push(alternateHeadLink(path, new URL(site).origin));
 });
