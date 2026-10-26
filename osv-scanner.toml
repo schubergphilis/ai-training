@@ -6,13 +6,3 @@
 # tests/test_osv_ignores.py checks that. Agents may edit this file, and
 # every edit asks the maintainer first. When an entry expires the scan
 # fails again, and the entry is removed or extended on purpose.
-
-[[IgnoredVulns]]
-id = "GHSA-vfj7-8cjw-p6xm"
-ignoreUntil = 2026-11-03
-reason = "#702: no fixed braces release yet. Through micromatch, from markdownlint-cli2 and fast-glob."
-
-[[IgnoredVulns]]
-id = "GHSA-ch52-4w7c-c8xp"
-ignoreUntil = 2026-11-03
-reason = "#702: no fixed http-cache-semantics release yet. Through astro."

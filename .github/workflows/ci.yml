@@ -75,14 +75,14 @@ jobs:
           fi
 
       - name: Set up mise
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
           # `min_version` requires at least this version. Refresh them
           # together (docs/agents/mise-refresh.md).
-          version: 2026.10.3
-          sha256: 8d48bc510b7d844fad0bc7156c0855c2a1e7230c51e498a7f6b63b021f8b57c5
+          version: 2026.10.15
+          sha256: e3b186d4c70627f27037be615becaf4acfb30e41fb6a1819486717dc94e4e2a9
           install: true
           cache: true
 
@@ -187,14 +187,14 @@ jobs:
           persist-credentials: false
 
       - name: Set up mise
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
           # `min_version` requires at least this version. Refresh them
           # together (docs/agents/mise-refresh.md).
-          version: 2026.10.3
-          sha256: 8d48bc510b7d844fad0bc7156c0855c2a1e7230c51e498a7f6b63b021f8b57c5
+          version: 2026.10.15
+          sha256: e3b186d4c70627f27037be615becaf4acfb30e41fb6a1819486717dc94e4e2a9
           install: true
           cache: true
 
@@ -224,7 +224,7 @@ jobs:
 
       - name: Upload the Playwright report
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
           path: site/playwright-report/
@@ -244,14 +244,14 @@ jobs:
           persist-credentials: false
 
       - name: Set up mise
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
           # `min_version` requires at least this version. Refresh them
           # together (docs/agents/mise-refresh.md).
-          version: 2026.10.3
-          sha256: 8d48bc510b7d844fad0bc7156c0855c2a1e7230c51e498a7f6b63b021f8b57c5
+          version: 2026.10.15
+          sha256: e3b186d4c70627f27037be615becaf4acfb30e41fb6a1819486717dc94e4e2a9
           # Only the scanner: the whole [tools] set is two CPythons, bun,
           # vale and more, for one binary this job needs.
           install_args: osv-scanner
@@ -273,13 +273,13 @@ jobs:
         with:
           persist-credentials: false
       - name: Audit GitHub Actions workflows (zizmor)
-        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
         with:
           advanced-security: false
           # Pin the version: the action's default is "latest", so a zizmor
           # release could turn CI red on its own. Keep in step with
           # `zizmor` in .mise.toml, which is what `mise run audit` uses.
-          version: "1.30.1"
+          version: "1.31.1"
           # `collect` is deliberately unset. The action's default already
           # covers workflows, composite actions, .github/dependabot.yml and
           # .pre-commit-config.yaml, while honouring .gitignore. Do not set
