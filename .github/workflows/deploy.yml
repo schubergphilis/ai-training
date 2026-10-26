@@ -41,14 +41,14 @@ jobs:
           fetch-depth: 0
 
       - name: Set up mise
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
           # `min_version` requires at least this version. Refresh them
           # together (docs/agents/mise-refresh.md).
-          version: 2026.10.3
-          sha256: 8d48bc510b7d844fad0bc7156c0855c2a1e7230c51e498a7f6b63b021f8b57c5
+          version: 2026.10.15
+          sha256: e3b186d4c70627f27037be615becaf4acfb30e41fb6a1819486717dc94e4e2a9
           # Only bun (see the job-level env for the other half).
           install_args: bun
           install: true
