@@ -317,7 +317,7 @@ export function checkGuessability(items, stemOf = (item) => (typeof item.stem ==
 		for (const e of optionErrors(item)) errors.push(`${where}: ${e}`);
 		const guessable = item.guessable;
 		if (guessable === undefined || guessable === null) {
-			for (const cue of itemCues(item, stemOf(item))) errors.push(`${where}: ${describe(cue)}`);
+			for (const cue of itemCues(item, stemOf(item))) errors.push(`${where}: ${describeCue(cue)}`);
 			continue;
 		}
 		if (typeof guessable !== 'string') {
@@ -336,7 +336,7 @@ export function checkGuessability(items, stemOf = (item) => (typeof item.stem ==
 		for (const cue of named)
 			if (!tripped.includes(cue)) errors.push(`${where}: guessable names ${cue}, which does not trip; remove it`);
 		for (const cue of tripped)
-			if (!named.includes(cue)) errors.push(`${where}: ${describe(cue)} (guessable does not name it)`);
+			if (!named.includes(cue)) errors.push(`${where}: ${describeCue(cue)} (guessable does not name it)`);
 		exemptions.push(`${where}: guessable (${named.join(', ')}): ${reason}`);
 	}
 	for (const { lesson, index, hits, count } of fixedPositionLessons(items, exemptFromPosition)) {
@@ -347,7 +347,7 @@ export function checkGuessability(items, stemOf = (item) => (typeof item.stem ==
 	return { errors, exemptions };
 }
 
-function describe(cue) {
+function describeCue(cue) {
 	switch (cue) {
 		case 'longest':
 			return 'longest: the correct option is more than 40 percent longer than the longest wrong one; tighten it or lengthen the distractors';
