@@ -1,4 +1,5 @@
 /** Interactive widgets embedded in lessons (site/src/components/widgets). */
+// biome-ignore-all lint/performance/useDomNodeTextContent: these are Playwright Locator.innerText() calls, not DOM innerText, and textContent() would change what the tests compare
 import { expect, test } from './fixtures';
 
 test('the sampler redraws its bars when the temperature changes', async ({ page }) => {

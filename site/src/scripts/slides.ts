@@ -126,7 +126,7 @@ export function mountSlides(doc: Document): boolean {
 		const id = decodeURIComponent(hash.slice(1));
 		const target = id ? doc.getElementById(id) : null;
 		const holder = target ? slides.findIndex((s) => s.contains(target)) : -1;
-		return holder >= 0 ? holder : 0;
+		return Math.max(holder, 0);
 	};
 
 	const toggleFullscreen = () => {
