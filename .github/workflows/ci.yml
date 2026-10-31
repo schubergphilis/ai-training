@@ -75,7 +75,7 @@ jobs:
           fi
 
       - name: Set up mise
-        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
@@ -187,7 +187,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up mise
-        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
@@ -244,7 +244,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up mise
-        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
         with:
           # CI pins the mise binary: `sha256` is the hash of the extracted
           # `mise/bin/mise` from the linux-x64 archive. `.mise.toml`
