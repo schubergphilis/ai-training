@@ -27,8 +27,8 @@ describe('FormatChecker', () => {
 		expect(html).toContain(`data-fields="${escaped(JSON.stringify(['owner', 'task', 'due', 'priority']))}"`);
 		expect(html).toContain(`data-priorities="${escaped(JSON.stringify(['high', 'medium', 'low']))}"`);
 		expect(html).toMatch(/<textarea class="fc-input[^"]*"[^>]*><\/textarea>/);
-		expect(html).toMatch(/<button type="button" class="fc-check[^"]*">Check<\/button>/);
-		expect(html).toMatch(/<div class="fc-report[^"]*" aria-live="polite">/);
+		expect(html).toMatch(/<button type="button" class="fc-check[^"]*"[^>]*>Check<\/button>/);
+		expect(html).toMatch(/<div class="fc-report[^"]*" aria-live="polite"[^>]*>/);
 	});
 	it('fills the text box with the sample file, escaped', async () => {
 		const name = 'concepts/structured-output/sample/bare.json';

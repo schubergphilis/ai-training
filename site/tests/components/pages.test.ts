@@ -242,7 +242,7 @@ describe('OverallProgress', () => {
 	it('renders the bar, the hidden due-lines list and the continue link inside a not-content container', async () => {
 		const html = await container.renderToString(OverallProgress, { props: { landing: true } });
 		expect(html).toMatch(/<div class="not-content overall[^"]*" data-overall data-landing="true"/);
-		expect(html).toMatch(/<ul class="overall-due[^"]*" data-due-lines hidden><\/ul>/);
+		expect(html).toMatch(/<ul class="overall-due[^"]*" data-due-lines hidden[^>]*><\/ul>/);
 		expect(html).toContain('href="/ai-training/concepts/how-models-work/"');
 		expect(html).toContain('href="/ai-training/map/"');
 		expect(html).not.toContain('data-text');
