@@ -43,7 +43,7 @@ describe('ClaimChecker', () => {
 			{ name: 'report.txt', text: readFileSync(join(EXAMPLES, DIR, 'sources/report.txt'), 'utf8') },
 			{ name: 'minutes.txt', text: readFileSync(join(EXAMPLES, DIR, 'sources/minutes.txt'), 'utf8') },
 		]);
-		expect(html).toMatch(/<button type="button" class="cc-check[^"]*">Check<\/button>/);
+		expect(html).toMatch(/<button type="button" class="cc-check[^"]*"[^>]*>Check<\/button>/);
 	});
 	it('leaves the source text out with showSources false and starts empty without a summary', async () => {
 		const html = await container.renderToString(ClaimChecker, { props: { sources: SOURCES, showSources: false } });

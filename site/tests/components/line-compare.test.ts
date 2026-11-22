@@ -41,8 +41,8 @@ describe('LineCompare', () => {
 		const attr = /data-source="([^"]*)"/.exec(html)?.[1] ?? '';
 		const data: unknown = JSON.parse(attr.replaceAll('&quot;', '"').replaceAll('&#39;', "'").replaceAll('&amp;', '&'));
 		expect(data).toEqual({ name: 'truncate.py', text: source });
-		expect(html).toMatch(/<button type="button" class="lc-check[^"]*">Compare<\/button>/);
-		expect(html).toMatch(/<pre class="lc-lines[^"]*" tabindex="0" hidden><\/pre>/);
+		expect(html).toMatch(/<button type="button" class="lc-check[^"]*"[^>]*>Compare<\/button>/);
+		expect(html).toMatch(/<pre class="lc-lines[^"]*" tabindex="0" hidden[^>]*><\/pre>/);
 	});
 	it('leaves the source text out with showSource false and starts empty without a candidate', async () => {
 		const html = await container.renderToString(LineCompare, { props: { source: SOURCE, showSource: false } });

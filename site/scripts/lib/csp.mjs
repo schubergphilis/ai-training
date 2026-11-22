@@ -8,7 +8,7 @@
  * hashes of the scripts and styles Astro processes, next to the directives
  * listed here.
  *
- * Astro does not hash an `is:inline` script, and Starlight 0.42 renders five
+ * Astro does not hash an `is:inline` script, and Starlight 0.43 renders five
  * of them on its pages (the theme provider, the theme picker update, the
  * search dialog opener, and the two sidebar scripts). Their hashes are listed
  * in `INLINE_SCRIPT_HASHES` and passed as `scriptDirective.hashes`
@@ -101,10 +101,10 @@ export const DIRECTIVES = [
  * `checkCsp` prints the hash of a script that is missing here.
  */
 export const INLINE_SCRIPT_HASHES = [
-	// window.StarlightThemeProvider = ... (ThemeProvider.astro)
-	'sha256-VWo5Wp4aqSj6nSgMpeAp9cKieaoIfwFUAunAVugI5gA=',
-	// StarlightThemeProvider.updatePickers(); (ThemeSelect.astro)
-	'sha256-GkZBRnvSuhtx/cvzvukVkX2JJZW+DdPlVr7BX8Tefqo=',
+	// The stored or preferred theme on <html data-theme> (ThemeProvider.astro)
+	'sha256-CucRf0bf0xYD/oKdMuRRn1yhi9AJeUlkP4LSbkp47Ls=',
+	// The stored theme in each theme picker (ThemeSelect.astro)
+	'sha256-yiTapURQAzVYqJIJXL03Gepg/022hHZUVvS4f8isCN8=',
 	// The search dialog opener (Search.astro)
 	'sha256-f/zAUE74ucc3JYp4r4QQvkJofoQdkOIhHYK+jeZ6eko=',
 	// The sidebar state restore and scroll position (SidebarPersister.astro)

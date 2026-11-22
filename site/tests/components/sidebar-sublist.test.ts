@@ -57,11 +57,11 @@ describe('SidebarSublist', () => {
 		const html = await render([course]);
 		// The heading link comes first in the item, then the details with a labelled, text-free summary.
 		expect(html).toMatch(
-			/<li class="linked[^"]*"><a href="\/ai-training\/concepts\/" class="large[^"]*" data-group-link><span[^>]*>Concepts<\/span><\/a><details class[^>]*><summary class="caret-only[^"]*" aria-label="Toggle Concepts"><svg/,
+			/<li class="linked[^"]*"[^>]*><a href="\/ai-training\/concepts\/" class="large[^"]*" data-group-link[^>]*><span[^>]*>Concepts<\/span><\/a><details[^>]*><summary class="caret-only[^"]*" aria-label="Toggle Concepts"[^>]*><svg/,
 		);
-		expect(html).not.toMatch(/class="group-label[^"]*"><span class="large[^"]*">Concepts</);
+		expect(html).not.toMatch(/class="group-label[^"]*"[^>]*><span class="large[^"]*"[^>]*>Concepts</);
 		// The part label is plain, and its lesson is nested under it.
-		expect(html).toMatch(/<span class="plain-label[^"]*">How language models work</);
+		expect(html).toMatch(/<span class="plain-label[^"]*"[^>]*>How language models work</);
 		expect(html).toContain('href="/ai-training/concepts/what-a-model-is/"');
 		// The collapsed course starts closed. The part is not collapsed, so it starts open.
 		expect(html).toMatch(/<details open/);
@@ -76,7 +76,7 @@ describe('SidebarSublist', () => {
 	});
 	it('renders a plain group with Starlight’s bold label and opens it when it holds the current page', async () => {
 		const html = await render([{ ...plain, entries: [{ ...lesson, isCurrent: true }] }]);
-		expect(html).toMatch(/<span class="large[^"]*">Contributing</);
+		expect(html).toMatch(/<span class="large[^"]*"[^>]*>Contributing</);
 		expect(html).toMatch(/<details open/);
 		expect(html).toContain('aria-current="page"');
 	});

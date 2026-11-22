@@ -29,9 +29,9 @@ describe('Redactor', () => {
 		expect(html).toMatch(/<div class="not-content redactor[^"]*" data-redactor data-action="redact"/);
 		expect(html).toContain(`>${escaped(readFileSync(join(EXAMPLES, DIR, 'email.txt'), 'utf8'))}</textarea>`);
 		expect(html).toContain(`>${escaped(readFileSync(join(EXAMPLES, DIR, 'email-map.txt'), 'utf8'))}</textarea>`);
-		expect(html).toMatch(/<button type="button" class="rd-run[^"]*">Redact<\/button>/);
+		expect(html).toMatch(/<button type="button" class="rd-run[^"]*"[^>]*>Redact<\/button>/);
 		expect(html).not.toContain('rd-watch');
-		expect(html).toMatch(/<pre class="rd-output[^"]*" tabindex="0" hidden><\/pre>/);
+		expect(html).toMatch(/<pre class="rd-output[^"]*" tabindex="0" hidden[^>]*><\/pre>/);
 	});
 	it('renders a watch box, an empty map box and the text label it is given', async () => {
 		const html = await container.renderToString(Redactor, {
