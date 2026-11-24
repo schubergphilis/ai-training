@@ -49,7 +49,7 @@ must be green.
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`.
 
-Git hooks (formatting, linting, link checking, secret scanning, commit-message linting) are managed with [prek](https://prek.j178.dev). The markdownlint and commitlint hooks run from the site's bun install, so install that first, then the hooks, once per clone:
+Git hooks (formatting, linting, link checking, secret scanning, commit-message linting) are managed with [prek](https://prek.j178.dev). prek installs nothing itself: the mdformat and ruff hooks run from `.venv` and the markdownlint and commitlint hooks from the site's bun install, so install both first, then the hooks, once per clone:
 
 ```bash
 mise run setup

@@ -79,7 +79,7 @@ approves.
   for `Edit` and `Write` in `.claude/settings.json`, and the Bash guard
   answers `ask` for a shell write to it. Remove an entry once its fix
   ships. Fix a Python advisory by editing the `==` pin in
-  the `dev` group of `pyproject.toml` and running `mise run py-install`
+  the `dev` group of `pyproject.toml` and running `mise run py-install`.
   For a transitive package, add a
   `[tool.uv] constraint-dependencies` entry in `pyproject.toml` and run
   `mise run py-install` again.
@@ -104,7 +104,7 @@ approves.
   `local` `system` hook that runs a tool from `.venv` (`uv.lock`),
   `site/node_modules` (`site/bun.lock`) or `.mise.toml`. A remote hook
   repo makes prek download and build packages when it prepares the hook.
-  For the Python hook repos that meant an unpinned setuptools from the
+  For the Python hook repos that meant an unpinned `setuptools` from the
   hook's build requirements and pins without hashes (#823).
   `tests/test_prek_hooks.py` fails on a remote repo, a local hook with
   another language than `system`, or `additional_dependencies`. To add a
