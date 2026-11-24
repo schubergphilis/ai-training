@@ -21,6 +21,11 @@ dev = [
   "pytest-cov==7.1.0",
   "ruff==0.17.5",
   "basedpyright==1.40.2",
+  # The Python tools of the prek hooks, which run from .venv as `system`
+  # hooks so uv.lock holds their hashes (prek.toml header, #823).
+  "mdformat==1.0.0",
+  "mdformat-gfm==1.0.0",
+  "mdformat-frontmatter==2.1.2",
 ]
 
 [tool.uv]

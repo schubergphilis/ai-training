@@ -49,10 +49,8 @@ approves.
 - `uv.lock` is committed and must stay in the tree. `mise run ci` and CI
   install with `py-install-frozen`. The dev group in `pyproject.toml` is
   exact-pinned. Use `mise run py-install` when deliberately changing it,
-  commit the result, and move the `ruff-pre-commit` rev in `prek.toml` to
-  the same ruff version.
-  `tests/test_ruff_pin.py` fails when the rev's `# vX.Y.Z` comment and the
-  pin differ.
+  and commit the result. The group also holds the Python tools that the
+  `prek.toml` hooks run from `.venv` (see the `prek.toml` bullet below).
 - `mise run site-audit` (`bun audit`) must be clean. Fix an advisory in a
   *transitive* package with the `overrides` block in `site/package.json`.
 - `mise run vuln` (osv-scanner) must be clean. The task scans `uv.lock`
@@ -82,8 +80,7 @@ approves.
   answers `ask` for a shell write to it. Remove an entry once its fix
   ships. Fix a Python advisory by editing the `==` pin in
   the `dev` group of `pyproject.toml` and running `mise run py-install`
-  (and moving the `ruff-pre-commit` rev in `prek.toml` when it is ruff, see
-  the `uv.lock` bullet above). For a transitive package, add a
+  For a transitive package, add a
   `[tool.uv] constraint-dependencies` entry in `pyproject.toml` and run
   `mise run py-install` again.
 - Pin GitHub Actions to full-length commit SHAs. `zizmor` enforces it.
@@ -102,9 +99,14 @@ approves.
 - CI pins the mise version and its checksum on every `mise-action` step.
   `docs/agents/mise-refresh.md` is the procedure for moving that pin, and
   `mise run mise-refresh <version>` does its download, verify and hash steps.
-- `prek.toml` hook repos are pinned by commit SHA (tag in the comment),
-  and each Python hook lists its full transitive tree in
-  `additional_dependencies`, exact-pinned. Both are invisible to
-  dependabot. To bump one, move the SHA with `git ls-remote --tags` and
-  rerun the `uv pip compile` command in the comment next to the list.
-  Never add a hook that resolves packages at install time.
+- prek installs nothing. Every `prek.toml` hook is a `builtin` hook,
+  which is Rust code inside the prek binary pinned in `.mise.toml`, or a
+  `local` `system` hook that runs a tool from `.venv` (`uv.lock`),
+  `site/node_modules` (`site/bun.lock`) or `.mise.toml`. A remote hook
+  repo makes prek download and build packages when it prepares the hook.
+  For the Python hook repos that meant an unpinned setuptools from the
+  hook's build requirements and pins without hashes (#823).
+  `tests/test_prek_hooks.py` fails on a remote repo, a local hook with
+  another language than `system`, or `additional_dependencies`. To add a
+  hook, add its tool to one of those lock files first. To bump one, bump
+  the tool there.
