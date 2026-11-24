@@ -103,6 +103,20 @@ if [ ! -x site/node_modules/.bin/astro ] || [ ! -x site/node_modules/.bin/cspell
 fi
 """
 
+# A `depends` of `lint`. The prek hooks run mdformat and ruff from .venv
+# (prek.toml header), and without it prek fails with a missing executable
+# instead of naming the task to run. The Python tasks use `uv run --locked`,
+# which installs .venv itself, so they don't need this.
+[tasks.require-py-setup]
+description = "Fail with a pointer to `mise run setup` when .venv is missing"
+hide = true
+run = """
+if [ ! -x .venv/bin/mdformat ] || [ ! -x .venv/bin/ruff ]; then
+  echo ".venv is missing or incomplete. Run 'mise run setup' first." >&2
+  exit 1
+fi
+"""
+
 # Deliberately NOT --frozen-lockfile: this is the task you run while
 # actually changing dependencies, and it is allowed to update bun.lock.
 # `site-install-frozen` is the one the gate uses.
@@ -349,20 +363,22 @@ bun run build
 bun scripts/screenshot.mjs "$usage_out" "$usage_path"
 """
 
-# The prek hooks (mdformat, markdownlint, gitleaks, the pre-commit-hooks
-# set) are the lint stack; prek.toml is their single source of truth. Run
-# them here too so the checks are enforced in CI rather than only for
-# people who remembered `prek install`.
+# The prek hooks (mdformat, ruff, markdownlint, gitleaks, the builtin file
+# hygiene set) are the lint stack; prek.toml is their single source of
+# truth. Run them here too so the checks are enforced in CI rather than
+# only for people who remembered `prek install`.
 #
-# The markdownlint hook runs the binary from site/node_modules/.bin through
-# the pinned bun (see prek.toml), so `site-install-frozen` has to have run
-# first. `ci` and ci.yml both do.
+# prek installs nothing (prek.toml header): mdformat and ruff run from
+# .venv and markdownlint from site/node_modules/.bin, so `setup`, or
+# `site-install-frozen` and `py-install-frozen`, has to have run first.
+# `ci` and ci.yml both do, and `require-setup` and `require-py-setup`
+# check for them.
 #
 # `lychee` is skipped: it is a network check that flakes on rate limits and
 # TLS handshakes, so it lives in `mise run links` instead of the gate.
 [tasks.lint]
-description = "prek hooks (mdformat, markdownlint, gitleaks) + actionlint"
-depends = ["require-setup"]
+description = "prek hooks (mdformat, ruff, markdownlint, gitleaks) + actionlint"
+depends = ["require-setup", "require-py-setup"]
 run = ["prek run --all-files --skip lychee", "actionlint"]
 
 [tasks.links]

@@ -19,11 +19,11 @@ updates:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
 
-  # Python dev tools (ruff, basedpyright, pytest) pinned in uv.lock. "uv" is
-  # the ecosystem that understands uv.lock; "pip" reads only pyproject.toml
-  # and would leave the lock file stale. The ruff-pre-commit rev in
-  # prek.toml is not a dependabot ecosystem, so a ruff bump here still needs
-  # the manual rev move that AGENTS.md describes.
+  # Python dev tools (ruff, basedpyright, pytest, and mdformat with its
+  # plugins for the prek hooks) pinned in uv.lock. "uv" is the ecosystem that
+  # understands uv.lock; "pip" reads only pyproject.toml and would leave the
+  # lock file stale. The prek hooks run these tools from .venv, so a bump
+  # here also moves the hooks.
   - package-ecosystem: "uv"
     directory: "/"
     schedule:

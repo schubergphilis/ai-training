@@ -116,8 +116,8 @@ has nothing to say.
   without a fix gets an expiring entry in `osv-scanner.toml`, and every
   edit to that file asks the maintainer first.
 - GitHub Actions are pinned to full commit SHAs, `.mise.toml` tools and the
-  mise pin in CI to exact versions, and `prek.toml` hooks by commit SHA
-  with their full dependency tree.
+  mise pin in CI to exact versions. `prek.toml` hooks are `builtin` or
+  run a tool from one of the lock files, so prek installs nothing.
 
 ## Process
 

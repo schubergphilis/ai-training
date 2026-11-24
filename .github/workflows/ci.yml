@@ -100,13 +100,6 @@ jobs:
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
           restore-keys: ${{ runner.os }}-uv-
 
-      - name: Cache prek hook environments
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/prek
-          key: ${{ runner.os }}-prek-${{ hashFiles('prek.toml') }}
-          restore-keys: ${{ runner.os }}-prek-
-
       # These are the same steps, in the same order, as `mise run ci`. They
       # are spelled out rather than run as one `mise run ci` so a failure
       # names itself in the job summary. Keep the two lists in sync.
